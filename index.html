@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>TabTrainer — practise tabs with notation and playback</title>
-  <meta name="description" content="Free, open-source tab + notation player and editor for electric bass. Slow it down, loop it, follow the red notes." />
+  <title>TabTrainer: learn bass from tab and notation</title>
+  <meta name="description" content="Free, open-source tab and notation player for electric bass. Slow a song down, loop the hard bars, and follow each note as it plays." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Inter+Tight:wght@800&family=JetBrains+Mono:wght@400;600&display=swap" />
@@ -88,19 +88,19 @@ time: 4/4
 (3.3 5.2):h r:h |      # chord + rest
 [3/4] :8t 3.3 5.3 7.3 :q ~7.3 r |</pre>
     <table>
-      <tr><td><code>3.4</code></td><td>fret 3 on string 4 (string 1 = highest)</td></tr>
-      <tr><td><code>:q</code></td><td>set the duration for the next notes: <code>w h q 8 16 32</code>, add <code>.</code> for dotted, <code>t</code> for triplets</td></tr>
-      <tr><td><code>3.4:8</code></td><td>duration on a single note</td></tr>
-      <tr><td><code>(3.4 5.3)</code></td><td>notes struck together</td></tr>
+      <tr><td><code>3.4</code></td><td>fret 3 on string 4 (string 1 is the highest)</td></tr>
+      <tr><td><code>:q</code></td><td>duration for the next notes: <code>w h q 8 16 32</code>. Add <code>.</code> for dotted and <code>t</code> for triplet</td></tr>
+      <tr><td><code>3.4:8</code></td><td>duration for one note</td></tr>
+      <tr><td><code>(3.4 5.3)</code></td><td>notes played together</td></tr>
       <tr><td><code>r</code></td><td>rest</td></tr>
-      <tr><td><code>~5.3</code></td><td>tied: keep the note ringing, don't pick again</td></tr>
+      <tr><td><code>~5.3</code></td><td>tie: keep the note ringing without picking it again</td></tr>
       <tr><td><code>"Am7"</code></td><td>chord name above the next note</td></tr>
       <tr><td><code>{let ring}</code></td><td>text above the next note (dynamics, tips)</td></tr>
       <tr><td><code>[3/4]</code></td><td>time signature from this bar on</td></tr>
-      <tr><td><code>@Chorus</code></td><td>section name (own line)</td></tr>
-      <tr><td><code># …</code></td><td>comment</td></tr>
+      <tr><td><code>@Chorus</code></td><td>section name, on its own line</td></tr>
+      <tr><td><code># ...</code></td><td>comment</td></tr>
     </table>
-    <p class="muted">Songs you save stay in this browser. Use Download / Open to move them between devices or share them.</p>
+    <p class="muted">The app saves your songs in this browser. Use Download and Open to move a song to another device or share it.</p>
   </dialog>
   <script type="module" src="/src/main.ts"></script>
 </body>

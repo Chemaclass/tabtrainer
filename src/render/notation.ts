@@ -30,7 +30,7 @@ export function renderSong(host: HTMLElement, song: Song, opt: RenderOptions): v
     sys.className = 'system'; sys.dataset.first = String(group[0].index); sys.dataset.last = String(group[group.length - 1].index);
     host.appendChild(sys);
     try { drawSystem(sys, group, song.bars[i - 1], { key, clef: inst.clef, tuning: inst.tuning, nStr, opt, barStart }); }
-    catch (e) { sys.textContent = `Bars ${group[0].index}–${group[group.length - 1].index} could not be drawn: ${(e as Error).message}`; sys.classList.add('error'); }
+    catch (e) { sys.textContent = `Bars ${group[0].index} to ${group[group.length - 1].index} could not be drawn: ${(e as Error).message}`; sys.classList.add('error'); }
   }
 }
 

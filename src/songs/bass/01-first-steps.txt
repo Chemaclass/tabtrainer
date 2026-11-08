@@ -1,11 +1,11 @@
-title: First Steps — open strings & roots
+title: First Steps: open strings and roots
 artist: TabTrainer exercise
 instrument: bass4
 tempo: 76
 key: C
 time: 4/4
 
-# Notes are fret.string: string 4 is your low E, string 1 the G string.
+# Notes are fret.string. String 4 is your low E and string 1 is the G string.
 # ":q" sets quarter notes until the next duration change.
 @Open strings
 :q 0.4 0.4 0.4 0.4 | 0.3 0.3 0.3 0.3 |

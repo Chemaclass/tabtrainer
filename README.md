@@ -1,27 +1,27 @@
 # TabTrainer
 
-**Practise tabs the way you'd practise with a teacher: slow it down, loop the hard bar, and follow the red notes.**
+Learn electric bass songs from tab and notation. Slow a song down, loop the bars you miss, and follow each note as it plays.
 
-TabTrainer is a free, open-source web app for learning songs on electric bass. Write or open a song as plain text and get standard notation and tab together, synth playback, and practice tools.
+TabTrainer is a free, open-source web app. You write or open a song as plain text, and it draws standard notation and tab together and plays them back.
 
-👉 **Try it:** https://chemaclass.github.io/tabtrainer/
+**Try it:** https://chemaclass.github.io/tabtrainer/
 
 ![TabTrainer showing notation and tab for a bass exercise](docs/screenshot.png)
 
 ## Features
 
-- **Notation + tab** drawn together and aligned note for note (key signatures, ties, triplets, chords).
-- **Playback** with a simple synth: play/pause/resume, speed 30–130 %, loop any range of bars.
-- **Follow along:** the notes being played light up red, and the page keeps the current line in view.
-- **Hands-free auto-scroll** at a speed you choose (`S` to toggle, `↑`/`↓` to adjust).
-- **Double-click any note** to start playing from there.
-- **Editor with live preview:** errors and warnings point to the exact line.
-- **Any bass:** 4, 5 or 6 strings, or any custom tuning. Guitar (`guitar6`) and ukulele files open too.
-- **Your songs stay yours:** they're saved in your browser, and you can download and open them as `.txt` files. No account, no server.
+- **Notation and tab** drawn one above the other and lined up note for note, with key signatures, ties, triplets and chords.
+- **Playback** with a simple synth. Play, pause and resume, set the speed from 30 to 130%, and loop any range of bars.
+- **Follow along:** each note turns red as it plays, and the page scrolls to keep the current line in view.
+- **Auto-scroll** at a speed you choose. Press `S` to start or stop it, and `↑` or `↓` to change the speed.
+- **Start anywhere:** double-click a note to play from there.
+- **Editor with live preview:** each error or warning names the line it comes from.
+- **Any bass:** 4, 5 or 6 strings, or a custom tuning. Guitar (`guitar6`) and ukulele song files open too.
+- **Songs stay on your device:** the app saves them in your browser. Download a song as a `.txt` file to move it to another device or share it. There is no account and no server.
 
 ## Song format
 
-Songs are plain text: a header, then bars separated by `|`.
+A song is plain text: a few header lines, then bars separated by `|`.
 
 ```text
 title: My groove
@@ -39,16 +39,16 @@ time: 4/4
 
 | Syntax | Meaning |
 | --- | --- |
-| `3.4` | fret 3 on string 4 (string 1 = highest-pitched) |
-| `:q` | duration for the following notes: `w h q 8 16 32`, add `.` for dotted, `t` for triplet |
-| `3.4:8` | duration for a single note |
-| `(3.4 5.3)` | notes struck together |
+| `3.4` | fret 3 on string 4 (string 1 is the highest) |
+| `:q` | duration for the next notes: `w h q 8 16 32`. Add `.` for dotted and `t` for triplet |
+| `3.4:8` | duration for one note |
+| `(3.4 5.3)` | notes played together |
 | `r` | rest |
-| `~5.3` | tied: keep the note ringing, don't pick it again |
+| `~5.3` | tie: keep the note ringing without picking it again |
 | `"Am7"` | chord name above the next note |
 | `{let ring}` | text above the next note |
 | `[3/4]` | time signature from this bar on |
-| `@Chorus` | section name (on its own line) |
+| `@Chorus` | section name, on its own line |
 | `# ...` | comment |
 
 ## Development
@@ -56,24 +56,24 @@ time: 4/4
 ```bash
 npm install
 npm run dev      # http://localhost:5173/tabtrainer/
-npm test         # parser, timeline and demo-song tests
+npm test         # parser, timeline and demo song tests
 npm run build    # production build in dist/
 ```
 
-Built with TypeScript, Vite and [VexFlow](https://www.vexflow.com/). Every push to `main` is tested and deployed to GitHub Pages by `.github/workflows/deploy.yml`.
+TabTrainer uses TypeScript, Vite and [VexFlow](https://www.vexflow.com/). The `.github/workflows/deploy.yml` workflow tests every push to `main` and deploys it to GitHub Pages.
 
 ```
 src/
-  core/     song model, text parser/serializer, timeline, instruments
-  render/   notation + tab rendering (VexFlow)
+  core/     song model, text parser and serializer, timeline, instruments
+  render/   notation and tab drawing (VexFlow)
   audio/    Web Audio player (scheduling, loop, speed)
-  ui/       local library and preferences
-  songs/    bundled demo exercises, one folder per instrument (original, MIT-licensed)
+  ui/       local song library and preferences
+  songs/    demo exercises, one folder per instrument (original, MIT license)
 ```
 
 ## Contributing
 
-Ideas and pull requests are welcome, especially new exercises, instrument presets and practice features. Please only contribute songs you wrote yourself or that are in the public domain: transcriptions of copyrighted songs can't be included in this repository, but you can always keep them in your own library.
+Pull requests for new exercises and practice features are welcome. Only send songs you wrote or that are in the public domain. This repository can't include transcriptions of copyrighted songs, but you can keep them in your own library.
 
 ## License
 
