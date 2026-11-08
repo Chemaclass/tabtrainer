@@ -81,12 +81,12 @@ about: Eighth notes on the root  # optional: what the song trains
 instrument: bass4      # bass4, bass5, bass6, guitar6
 tuning: D2 A2 D3 G3    # optional: any tuning, low to high
 tempo: 90
-key: C                 # e.g. C, Ab, F#m
+key: C                 # C, Ab, F#m, ...
 time: 4/4
 
 @Verse                 # section name
 "C" :q 3.3 3.3 :8 5.2 5.2 :q 3.3 |
-(3.3 5.2):h r:h |      # chord + rest
+(3.3 5.2):h r:h |      # two notes together, then a rest
 [3/4] :8t 3.3 5.3 7.3 :q ~7.3 r |</pre>
     <table>
       <tr><td><code>about:</code></td><td>one line on what the song trains, shown under the title</td></tr>
@@ -100,7 +100,7 @@ time: 4/4
       <tr><td><code>{let ring}</code></td><td>text above the next note (dynamics, tips)</td></tr>
       <tr><td><code>[3/4]</code></td><td>time signature from this bar on</td></tr>
       <tr><td><code>@Chorus</code></td><td>section name, on its own line</td></tr>
-      <tr><td><code>== Bass line</code></td><td>starts another version of the song (own line). Versions share the header; switch between them with the buttons under the title</td></tr>
+      <tr><td><code>== Bass line</code></td><td>starts another version of the song, on its own line. Versions share the header. Switch between them with the buttons under the title</td></tr>
       <tr><td><code># ...</code></td><td>comment</td></tr>
     </table>
     <p class="muted">The app saves your songs in this browser. Use Download and Open to move a song to another device or share it.</p>
