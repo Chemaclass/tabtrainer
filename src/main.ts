@@ -217,7 +217,7 @@ document.addEventListener('keydown', e => {
   const t = e.target as HTMLElement;
   if (t === src || t.tagName === 'INPUT' || t.tagName === 'SELECT' || t.isContentEditable) return;
   if (e.code === 'Space') { e.preventDefault(); player.toggle(); }
-  else if (e.key === 's' || e.key === 'S') { e.preventDefault(); scrolling ? stopScroll() : startScroll(); }
+  else if (e.key === 's' || e.key === 'S') { e.preventDefault(); if (scrolling) stopScroll(); else startScroll(); }
   else if (scrolling && e.key === 'ArrowUp') { e.preventDefault(); sspeed.value = String(+sspeed.value + 2); fillRange(sspeed); }
   else if (scrolling && e.key === 'ArrowDown') { e.preventDefault(); sspeed.value = String(Math.max(3, +sspeed.value - 2)); fillRange(sspeed); }
 });

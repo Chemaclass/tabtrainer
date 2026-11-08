@@ -77,10 +77,11 @@ key: C
 npm install
 npm run dev      # http://localhost:5173/tabtrainer/
 npm test         # parser, timeline and demo song tests
+npm run lint     # ESLint
 npm run build    # production build in dist/
 ```
 
-TabTrainer uses TypeScript, Vite and [VexFlow](https://www.vexflow.com/). The `.github/workflows/deploy.yml` workflow tests every push to `main` and deploys it to GitHub Pages.
+TabTrainer uses TypeScript, Vite and [VexFlow](https://www.vexflow.com/). The CI workflow lints, typechecks and tests every pull request and every push to `main`. When it passes on `main`, the deploy workflow publishes the site to GitHub Pages.
 
 ```
 src/
