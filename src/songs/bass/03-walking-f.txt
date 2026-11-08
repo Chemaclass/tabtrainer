@@ -1,4 +1,4 @@
-title: Walking in F — 12-bar blues
+title: Walking in F: 12-bar blues
 artist: TabTrainer exercise
 instrument: bass4
 tempo: 104

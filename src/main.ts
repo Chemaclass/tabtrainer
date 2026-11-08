@@ -55,7 +55,7 @@ function update(resetLoop: boolean) {
   $('title').textContent = s.meta.title;
   renderMeta(s);
   $('barTotal').textContent = String(s.bars.length || '–');
-  document.title = `${s.meta.title} — TabTrainer`;
+  document.title = `${s.meta.title} · TabTrainer`;
   const wasPlaying = player.playing;
   player.load(buildTimeline(s), s.meta.tempo);
   if (resetLoop || +$<HTMLInputElement>('loopB').value > s.bars.length) { $<HTMLInputElement>('loopA').value = '1'; $<HTMLInputElement>('loopB').value = String(Math.max(1, s.bars.length)); }

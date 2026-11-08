@@ -51,7 +51,7 @@ export function parseSong(src: string): ParseResult {
     const [, k, v] = h; const key = k.toLowerCase();
     if (key === 'title') meta.title = v;
     else if (key === 'artist') meta.artist = v;
-    else if (key === 'tempo') { const t = parseFloat(v); if (t >= 20 && t <= 400) meta.tempo = t; else issues.push({ line: i + 1, col: 1, message: `Tempo must be 20–400 (got "${v}")`, severity: 'error' }); }
+    else if (key === 'tempo') { const t = parseFloat(v); if (t >= 20 && t <= 400) meta.tempo = t; else issues.push({ line: i + 1, col: 1, message: `Tempo must be between 20 and 400 (got "${v}")`, severity: 'error' }); }
     else if (key === 'key') meta.key = v;
     else if (key === 'instrument') { if (INSTRUMENTS[v]) meta.instrument = INSTRUMENTS[v]; else issues.push({ line: i + 1, col: 1, message: `Unknown instrument "${v}". Use one of: ${Object.keys(INSTRUMENTS).join(', ')} (or a "tuning:" line)`, severity: 'error' }); }
     else if (key === 'tuning') tuning = v;
