@@ -17,7 +17,7 @@ function pieces(e: NoteEvent): [string, number, boolean][] {
   return out;
 }
 
-/** Draws the song as systems of notation + tab. Every struck note gets data-key=<onset> for highlight / click-to-play. */
+/** Draws the song as systems of notation + tab. Every played note, tied ones included, gets data-key=<onset> for highlight / click-to-play. */
 export function renderSong(host: HTMLElement, song: Song, opt: RenderOptions): void {
   host.innerHTML = '';
   const inst = song.meta.instrument; const key = safeKey(song.meta.key.trim());
@@ -77,9 +77,8 @@ function drawSystem(div: HTMLDivElement, bars: Bar[], prev: Bar | undefined, c: 
           t = new GhostNote({ duration: val });
         } else {
           s = new StaveNote({ clef: c.clef, keys: sorted.map(n => vexKey(c.tuning[n.string - 1] + n.fret, c.key)), duration: val, auto_stem: true });
-          const allTied = sorted.every(n => n.tie);
           t = new TabNote({ positions: sorted.map(n => ({ str: n.string, fret: (pi > 0 || n.tie) ? `(${n.fret})` : String(n.fret) })), duration: val });
-          if (pi === 0 && !allTied) tags.push([st ? s : null, t as TabNote, onsetKey(c.barStart[bar.index] + ev.start / PPQ)]);
+          if (pi === 0) tags.push([st ? s : null, t as TabNote, onsetKey(c.barStart[bar.index] + ev.start / PPQ)]);
           if (prevS) ties.push([prevS, s]);
         }
         if (dots) Dot.buildAndAttach([s], { all: true });
@@ -90,7 +89,6 @@ function drawSystem(div: HTMLDivElement, bars: Bar[], prev: Bar | undefined, c: 
       });
     }
     if (g.length) { trip.push(g); ttrip.push(tg); }
-    // tie into this bar from the previous one: sorted notes all tied
     const ticks = bar.beats; const bv = bar.beatValue;
     const tv = new Voice({ num_beats: ticks, beat_value: bv }).setMode(Voice.Mode.SOFT).addTickables(tn);
     ttrip.forEach(grp => new Tuplet(grp as never, { num_notes: 3, notes_occupied: 2 }));

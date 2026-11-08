@@ -57,7 +57,7 @@ export class Player {
     while (this.next < this.notes.length && this.notes[this.next].beat < this.to) {
       const n = this.notes[this.next]; const when = this.t0 + (n.beat - this.from) * spb;
       if (when > now + 0.25) break;
-      if (when >= now - 0.03 && !this.mute.has(n.string)) this.voice(when, n.midi, Math.max(0.15, n.ring * spb), 0.28);
+      if (when >= now - 0.03 && !this.mute.has(n.string)) this.voice(when, n.midi, Math.max(0.15, n.ring * spb), n.soft ? 0.14 : 0.28);
       this.next++;
     }
     const beat = this.from + (now - this.t0) / spb;
