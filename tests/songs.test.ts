@@ -4,7 +4,9 @@ import { parseSong } from '../src/core/parser';
 import { serializeSong } from '../src/core/serialize';
 
 describe('bundled demo songs', () => {
-  for (const f of readdirSync('src/songs').filter(f => f.endsWith('.txt'))) {
+  const files = readdirSync('src/songs', { recursive: true, encoding: 'utf8' }).filter(f => f.endsWith('.txt'));
+  it('ships at least one demo per instrument folder', () => expect(files.length).toBeGreaterThan(0));
+  for (const f of files) {
     it(`${f} parses cleanly and round-trips`, () => {
       const { song, issues } = parseSong(readFileSync(`src/songs/${f}`, 'utf8'));
       expect(issues).toEqual([]);

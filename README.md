@@ -2,7 +2,7 @@
 
 **Practise tabs the way you'd practise with a teacher: slow it down, loop the hard bar, and follow the red notes.**
 
-TabTrainer is a free, open-source web app for learning songs on bass, guitar and other fretted instruments. Write or open a song as plain text and get standard notation and tab together, synth playback, and practice tools.
+TabTrainer is a free, open-source web app for learning songs on electric bass. Write or open a song as plain text and get standard notation and tab together, synth playback, and practice tools.
 
 👉 **Try it:** https://chemaclass.github.io/tabtrainer/
 
@@ -16,7 +16,7 @@ TabTrainer is a free, open-source web app for learning songs on bass, guitar and
 - **Hands-free auto-scroll** at a speed you choose (`S` to toggle, `↑`/`↓` to adjust).
 - **Double-click any note** to start playing from there.
 - **Editor with live preview:** errors and warnings point to the exact line.
-- **Any fretted instrument:** 4/5/6-string bass, 6-string guitar, ukulele, or any custom tuning.
+- **Any bass:** 4, 5 or 6 strings, or any custom tuning. Guitar (`guitar6`) and ukulele files open too.
 - **Your songs stay yours:** they're saved in your browser, and you can download and open them as `.txt` files. No account, no server.
 
 ## Song format
@@ -25,7 +25,7 @@ Songs are plain text: a header, then bars separated by `|`.
 
 ```text
 title: My groove
-instrument: bass4      # bass4, bass5, bass6, guitar6, ukulele
+instrument: bass4      # bass4, bass5, bass6
 tuning: D2 A2 D3 G3    # optional: any tuning, low to high
 tempo: 90
 key: C                 # C, Ab, F#m, ...
@@ -68,7 +68,7 @@ src/
   render/   notation + tab rendering (VexFlow)
   audio/    Web Audio player (scheduling, loop, speed)
   ui/       local library and preferences
-  songs/    bundled demo exercises (original, MIT-licensed)
+  songs/    bundled demo exercises, one folder per instrument (original, MIT-licensed)
 ```
 
 ## Contributing
