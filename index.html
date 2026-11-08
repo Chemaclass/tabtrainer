@@ -5,53 +5,75 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>TabTrainer — practise tabs with notation and playback</title>
   <meta name="description" content="Free, open-source tab + notation player and editor for bass, guitar and other fretted instruments. Slow it down, loop it, follow the red notes." />
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='14' fill='%23b5532a'/><g stroke='%23fff' stroke-width='3'><line x1='12' y1='20' x2='52' y2='20'/><line x1='12' y1='30' x2='52' y2='30'/><line x1='12' y1='40' x2='52' y2='40'/></g><circle cx='26' cy='30' r='6' fill='%23fff'/></svg>" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Inter+Tight:wght@800&family=JetBrains+Mono:wght@400;600&display=swap" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='14' fill='%23111111'/><g stroke='%23fff' stroke-width='3'><line x1='12' y1='20' x2='52' y2='20'/><line x1='12' y1='30' x2='52' y2='30'/><line x1='12' y1='40' x2='52' y2='40'/></g><circle cx='38' cy='30' r='8' fill='%23e0312b'/></svg>" />
 </head>
 <body>
   <header class="top">
-    <div class="brand"><span class="logo">♪</span> TabTrainer</div>
+    <div class="brand">
+      <svg class="logo" width="22" height="22" viewBox="0 0 22 22" aria-hidden="true"><path d="M1 5h20M1 11h20M1 17h20" stroke="currentColor" stroke-width="1.5"/><circle cx="14" cy="11" r="4" fill="var(--playing)"/></svg>
+      TabTrainer
+    </div>
     <select id="songSel" aria-label="Choose a song"></select>
     <div class="grow"></div>
-    <button id="newBtn" title="Start a new song">New</button>
-    <label class="btn" title="Open a song file from your computer">Open<input id="openFile" type="file" accept=".txt,.tab,.tabt,text/plain" hidden /></label>
-    <button id="saveBtn" title="Save to this browser's library">Save</button>
-    <button id="dlBtn" title="Download the song as a text file">Download</button>
-    <button id="editBtn" class="on" title="Show or hide the editor">Editor</button>
-    <button id="helpBtn" title="How to write songs">?</button>
+    <nav class="file-actions" aria-label="Song file">
+      <button id="newBtn" class="ghost" title="Start a new song">New</button>
+      <label class="btn ghost" title="Open a song file from your computer">Open<input id="openFile" type="file" accept=".txt,.tab,.tabt,text/plain" hidden /></label>
+      <button id="saveBtn" class="ghost" title="Save to this browser's library">Save</button>
+      <button id="dlBtn" class="ghost" title="Download the song as a text file">Download</button>
+    </nav>
+    <span class="divider" aria-hidden="true"></span>
+    <button id="editBtn" class="toggle on" title="Show or hide the editor"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><rect x="1" y="2" width="12" height="10" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.3"/><path d="M5.5 2v10" stroke="currentColor" stroke-width="1.3"/></svg>Editor</button>
+    <button id="helpBtn" class="round" title="How to write songs" aria-label="How to write songs">?</button>
   </header>
 
   <main class="layout">
     <section id="editorPane" class="editor">
-      <div class="pane-head"><b>Song text</b><span id="status" class="status"></span></div>
+      <div class="pane-head"><span class="caps">Song text</span><span id="status" class="status"></span></div>
       <textarea id="src" spellcheck="false" aria-label="Song source"></textarea>
       <ul id="issues" class="issues"></ul>
     </section>
     <section class="viewer">
       <div class="song-head">
-        <div><h1 id="title"></h1><div id="subtitle" class="muted"></div></div>
-        <div class="view-opts">
-          <button id="notaBtn" class="on" title="Show standard notation above the tab">Notation</button>
-          <button id="zoomOut" title="Smaller">A−</button><button id="zoomIn" title="Bigger">A+</button>
+        <div><h1 id="title"></h1><div id="subtitle" class="meta"></div></div>
+        <div class="view-opts" role="group" aria-label="View">
+          <button id="notaBtn" class="seg" title="Show standard notation above the tab">Notation + tab</button>
+          <button id="tabBtn" class="seg" title="Show the tab only">Tab only</button>
+          <span class="divider" aria-hidden="true"></span>
+          <button id="zoomOut" class="seg small" title="Smaller" aria-label="Smaller">A−</button><button id="zoomIn" class="seg big" title="Bigger" aria-label="Bigger">A+</button>
         </div>
       </div>
       <div id="sheet" class="sheet"></div>
-      <p class="muted small">Tip: double-click any note to start playing from there. Space = play/pause.</p>
+      <p class="tip">Double-click any note to start playing from there. <kbd>Space</kbd> plays or pauses, <kbd>S</kbd> starts auto-scroll.</p>
     </section>
   </main>
 
   <footer class="player">
-    <button id="playBtn" class="primary" title="Play / pause (Space)">▶ Play</button>
-    <button id="stopBtn" title="Stop and go back to the start">■</button>
-    <div class="ctl"><span>Speed</span><input id="speed" type="range" min="30" max="130" value="100" /><output id="speedOut">100%</output></div>
-    <div class="ctl"><label><input id="loopChk" type="checkbox" /> Loop</label> bars <input id="loopA" type="number" min="1" value="1" /> – <input id="loopB" type="number" min="1" value="1" /></div>
-    <div class="ctl"><label><input id="followChk" type="checkbox" checked /> Follow</label></div>
-    <div class="ctl"><button id="scrollBtn" title="Slow auto-scroll (S)">⇩ Auto-scroll</button><input id="scrollSpeed" type="range" min="3" max="80" value="15" title="Scroll speed (↑/↓ while scrolling)" /></div>
+    <div class="transport">
+      <button id="playBtn" class="play" title="Play / pause (Space)" aria-label="Play"></button>
+      <button id="stopBtn" class="stop" title="Stop and go back to the start" aria-label="Stop"><span></span></button>
+    </div>
+    <div class="readout"><span class="lbl">Bar</span><span class="led"><b id="barNo">–</b><small> / <span id="barTotal">–</span></small></span></div>
+    <div class="speed">
+      <div class="speed-head"><label class="lbl" for="speed">Speed</label><output id="speedOut">100%</output></div>
+      <input id="speed" type="range" min="30" max="130" value="100" />
+    </div>
+    <div class="loop">
+      <label class="pill"><input id="loopChk" type="checkbox" /><svg width="16" height="14" viewBox="0 0 16 14" aria-hidden="true"><path d="M2 7a4 4 0 0 1 4-4h6M14 7a4 4 0 0 1-4 4H4M10 1l2 2-2 2M6 9l-2 2 2 2" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Loop bars</label>
+      <input id="loopA" type="number" min="1" value="1" aria-label="Loop from bar" /><span class="arrow" aria-hidden="true">→</span><input id="loopB" type="number" min="1" value="1" aria-label="Loop to bar" />
+    </div>
     <div class="grow"></div>
-    <div class="barno">Bar <b id="barNo">–</b></div>
+    <label class="pill dot"><input id="followChk" type="checkbox" checked />Follow</label>
+    <div class="scroll">
+      <button id="scrollBtn" class="pill dot" title="Slow auto-scroll (S)">Auto-scroll</button>
+      <input id="scrollSpeed" type="range" min="3" max="80" value="15" title="Scroll speed (↑/↓ while scrolling)" aria-label="Scroll speed" />
+    </div>
   </footer>
 
   <dialog id="help">
-    <form method="dialog"><button class="close" aria-label="Close">✕</button></form>
+    <form method="dialog"><button class="close round" aria-label="Close">✕</button></form>
     <h2>Writing a song</h2>
     <p>A song is plain text: a few header lines, then bars of notes separated by <code>|</code>.</p>
 <pre>title: My groove
