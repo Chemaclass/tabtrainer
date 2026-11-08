@@ -1,0 +1,20 @@
+title: Greensleeves
+artist: Traditional (public domain)
+about: Root and fifth in long notes under an old English folk song in a minor key. It trains feeling 6/8 time as two big beats per bar.
+instrument: bass4
+tempo: 84
+key: Am
+time: 6/8
+
+@Verse
+"Am" :q. 0.3 2.2 | "C" 3.3 5.2 | "G" 3.4 5.3 | "Em" 0.4 2.3 |
+"Am" 0.3 2.2 | "F" 1.4 3.3 | "E" 0.4 2.3 | 0.4 2.3 |
+"Am" 0.3 2.2 | "C" 3.3 5.2 | "G" 3.4 5.3 | "Em" 0.4 2.3 |
+"Am" 0.3 2.2 | "E" 0.4 2.3 | "Am" 0.3 2.2 | 0.3 2.2 |
+@Chorus
+"C" 3.3 5.2 | 3.3 5.2 | "G" 3.4 5.3 | "Em" 0.4 2.3 |
+"Am" 0.3 2.2 | "F" 1.4 3.3 | "E" 0.4 2.3 | 0.4 2.3 |
+"C" 3.3 5.2 | 3.3 5.2 | "G" 3.4 5.3 | "Em" 0.4 2.3 |
+"Am" 0.3 2.2 | "E" 0.4 2.3 | "Am" 0.3 2.2 | 0.3 2.2 |
+@Ending
+"Am" :h. 0.3 |

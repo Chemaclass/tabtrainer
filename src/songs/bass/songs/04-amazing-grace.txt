@@ -1,0 +1,20 @@
+title: Amazing Grace
+artist: Traditional (public domain)
+about: A waltz bass line in 3/4. The root falls on beat 1 and the fifth on beats 2 and 3. It trains counting in three and moving between the G, C and D chords.
+instrument: bass4
+tempo: 84
+key: G
+time: 3/4
+
+@Verse
+"G" :q 3.4 5.3 5.3 | 3.4 5.3 5.3 | "C" 3.3 5.2 5.2 | "G" 3.4 5.3 5.3 |
+3.4 5.3 5.3 | 3.4 5.3 5.3 | "D" 5.3 7.2 7.2 | 5.3 7.2 7.2 |
+"G" 3.4 5.3 5.3 | 3.4 5.3 5.3 | "C" 3.3 5.2 5.2 | "G" 3.4 5.3 5.3 |
+3.4 5.3 5.3 | "D" 5.3 7.2 7.2 | "G" 3.4 5.3 5.3 | 3.4 5.3 5.3 |
+@Verse with the octave
+"G" 3.4 5.3 5.2 | 3.4 5.3 5.2 | "C" 3.3 5.2 5.1 | "G" 3.4 5.3 5.2 |
+3.4 5.3 5.2 | 3.4 5.3 5.2 | "D" 5.3 7.2 7.1 | 5.3 7.2 7.1 |
+"G" 3.4 5.3 5.2 | 3.4 5.3 5.2 | "C" 3.3 5.2 5.1 | "G" 3.4 5.3 5.2 |
+3.4 5.3 5.2 | "D" 5.3 7.2 7.1 | "G" 3.4 5.3 5.2 | 3.4 5.3 5.2 |
+@Ending
+"G" :h. 3.4 |
