@@ -16,6 +16,7 @@ import { FAMILIES, familyOf, isFamily, type Family } from './core/instruments';
 import { renderSong } from './render/notation';
 import { Player } from './audio/player';
 import { library, saveSong, removeSong, pref, setPref } from './ui/storage';
+import { findBySlug, songSlug } from './ui/songLink';
 
 const demos = import.meta.glob('./songs/*/*/*.txt', { query: '?raw', import: 'default', eager: true }) as Record<string, string>;
 const $ = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T;
@@ -45,7 +46,7 @@ function fillSongList() {
   const draft = new Option('Unsaved song', ''); draft.hidden = true; sel.appendChild(draft);
   const { demos: ex, mine } = songsFor(family);
   const group = (label: string, opts: HTMLOptionElement[]) => { if (!opts.length) return; const g = document.createElement('optgroup'); g.label = label; g.append(...opts); sel.appendChild(g); };
-  const demoGroup = (label: string, kind: string) => group(label, ex.filter(p => demoKind(p) === kind).map(p => new Option(titleOf(demos[p]), 'demo:' + p)));
+  const demoGroup = (label: string, kind: string) => group(label, ex.filter(p => demoKind(p) === kind).map(p => new Option(listLabel(demos[p]), 'demo:' + p)));
   demoGroup('Exercises', 'exercises');
   demoGroup('Songs', 'songs');
   group('My songs', mine.map(s => new Option(s.title, 'lib:' + s.title)));
@@ -59,15 +60,29 @@ function chooseFamily(f: Family) {
   if (f === family) return;
   family = f; setPref('family', f);
   const { demos: ex, mine } = songsFor(f);
-  if (ex.length) pickSong('demo:' + ex[0]); else if (mine.length) pickSong('lib:' + mine[0].title); else { picked = ''; loadText(newSong()); }
+  if (ex.length) pickSong('demo:' + ex[0]); else if (mine.length) pickSong('lib:' + mine[0].title); else { picked = ''; loadText(newSong()); showLink(); }
   showFamily();
 }
 const titleOf = (t: string) => /^\s*title\s*:\s*(.+)$/im.exec(t)?.[1].trim() ?? 'Untitled';
+const creditNames = (artist = '') => artist.replace(/\s*\(public domain\)\s*$/i, '').split(',').map(n => n.trim()).filter(Boolean);
+// the list names who wrote a song, unless TabTrainer wrote it or nobody knows
+const listLabel = (t: string) => {
+  const names = creditNames(/^\s*artist\s*:\s*(.+)$/im.exec(t)?.[1]).filter(n => !/^(tabtrainer|traditional)$/i.test(n));
+  return names.length ? `${titleOf(t)} (${names.join(', ')})` : titleOf(t);
+};
 function loadText(text: string) { src.value = text; update(true); setPref('last', text); }
 function pickSong(v: string) {
   const text = v.startsWith('demo:') ? demos[v.slice(5)] : library().find(x => 'lib:' + x.title === v)?.text;
   if (text === undefined) return;
-  picked = v; setPref('picked', v); loadText(text);
+  picked = v; setPref('picked', v); loadText(text); showLink();
+}
+// only bundled songs get a link: "My songs" live in one browser
+function showLink() {
+  const query = new URLSearchParams(location.search);
+  if (picked.startsWith('demo:')) query.set('song', songSlug(picked.slice(5))); else query.delete('song');
+  // keep the slash readable: "?song=bass/a-dawning"
+  const search = query.toString().replace(/%2F/g, '/');
+  history.replaceState(null, '', location.pathname + (search ? '?' + search : '') + location.hash);
 }
 $<HTMLSelectElement>('songSel').onchange = e => pickSong((e.target as HTMLSelectElement).value);
 document.querySelectorAll<HTMLButtonElement>('[data-family]').forEach(b => { b.onclick = () => isFamily(b.dataset.family!) && chooseFamily(b.dataset.family); });
@@ -130,7 +145,7 @@ function renderMeta(s: Song) {
   $('subtitle').replaceChildren(...parts.filter(([t]) => t).map(([t, num]) => { const e = document.createElement('span'); if (num) e.className = 'num'; e.textContent = t; return e; }));
 }
 function renderCredit(s: Song) {
-  const names = (s.meta.artist ?? '').replace(/\s*\(public domain\)\s*$/i, '').split(',').map(n => n.trim()).filter(Boolean);
+  const names = creditNames(s.meta.artist);
   const byline = $('byline'); byline.hidden = !names.length;
   const traditional = names.length === 1 && /^traditional$/i.test(names[0]);
   byline.replaceChildren(...(traditional ? [] : [document.createTextNode('by ')]), ...names.flatMap((n, i) => {
@@ -237,12 +252,12 @@ document.addEventListener('keydown', e => {
 });
 
 // ---------- toolbar ----------
-const unpick = () => { picked = ''; setPref('picked', ''); $<HTMLSelectElement>('songSel').value = ''; };
+const unpick = () => { picked = ''; setPref('picked', ''); $<HTMLSelectElement>('songSel').value = ''; showLink(); };
 $('newBtn').onclick = () => { unpick(); loadText(newSong()); showEditor(true); src.focus(); };
 $('saveBtn').onclick = () => {
   const t = titleOf(src.value);
   if (library().some(s => s.title === t) && !window.confirm?.call(window, `Replace "${t}" in your library?`)) return;
-  saveSong(t, src.value); picked = 'lib:' + t; setPref('picked', picked); fillSongList(); flash(`Saved "${t}" in this browser`);
+  saveSong(t, src.value); picked = 'lib:' + t; setPref('picked', picked); fillSongList(); showLink(); flash(`Saved "${t}" in this browser`);
 };
 $('dlBtn').onclick = () => {
   const blob = new Blob([src.value], { type: 'text/plain' }); const a = document.createElement('a');
@@ -273,7 +288,10 @@ $('notaBtn').classList.toggle('on', showNota); $('tabBtn').classList.toggle('on'
 setPlayLabel();
 showEditor(pref('editor', true));
 const lastText = pref<string | null>('last', null), lastPick = pref('picked', '');
-if (lastText) {
+const linked = findBySlug(Object.keys(demos), new URLSearchParams(location.search).get('song') ?? '');
+if (linked) {
+  pickSong('demo:' + linked);
+} else if (lastText) {
   const pickedText = lastPick.startsWith('demo:') ? demos[lastPick.slice(5)] : library().find(x => 'lib:' + x.title === lastPick)?.text;
   picked = pickedText === lastText ? lastPick : '';
   loadText(lastText);
@@ -281,4 +299,5 @@ if (lastText) {
   picked = 'demo:' + songsFor(family).demos[0];
   loadText(demos[picked.slice(5)]);
 }
+showLink();
 showFamily();
