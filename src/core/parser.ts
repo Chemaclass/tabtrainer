@@ -5,7 +5,7 @@ export interface ParseIssue { line: number; col: number; message: string; severi
 export interface ParseResult { song: Song; issues: ParseIssue[] }
 
 const VALUES: Record<string, number> = { w: 4 * PPQ, h: 2 * PPQ, q: PPQ, '8': PPQ / 2, '16': PPQ / 4, '32': PPQ / 8 };
-const HEADER = /^\s*(title|artist|instrument|tuning|tempo|key|time|clef)\s*:\s*(.*?)\s*$/i;
+const HEADER = /^\s*(title|artist|about|instrument|tuning|tempo|key|time|clef)\s*:\s*(.*?)\s*$/i;
 
 interface Tok { text: string; line: number; col: number }
 
@@ -38,7 +38,7 @@ export function parseDuration(s: string): { ticks: number; value: string; dots: 
 export function parseSong(src: string): ParseResult {
   const issues: ParseIssue[] = [];
   const lines = src.replace(/\r\n?/g, '\n').split('\n');
-  const meta = { title: 'Untitled', artist: undefined as string | undefined, tempo: 90, key: 'C', instrument: INSTRUMENTS.bass4 as Instrument };
+  const meta = { title: 'Untitled', artist: undefined as string | undefined, about: undefined as string | undefined, tempo: 90, key: 'C', instrument: INSTRUMENTS.bass4 as Instrument };
   let time: [number, number] = [4, 4];
   let tuning: string | null = null; let clef: 'bass' | 'treble' | undefined;
   let bodyStart = 0;
@@ -52,6 +52,7 @@ export function parseSong(src: string): ParseResult {
     const v = raw.replace(/(^|\s)#.*$/, '').trim();
     if (key === 'title') meta.title = v;
     else if (key === 'artist') meta.artist = v;
+    else if (key === 'about') meta.about = v;
     else if (key === 'tempo') { const t = parseFloat(v); if (t >= 20 && t <= 400) meta.tempo = t; else issues.push({ line: i + 1, col: 1, message: `Tempo must be between 20 and 400 (got "${v}")`, severity: 'error' }); }
     else if (key === 'key') meta.key = v;
     else if (key === 'instrument') { if (INSTRUMENTS[v]) meta.instrument = INSTRUMENTS[v]; else issues.push({ line: i + 1, col: 1, message: `Unknown instrument "${v}". Use one of: ${Object.keys(INSTRUMENTS).join(', ')} (or a "tuning:" line)`, severity: 'error' }); }

@@ -40,7 +40,7 @@
     </section>
     <section class="viewer">
       <div class="song-head">
-        <div><h1 id="title"></h1><div id="subtitle" class="meta"></div></div>
+        <div><h1 id="title"></h1><div id="subtitle" class="meta"></div><p id="about" class="about" hidden></p></div>
         <div class="view-opts" role="group" aria-label="View">
           <button id="notaBtn" class="seg" title="Show standard notation above the tab">Notation + tab</button>
           <button id="tabBtn" class="seg" title="Show the tab only">Tab only</button>
@@ -80,6 +80,7 @@
     <h2>Writing a song</h2>
     <p>A song is plain text: a few header lines, then bars of notes separated by <code>|</code>.</p>
 <pre>title: My groove
+about: Eighth notes on the root  # optional: what the song trains
 instrument: bass4      # bass4, bass5, bass6, guitar6
 tuning: D2 A2 D3 G3    # optional: any tuning, low to high
 tempo: 90
@@ -91,6 +92,7 @@ time: 4/4
 (3.3 5.2):h r:h |      # chord + rest
 [3/4] :8t 3.3 5.3 7.3 :q ~7.3 r |</pre>
     <table>
+      <tr><td><code>about:</code></td><td>one line on what the song trains, shown under the title</td></tr>
       <tr><td><code>3.4</code></td><td>fret 3 on string 4 (string 1 is the highest)</td></tr>
       <tr><td><code>:q</code></td><td>duration for the next notes: <code>w h q 8 16 32</code>. Add <code>.</code> for dotted and <code>t</code> for triplet</td></tr>
       <tr><td><code>3.4:8</code></td><td>duration for one note</td></tr>

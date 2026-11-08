@@ -41,6 +41,8 @@ export interface Bar {
 export interface SongMeta {
   title: string;
   artist?: string;
+  /** What the song trains, shown under the title. */
+  about?: string;
   tempo: number;
   key: string; // e.g. "C", "Ab", "F#m"
   instrument: Instrument;
