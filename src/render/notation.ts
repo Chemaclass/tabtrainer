@@ -111,9 +111,9 @@ function drawSystem(div: HTMLDivElement, bars: Bar[], prev: Bar | undefined, c: 
     beams.forEach(b => b.setContext(ctx).draw()); tups.forEach(t => t.setContext(ctx).draw());
     if (st) ties.forEach(([a, b]) => { try { new StaveTie({ first_note: a, last_note: b, first_indices: a.getKeys().map((_, i) => i), last_indices: b.getKeys().map((_, i) => i) }).setContext(ctx).draw(); } catch { /* skip */ } });
     // labels
-    ctx.save(); ctx.setFont('Arial', 11, 'bold');
+    ctx.save(); ctx.setFont('Inter, Arial, sans-serif', 12, 'bold');
     labels.forEach(([n, ev]) => { const px = n.getAbsoluteX(); ctx.fillText([ev.chord, ev.text].filter(Boolean).join('  '), px - 2, top - 6); });
-    if (bar.section) { ctx.setFont('Arial', 13, 'bold'); ctx.setFillStyle('#b5532a'); ctx.fillText('▌' + bar.section, x + 4, top - 26); ctx.setFillStyle('#000'); }
+    if (bar.section) { ctx.setFont('Inter, Arial, sans-serif', 11, 'bold'); ctx.fillText(bar.section.toUpperCase(), x + 4, top - 28); }
     ctx.restore();
     // tag elements for highlight + click
     tags.forEach(([s, t, k]) => {

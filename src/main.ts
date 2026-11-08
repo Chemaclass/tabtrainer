@@ -17,6 +17,7 @@ let zoom = pref('zoom', 1), showNota = pref('notation', true);
 const NEW_SONG = `title: New song\ninstrument: bass4\ntempo: 90\nkey: C\ntime: 4/4\n\n@Intro\n"C" :q 3.3 3.3 5.2 3.3 |\n`;
 function fillSongList(selected?: string) {
   const sel = $<HTMLSelectElement>('songSel'); sel.innerHTML = '';
+  const draft = new Option('Unsaved song', ''); draft.hidden = true; sel.appendChild(draft);
   const g1 = document.createElement('optgroup'); g1.label = 'Exercises';
   Object.keys(demos).sort().forEach(p => { const o = new Option(titleOf(demos[p]), 'demo:' + p); g1.appendChild(o); });
   sel.appendChild(g1);
@@ -45,14 +46,20 @@ function update(resetLoop: boolean) {
   });
   const errs = issues.filter(i => i.severity === 'error').length;
   $('status').textContent = errs ? `${errs} error${errs > 1 ? 's' : ''}` : `${s.bars.length} bars · ${s.meta.instrument.name}`;
+  $('status').classList.toggle('bad', errs > 0);
   $('title').textContent = s.meta.title;
-  $('subtitle').textContent = [s.meta.artist, `♩ = ${s.meta.tempo}`, `key ${s.meta.key}`].filter(Boolean).join(' · ');
+  renderMeta(s);
+  $('barTotal').textContent = String(s.bars.length || '–');
   document.title = `${s.meta.title} — TabTrainer`;
   const wasPlaying = player.playing;
   player.load(buildTimeline(s), s.meta.tempo);
   if (resetLoop || +$<HTMLInputElement>('loopB').value > s.bars.length) { $<HTMLInputElement>('loopA').value = '1'; $<HTMLInputElement>('loopB').value = String(Math.max(1, s.bars.length)); }
   $<HTMLInputElement>('loopA').max = $<HTMLInputElement>('loopB').max = String(s.bars.length);
-  applyLoop(); draw(); if (wasPlaying) setPlayLabel();
+  applyLoop(); draw(); showSpeed(); if (wasPlaying) setPlayLabel();
+}
+function renderMeta(s: Song) {
+  const parts: [string, boolean][] = [[s.meta.artist ?? '', false], [`♩ = ${s.meta.tempo}`, true], [`key ${s.meta.key}`, true], [s.meta.instrument.name, false]];
+  $('subtitle').replaceChildren(...parts.filter(([t]) => t).map(([t, num]) => { const e = document.createElement('span'); if (num) e.className = 'num'; e.textContent = t; return e; }));
 }
 function jumpToLine(line: number) {
   const lines = src.value.split('\n'); let pos = 0; for (let i = 0; i < line - 1 && i < lines.length; i++) pos += lines[i].length + 1;
@@ -69,7 +76,10 @@ let rz = 0; let lastW = window.innerWidth;
 window.addEventListener('resize', () => { if (Math.abs(window.innerWidth - lastW) < 60) return; lastW = window.innerWidth; clearTimeout(rz); rz = window.setTimeout(draw, 250); });
 
 // ---------- player wiring ----------
-const setPlayLabel = () => { $('playBtn').textContent = player.playing ? '❚❚ Pause' : player.pausedAt !== null ? '▶ Resume' : '▶ Play'; };
+const setPlayLabel = () => {
+  const b = $('playBtn'); b.classList.toggle('pause', player.playing);
+  b.setAttribute('aria-label', player.playing ? 'Pause' : player.pausedAt !== null ? 'Resume' : 'Play');
+};
 let lit: Element[] = [], litKey: string | null = null, curSys: Element | null = null;
 const onsets = () => [...new Set(player.notes.map(n => n.key))].map(Number).sort((a, b) => a - b);
 let onsetCache: number[] = [];
@@ -97,8 +107,13 @@ player.on(s => { if (s.beat === null && scrollWasOn && !player.playing) stopScro
 $('playBtn').onclick = () => player.toggle();
 $('stopBtn').onclick = () => player.stop();
 const speed = $<HTMLInputElement>('speed');
-speed.value = String(pref('speed', 100)); $('speedOut').textContent = speed.value + '%'; player.speed = +speed.value / 100;
-speed.oninput = () => { $('speedOut').textContent = speed.value + '%'; player.setSpeed(+speed.value / 100); setPref('speed', +speed.value); };
+const fillRange = (r: HTMLInputElement) => r.style.setProperty('--fill', `${((+r.value - +r.min) / (+r.max - +r.min)) * 100}%`);
+const showSpeed = () => {
+  const bpm = Math.round(player.tempo * +speed.value / 100), q = document.createElement('span'); q.textContent = `  ♩${bpm}`;
+  $('speedOut').replaceChildren(speed.value + '%', q); fillRange(speed);
+};
+speed.value = String(pref('speed', 100)); player.speed = +speed.value / 100;
+speed.oninput = () => { player.setSpeed(+speed.value / 100); setPref('speed', +speed.value); showSpeed(); };
 function applyLoop() {
   if (!song?.bars.length) return;
   const a = Math.max(1, +$<HTMLInputElement>('loopA').value || 1), z = Math.max(a, +$<HTMLInputElement>('loopB').value || a);
@@ -122,15 +137,16 @@ sheet.addEventListener('dblclick', e => {
 // ---------- auto-scroll ----------
 let scrolling = false, scrollWasOn = false, last = 0, acc = 0;
 const sspeed = $<HTMLInputElement>('scrollSpeed'); sspeed.value = String(pref('scroll', 15));
-sspeed.oninput = () => setPref('scroll', +sspeed.value);
+fillRange(sspeed);
+sspeed.oninput = () => { setPref('scroll', +sspeed.value); fillRange(sspeed); };
 function stepScroll(ts: number) {
   if (!scrolling) return;
   if (last) { acc += (+sspeed.value * (ts - last)) / 1000; const px = Math.floor(acc); if (px >= 1) { window.scrollBy(0, px); acc -= px; } }
   if (window.innerHeight + window.scrollY >= document.body.scrollHeight - 2) { stopScroll(); return; }
   last = ts; requestAnimationFrame(stepScroll);
 }
-function startScroll() { scrolling = true; last = 0; acc = 0; $('scrollBtn').classList.add('on'); $('scrollBtn').textContent = '❚❚ Scrolling'; requestAnimationFrame(stepScroll); }
-function stopScroll(remember = false) { scrollWasOn = remember ? scrolling : false; scrolling = false; $('scrollBtn').classList.remove('on'); $('scrollBtn').textContent = '⇩ Auto-scroll'; }
+function startScroll() { scrolling = true; last = 0; acc = 0; $('scrollBtn').classList.add('on'); $('scrollBtn').textContent = 'Scrolling'; requestAnimationFrame(stepScroll); }
+function stopScroll(remember = false) { scrollWasOn = remember ? scrolling : false; scrolling = false; $('scrollBtn').classList.remove('on'); $('scrollBtn').textContent = 'Auto-scroll'; }
 $('scrollBtn').onclick = () => (scrolling ? stopScroll() : startScroll());
 
 // ---------- keyboard ----------
@@ -139,8 +155,8 @@ document.addEventListener('keydown', e => {
   if (t === src || t.tagName === 'INPUT' || t.tagName === 'SELECT' || t.isContentEditable) return;
   if (e.code === 'Space') { e.preventDefault(); player.toggle(); }
   else if (e.key === 's' || e.key === 'S') { e.preventDefault(); scrolling ? stopScroll() : startScroll(); }
-  else if (scrolling && e.key === 'ArrowUp') { e.preventDefault(); sspeed.value = String(+sspeed.value + 2); }
-  else if (scrolling && e.key === 'ArrowDown') { e.preventDefault(); sspeed.value = String(Math.max(3, +sspeed.value - 2)); }
+  else if (scrolling && e.key === 'ArrowUp') { e.preventDefault(); sspeed.value = String(+sspeed.value + 2); fillRange(sspeed); }
+  else if (scrolling && e.key === 'ArrowDown') { e.preventDefault(); sspeed.value = String(Math.max(3, +sspeed.value - 2)); fillRange(sspeed); }
 });
 
 // ---------- toolbar ----------
@@ -161,7 +177,9 @@ $<HTMLInputElement>('openFile').onchange = async e => {
 };
 const showEditor = (on: boolean) => { document.querySelector('.layout')!.classList.toggle('noedit', !on); $('editBtn').classList.toggle('on', on); setPref('editor', on); setTimeout(draw, 50); };
 $('editBtn').onclick = () => showEditor(document.querySelector('.layout')!.classList.contains('noedit'));
-$('notaBtn').onclick = () => { showNota = !showNota; setPref('notation', showNota); $('notaBtn').classList.toggle('on', showNota); draw(); };
+const setNotation = (on: boolean) => { showNota = on; setPref('notation', on); $('notaBtn').classList.toggle('on', on); $('tabBtn').classList.toggle('on', !on); draw(); };
+$('notaBtn').onclick = () => setNotation(true);
+$('tabBtn').onclick = () => setNotation(false);
 $('zoomIn').onclick = () => { zoom = Math.min(1.8, +(zoom + 0.1).toFixed(2)); setPref('zoom', zoom); draw(); };
 $('zoomOut').onclick = () => { zoom = Math.max(0.6, +(zoom - 0.1).toFixed(2)); setPref('zoom', zoom); draw(); };
 $('helpBtn').onclick = () => $<HTMLDialogElement>('help').showModal();
@@ -169,9 +187,13 @@ function flash(msg: string) { const s = $('status'); const old = s.textContent; 
 // keep removeSong reachable for a future "delete" button (and from the console)
 (window as never as { tabtrainer: unknown }).tabtrainer = { player, removeSong, onsetKey };
 
+// the player wraps at narrow widths; reserve exactly its height below the page and the sticky editor
+new ResizeObserver(([e]) => document.documentElement.style.setProperty('--deck-h', `${Math.ceil(e.borderBoxSize[0].blockSize)}px`)).observe(document.querySelector('.player')!);
+
 // ---------- start ----------
 fillSongList();
-$('notaBtn').classList.toggle('on', showNota);
+$('notaBtn').classList.toggle('on', showNota); $('tabBtn').classList.toggle('on', !showNota);
+setPlayLabel();
 showEditor(pref('editor', true));
 const first = Object.keys(demos).sort()[0];
 const lastText = pref<string | null>('last', null);
