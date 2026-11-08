@@ -48,9 +48,24 @@ export interface SongMeta {
   instrument: Instrument;
 }
 
+/** One way of playing a song (e.g. "Bass line", "Melody + chords"). Every version shares the song's header. */
+export interface Version {
+  name: string;
+  bars: Bar[];
+}
+
 export interface Song {
   meta: SongMeta;
+  /** Bars of the version being shown; equal to versions[0].bars right after parsing. */
   bars: Bar[];
+  /** Always at least one. A song without "== Name" lines has a single version called "Main". */
+  versions: Version[];
+}
+
+/** The same song, showing another of its versions (index is clamped to the available range). */
+export function withVersion(song: Song, index: number): Song {
+  const v = song.versions[Math.max(0, Math.min(index, song.versions.length - 1))];
+  return { ...song, bars: v.bars };
 }
 
 export const barTicks = (b: Pick<Bar, 'beats' | 'beatValue'>): number => (b.beats * PPQ * 4) / b.beatValue;

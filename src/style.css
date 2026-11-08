@@ -60,6 +60,8 @@ kbd{font:600 12px var(--mono);padding:1px 5px;border:1px solid var(--rule);borde
 .view-opts .divider{height:16px;margin:0 4px}
 .seg{padding:5px 12px;font-size:13px;border-radius:5px}
 .seg.on{background:var(--ink);color:var(--page)}
+.versions{display:flex;flex-wrap:wrap;align-items:center;gap:4px;margin:14px 0 0;padding:3px;border:1px solid var(--line, #e2ddd3);border-radius:8px;width:max-content;max-width:100%}
+.versions[hidden]{display:none}
 .seg.small,.seg.big{width:30px;padding:5px 0;font-weight:600}.seg.small{font-size:12px}.seg.big{font-size:15px}
 .sheet{background:#fff;color:#000;overflow-x:auto}
 @media (prefers-color-scheme:dark){.sheet{filter:invert(.94) hue-rotate(180deg)}}

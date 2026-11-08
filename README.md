@@ -51,7 +51,24 @@ time: 4/4
 | `{let ring}` | text above the next note |
 | `[3/4]` | time signature from this bar on |
 | `@Chorus` | section name, on its own line |
+| `== Bass line` | starts another version of the song, on its own line (see below) |
 | `# ...` | comment |
+
+### Several versions of one song
+
+A song can hold more than one way of playing it, for example the plain bass line and a solo arrangement with melody and chords. Start each version with a `== Name` line. All versions share the header (title, instrument, key, tempo), and each one counts its own bars. In the app, buttons under the song title switch between them.
+
+```text
+title: My song
+instrument: bass4
+key: C
+
+== Bass line
+"C" :q 3.3 3.3 5.2 3.3 |
+
+== Melody + chords
+"C" :h (3.3 5.2) :q 5.1 7.1 |
+```
 
 ## Development
 

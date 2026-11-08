@@ -1,5 +1,5 @@
 import { INSTRUMENTS, customInstrument, type Instrument } from './instruments';
-import { PPQ, barTicks, type Bar, type Note, type NoteEvent, type Song } from './model';
+import { PPQ, barTicks, type Bar, type Note, type NoteEvent, type Song, type Version } from './model';
 
 export interface ParseIssue { line: number; col: number; message: string; severity: 'error' | 'warning' }
 export interface ParseResult { song: Song; issues: ParseIssue[] }
@@ -16,6 +16,7 @@ function tokenize(src: string, firstLine: number): Tok[] {
     const hash = raw.search(/(^|\s)#/);
     const text = hash >= 0 ? raw.slice(0, hash) : raw;
     if (/^\s*@/.test(text)) { toks.push({ text: text.trim(), line, col: text.indexOf('@') + 1 }); return; }
+    if (/^\s*==/.test(text)) { toks.push({ text: text.trim(), line, col: text.indexOf('=') + 1 }); return; }
     const re = /"[^"]*"|\{[^}]*\}|\([^)]*\)(:[^\s|]+)?|\[[^\]]*\]|\||[^\s|]+/g;
     let mt: RegExpExecArray | null;
     while ((mt = re.exec(text))) toks.push({ text: mt[0], line, col: mt.index + 1 });
@@ -65,7 +66,10 @@ export function parseSong(src: string): ParseResult {
   else if (clef) meta.instrument = { ...meta.instrument, clef };
   const strings = meta.instrument.tuning.length;
 
-  const bars: Bar[] = [];
+  const headerTime: [number, number] = [time[0], time[1]];
+  const versions: Version[] = [];
+  let versionName = 'Main'; let versionLine = 0;
+  let bars: Bar[] = [];
   const st = { cur: null as Bar | null }; let t = 0;
   let dur = parseDuration('q')!;
   let pendingChord: string | undefined; let pendingText: string | undefined; let pendingSection: string | undefined;
@@ -109,6 +113,17 @@ export function parseSong(src: string): ParseResult {
   for (const tok of tokenize(lines.slice(bodyStart).join('\n'), bodyStart + 1)) {
     let s = tok.text;
     if (s.startsWith('@')) { if (st.cur && st.cur.events.length) closeBar(tok); pendingSection = s.slice(1).trim(); continue; }
+    if (s.startsWith('==')) {
+      // a new version of the song: finish the current one and start counting bars again
+      closeBar(tok);
+      const name = s.replace(/^=+/, '').trim() || `Version ${versions.length + 1}`;
+      if (bars.length || versionLine) versions.push({ name: versionName, bars });
+      else if (versions.length === 0 && pendingSection) { /* section before the first version applies to it */ }
+      bars = []; versionName = name; versionLine = tok.line;
+      time = [headerTime[0], headerTime[1]]; dur = parseDuration('q')!; pendingChord = pendingText = undefined;
+      if (versions.some(v => v.name === name)) issues.push({ line: tok.line, col: tok.col, message: `There is already a version called "${name}"`, severity: 'warning' });
+      continue;
+    }
     if (s === '|') { closeBar(tok); continue; }
     if (s.startsWith('[')) {
       const r = /^\[(\d+)\/(\d+)\]$/.exec(s);
@@ -140,6 +155,8 @@ export function parseSong(src: string): ParseResult {
     if (n) pushEvent([n], tok);
   }
   if (st.cur) closeBar({ text: '', line: lines.length, col: 1 });
-  if (!bars.length) issues.push({ line: 1, col: 1, message: 'No bars yet. Add notes like:  :q 3.4 5.4 3.3 5.3 |', severity: 'warning' });
-  return { song: { meta, bars }, issues };
+  if (bars.length || !versions.length) versions.push({ name: versionName, bars });
+  if (versions.every(v => !v.bars.length)) issues.push({ line: 1, col: 1, message: 'No bars yet. Add notes like:  :q 3.4 5.4 3.3 5.3 |', severity: 'warning' });
+  for (const v of versions) if (!v.bars.length && versions.length > 1) issues.push({ line: 1, col: 1, message: `Version "${v.name}" has no bars`, severity: 'warning' });
+  return { song: { meta, bars: versions[0].bars, versions }, issues };
 }

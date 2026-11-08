@@ -37,7 +37,7 @@
     </section>
     <section class="viewer">
       <div class="song-head">
-        <div><h1 id="title"></h1><div id="subtitle" class="meta"></div><p id="about" class="about" hidden></p></div>
+        <div><h1 id="title"></h1><div id="subtitle" class="meta"></div><p id="about" class="about" hidden></p><div id="versions" class="versions" role="group" aria-label="Versions of this song" hidden></div></div>
         <div class="view-opts" role="group" aria-label="View">
           <button id="notaBtn" class="seg" title="Show standard notation above the tab">Notation + tab</button>
           <button id="tabBtn" class="seg" title="Show the tab only">Tab only</button>
@@ -100,6 +100,7 @@ time: 4/4
       <tr><td><code>{let ring}</code></td><td>text above the next note (dynamics, tips)</td></tr>
       <tr><td><code>[3/4]</code></td><td>time signature from this bar on</td></tr>
       <tr><td><code>@Chorus</code></td><td>section name, on its own line</td></tr>
+      <tr><td><code>== Bass line</code></td><td>starts another version of the song (own line). Versions share the header; switch between them with the buttons under the title</td></tr>
       <tr><td><code># ...</code></td><td>comment</td></tr>
     </table>
     <p class="muted">The app saves your songs in this browser. Use Download and Open to move a song to another device or share it.</p>
