@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { readdirSync } from 'node:fs';
-import { findBySlug, songSlug } from '../src/ui/songLink';
+import { findBySlug, songSlug, versionSlug } from '../src/ui/songLink';
 
 describe('song links', () => {
   it('names a song by family and file name, without the order number', () => {
@@ -14,5 +14,12 @@ describe('song links', () => {
   it('gives every bundled song its own link', () => {
     const slugs = readdirSync('src/songs', { recursive: true, encoding: 'utf8' }).filter(f => f.endsWith('.txt')).map(f => songSlug(`./songs/${f}`));
     expect(new Set(slugs).size).toBe(slugs.length);
+  });
+});
+
+describe('version links', () => {
+  it('names a version in plain words', () => {
+    expect(versionSlug('Solo bass (melody + chords)')).toBe('solo-bass-melody-chords');
+    expect(versionSlug('Bass line')).toBe('bass-line');
   });
 });

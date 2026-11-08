@@ -16,7 +16,7 @@ import { FAMILIES, familyOf, isFamily, type Family } from './core/instruments';
 import { renderSong } from './render/notation';
 import { Player } from './audio/player';
 import { library, saveSong, removeSong, pref, setPref } from './ui/storage';
-import { findBySlug, songSlug } from './ui/songLink';
+import { findBySlug, songSlug, versionSlug } from './ui/songLink';
 
 const demos = import.meta.glob('./songs/*/*/*.txt', { query: '?raw', import: 'default', eager: true }) as Record<string, string>;
 const $ = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T;
@@ -80,6 +80,7 @@ function pickSong(v: string) {
 function showLink() {
   const query = new URLSearchParams(location.search);
   if (picked.startsWith('demo:')) query.set('song', songSlug(picked.slice(5))); else query.delete('song');
+  if (picked.startsWith('demo:') && parsed && parsed.versions.length > 1) query.set('version', versionSlug(parsed.versions[versionIdx].name)); else query.delete('version');
   // keep the slash readable: "?song=bass/a-dawning"
   const search = query.toString().replace(/%2F/g, '/');
   history.replaceState(null, '', location.pathname + (search ? '?' + search : '') + location.hash);
@@ -135,9 +136,13 @@ function renderVersions(all: Song) {
 function chooseVersion(i: number) {
   if (!parsed || i === versionIdx) return;
   player.stop(); versionIdx = i;
-  update(false);
+  update(false); showLink();
   // a different version usually has a different number of bars: reset the loop range to the whole version
   if (song) { $<HTMLInputElement>('loopA').value = '1'; $<HTMLInputElement>('loopB').value = String(Math.max(1, song.bars.length)); applyLoop(); }
+}
+function chooseVersionNamed(slug: string | null) {
+  const i = parsed?.versions.findIndex(v => versionSlug(v.name) === slug) ?? -1;
+  if (i >= 0) chooseVersion(i);
 }
 function renderMeta(s: Song) {
   renderCredit(s);
@@ -288,9 +293,11 @@ $('notaBtn').classList.toggle('on', showNota); $('tabBtn').classList.toggle('on'
 setPlayLabel();
 showEditor(pref('editor', true));
 const lastText = pref<string | null>('last', null), lastPick = pref('picked', '');
-const linked = findBySlug(Object.keys(demos), new URLSearchParams(location.search).get('song') ?? '');
+const link = new URLSearchParams(location.search);
+const linked = findBySlug(Object.keys(demos), link.get('song') ?? '');
 if (linked) {
   pickSong('demo:' + linked);
+  chooseVersionNamed(link.get('version'));
 } else if (lastText) {
   const pickedText = lastPick.startsWith('demo:') ? demos[lastPick.slice(5)] : library().find(x => 'lib:' + x.title === lastPick)?.text;
   picked = pickedText === lastText ? lastPick : '';
