@@ -1,0 +1,16 @@
+title: Reggae One Drop
+artist: TabTrainer exercise
+about: Leaving space. You rest on beats 1 and 2 and land on beat 3 with the drums. It trains patience and placing a note exactly on time after silence.
+instrument: bass4
+tempo: 76
+key: Am
+time: 4/4
+
+# Count the rests out loud. The space is part of the groove.
+@Groove
+"Am" :h r :q 5.4 :8 7.3 7.2 | :q. 7.2 :8 5.2 :q 7.3 r |
+"Am" :h r :q 5.4 :8 7.3 7.2 | :q. 7.2 :8 5.2 :q 7.3 r |
+"Dm" :h r :q 5.3 :8 7.2 7.1 | :q. 7.1 :8 5.1 :q 7.2 r |
+"G" :h r :q 3.4 :8 5.3 5.2 | :q. 5.2 :8 3.2 :q 5.3 r |
+@Ending
+"Am" :h r 5.4 |

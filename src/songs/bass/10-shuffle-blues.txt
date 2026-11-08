@@ -1,0 +1,18 @@
+title: Shuffle Blues in E
+artist: TabTrainer exercise
+about: The swing feel of the blues, where each beat splits into a long note and a short one. It trains the 12-bar blues form and the root, fifth, sixth pattern.
+instrument: bass4
+tempo: 120
+key: E
+time: 12/8
+
+# Each beat is a long note and a short one: "daa-da". That uneven feel is the shuffle.
+@12-bar blues
+"E" :q 0.4 :8 0.4 :q 2.3 :8 2.3 :q 4.3 :8 4.3 :q 2.3 :8 2.3 | :q 0.4 :8 0.4 :q 2.3 :8 2.3 :q 4.3 :8 4.3 :q 2.3 :8 2.3 |
+:q 0.4 :8 0.4 :q 2.3 :8 2.3 :q 4.3 :8 4.3 :q 2.3 :8 2.3 | :q 0.4 :8 0.4 :q 2.3 :8 2.3 :q 4.3 :8 4.3 :q 2.3 :8 2.3 |
+"A" :q 0.3 :8 0.3 :q 2.2 :8 2.2 :q 4.2 :8 4.2 :q 2.2 :8 2.2 | :q 0.3 :8 0.3 :q 2.2 :8 2.2 :q 4.2 :8 4.2 :q 2.2 :8 2.2 |
+"E" :q 0.4 :8 0.4 :q 2.3 :8 2.3 :q 4.3 :8 4.3 :q 2.3 :8 2.3 | :q 0.4 :8 0.4 :q 2.3 :8 2.3 :q 4.3 :8 4.3 :q 2.3 :8 2.3 |
+"B" :q 2.3 :8 2.3 :q 4.2 :8 4.2 :q 6.2 :8 6.2 :q 4.2 :8 4.2 | "A" :q 0.3 :8 0.3 :q 2.2 :8 2.2 :q 4.2 :8 4.2 :q 2.2 :8 2.2 |
+"E" :q 0.4 :8 0.4 :q 2.3 :8 2.3 :q 4.3 :8 4.3 :q 2.3 :8 2.3 | "B" :q 2.3 :8 2.3 :q 4.2 :8 4.2 :q 6.2 :8 6.2 :q 4.2 :8 4.2 |
+@Ending
+"E" :w. 0.4 |

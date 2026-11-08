@@ -10,6 +10,7 @@ TabTrainer is a free, open-source web app. You write or open a song as plain tex
 
 ## Features
 
+- **13 bass exercises**, from open strings to a Latin tumbao, plus public domain songs like Pachelbel's Canon. Each one says under its title what it trains.
 - **Notation and tab** drawn one above the other and lined up note for note, with key signatures, ties, triplets and chords.
 - **Playback** with a simple synth. Play, pause and resume, set the speed from 30 to 130%, and loop any range of bars.
 - **Follow along:** each note turns red as it plays, and the page scrolls to keep the current line in view.
@@ -25,6 +26,7 @@ A song is plain text: a few header lines, then bars separated by `|`.
 
 ```text
 title: My groove
+about: Eighth notes on the root  # optional: what the song trains, shown under the title
 instrument: bass4      # bass4, bass5, bass6, guitar6
 tuning: D2 A2 D3 G3    # optional: any tuning, low to high
 tempo: 90

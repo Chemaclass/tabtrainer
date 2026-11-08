@@ -1,0 +1,14 @@
+title: A Minor Pentatonic
+artist: TabTrainer exercise
+about: The five-note scale behind most rock and blues fills, in its most common shape at the fifth fret. Up, down, then a short fill built from it.
+instrument: bass4
+tempo: 80
+key: Am
+time: 4/4
+
+# The notes are A, C, D, E and G. Index finger on fret 5.
+@Up and down
+"Am" :8 5.4 8.4 5.3 7.3 5.2 7.2 5.1 7.1 | 7.1 5.1 7.2 5.2 7.3 5.3 8.4 5.4 |
+@A fill
+:q 5.4 :8 5.4 8.4 :q 5.3 7.3 | :8 7.2 5.2 7.3 5.3 :q 8.4 5.4 |
+:q 5.4 :8 5.4 8.4 :q 5.3 7.3 | :8 5.1 7.2 5.2 7.3 :h 5.4 |
