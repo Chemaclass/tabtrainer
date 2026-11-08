@@ -48,7 +48,8 @@ export function parseSong(src: string): ParseResult {
     if (/^\s*---\s*$/.test(l)) { bodyStart = i + 1; break; }
     const h = HEADER.exec(l);
     if (!h) { bodyStart = i; break; }
-    const [, k, v] = h; const key = k.toLowerCase();
+    const [, k, raw] = h; const key = k.toLowerCase();
+    const v = raw.replace(/(^|\s)#.*$/, '').trim();
     if (key === 'title') meta.title = v;
     else if (key === 'artist') meta.artist = v;
     else if (key === 'tempo') { const t = parseFloat(v); if (t >= 20 && t <= 400) meta.tempo = t; else issues.push({ line: i + 1, col: 1, message: `Tempo must be between 20 and 400 (got "${v}")`, severity: 'error' }); }
