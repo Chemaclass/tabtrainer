@@ -7,7 +7,7 @@ import { renderSong } from './render/notation';
 import { Player } from './audio/player';
 import { library, saveSong, removeSong, pref, setPref } from './ui/storage';
 
-const demos = import.meta.glob('./songs/*/*.txt', { query: '?raw', import: 'default', eager: true }) as Record<string, string>;
+const demos = import.meta.glob('./songs/*/*/*.txt', { query: '?raw', import: 'default', eager: true }) as Record<string, string>;
 const $ = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T;
 
 const src = $<HTMLTextAreaElement>('src'), sheet = $('sheet'), player = new Player();
@@ -15,9 +15,10 @@ let song: Song | null = null;
 let zoom = pref('zoom', 1), showNota = pref('notation', true);
 
 // ---------- song list ----------
-// demo songs live in src/songs/<family>/
+// demo songs live in src/songs/<family>/<kind>/, kind being exercises or songs
 const familyOfText = (t: string) => familyOf(parseSong(t).song.meta.instrument);
 const demoFamily = (path: string) => path.split('/')[2];
+const demoKind = (path: string) => path.split('/')[3];
 const savedFamily = pref('family', 'bass');
 let family: Family = isFamily(savedFamily) ? savedFamily : 'bass';
 let picked = '';
@@ -32,7 +33,9 @@ function fillSongList() {
   const draft = new Option('Unsaved song', ''); draft.hidden = true; sel.appendChild(draft);
   const { demos: ex, mine } = songsFor(family);
   const group = (label: string, opts: HTMLOptionElement[]) => { if (!opts.length) return; const g = document.createElement('optgroup'); g.label = label; g.append(...opts); sel.appendChild(g); };
-  group('Exercises', ex.map(p => new Option(titleOf(demos[p]), 'demo:' + p)));
+  const demoGroup = (label: string, kind: string) => group(label, ex.filter(p => demoKind(p) === kind).map(p => new Option(titleOf(demos[p]), 'demo:' + p)));
+  demoGroup('Exercises', 'exercises');
+  demoGroup('Songs', 'songs');
   group('My songs', mine.map(s => new Option(s.title, 'lib:' + s.title)));
   sel.value = [...sel.options].some(o => o.value === picked) ? picked : '';
 }
