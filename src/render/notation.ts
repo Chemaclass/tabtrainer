@@ -42,7 +42,7 @@ function drawSystem(div: HTMLDivElement, bars: Bar[], prev: Bar | undefined, c: 
   const staffH = c.opt.showNotation ? 92 : 0;
   const H = top + staffH + 40 + c.nStr * 13 + 30; // provisional; resized to the real tab bottom below
   const r = new Renderer(div, Renderer.Backends.SVG); r.resize(W, H); const ctx = r.getContext();
-  const lead = c.opt.showNotation ? 80 : 40;
+  const lead = c.opt.showNotation ? 80 : 0;
   const weight = bars.map(b => 3 + b.events.length);
   const tw = weight.reduce((a, b) => a + b, 0);
   let x = 6; const avail = W - 12 - lead; let bottom = 0;
@@ -52,7 +52,7 @@ function drawSystem(div: HTMLDivElement, bars: Bar[], prev: Bar | undefined, c: 
     const st = c.opt.showNotation ? new Stave(x, top, bw) : null;
     const tab = new TabStave(x, top + staffH, bw, { num_lines: c.nStr });
     const tsChange = !prevBar || prevBar.beats !== bar.beats || prevBar.beatValue !== bar.beatValue;
-    if (bi === 0) { st?.addClef(c.clef).addKeySignature(c.key); tab.addClef('tab'); }
+    if (bi === 0) st?.addClef(c.clef).addKeySignature(c.key);
     if (tsChange || bi === 0) st?.addTimeSignature(`${bar.beats}/${bar.beatValue}`);
     st?.setMeasure(bar.index); if (!st) tab.setMeasure(bar.index);
     st?.setContext(ctx); tab.setContext(ctx);
