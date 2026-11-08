@@ -130,9 +130,10 @@ function renderMeta(s: Song) {
   $('subtitle').replaceChildren(...parts.filter(([t]) => t).map(([t, num]) => { const e = document.createElement('span'); if (num) e.className = 'num'; e.textContent = t; return e; }));
 }
 function renderCredit(s: Song) {
-  const names = (s.meta.artist ?? '').split(',').map(n => n.trim()).filter(Boolean);
+  const names = (s.meta.artist ?? '').replace(/\s*\(public domain\)\s*$/i, '').split(',').map(n => n.trim()).filter(Boolean);
   const byline = $('byline'); byline.hidden = !names.length;
-  byline.replaceChildren(document.createTextNode('by '), ...names.flatMap((n, i) => {
+  const traditional = names.length === 1 && /^traditional$/i.test(names[0]);
+  byline.replaceChildren(...(traditional ? [] : [document.createTextNode('by ')]), ...names.flatMap((n, i) => {
     const b = document.createElement('b'); b.textContent = n;
     const sep = i === names.length - 1 ? [] : [document.createTextNode(i === names.length - 2 ? ' and ' : ', ')];
     return [b, ...sep];
