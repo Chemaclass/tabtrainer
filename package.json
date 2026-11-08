@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "description": "Open-source tab + notation player and editor for bass, guitar and other fretted instruments.",
+  "description": "Open-source tab + notation player and editor for electric bass.",
   "license": "MIT",
   "scripts": {
     "dev": "vite",

@@ -6,7 +6,7 @@ import { renderSong } from './render/notation';
 import { Player } from './audio/player';
 import { library, saveSong, removeSong, pref, setPref } from './ui/storage';
 
-const demos = import.meta.glob('./songs/*.txt', { query: '?raw', import: 'default', eager: true }) as Record<string, string>;
+const demos = import.meta.glob('./songs/*/*.txt', { query: '?raw', import: 'default', eager: true }) as Record<string, string>;
 const $ = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T;
 
 const src = $<HTMLTextAreaElement>('src'), sheet = $('sheet'), player = new Player();
@@ -18,13 +18,18 @@ const NEW_SONG = `title: New song\ninstrument: bass4\ntempo: 90\nkey: C\ntime: 4
 function fillSongList(selected?: string) {
   const sel = $<HTMLSelectElement>('songSel'); sel.innerHTML = '';
   const draft = new Option('Unsaved song', ''); draft.hidden = true; sel.appendChild(draft);
-  const g1 = document.createElement('optgroup'); g1.label = 'Exercises';
-  Object.keys(demos).sort().forEach(p => { const o = new Option(titleOf(demos[p]), 'demo:' + p); g1.appendChild(o); });
-  sel.appendChild(g1);
+  const groups = new Map<string, HTMLOptGroupElement>();
+  Object.keys(demos).sort().forEach(p => {
+    const inst = p.split('/')[2];
+    let g = groups.get(inst);
+    if (!g) { g = document.createElement('optgroup'); g.label = INSTRUMENT_GROUPS[inst] ?? inst; groups.set(inst, g); sel.appendChild(g); }
+    g.appendChild(new Option(titleOf(demos[p]), 'demo:' + p));
+  });
   const lib = library();
   if (lib.length) { const g2 = document.createElement('optgroup'); g2.label = 'My songs'; lib.forEach(s => g2.appendChild(new Option(s.title, 'lib:' + s.title))); sel.appendChild(g2); }
   if (selected) sel.value = selected;
 }
+const INSTRUMENT_GROUPS: Record<string, string> = { bass: 'Bass exercises' };
 const titleOf = (t: string) => /^\s*title\s*:\s*(.+)$/im.exec(t)?.[1].trim() ?? 'Untitled';
 function loadText(text: string) { src.value = text; update(true); setPref('last', text); }
 $<HTMLSelectElement>('songSel').onchange = e => {
