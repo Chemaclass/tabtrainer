@@ -20,4 +20,9 @@ describe('instrument families', () => {
   it('has a demo folder for every family', () => {
     expect(readdirSync('src/songs').sort()).toEqual(Object.keys(FAMILIES).sort());
   });
+  it('splits each family into exercises and songs only', () => {
+    for (const f of Object.keys(FAMILIES)) {
+      for (const kind of readdirSync(`src/songs/${f}`)) expect(['exercises', 'songs']).toContain(kind);
+    }
+  });
 });
