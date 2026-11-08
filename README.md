@@ -17,6 +17,7 @@ TabTrainer is a free, open-source web app. You write or open a song as plain tex
 - **Auto-scroll** at a speed you choose. Press `S` to start or stop it, and `↑` or `↓` to change the speed.
 - **Start anywhere:** double-click a note to play from there.
 - **Editor with live preview:** each error or warning names the line it comes from.
+- **Credits and the original:** each song shows who wrote it, and a "Listen to the original" link when the file has one.
 - **Several versions of a song:** keep the plain bass line and a solo arrangement in one file, and switch between them with buttons under the title.
 - **Instrument first:** pick bass or guitar, then a song for it. Bass has 4, 5 or 6 strings and guitar has 6. Both take a custom tuning, and ukulele song files open under guitar.
 - **Songs stay on your device:** the app saves them in your browser. Download a song as a `.txt` file to move it to another device or share it. There is no account and no server.
@@ -27,7 +28,9 @@ A song is plain text: a few header lines, then bars separated by `|`.
 
 ```text
 title: My groove
+artist: Jane Doe, John Roe  # optional: who wrote it, shown as "by ..."
 about: Eighth notes on the root  # optional: what the song trains, shown under the title
+listen: https://www.youtube.com/watch?v=...  # optional: link to the original recording
 instrument: bass4      # bass4, bass5, bass6, guitar6
 tuning: D2 A2 D3 G3    # optional: any tuning, low to high
 tempo: 90

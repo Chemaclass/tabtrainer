@@ -1,5 +1,5 @@
 title: Arpeggio Study
-artist: TabTrainer exercise
+artist: TabTrainer
 about: Picking one string per note while each chord rings, in 3/4 time.
 instrument: guitar6
 tempo: 80

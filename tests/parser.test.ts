@@ -6,6 +6,7 @@ import { PPQ } from '../src/core/model';
 
 const SRC = `title: Test
 about: Root notes in quarters
+listen: https://www.youtube.com/watch?v=abc
 instrument: bass4
 tempo: 100
 key: G
@@ -34,6 +35,7 @@ describe('parseSong', () => {
     expect(song.meta.title).toBe('Test');
     expect(song.meta.tempo).toBe(100);
     expect(song.meta.about).toBe('Root notes in quarters');
+    expect(song.meta.listen).toBe('https://www.youtube.com/watch?v=abc');
     expect(song.bars).toHaveLength(3);
     expect(song.bars[0].section).toBe('Intro');
     expect(song.bars[0].events[0].chord).toBe('G');
@@ -51,6 +53,7 @@ describe('parseSong', () => {
     const again = parseSong(serializeSong(song));
     expect(again.issues).toEqual([]);
     expect(again.song.meta.about).toBe(song.meta.about);
+    expect(again.song.meta.listen).toBe(song.meta.listen);
     expect(again.song.bars).toEqual(song.bars.map(b => ({ ...b, line: again.song.bars[b.index - 1].line })));
   });
   it('reports errors with line numbers', () => {
@@ -83,5 +86,12 @@ describe('timeline', () => {
     expect(bar3).toHaveLength(4);
     expect(bar3.filter(n => n.soft)).toMatchObject([{ fret: 7, string: 3 }]);
     expect(tl.notes[0]).toMatchObject({ beat: 0, midi: 40 + 3 - 12 });
+  });
+  it('rejects a listen: line that is not a web address', () => {
+    for (const bad of ['youtube', 'javascript:alert(1)', 'https://youtube.com:99999']) {
+      const { song, issues } = parseSong(`listen: ${bad}\n:q 0.4 0.4 0.4 0.4 |`);
+      expect(song.meta.listen).toBeUndefined();
+      expect(issues[0]).toMatchObject({ line: 1, severity: 'error' });
+    }
   });
 });

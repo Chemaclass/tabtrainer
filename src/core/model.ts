@@ -43,6 +43,8 @@ export interface SongMeta {
   artist?: string;
   /** What the song trains, shown under the title. */
   about?: string;
+  /** Link to a recording of the original song. */
+  listen?: string;
   tempo: number;
   key: string; // e.g. "C", "Ab", "F#m"
   instrument: Instrument;

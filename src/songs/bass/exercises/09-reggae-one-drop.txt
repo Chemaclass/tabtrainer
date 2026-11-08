@@ -1,5 +1,5 @@
 title: Reggae One Drop
-artist: TabTrainer exercise
+artist: TabTrainer
 about: Leaving space. You rest on beats 1 and 2 and land on beat 3 with the drums. It trains patience and placing a note exactly on time after silence.
 instrument: bass4
 tempo: 76

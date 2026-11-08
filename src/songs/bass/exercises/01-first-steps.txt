@@ -1,5 +1,5 @@
 title: First Steps: open strings and roots
-artist: TabTrainer exercise
+artist: TabTrainer
 about: Start here. Open strings and fretted roots in quarter, half and whole notes, so you learn where each note sits on the neck.
 instrument: bass4
 tempo: 76

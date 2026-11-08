@@ -125,8 +125,21 @@ function chooseVersion(i: number) {
   if (song) { $<HTMLInputElement>('loopA').value = '1'; $<HTMLInputElement>('loopB').value = String(Math.max(1, song.bars.length)); applyLoop(); }
 }
 function renderMeta(s: Song) {
-  const parts: [string, boolean][] = [[s.meta.artist ?? '', false], [`♩ = ${s.meta.tempo}`, true], [`key ${s.meta.key}`, true], [s.meta.instrument.name, false]];
+  renderCredit(s);
+  const parts: [string, boolean][] = [[`♩ = ${s.meta.tempo}`, true], [`key ${s.meta.key}`, true], [s.meta.instrument.name, false]];
   $('subtitle').replaceChildren(...parts.filter(([t]) => t).map(([t, num]) => { const e = document.createElement('span'); if (num) e.className = 'num'; e.textContent = t; return e; }));
+}
+function renderCredit(s: Song) {
+  const names = (s.meta.artist ?? '').split(',').map(n => n.trim()).filter(Boolean);
+  const byline = $('byline'); byline.hidden = !names.length;
+  byline.replaceChildren(document.createTextNode('by '), ...names.flatMap((n, i) => {
+    const b = document.createElement('b'); b.textContent = n;
+    const sep = i === names.length - 1 ? [] : [document.createTextNode(i === names.length - 2 ? ' and ' : ', ')];
+    return [b, ...sep];
+  }));
+  const link = $<HTMLAnchorElement>('listen'); link.hidden = !s.meta.listen;
+  if (s.meta.listen) { link.href = s.meta.listen; $('listenHost').textContent = new URL(s.meta.listen).hostname.replace(/^www\./, ''); }
+  $('credit').hidden = byline.hidden && link.hidden;
 }
 function jumpToLine(line: number) {
   const lines = src.value.split('\n'); let pos = 0; for (let i = 0; i < line - 1 && i < lines.length; i++) pos += lines[i].length + 1;
