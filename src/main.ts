@@ -2,6 +2,7 @@ import './style.css';
 import { parseSong } from './core/parser';
 import { buildTimeline, onsetKey } from './core/timeline';
 import type { Song } from './core/model';
+import { FAMILIES, familyOf, isFamily, type Family } from './core/instruments';
 import { renderSong } from './render/notation';
 import { Player } from './audio/player';
 import { library, saveSong, removeSong, pref, setPref } from './ui/storage';
@@ -14,29 +15,47 @@ let song: Song | null = null;
 let zoom = pref('zoom', 1), showNota = pref('notation', true);
 
 // ---------- song list ----------
-const NEW_SONG = `title: New song\ninstrument: bass4\ntempo: 90\nkey: C\ntime: 4/4\n\n@Intro\n"C" :q 3.3 3.3 5.2 3.3 |\n`;
-function fillSongList(selected?: string) {
+// demo songs live in src/songs/<family>/
+const familyOfText = (t: string) => familyOf(parseSong(t).song.meta.instrument);
+const demoFamily = (path: string) => path.split('/')[2];
+const savedFamily = pref('family', 'bass');
+let family: Family = isFamily(savedFamily) ? savedFamily : 'bass';
+let picked = '';
+
+const newSong = () => `title: New song\ninstrument: ${FAMILIES[family]}\ntempo: 90\nkey: C\ntime: 4/4\n\n@Intro\n"C" :q 3.3 3.3 5.2 3.3 |\n`;
+const songsFor = (f: Family) => ({
+  demos: Object.keys(demos).filter(p => demoFamily(p) === f).sort(),
+  mine: library().filter(s => familyOfText(s.text) === f),
+});
+function fillSongList() {
   const sel = $<HTMLSelectElement>('songSel'); sel.innerHTML = '';
   const draft = new Option('Unsaved song', ''); draft.hidden = true; sel.appendChild(draft);
-  const groups = new Map<string, HTMLOptGroupElement>();
-  Object.keys(demos).sort().forEach(p => {
-    const inst = p.split('/')[2];
-    let g = groups.get(inst);
-    if (!g) { g = document.createElement('optgroup'); g.label = INSTRUMENT_GROUPS[inst] ?? inst; groups.set(inst, g); sel.appendChild(g); }
-    g.appendChild(new Option(titleOf(demos[p]), 'demo:' + p));
-  });
-  const lib = library();
-  if (lib.length) { const g2 = document.createElement('optgroup'); g2.label = 'My songs'; lib.forEach(s => g2.appendChild(new Option(s.title, 'lib:' + s.title))); sel.appendChild(g2); }
-  if (selected) sel.value = selected;
+  const { demos: ex, mine } = songsFor(family);
+  const group = (label: string, opts: HTMLOptionElement[]) => { if (!opts.length) return; const g = document.createElement('optgroup'); g.label = label; g.append(...opts); sel.appendChild(g); };
+  group('Exercises', ex.map(p => new Option(titleOf(demos[p]), 'demo:' + p)));
+  group('My songs', mine.map(s => new Option(s.title, 'lib:' + s.title)));
+  sel.value = [...sel.options].some(o => o.value === picked) ? picked : '';
 }
-const INSTRUMENT_GROUPS: Record<string, string> = { bass: 'Bass exercises' };
+function showFamily() {
+  document.querySelectorAll<HTMLButtonElement>('[data-family]').forEach(b => { const on = b.dataset.family === family; b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on)); });
+  fillSongList();
+}
+function chooseFamily(f: Family) {
+  if (f === family) return;
+  family = f; setPref('family', f);
+  const { demos: ex, mine } = songsFor(f);
+  if (ex.length) pickSong('demo:' + ex[0]); else if (mine.length) pickSong('lib:' + mine[0].title); else { picked = ''; loadText(newSong()); }
+  showFamily();
+}
 const titleOf = (t: string) => /^\s*title\s*:\s*(.+)$/im.exec(t)?.[1].trim() ?? 'Untitled';
 function loadText(text: string) { src.value = text; update(true); setPref('last', text); }
-$<HTMLSelectElement>('songSel').onchange = e => {
-  const v = (e.target as HTMLSelectElement).value;
-  if (v.startsWith('demo:')) loadText(demos[v.slice(5)]);
-  else { const s = library().find(x => 'lib:' + x.title === v); if (s) loadText(s.text); }
-};
+function pickSong(v: string) {
+  const text = v.startsWith('demo:') ? demos[v.slice(5)] : library().find(x => 'lib:' + x.title === v)?.text;
+  if (text === undefined) return;
+  picked = v; setPref('picked', v); loadText(text);
+}
+$<HTMLSelectElement>('songSel').onchange = e => pickSong((e.target as HTMLSelectElement).value);
+document.querySelectorAll<HTMLButtonElement>('[data-family]').forEach(b => { b.onclick = () => isFamily(b.dataset.family!) && chooseFamily(b.dataset.family); });
 
 // ---------- parse + render ----------
 let timer = 0;
@@ -50,10 +69,12 @@ function update(resetLoop: boolean) {
     li.onclick = () => jumpToLine(i.line); ul.appendChild(li);
   });
   const errs = issues.filter(i => i.severity === 'error').length;
-  $('status').textContent = errs ? `${errs} error${errs > 1 ? 's' : ''}` : `${s.bars.length} bars · ${s.meta.instrument.name}`;
+  $('status').textContent = errs ? `${errs} error${errs > 1 ? 's' : ''}` : `${s.bars.length} bar${s.bars.length === 1 ? '' : 's'} · ${s.meta.instrument.name}`;
   $('status').classList.toggle('bad', errs > 0);
   $('title').textContent = s.meta.title;
   renderMeta(s);
+  const f = familyOf(s.meta.instrument);
+  if (f !== family) { family = f; setPref('family', f); showFamily(); }
   $('barTotal').textContent = String(s.bars.length || '–');
   document.title = `${s.meta.title} · TabTrainer`;
   const wasPlaying = player.playing;
@@ -165,11 +186,12 @@ document.addEventListener('keydown', e => {
 });
 
 // ---------- toolbar ----------
-$('newBtn').onclick = () => { loadText(NEW_SONG); $<HTMLSelectElement>('songSel').value = ''; showEditor(true); src.focus(); };
+const unpick = () => { picked = ''; setPref('picked', ''); $<HTMLSelectElement>('songSel').value = ''; };
+$('newBtn').onclick = () => { unpick(); loadText(newSong()); showEditor(true); src.focus(); };
 $('saveBtn').onclick = () => {
   const t = titleOf(src.value);
   if (library().some(s => s.title === t) && !window.confirm?.call(window, `Replace "${t}" in your library?`)) return;
-  saveSong(t, src.value); fillSongList('lib:' + t); flash(`Saved "${t}" in this browser`);
+  saveSong(t, src.value); picked = 'lib:' + t; setPref('picked', picked); fillSongList(); flash(`Saved "${t}" in this browser`);
 };
 $('dlBtn').onclick = () => {
   const blob = new Blob([src.value], { type: 'text/plain' }); const a = document.createElement('a');
@@ -178,7 +200,7 @@ $('dlBtn').onclick = () => {
 };
 $<HTMLInputElement>('openFile').onchange = async e => {
   const f = (e.target as HTMLInputElement).files?.[0]; if (!f) return;
-  loadText(await f.text()); $<HTMLSelectElement>('songSel').value = ''; (e.target as HTMLInputElement).value = '';
+  unpick(); loadText(await f.text()); (e.target as HTMLInputElement).value = '';
 };
 const showEditor = (on: boolean) => { document.querySelector('.layout')!.classList.toggle('noedit', !on); $('editBtn').classList.toggle('on', on); setPref('editor', on); setTimeout(draw, 50); };
 $('editBtn').onclick = () => showEditor(document.querySelector('.layout')!.classList.contains('noedit'));
@@ -196,10 +218,16 @@ function flash(msg: string) { const s = $('status'); const old = s.textContent; 
 new ResizeObserver(([e]) => document.documentElement.style.setProperty('--deck-h', `${Math.ceil(e.borderBoxSize[0].blockSize)}px`)).observe(document.querySelector('.player')!);
 
 // ---------- start ----------
-fillSongList();
 $('notaBtn').classList.toggle('on', showNota); $('tabBtn').classList.toggle('on', !showNota);
 setPlayLabel();
 showEditor(pref('editor', true));
-const first = Object.keys(demos).sort()[0];
-const lastText = pref<string | null>('last', null);
-if (lastText) { loadText(lastText); $<HTMLSelectElement>('songSel').value = ''; } else { loadText(demos[first]); $<HTMLSelectElement>('songSel').value = 'demo:' + first; }
+const lastText = pref<string | null>('last', null), lastPick = pref('picked', '');
+if (lastText) {
+  const pickedText = lastPick.startsWith('demo:') ? demos[lastPick.slice(5)] : library().find(x => 'lib:' + x.title === lastPick)?.text;
+  picked = pickedText === lastText ? lastPick : '';
+  loadText(lastText);
+} else {
+  picked = 'demo:' + songsFor(family).demos[0];
+  loadText(demos[picked.slice(5)]);
+}
+showFamily();

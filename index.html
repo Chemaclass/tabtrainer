@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>TabTrainer: learn bass from tab and notation</title>
-  <meta name="description" content="Free, open-source tab and notation player for electric bass. Slow a song down, loop the hard bars, and follow each note as it plays." />
+  <title>TabTrainer: learn bass and guitar from tab and notation</title>
+  <meta name="description" content="Free, open-source tab and notation player for electric bass and guitar. Slow a song down, loop the hard bars, and follow each note as it plays." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Inter+Tight:wght@800&family=JetBrains+Mono:wght@400;600&display=swap" />
@@ -15,6 +15,10 @@
     <div class="brand">
       <svg class="logo" width="22" height="22" viewBox="0 0 22 22" aria-hidden="true"><path d="M1 5h20M1 11h20M1 17h20" stroke="currentColor" stroke-width="1.5"/><circle cx="14" cy="11" r="4" fill="var(--playing)"/></svg>
       TabTrainer
+    </div>
+    <div class="inst-switch" role="group" aria-label="Instrument">
+      <button class="seg" data-family="bass">Bass</button>
+      <button class="seg" data-family="guitar">Guitar</button>
     </div>
     <select id="songSel" aria-label="Choose a song"></select>
     <div class="grow"></div>
@@ -77,7 +81,7 @@
     <h2>Writing a song</h2>
     <p>A song is plain text: a few header lines, then bars of notes separated by <code>|</code>.</p>
 <pre>title: My groove
-instrument: bass4      # bass4, bass5, bass6
+instrument: bass4      # bass4, bass5, bass6, guitar6
 tuning: D2 A2 D3 G3    # optional: any tuning, low to high
 tempo: 90
 key: C                 # e.g. C, Ab, F#m

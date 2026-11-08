@@ -38,3 +38,10 @@ export function customInstrument(tuningLowToHigh: string, clef?: 'bass' | 'trebl
   const c = clef ?? (lowest < noteToMidi('C3') ? 'bass' : 'treble');
   return { id: 'custom', name: `Custom (${tuningLowToHigh.trim()})`, tuning: [...notes].reverse(), clef: c, transpose: -12, maxFret: 24 };
 }
+
+/** Instrument families the app lists songs by, with the instrument a new song starts with. */
+export const FAMILIES = { bass: 'bass4', guitar: 'guitar6' } as const;
+export type Family = keyof typeof FAMILIES;
+export const isFamily = (f: string): f is Family => f in FAMILIES;
+/** Basses and bass-clef custom tunings are bass; everything else (guitar, ukulele, treble custom) lists under guitar. */
+export const familyOf = (i: Instrument): Family => (i.id.startsWith('bass') || (i.id === 'custom' && i.clef === 'bass') ? 'bass' : 'guitar');

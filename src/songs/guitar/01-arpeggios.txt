@@ -1,0 +1,12 @@
+title: Arpeggio Study
+artist: TabTrainer exercise
+instrument: guitar6
+tempo: 80
+key: G
+time: 3/4
+
+# Pick one string per note and let each chord ring.
+@Arpeggios
+"G" :8 3.6 2.5 0.4 0.3 3.2 0.3 | "Em" 0.6 2.5 2.4 0.3 0.2 0.3 |
+"C" 3.5 2.4 0.3 1.2 0.1 1.2 | "D" 0.4 0.3 2.2 3.1 2.2 0.3 |
+"G" :h. (3.6 2.5 0.4 0.3 3.2 3.1) |

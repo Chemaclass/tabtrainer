@@ -1,6 +1,6 @@
 # TabTrainer
 
-Learn electric bass songs from tab and notation. Slow a song down, loop the bars you miss, and follow each note as it plays.
+Learn electric bass and guitar songs from tab and notation. Slow a song down, loop the bars you miss, and follow each note as it plays.
 
 TabTrainer is a free, open-source web app. You write or open a song as plain text, and it draws standard notation and tab together and plays them back.
 
@@ -16,7 +16,7 @@ TabTrainer is a free, open-source web app. You write or open a song as plain tex
 - **Auto-scroll** at a speed you choose. Press `S` to start or stop it, and `↑` or `↓` to change the speed.
 - **Start anywhere:** double-click a note to play from there.
 - **Editor with live preview:** each error or warning names the line it comes from.
-- **Any bass:** 4, 5 or 6 strings, or a custom tuning. Guitar (`guitar6`) and ukulele song files open too.
+- **Bass or guitar first:** pick your instrument, then a song for it. Bass comes with 4, 5 or 6 strings, guitar with 6, and both take a custom tuning. Ukulele song files open under guitar.
 - **Songs stay on your device:** the app saves them in your browser. Download a song as a `.txt` file to move it to another device or share it. There is no account and no server.
 
 ## Song format
@@ -25,7 +25,7 @@ A song is plain text: a few header lines, then bars separated by `|`.
 
 ```text
 title: My groove
-instrument: bass4      # bass4, bass5, bass6
+instrument: bass4      # bass4, bass5, bass6, guitar6
 tuning: D2 A2 D3 G3    # optional: any tuning, low to high
 tempo: 90
 key: C                 # C, Ab, F#m, ...
