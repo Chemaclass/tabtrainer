@@ -1,0 +1,20 @@
+title: When the Saints Go Marching In
+artist: Traditional (public domain)
+about: Root and fifth over the three main chords of a key (C, F and G). First in half notes, then with the octave added in quarter notes.
+instrument: bass4
+tempo: 100
+key: C
+time: 4/4
+
+@Root and fifth
+"C" :h 3.3 5.2 | :h 3.3 5.2 | :h 3.3 5.2 | :h 3.3 5.2 |
+:h 3.3 5.2 | :h 3.3 5.2 | "G" :h 3.4 5.3 | :h 3.4 5.3 |
+"C" :h 3.3 5.2 | :h 3.3 5.2 | "F" :h 1.4 3.3 | :h 1.4 3.3 |
+"C" :h 3.3 5.2 | "G" :h 3.4 5.3 | "C" :h 3.3 5.2 | :h 3.3 5.2 |
+@Add the octave
+"C" :q 3.3 5.2 5.1 5.2 | :q 3.3 5.2 5.1 5.2 | :q 3.3 5.2 5.1 5.2 | :q 3.3 5.2 5.1 5.2 |
+:q 3.3 5.2 5.1 5.2 | :q 3.3 5.2 5.1 5.2 | "G" :q 3.4 5.3 5.2 5.3 | :q 3.4 5.3 5.2 5.3 |
+"C" :q 3.3 5.2 5.1 5.2 | :q 3.3 5.2 5.1 5.2 | "F" :q 1.4 3.3 3.2 3.3 | :q 1.4 3.3 3.2 3.3 |
+"C" :q 3.3 5.2 5.1 5.2 | "G" :q 3.4 5.3 5.2 5.3 | "C" :q 3.3 5.2 5.1 5.2 | :q 3.3 5.2 5.1 5.2 |
+@Ending
+"C" :w 3.3 |

@@ -1,0 +1,15 @@
+title: Latin Tumbao
+artist: TabTrainer exercise
+about: The salsa bass pattern. You play just before beat 3 and on beat 4, and the beat 4 note is the next chord's root, held over the bar line. It trains anticipation and ties.
+instrument: bass4
+tempo: 96
+key: Am
+time: 4/4
+
+# Don't play on beat 1: you are still holding the note from the bar before.
+@Montuno
+"Am" :q r :8 r 7.3 :q ~7.3 5.3 | "D7" :q ~5.3 :8 r 7.2 :q ~7.2 5.4 |
+"Am" :q ~5.4 :8 r 7.3 :q ~7.3 5.3 | "D7" :q ~5.3 :8 r 7.2 :q ~7.2 5.4 |
+"Am" :q ~5.4 :8 r 7.3 :q ~7.3 5.3 | "D7" :q ~5.3 :8 r 7.2 :q ~7.2 5.4 |
+@Ending
+"Am" :q ~5.4 r :h r |

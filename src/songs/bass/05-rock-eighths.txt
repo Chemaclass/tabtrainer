@@ -1,0 +1,16 @@
+title: Rock Eighths
+artist: TabTrainer exercise
+about: Steady eighth notes on the root through the four-chord progression behind countless pop and rock songs. Keep every note the same length and volume.
+instrument: bass4
+tempo: 120
+key: E
+time: 4/4
+
+@Roots
+"E" :8 0.4 0.4 0.4 0.4 0.4 0.4 0.4 0.4 | "B" 2.3 2.3 2.3 2.3 2.3 2.3 2.3 2.3 |
+"C#m" 4.3 4.3 4.3 4.3 4.3 4.3 4.3 4.3 | "A" 0.3 0.3 0.3 0.3 0.3 0.3 0.3 0.3 |
+@Add the octave
+"E" 0.4 0.4 2.2 0.4 0.4 0.4 2.2 0.4 | "B" 2.3 2.3 4.1 2.3 2.3 2.3 4.1 2.3 |
+"C#m" 4.3 4.3 6.1 4.3 4.3 4.3 6.1 4.3 | "A" 0.3 0.3 2.1 0.3 0.3 0.3 2.1 0.3 |
+@Ending
+"E" :w 0.4 |

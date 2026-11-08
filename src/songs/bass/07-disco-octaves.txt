@@ -1,0 +1,15 @@
+title: Disco Octaves
+artist: TabTrainer exercise
+about: The octave shape (root, then the same note two strings up and two frets higher) bouncing in eighth notes. It trains a relaxed hand that jumps strings in time.
+instrument: bass4
+tempo: 112
+key: Am
+time: 4/4
+
+# Keep the same shape for every chord: only the starting fret moves.
+@Groove
+"Am" :8 5.4 7.2 5.4 7.2 5.4 7.2 5.4 7.2 | 5.4 7.2 5.4 7.2 5.4 7.2 5.4 7.2 |
+"Dm" 5.3 7.1 5.3 7.1 5.3 7.1 5.3 7.1 | 5.3 7.1 5.3 7.1 5.3 7.1 5.3 7.1 |
+"G" 3.4 5.2 3.4 5.2 3.4 5.2 3.4 5.2 | "E" 0.4 2.2 0.4 2.2 0.4 2.2 0.4 2.2 |
+@Ending
+"Am" :q 5.4 7.2 :h 5.4 |
