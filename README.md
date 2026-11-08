@@ -17,7 +17,8 @@ TabTrainer is a free, open-source web app. You write or open a song as plain tex
 - **Auto-scroll** at a speed you choose. Press `S` to start or stop it, and `↑` or `↓` to change the speed.
 - **Start anywhere:** double-click a note to play from there.
 - **Editor with live preview:** each error or warning names the line it comes from.
-- **Bass or guitar first:** pick your instrument, then a song for it. Bass comes with 4, 5 or 6 strings, guitar with 6, and both take a custom tuning. Ukulele song files open under guitar.
+- **Several versions of a song:** keep the plain bass line and a solo arrangement in one file, and switch between them with buttons under the title.
+- **Instrument first:** pick bass or guitar, then a song for it. Bass has 4, 5 or 6 strings and guitar has 6. Both take a custom tuning, and ukulele song files open under guitar.
 - **Songs stay on your device:** the app saves them in your browser. Download a song as a `.txt` file to move it to another device or share it. There is no account and no server.
 
 ## Song format
@@ -51,12 +52,12 @@ time: 4/4
 | `{let ring}` | text above the next note |
 | `[3/4]` | time signature from this bar on |
 | `@Chorus` | section name, on its own line |
-| `== Bass line` | starts another version of the song, on its own line (see below) |
+| `== Bass line` | starts another version of the song, on its own line |
 | `# ...` | comment |
 
 ### Several versions of one song
 
-A song can hold more than one way of playing it, for example the plain bass line and a solo arrangement with melody and chords. Start each version with a `== Name` line. All versions share the header (title, instrument, key, tempo), and each one counts its own bars. In the app, buttons under the song title switch between them.
+A song can hold more than one way of playing it, for example the plain bass line and a solo arrangement with melody and chords. Start each version with a `== Name` line. All versions share the header (title, instrument, key and tempo), and each version numbers its own bars from 1.
 
 ```text
 title: My song
@@ -66,7 +67,7 @@ key: C
 == Bass line
 "C" :q 3.3 3.3 5.2 3.3 |
 
-== Melody + chords
+== Melody and chords
 "C" :h (3.3 5.2) :q 5.1 7.1 |
 ```
 
