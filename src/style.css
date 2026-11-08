@@ -54,7 +54,7 @@ kbd{font:600 12px var(--mono);padding:1px 5px;border:1px solid var(--rule);borde
 .song-head h1{margin:0 0 10px;font:800 40px/44px var(--display);letter-spacing:-.025em}
 .meta{display:flex;flex-wrap:wrap;gap:6px 18px;color:var(--mut)}
 .meta .num{font:400 13px/20px var(--mono);color:var(--ink)}
-.view-opts{display:flex;align-items:center;gap:2px;padding:3px;border:1px solid var(--rule);border-radius:8px}
+.inst-switch,.view-opts{display:flex;align-items:center;gap:2px;padding:3px;border:1px solid var(--rule);border-radius:8px}
 .view-opts .divider{height:16px;margin:0 4px}
 .seg{padding:5px 12px;font-size:13px;border-radius:5px}
 .seg.on{background:var(--ink);color:var(--page)}
