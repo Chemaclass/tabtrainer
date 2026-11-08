@@ -202,7 +202,7 @@ $<HTMLInputElement>('openFile').onchange = async e => {
   const f = (e.target as HTMLInputElement).files?.[0]; if (!f) return;
   unpick(); loadText(await f.text()); (e.target as HTMLInputElement).value = '';
 };
-const showEditor = (on: boolean) => { document.querySelector('.layout')!.classList.toggle('noedit', !on); $('editBtn').classList.toggle('on', on); setPref('editor', on); setTimeout(draw, 50); };
+const showEditor = (on: boolean) => { document.querySelector('.layout')!.classList.toggle('noedit', !on); $('editBtn').classList.toggle('on', on); $('editBtn').setAttribute('aria-pressed', String(on)); setPref('editor', on); setTimeout(draw, 50); };
 $('editBtn').onclick = () => showEditor(document.querySelector('.layout')!.classList.contains('noedit'));
 const setNotation = (on: boolean) => { showNota = on; setPref('notation', on); $('notaBtn').classList.toggle('on', on); $('tabBtn').classList.toggle('on', !on); draw(); };
 $('notaBtn').onclick = () => setNotation(true);

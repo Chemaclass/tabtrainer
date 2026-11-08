@@ -21,14 +21,15 @@ button:focus-visible,.btn:focus-visible,select:focus-visible,input:focus-visible
 kbd{font:600 12px var(--mono);padding:1px 5px;border:1px solid var(--rule);border-radius:4px}
 
 /* top bar */
-.top{position:sticky;top:0;z-index:5;display:flex;gap:16px;align-items:center;height:56px;padding:0 24px;background:var(--page);border-bottom:1px solid var(--rule)}
+.top{position:sticky;top:0;z-index:5;display:flex;gap:16px;align-items:center;height:56px;padding:0 24px 0 16px;background:var(--page);border-bottom:1px solid var(--rule)}
 .brand{display:flex;align-items:center;gap:10px;font:800 17px var(--display);letter-spacing:-.02em;white-space:nowrap}
 #songSel{max-width:340px;height:34px;padding:0 32px 0 12px;border-color:var(--rule);appearance:none;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12'%3E%3Cpath d='M3 4.5 6 7.5 9 4.5' fill='none' stroke='%235c5c5c' stroke-width='1.5'/%3E%3C/svg%3E") no-repeat right 12px center}
 #songSel option,#songSel optgroup{background:var(--page);color:var(--ink)}
 .file-actions{display:flex;gap:2px}
 .ghost:hover,.seg:hover{background:var(--wash)}
 .toggle{display:flex;align-items:center;gap:6px;height:32px;padding:0 12px;border-color:var(--rule)}
-.toggle.on{background:var(--ink);border-color:var(--ink);color:var(--page)}
+.toggle:hover{background:var(--wash)}
+.toggle.on{background:var(--wash)}
 .round{width:32px;height:32px;padding:0;border-color:var(--rule);border-radius:16px}
 .round:hover{background:var(--wash)}
 
@@ -125,7 +126,6 @@ dialog .muted{color:var(--mut)}
 @media (max-width:900px){
   .top{height:auto;flex-wrap:wrap;padding:10px 16px;gap:8px}
   .file-actions .ghost{padding:6px 8px}
-  .top .divider{display:none}
   .layout{grid-template-columns:1fr}
   .editor{position:static;height:auto;border-right:0;border-bottom:1px solid var(--rule)}
   #src{min-height:220px}
