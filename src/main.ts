@@ -1,3 +1,13 @@
+import '@fontsource/inter/latin-400.css';
+import '@fontsource/inter/latin-500.css';
+import '@fontsource/inter/latin-600.css';
+import '@fontsource/inter/latin-ext-400.css';
+import '@fontsource/inter/latin-ext-500.css';
+import '@fontsource/inter/latin-ext-600.css';
+import '@fontsource/inter-tight/latin-800.css';
+import '@fontsource/inter-tight/latin-ext-800.css';
+import '@fontsource/jetbrains-mono/latin-400.css';
+import '@fontsource/jetbrains-mono/latin-600.css';
 import './style.css';
 import { parseSong } from './core/parser';
 import { buildTimeline, onsetKey } from './core/timeline';
