@@ -18,7 +18,10 @@
       <button class="seg" data-family="bass">Bass</button>
       <button class="seg" data-family="guitar">Guitar</button>
     </div>
-    <select id="songSel" aria-label="Choose a song"></select>
+    <div class="song-pick">
+      <input id="songSearch" type="text" role="combobox" aria-label="Search songs or artists" aria-expanded="false" aria-controls="songList" aria-autocomplete="list" autocomplete="off" spellcheck="false" placeholder="Search songs or artists" />
+      <ul id="songList" role="listbox" aria-label="Songs" hidden></ul>
+    </div>
     <div class="grow"></div>
     <nav class="file-actions" aria-label="Song file">
       <button id="newBtn" class="ghost" title="Start a new song">New</button>

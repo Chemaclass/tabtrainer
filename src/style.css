@@ -23,8 +23,18 @@ kbd{font:600 12px var(--mono);padding:1px 5px;border:1px solid var(--rule);borde
 /* top bar */
 .top{position:sticky;top:0;z-index:5;display:flex;gap:16px;align-items:center;height:56px;padding:0 24px 0 16px;background:var(--page);border-bottom:1px solid var(--rule)}
 .brand{display:flex;align-items:center;gap:10px;font:800 17px var(--display);letter-spacing:-.02em;white-space:nowrap}
-#songSel{max-width:340px;height:34px;padding:0 32px 0 12px;border-color:var(--rule);appearance:none;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12'%3E%3Cpath d='M3 4.5 6 7.5 9 4.5' fill='none' stroke='%235c5c5c' stroke-width='1.5'/%3E%3C/svg%3E") no-repeat right 12px center}
-#songSel option,#songSel optgroup{background:var(--page);color:var(--ink)}
+.song-pick{position:relative;width:340px;max-width:100%}
+#songSearch{width:100%;height:34px;padding:0 32px 0 12px;font:500 14px/20px var(--ui);color:var(--ink);border:1px solid var(--rule);border-radius:6px;cursor:pointer;text-overflow:ellipsis;background:var(--page) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12'%3E%3Cpath d='M3 4.5 6 7.5 9 4.5' fill='none' stroke='%235c5c5c' stroke-width='1.5'/%3E%3C/svg%3E") no-repeat right 12px center}
+#songSearch[aria-expanded=true]{cursor:text;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12'%3E%3Ccircle cx='5' cy='5' r='3.5' fill='none' stroke='%235c5c5c' stroke-width='1.5'/%3E%3Cpath d='M7.6 7.6 11 11' stroke='%235c5c5c' stroke-width='1.5'/%3E%3C/svg%3E")}
+#songSearch::placeholder{color:var(--faint)}
+#songList{position:absolute;top:calc(100% + 4px);left:0;right:0;z-index:10;max-height:min(60vh,440px);overflow-y:auto;margin:0;padding:4px;list-style:none;background:var(--page);border:1px solid var(--rule);border-radius:8px;box-shadow:0 8px 28px rgba(0,0,0,.14)}
+#songList .grp{padding:10px 10px 4px;font:600 11px var(--ui);letter-spacing:.04em;text-transform:uppercase;color:var(--faint)}
+#songList [role=option]{display:flex;align-items:baseline;gap:8px;padding:7px 10px;border-radius:5px;cursor:pointer;font:500 14px/20px var(--ui)}
+#songList [role=option][aria-selected=true]{background:var(--hover)}
+#songList .cur .opt-title{font-weight:650}
+#songList .opt-title{flex:none}
+#songList .opt-artist{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--mut);font-size:13px}
+#songList .empty{padding:12px 10px;color:var(--mut)}
 .file-actions{display:flex;gap:2px}
 .ghost:hover,.seg:hover{background:var(--wash)}
 .toggle{display:flex;align-items:center;gap:6px;height:32px;padding:0 12px;border-color:var(--rule)}

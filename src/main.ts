@@ -17,6 +17,8 @@ import { renderSong } from './render/notation';
 import { Player } from './audio/player';
 import { library, saveSong, removeSong, pref, setPref } from './ui/storage';
 import { findBySlug, songSlug, versionSlug } from './ui/songLink';
+import { songPicker } from './ui/songPicker';
+import type { SongEntry } from './ui/songSearch';
 
 const demos = import.meta.glob('./songs/*/*/*.txt', { query: '?raw', import: 'default', eager: true }) as Record<string, string>;
 const $ = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T;
@@ -41,16 +43,14 @@ const songsFor = (f: Family) => ({
   demos: Object.keys(demos).filter(p => demoFamily(p) === f).sort(),
   mine: library().filter(s => familyOfText(s.text) === f),
 });
+const picker = songPicker($<HTMLInputElement>('songSearch'), $('songList'), v => pickSong(v));
+const demoGroups: Record<string, string> = { exercises: 'Exercises', songs: 'Songs' };
 function fillSongList() {
-  const sel = $<HTMLSelectElement>('songSel'); sel.innerHTML = '';
-  const draft = new Option('Unsaved song', ''); draft.hidden = true; sel.appendChild(draft);
-  const { demos: ex, mine } = songsFor(family);
-  const group = (label: string, opts: HTMLOptionElement[]) => { if (!opts.length) return; const g = document.createElement('optgroup'); g.label = label; g.append(...opts); sel.appendChild(g); };
-  const demoGroup = (label: string, kind: string) => group(label, ex.filter(p => demoKind(p) === kind).map(p => new Option(listLabel(demos[p]), 'demo:' + p)));
-  demoGroup('Exercises', 'exercises');
-  demoGroup('Songs', 'songs');
-  group('My songs', mine.map(s => new Option(s.title, 'lib:' + s.title)));
-  sel.value = [...sel.options].some(o => o.value === picked) ? picked : '';
+  const entries: SongEntry[] = [
+    ...Object.keys(demos).sort().map(p => ({ value: 'demo:' + p, title: titleOf(demos[p]), artist: artistOf(demos[p]), family: demoFamily(p), group: demoGroups[demoKind(p)] ?? 'Songs' })),
+    ...library().map(s => ({ value: 'lib:' + s.title, title: s.title, artist: artistOf(s.text), family: familyOfText(s.text), group: 'My songs' })),
+  ];
+  picker.show(entries, family, picked, entries.find(e => e.value === picked)?.title ?? 'Unsaved song');
 }
 function showFamily() {
   document.querySelectorAll<HTMLButtonElement>('[data-family]').forEach(b => { const on = b.dataset.family === family; b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on)); });
@@ -66,15 +66,12 @@ function chooseFamily(f: Family) {
 const titleOf = (t: string) => /^\s*title\s*:\s*(.+)$/im.exec(t)?.[1].trim() ?? 'Untitled';
 const creditNames = (artist = '') => artist.replace(/\s*\(public domain\)\s*$/i, '').split(',').map(n => n.trim()).filter(Boolean);
 // the list names who wrote a song, unless TabTrainer wrote it or nobody knows
-const listLabel = (t: string) => {
-  const names = creditNames(/^\s*artist\s*:\s*(.+)$/im.exec(t)?.[1]).filter(n => !/^(tabtrainer|traditional)$/i.test(n));
-  return names.length ? `${titleOf(t)} (${names.join(', ')})` : titleOf(t);
-};
+const artistOf = (t: string) => creditNames(/^\s*artist\s*:\s*(.+)$/im.exec(t)?.[1]).filter(n => !/^(tabtrainer|traditional)$/i.test(n)).join(', ');
 function loadText(text: string) { src.value = text; update(true); setPref('last', text); }
 function pickSong(v: string) {
   const text = v.startsWith('demo:') ? demos[v.slice(5)] : library().find(x => 'lib:' + x.title === v)?.text;
   if (text === undefined) return;
-  picked = v; setPref('picked', v); loadText(text); showLink();
+  picked = v; setPref('picked', v); loadText(text); fillSongList(); showLink();
 }
 // only bundled songs get a link: "My songs" live in one browser
 function showLink() {
@@ -85,7 +82,6 @@ function showLink() {
   const search = query.toString().replace(/%2F/g, '/');
   history.replaceState(null, '', location.pathname + (search ? '?' + search : '') + location.hash);
 }
-$<HTMLSelectElement>('songSel').onchange = e => pickSong((e.target as HTMLSelectElement).value);
 document.querySelectorAll<HTMLButtonElement>('[data-family]').forEach(b => { b.onclick = () => isFamily(b.dataset.family!) && chooseFamily(b.dataset.family); });
 
 // ---------- parse + render ----------
@@ -257,7 +253,7 @@ document.addEventListener('keydown', e => {
 });
 
 // ---------- toolbar ----------
-const unpick = () => { picked = ''; setPref('picked', ''); $<HTMLSelectElement>('songSel').value = ''; showLink(); };
+const unpick = () => { picked = ''; setPref('picked', ''); fillSongList(); showLink(); };
 $('newBtn').onclick = () => { unpick(); loadText(newSong()); showEditor(true); src.focus(); };
 $('saveBtn').onclick = () => {
   const t = titleOf(src.value);
