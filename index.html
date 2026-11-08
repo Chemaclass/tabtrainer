@@ -37,7 +37,7 @@
     </section>
     <section class="viewer">
       <div class="song-head">
-        <div><h1 id="title"></h1><div id="subtitle" class="meta"></div><p id="about" class="about" hidden></p><div id="versions" class="versions" role="group" aria-label="Versions of this song" hidden></div></div>
+        <div><h1 id="title"></h1><div id="credit" class="credit"><span id="byline" class="byline" hidden></span><a id="listen" class="listen" target="_blank" rel="noopener noreferrer" hidden><span class="listen-dot" aria-hidden="true"></span><span class="listen-label">Listen to the original</span><span id="listenHost" class="listen-host"></span></a></div><div id="subtitle" class="meta"></div><p id="about" class="about" hidden></p><div id="versions" class="versions" role="group" aria-label="Versions of this song" hidden></div></div>
         <div class="view-opts" role="group" aria-label="View">
           <button id="notaBtn" class="seg" title="Show standard notation above the tab">Notation + tab</button>
           <button id="tabBtn" class="seg" title="Show the tab only">Tab only</button>
@@ -77,7 +77,9 @@
     <h2>Writing a song</h2>
     <p>A song is plain text: a few header lines, then bars of notes separated by <code>|</code>.</p>
 <pre>title: My groove
+artist: Jane Doe, John Roe  # optional: who wrote it
 about: Eighth notes on the root  # optional: what the song trains
+listen: https://www.youtube.com/watch?v=...  # optional: the original
 instrument: bass4      # bass4, bass5, bass6, guitar6
 tuning: D2 A2 D3 G3    # optional: any tuning, low to high
 tempo: 90
@@ -89,7 +91,9 @@ time: 4/4
 (3.3 5.2):h r:h |      # two notes together, then a rest
 [3/4] :8t 3.3 5.3 7.3 :q ~7.3 r |</pre>
     <table>
+      <tr><td><code>artist:</code></td><td>who wrote the song, shown as "by ...". Separate several names with commas</td></tr>
       <tr><td><code>about:</code></td><td>one line on what the song trains, shown under the title</td></tr>
+      <tr><td><code>listen:</code></td><td>web address of a recording of the original, shown as a "Listen to the original" link</td></tr>
       <tr><td><code>3.4</code></td><td>fret 3 on string 4 (string 1 is the highest)</td></tr>
       <tr><td><code>:q</code></td><td>duration for the next notes: <code>w h q 8 16 32</code>. Add <code>.</code> for dotted and <code>t</code> for triplet</td></tr>
       <tr><td><code>3.4:8</code></td><td>duration for one note</td></tr>

@@ -1,5 +1,5 @@
 title: Walking in F: 12-bar blues
-artist: TabTrainer exercise
+artist: TabTrainer
 about: A walking bass line: one note per beat that steps into each new chord of a 12-bar blues in F.
 instrument: bass4
 tempo: 104
