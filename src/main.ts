@@ -11,7 +11,7 @@ import '@fontsource/jetbrains-mono/latin-600.css';
 import './style.css';
 import { parseSong } from './core/parser';
 import { buildTimeline, onsetAt, onsetKey, onsetsOf } from './core/timeline';
-import type { Song } from './core/model';
+import { withVersion, type Song } from './core/model';
 import { FAMILIES, familyOf, isFamily, type Family } from './core/instruments';
 import { renderSong } from './render/notation';
 import { Player } from './audio/player';
@@ -22,6 +22,8 @@ const $ = <T extends HTMLElement = HTMLElement>(id: string) => document.getEleme
 
 const src = $<HTMLTextAreaElement>('src'), sheet = $('sheet'), player = new Player();
 let song: Song | null = null;
+let parsed: Song | null = null; // whole song with every version
+let versionIdx = 0;
 let zoom = pref('zoom', 1), showNota = pref('notation', true);
 
 // ---------- song list ----------
@@ -74,8 +76,13 @@ document.querySelectorAll<HTMLButtonElement>('[data-family]').forEach(b => { b.o
 let timer = 0;
 src.addEventListener('input', () => { clearTimeout(timer); timer = window.setTimeout(() => { update(false); setPref('last', src.value); }, 300); });
 function update(resetLoop: boolean) {
-  const { song: s, issues } = parseSong(src.value);
+  const { song: all, issues } = parseSong(src.value);
+  parsed = all;
+  if (resetLoop) versionIdx = 0;
+  versionIdx = Math.min(versionIdx, all.versions.length - 1);
+  const s = withVersion(all, versionIdx);
   song = s;
+  renderVersions(all);
   const ul = $('issues'); ul.innerHTML = '';
   issues.forEach(i => {
     const li = document.createElement('li'); li.className = i.severity; li.textContent = `Line ${i.line}: ${i.message}`;
@@ -96,6 +103,26 @@ function update(resetLoop: boolean) {
   if (resetLoop || +$<HTMLInputElement>('loopB').value > s.bars.length) { $<HTMLInputElement>('loopA').value = '1'; $<HTMLInputElement>('loopB').value = String(Math.max(1, s.bars.length)); }
   $<HTMLInputElement>('loopA').max = $<HTMLInputElement>('loopB').max = String(s.bars.length);
   applyLoop(); draw(); showSpeed(); if (wasPlaying) setPlayLabel();
+}
+function renderVersions(all: Song) {
+  const box = $('versions'); box.replaceChildren();
+  box.hidden = all.versions.length < 2;
+  if (box.hidden) return;
+  all.versions.forEach((v, i) => {
+    const b = document.createElement('button');
+    b.type = 'button'; b.textContent = v.name; b.className = 'seg' + (i === versionIdx ? ' on' : '');
+    b.setAttribute('aria-pressed', String(i === versionIdx));
+    b.title = `${v.bars.length} bar${v.bars.length === 1 ? '' : 's'}`;
+    b.onclick = () => chooseVersion(i);
+    box.appendChild(b);
+  });
+}
+function chooseVersion(i: number) {
+  if (!parsed || i === versionIdx) return;
+  player.stop(); versionIdx = i;
+  update(false);
+  // a different version usually has a different number of bars: reset the loop range to the whole version
+  if (song) { $<HTMLInputElement>('loopA').value = '1'; $<HTMLInputElement>('loopB').value = String(Math.max(1, song.bars.length)); applyLoop(); }
 }
 function renderMeta(s: Song) {
   const parts: [string, boolean][] = [[s.meta.artist ?? '', false], [`♩ = ${s.meta.tempo}`, true], [`key ${s.meta.key}`, true], [s.meta.instrument.name, false]];
