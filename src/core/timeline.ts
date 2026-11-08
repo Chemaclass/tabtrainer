@@ -12,6 +12,8 @@ export interface TimedNote {
   bar: number;
   /** Stable key shared by every note struck at the same moment: used for highlighting. */
   key: string;
+  /** A tied note: written as held, played again quietly so the synth's fading note stays audible. */
+  soft?: boolean;
 }
 
 export interface BarSpan { bar: number; start: number; length: number }
@@ -28,12 +30,7 @@ export function buildTimeline(song: Song): { notes: TimedNote[]; bars: BarSpan[]
     for (const e of b.events) {
       const beat = pos + e.start / PPQ;
       for (const n of e.notes) {
-        if (n.tie) {
-          // extend the ringing note on this string instead of re-striking it
-          for (let i = notes.length - 1; i >= 0; i--) if (notes[i].string === n.string) { notes[i].ring = Math.max(notes[i].ring, beat + e.dur / PPQ - notes[i].beat); break; }
-          continue;
-        }
-        notes.push({ beat, ring: e.dur / PPQ, midi: tuning[n.string - 1] + n.fret + tr, string: n.string, fret: n.fret, bar: b.index, key: onsetKey(beat) });
+        notes.push({ beat, ring: e.dur / PPQ, midi: tuning[n.string - 1] + n.fret + tr, string: n.string, fret: n.fret, bar: b.index, key: onsetKey(beat), ...(n.tie ? { soft: true } : {}) });
       }
     }
     pos += len;

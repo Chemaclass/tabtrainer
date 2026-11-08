@@ -73,13 +73,15 @@ describe('parseSong', () => {
 });
 
 describe('timeline', () => {
-  it('places notes in beats and lets ties extend', () => {
+  it('places notes in beats and replays ties softly', () => {
     const { song } = parseSong(SRC);
     const tl = buildTimeline(song);
     expect(tl.bars.map(b => b.length)).toEqual([4, 4, 2]);
     expect(tl.total).toBe(10);
-    // the tied 7.3 in bar 3 is not re-struck
-    expect(tl.notes.filter(n => n.bar === 3)).toHaveLength(3);
+    // the tied 7.3 in bar 3 sounds again at half volume
+    const bar3 = tl.notes.filter(n => n.bar === 3);
+    expect(bar3).toHaveLength(4);
+    expect(bar3.filter(n => n.soft)).toMatchObject([{ fret: 7, string: 3 }]);
     expect(tl.notes[0]).toMatchObject({ beat: 0, midi: 40 + 3 - 12 });
   });
 });
