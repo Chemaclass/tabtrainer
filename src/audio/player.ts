@@ -62,10 +62,12 @@ export class Player {
     }
     const beat = this.from + (now - this.t0) / spb;
     if (beat >= this.to) { if (this.loop) { const [a] = this.range ?? [0, this.total]; this.play(a); } else this.stop(); return; }
-    this.emit(beat >= this.from ? beat : this.from);
+    // show what the listener hears now: the speakers lag the audio clock by the output latency
+    const heard = beat - (ctx.outputLatency || ctx.baseLatency || 0) / spb;
+    this.emit(Math.max(this.from, heard));
   }
   private halt() { if (this.timer !== null) clearInterval(this.timer); this.timer = null; if (this.master && this.ctx) this.master.gain.setTargetAtTime(0, this.ctx.currentTime, 0.03); }
-  pause() { if (!this.playing || !this.ctx) return; this.paused = Math.max(this.from, this.from + (this.ctx.currentTime - this.t0) / this.spb() - 0.05); this.halt(); this.emit(null); }
+  pause() { if (!this.playing || !this.ctx) return; this.paused = Math.max(this.from, this.from + (this.ctx.currentTime - this.t0) / this.spb() - 0.05); this.halt(); this.emit(this.paused); }
   toggle() { if (this.playing) this.pause(); else this.play(this.paused ?? undefined); }
   stop() { this.halt(); this.paused = null; this.emit(null); }
   setSpeed(s: number) { const wasBeat = this.playing && this.ctx ? this.from + (this.ctx.currentTime - this.t0) / this.spb() : null; this.speed = s; if (wasBeat !== null) this.play(wasBeat); }
