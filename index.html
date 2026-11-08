@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>TabTrainer — practise tabs with notation and playback</title>
+  <meta name="description" content="Free, open-source tab + notation player and editor for bass, guitar and other fretted instruments. Slow it down, loop it, follow the red notes." />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='14' fill='%23b5532a'/><g stroke='%23fff' stroke-width='3'><line x1='12' y1='20' x2='52' y2='20'/><line x1='12' y1='30' x2='52' y2='30'/><line x1='12' y1='40' x2='52' y2='40'/></g><circle cx='26' cy='30' r='6' fill='%23fff'/></svg>" />
+</head>
+<body>
+  <header class="top">
+    <div class="brand"><span class="logo">♪</span> TabTrainer</div>
+    <select id="songSel" aria-label="Choose a song"></select>
+    <div class="grow"></div>
+    <button id="newBtn" title="Start a new song">New</button>
+    <label class="btn" title="Open a song file from your computer">Open<input id="openFile" type="file" accept=".txt,.tab,.tabt,text/plain" hidden /></label>
+    <button id="saveBtn" title="Save to this browser's library">Save</button>
+    <button id="dlBtn" title="Download the song as a text file">Download</button>
+    <button id="editBtn" class="on" title="Show or hide the editor">Editor</button>
+    <button id="helpBtn" title="How to write songs">?</button>
+  </header>
+
+  <main class="layout">
+    <section id="editorPane" class="editor">
+      <div class="pane-head"><b>Song text</b><span id="status" class="status"></span></div>
+      <textarea id="src" spellcheck="false" aria-label="Song source"></textarea>
+      <ul id="issues" class="issues"></ul>
+    </section>
+    <section class="viewer">
+      <div class="song-head">
+        <div><h1 id="title"></h1><div id="subtitle" class="muted"></div></div>
+        <div class="view-opts">
+          <button id="notaBtn" class="on" title="Show standard notation above the tab">Notation</button>
+          <button id="zoomOut" title="Smaller">A−</button><button id="zoomIn" title="Bigger">A+</button>
+        </div>
+      </div>
+      <div id="sheet" class="sheet"></div>
+      <p class="muted small">Tip: double-click any note to start playing from there. Space = play/pause.</p>
+    </section>
+  </main>
+
+  <footer class="player">
+    <button id="playBtn" class="primary" title="Play / pause (Space)">▶ Play</button>
+    <button id="stopBtn" title="Stop and go back to the start">■</button>
+    <div class="ctl"><span>Speed</span><input id="speed" type="range" min="30" max="130" value="100" /><output id="speedOut">100%</output></div>
+    <div class="ctl"><label><input id="loopChk" type="checkbox" /> Loop</label> bars <input id="loopA" type="number" min="1" value="1" /> – <input id="loopB" type="number" min="1" value="1" /></div>
+    <div class="ctl"><label><input id="followChk" type="checkbox" checked /> Follow</label></div>
+    <div class="ctl"><button id="scrollBtn" title="Slow auto-scroll (S)">⇩ Auto-scroll</button><input id="scrollSpeed" type="range" min="3" max="80" value="15" title="Scroll speed (↑/↓ while scrolling)" /></div>
+    <div class="grow"></div>
+    <div class="barno">Bar <b id="barNo">–</b></div>
+  </footer>
+
+  <dialog id="help">
+    <form method="dialog"><button class="close" aria-label="Close">✕</button></form>
+    <h2>Writing a song</h2>
+    <p>A song is plain text: a few header lines, then bars of notes separated by <code>|</code>.</p>
+<pre>title: My groove
+instrument: bass4      # bass4, bass5, bass6, guitar6, ukulele
+tuning: D2 A2 D3 G3    # optional: any tuning, low to high
+tempo: 90
+key: C                 # e.g. C, Ab, F#m
+time: 4/4
+
+@Verse                 # section name
+"C" :q 3.3 3.3 :8 5.2 5.2 :q 3.3 |
+(3.3 5.2):h r:h |      # chord + rest
+[3/4] :8t 3.3 5.3 7.3 :q ~7.3 r |</pre>
+    <table>
+      <tr><td><code>3.4</code></td><td>fret 3 on string 4 (string 1 = highest)</td></tr>
+      <tr><td><code>:q</code></td><td>set the duration for the next notes: <code>w h q 8 16 32</code>, add <code>.</code> for dotted, <code>t</code> for triplets</td></tr>
+      <tr><td><code>3.4:8</code></td><td>duration on a single note</td></tr>
+      <tr><td><code>(3.4 5.3)</code></td><td>notes struck together</td></tr>
+      <tr><td><code>r</code></td><td>rest</td></tr>
+      <tr><td><code>~5.3</code></td><td>tied: keep the note ringing, don't pick again</td></tr>
+      <tr><td><code>"Am7"</code></td><td>chord name above the next note</td></tr>
+      <tr><td><code>{let ring}</code></td><td>text above the next note (dynamics, tips)</td></tr>
+      <tr><td><code>[3/4]</code></td><td>time signature from this bar on</td></tr>
+      <tr><td><code>@Chorus</code></td><td>section name (own line)</td></tr>
+      <tr><td><code># …</code></td><td>comment</td></tr>
+    </table>
+    <p class="muted">Songs you save stay in this browser. Use Download / Open to move them between devices or share them.</p>
+  </dialog>
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>

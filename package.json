@@ -1,0 +1,24 @@
+{
+  "name": "tabtrainer",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Open-source tab + notation player and editor for bass, guitar and other fretted instruments.",
+  "license": "MIT",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "vexflow": "4.2.5"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.5",
+    "typescript": "^5.6.0",
+    "vite": "^5.4.0",
+    "vitest": "^2.1.0"
+  }
+}
