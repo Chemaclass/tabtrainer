@@ -10,7 +10,7 @@ import '@fontsource/jetbrains-mono/latin-400.css';
 import '@fontsource/jetbrains-mono/latin-600.css';
 import './style.css';
 import { parseSong } from './core/parser';
-import { buildTimeline, onsetKey } from './core/timeline';
+import { buildTimeline, onsetAt, onsetKey, onsetsOf } from './core/timeline';
 import type { Song } from './core/model';
 import { FAMILIES, familyOf, isFamily, type Family } from './core/instruments';
 import { renderSong } from './render/notation';
@@ -92,7 +92,7 @@ function update(resetLoop: boolean) {
   $('barTotal').textContent = String(s.bars.length || '–');
   document.title = `${s.meta.title} · TabTrainer`;
   const wasPlaying = player.playing;
-  player.load(buildTimeline(s), s.meta.tempo);
+  player.load(buildTimeline(s), s.meta.tempo); onsets = onsetsOf(player.notes);
   if (resetLoop || +$<HTMLInputElement>('loopB').value > s.bars.length) { $<HTMLInputElement>('loopA').value = '1'; $<HTMLInputElement>('loopB').value = String(Math.max(1, s.bars.length)); }
   $<HTMLInputElement>('loopA').max = $<HTMLInputElement>('loopB').max = String(s.bars.length);
   applyLoop(); draw(); showSpeed(); if (wasPlaying) setPlayLabel();
@@ -121,15 +121,11 @@ const setPlayLabel = () => {
   b.setAttribute('aria-label', player.playing ? 'Pause' : player.pausedAt !== null ? 'Resume' : 'Play');
 };
 let lit: Element[] = [], litKey: string | null = null, curSys: Element | null = null;
-const onsets = () => [...new Set(player.notes.map(n => n.key))].map(Number).sort((a, b) => a - b);
-let onsetCache: number[] = [];
+let onsets: number[] = [];
 player.on(({ beat }) => {
   setPlayLabel();
   if (beat === null) { lit.forEach(e => e.classList.remove('on')); lit = []; litKey = null; curSys?.classList.remove('cur'); curSys = null; $('barNo').textContent = '–'; return; }
-  if (!onsetCache.length || onsetCache.length !== new Set(player.notes.map(n => n.key)).size) onsetCache = onsets();
-  let k: number | null = null; let lo = 0, hi = onsetCache.length - 1;
-  while (lo <= hi) { const m = (lo + hi) >> 1; if (onsetCache[m] <= beat * 1000 + 5) { k = onsetCache[m]; lo = m + 1; } else hi = m - 1; }
-  const key = k === null ? null : String(k);
+  const key = onsetAt(onsets, beat);
   if (key !== litKey) {
     lit.forEach(e => e.classList.remove('on'));
     lit = key ? [...sheet.querySelectorAll(`[data-key="${key}"]`)] : []; lit.forEach(e => e.classList.add('on')); litKey = key;

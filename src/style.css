@@ -70,6 +70,7 @@ kbd{font:600 12px var(--mono);padding:1px 5px;border:1px solid var(--rule);borde
 .system svg{display:block}
 .note{cursor:pointer}
 .note.on path,.note.on text{fill:var(--playing)!important}
+.note.on .vf-stem path{stroke:var(--playing)!important}
 .tip{margin:16px 0 0;font-size:13px;color:var(--mut)}
 
 /* transport deck */
