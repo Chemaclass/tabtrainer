@@ -46,3 +46,13 @@ export function buildTimeline(song: Song): { notes: TimedNote[]; bars: BarSpan[]
   }
   return { notes, bars, total: pos };
 }
+
+/** Sorted onset keys of a timeline, for looking up the note sounding at a beat. */
+export const onsetsOf = (notes: TimedNote[]): number[] => [...new Set(notes.map(n => Number(n.key)))].sort((a, b) => a - b);
+
+/** Key of the last onset at or before the beat, or null before the first note. */
+export function onsetAt(onsets: number[], beat: number): string | null {
+  let k: number | null = null, lo = 0, hi = onsets.length - 1;
+  while (lo <= hi) { const m = (lo + hi) >> 1; if (onsets[m] <= beat * 1000 + 5) { k = onsets[m]; lo = m + 1; } else hi = m - 1; }
+  return k === null ? null : String(k);
+}
