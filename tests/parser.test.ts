@@ -39,6 +39,12 @@ describe('parseSong', () => {
     expect(song.bars[2].beats).toBe(2);
     expect(song.bars[2].events[3].notes[0].tie).toBe(true);
   });
+  it('ignores comments after header values, like in the body', () => {
+    const r = parseSong('title: X\ninstrument: bass5   # five strings\nkey: F#m\n\n:w 3.3 |\n');
+    expect(r.issues).toEqual([]);
+    expect(r.song.meta.instrument.id).toBe('bass5');
+    expect(r.song.meta.key).toBe('F#m');
+  });
   it('round-trips through the serializer', () => {
     const again = parseSong(serializeSong(song));
     expect(again.issues).toEqual([]);
