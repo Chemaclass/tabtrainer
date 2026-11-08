@@ -73,6 +73,7 @@ function update(resetLoop: boolean) {
   $('status').classList.toggle('bad', errs > 0);
   $('title').textContent = s.meta.title;
   renderMeta(s);
+  $('about').textContent = s.meta.about ?? ''; $('about').hidden = !s.meta.about;
   const f = familyOf(s.meta.instrument);
   if (f !== family) { family = f; setPref('family', f); showFamily(); }
   $('barTotal').textContent = String(s.bars.length || '–');

@@ -5,6 +5,7 @@ import { buildTimeline } from '../src/core/timeline';
 import { PPQ } from '../src/core/model';
 
 const SRC = `title: Test
+about: Root notes in quarters
 instrument: bass4
 tempo: 100
 key: G
@@ -32,6 +33,7 @@ describe('parseSong', () => {
     expect(issues).toEqual([]);
     expect(song.meta.title).toBe('Test');
     expect(song.meta.tempo).toBe(100);
+    expect(song.meta.about).toBe('Root notes in quarters');
     expect(song.bars).toHaveLength(3);
     expect(song.bars[0].section).toBe('Intro');
     expect(song.bars[0].events[0].chord).toBe('G');
@@ -48,6 +50,7 @@ describe('parseSong', () => {
   it('round-trips through the serializer', () => {
     const again = parseSong(serializeSong(song));
     expect(again.issues).toEqual([]);
+    expect(again.song.meta.about).toBe(song.meta.about);
     expect(again.song.bars).toEqual(song.bars.map(b => ({ ...b, line: again.song.bars[b.index - 1].line })));
   });
   it('reports errors with line numbers', () => {

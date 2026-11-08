@@ -14,6 +14,7 @@ export function serializeSong(song: Song, barsPerLine = 2): string {
   const { meta } = song;
   const out: string[] = [`title: ${meta.title}`];
   if (meta.artist) out.push(`artist: ${meta.artist}`);
+  if (meta.about) out.push(`about: ${meta.about}`);
   const preset = Object.values(INSTRUMENTS).find(i => i.id === meta.instrument.id);
   if (preset) out.push(`instrument: ${preset.id}`);
   else out.push(`tuning: ${[...meta.instrument.tuning].reverse().map(midiName).join(' ')}`);

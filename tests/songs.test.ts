@@ -10,6 +10,7 @@ describe('bundled demo songs', () => {
     it(`${f} parses cleanly and round-trips`, () => {
       const { song, issues } = parseSong(readFileSync(`src/songs/${f}`, 'utf8'));
       expect(issues).toEqual([]);
+      expect(song.meta.about, 'every demo says what it trains').toBeTruthy();
       expect(song.bars.length).toBeGreaterThan(3);
       const again = parseSong(serializeSong(song));
       expect(again.issues).toEqual([]);
