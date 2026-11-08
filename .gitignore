@@ -8,19 +8,28 @@ dist
 # >>> agnostic-ai (managed) >>>
 # Generated paths. Edit specs, not this block. Run `agnostic-ai sync` to refresh.
 # Not committed: a fresh clone or `git worktree` lacks these until `agnostic-ai sync` runs (e.g. a post-checkout hook).
+/.agents/skills/
 /.agnostic-ai/.command-lock
 /.agnostic-ai/.sync-state
 /.agnostic-ai/local/
 /.agnostic-ai/packs/
 /.claude/agent-memory-local/
+/.claude/agents/
+/.claude/rules/
 /.claude/scheduled_tasks.lock
 /.claude/scheduled_tasks.lock.bak
 /.claude/settings.local.json
 /.claude/settings.local.json.bak
+/.claude/skills/
 /.claude/worktrees/
+/.codex/agents/
 /AGENTS.md
 /AGENTS.md.bak
 /CLAUDE.md
 /CLAUDE.md.bak
 /agnostic-ai.local.yaml
+/src/core/AGENTS.md
+/src/core/AGENTS.md.bak
+/src/songs/AGENTS.md
+/src/songs/AGENTS.md.bak
 # <<< agnostic-ai (managed) <<<
