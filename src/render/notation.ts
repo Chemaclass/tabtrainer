@@ -128,7 +128,7 @@ function drawSystem(div: HTMLDivElement, bars: Bar[], prev: Bar | undefined, c: 
     x += bw;
   });
   if (lyrics.length) {
-    ctx.save(); ctx.setFont('Inter, Arial, sans-serif', 13, 'normal');
+    ctx.save(); ctx.setFont('Inter, Arial, sans-serif', 13, 'italic'); ctx.setFillStyle('#6b6b6b');
     lyrics.forEach(([px, words]) => ctx.fillText(words, px, bottom + 30));
     ctx.restore();
   }
