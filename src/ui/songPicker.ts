@@ -24,7 +24,7 @@ export function songPicker(input: HTMLInputElement, list: HTMLElement, onPick: (
       if (e.levels?.length) {
         const l = document.createElement('span'); l.className = 'opt-level'; l.setAttribute('role', 'img');
         const words = e.levels.join(', '); l.title = words; l.setAttribute('aria-label', `Level: ${words}`);
-        l.append(...e.levels.map(v => { const d = document.createElement('span'); d.className = `dot dot-${v}`; return d; }));
+        l.append(...e.levels.map(v => { const d = document.createElement('span'); d.className = `lvl-dot lvl-dot-${v}`; return d; }));
         li.append(l);
       }
       li.onclick = () => pick(e.value);
