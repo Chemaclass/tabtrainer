@@ -26,6 +26,8 @@ export interface NoteEvent {
   chord?: string;
   /** Free text shown above the event, e.g. "p", "rit.", "let ring". */
   text?: string;
+  /** Words sung from this event on, shown below the tab. */
+  lyric?: string;
 }
 
 export interface Bar {

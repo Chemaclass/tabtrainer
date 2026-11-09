@@ -17,7 +17,7 @@ function tokenize(src: string, firstLine: number): Tok[] {
     const text = hash >= 0 ? raw.slice(0, hash) : raw;
     if (/^\s*@/.test(text)) { toks.push({ text: text.trim(), line, col: text.indexOf('@') + 1 }); return; }
     if (/^\s*==/.test(text)) { toks.push({ text: text.trim(), line, col: text.indexOf('=') + 1 }); return; }
-    const re = /"[^"]*"|\{[^}]*\}|\([^)]*\)(:[^\s|]+)?|\[[^\]]*\]|\||[^\s|]+/g;
+    const re = /"[^"]*"|\{[^}]*\}|<[^>]*>|\([^)]*\)(:[^\s|]+)?|\[[^\]]*\]|\||[^\s|]+/g;
     let mt: RegExpExecArray | null;
     while ((mt = re.exec(text))) toks.push({ text: mt[0], line, col: mt.index + 1 });
   });
@@ -77,7 +77,7 @@ export function parseSong(src: string): ParseResult {
   let bars: Bar[] = [];
   const st = { cur: null as Bar | null }; let t = 0;
   let dur = parseDuration('q')!;
-  let pendingChord: string | undefined; let pendingText: string | undefined; let pendingSection: string | undefined;
+  let pendingChord: string | undefined; let pendingText: string | undefined; let pendingLyric: string | undefined; let pendingSection: string | undefined;
   const newBar = (line: number): Bar => {
     const b: Bar = { index: bars.length + 1, beats: time[0], beatValue: time[1], events: [], line, section: pendingSection };
     pendingSection = undefined; bars.push(b); t = 0; return b;
@@ -110,8 +110,8 @@ export function parseSong(src: string): ParseResult {
     const strs = notes.map(n => n.string);
     if (new Set(strs).size !== strs.length) issues.push({ line: tok.line, col: tok.col, message: 'Two notes on the same string in one chord', severity: 'error' });
     const ev: NoteEvent = { start: t, dur: dur.ticks, notes, value: dur.value, dots: dur.dots, triplet: dur.triplet };
-    if (pendingChord) ev.chord = pendingChord; if (pendingText) ev.text = pendingText;
-    pendingChord = pendingText = undefined;
+    if (pendingChord) ev.chord = pendingChord; if (pendingText) ev.text = pendingText; if (pendingLyric) ev.lyric = pendingLyric;
+    pendingChord = pendingText = pendingLyric = undefined;
     st.cur.events.push(ev); t += dur.ticks;
   };
 
@@ -125,7 +125,7 @@ export function parseSong(src: string): ParseResult {
       if (bars.length || versionLine) versions.push({ name: versionName, bars });
       else if (versions.length === 0 && pendingSection) { /* section before the first version applies to it */ }
       bars = []; versionName = name; versionLine = tok.line;
-      time = [headerTime[0], headerTime[1]]; dur = parseDuration('q')!; pendingChord = pendingText = undefined;
+      time = [headerTime[0], headerTime[1]]; dur = parseDuration('q')!; pendingChord = pendingText = pendingLyric = undefined;
       if (versions.some(v => v.name === name)) issues.push({ line: tok.line, col: tok.col, message: `There is already a version called "${name}"`, severity: 'warning' });
       continue;
     }
@@ -139,6 +139,7 @@ export function parseSong(src: string): ParseResult {
     }
     if (s.startsWith('"')) { pendingChord = s.slice(1, -1); continue; }
     if (s.startsWith('{')) { pendingText = s.slice(1, -1).trim(); continue; }
+    if (s.startsWith('<') && s.endsWith('>')) { pendingLyric = s.slice(1, -1).trim(); continue; }
     // optional inline duration: token:dur
     let inline: string | null = null;
     const ci = s.lastIndexOf(':');

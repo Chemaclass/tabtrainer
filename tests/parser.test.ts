@@ -95,3 +95,25 @@ describe('timeline', () => {
     }
   });
 });
+
+describe('lyrics', () => {
+  const SRC = `title: Sing along
+instrument: bass4
+tempo: 90
+key: C
+time: 4/4
+
+"C" <la la, don't stop> :q 3.3 3.3 <hey> 5.2 3.3 |
+<ooh> :h r 3.3 |
+`;
+  const { song, issues } = parseSong(SRC);
+  it('attaches <words> to the next note or rest', () => {
+    expect(issues).toEqual([]);
+    expect(song.bars[0].events.map(e => e.lyric)).toEqual(["la la, don't stop", undefined, 'hey', undefined]);
+    expect(song.bars[0].events[0].chord).toBe('C');
+    expect(song.bars[1].events[0]).toMatchObject({ notes: [], lyric: 'ooh' });
+  });
+  it('survives a round trip', () => {
+    expect(parseSong(serializeSong(song)).song.bars).toEqual(song.bars.map(b => expect.objectContaining({ events: b.events })));
+  });
+});

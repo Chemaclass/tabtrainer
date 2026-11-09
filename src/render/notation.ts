@@ -46,6 +46,7 @@ function drawSystem(div: HTMLDivElement, bars: Bar[], prev: Bar | undefined, c: 
   const weight = bars.map(b => 3 + b.events.length);
   const tw = weight.reduce((a, b) => a + b, 0);
   let x = 6; const avail = W - 12 - lead; let bottom = 0;
+  const lyrics: [number, string][] = [];
   bars.forEach((bar, bi) => {
     const prevBar = bi === 0 ? prev : bars[bi - 1];
     const bw = (bi === 0 ? lead : 0) + (avail * weight[bi]) / tw;
@@ -67,6 +68,7 @@ function drawSystem(div: HTMLDivElement, bars: Bar[], prev: Bar | undefined, c: 
     const ties: [StaveNote, StaveNote][] = []; const trip: StaveNote[][] = [], ttrip: (TabNote | GhostNote)[][] = [];
     let g: StaveNote[] = [], tg: (TabNote | GhostNote)[] = [];
     const labels: [StaveNote | TabNote | GhostNote, NoteEvent][] = [];
+    const lyricAt: [TabNote | GhostNote, string][] = [];
     for (const ev of bar.events) {
       const ps = pieces(ev); let prevS: StaveNote | null = null;
       ps.forEach(([val, dots, isT], pi) => {
@@ -85,6 +87,7 @@ function drawSystem(div: HTMLDivElement, bars: Bar[], prev: Bar | undefined, c: 
         if (isT) { g.push(s); tg.push(t); if (g.length === 3) { trip.push(g); ttrip.push(tg); g = []; tg = []; } }
         else if (g.length) { trip.push(g); ttrip.push(tg); g = []; tg = []; }
         if (pi === 0 && (ev.chord || ev.text)) labels.push([st ? s : t, ev]);
+        if (pi === 0 && ev.lyric) lyricAt.push([t, ev.lyric]);
         sn.push(s); tn.push(t); prevS = sorted.length ? s : null;
       });
     }
@@ -113,6 +116,7 @@ function drawSystem(div: HTMLDivElement, bars: Bar[], prev: Bar | undefined, c: 
     labels.forEach(([n, ev]) => { const px = n.getAbsoluteX(); ctx.fillText([ev.chord, ev.text].filter(Boolean).join('  '), px - 2, top - 6); });
     if (bar.section) { ctx.setFont('Inter, Arial, sans-serif', 11, 'bold'); ctx.fillText(bar.section.toUpperCase(), x + 4, top - 28); }
     ctx.restore();
+    lyricAt.forEach(([n, words]) => lyrics.push([n.getAbsoluteX() - 2, words]));
     // tag elements for highlight + click
     tags.forEach(([s, t, k]) => {
       for (const o of [s, t]) {
@@ -123,5 +127,10 @@ function drawSystem(div: HTMLDivElement, bars: Bar[], prev: Bar | undefined, c: 
     });
     x += bw;
   });
-  r.resize(W, Math.ceil(bottom + 34));
+  if (lyrics.length) {
+    ctx.save(); ctx.setFont('Inter, Arial, sans-serif', 13, 'normal');
+    lyrics.forEach(([px, words]) => ctx.fillText(words, px, bottom + 30));
+    ctx.restore();
+  }
+  r.resize(W, Math.ceil(bottom + (lyrics.length ? 44 : 34)));
 }
