@@ -47,8 +47,8 @@ const picker = songPicker($<HTMLInputElement>('songSearch'), $('songList'), v =>
 const demoGroups: Record<string, string> = { exercises: 'Exercises', songs: 'Songs' };
 function fillSongList() {
   const entries: SongEntry[] = [
-    ...Object.keys(demos).sort().map(p => ({ value: 'demo:' + p, title: titleOf(demos[p]), artist: artistOf(demos[p]), family: demoFamily(p), group: demoGroups[demoKind(p)] ?? 'Songs' })),
-    ...library().map(s => ({ value: 'lib:' + s.title, title: s.title, artist: artistOf(s.text), family: familyOfText(s.text), group: 'My songs' })),
+    ...Object.keys(demos).sort().map(p => ({ value: 'demo:' + p, title: titleOf(demos[p]), artist: artistOf(demos[p]), levels: levelsOf(demos[p]), family: demoFamily(p), group: demoGroups[demoKind(p)] ?? 'Songs' })),
+    ...library().map(s => ({ value: 'lib:' + s.title, title: s.title, artist: artistOf(s.text), levels: levelsOf(s.text), family: familyOfText(s.text), group: 'My songs' })),
   ];
   picker.show(entries, family, picked, entries.find(e => e.value === picked)?.title ?? 'Unsaved song');
 }
@@ -63,6 +63,8 @@ function chooseFamily(f: Family) {
   if (ex.length) pickSong('demo:' + ex[0]); else if (mine.length) pickSong('lib:' + mine[0].title); else { picked = ''; loadText(newSong()); showLink(); }
   showFamily();
 }
+// one level per version, in the order the versions are listed
+const levelsOf = (t: string) => { const { meta, versions } = parseSong(t).song; return versions.flatMap(v => v.level ?? meta.level ?? []); };
 const titleOf = (t: string) => /^\s*title\s*:\s*(.+)$/im.exec(t)?.[1].trim() ?? 'Untitled';
 const creditNames = (artist = '') => artist.replace(/\s*\(public domain\)\s*$/i, '').split(',').map(n => n.trim()).filter(Boolean);
 // the list names who wrote a song, unless TabTrainer wrote it or nobody knows
@@ -143,7 +145,9 @@ function chooseVersionNamed(slug: string | null) {
 function renderMeta(s: Song) {
   renderCredit(s);
   const parts: [string, boolean][] = [[`♩ = ${s.meta.tempo}`, true], [`key ${s.meta.key}`, true], [s.meta.instrument.name, false]];
-  $('subtitle').replaceChildren(...parts.filter(([t]) => t).map(([t, num]) => { const e = document.createElement('span'); if (num) e.className = 'num'; e.textContent = t; return e; }));
+  const facts = parts.filter(([t]) => t).map(([t, num]) => { const e = document.createElement('span'); if (num) e.className = 'num'; e.textContent = t; return e; });
+  if (s.meta.level) { const l = document.createElement('span'); l.className = `lvl lvl-${s.meta.level}`; l.textContent = s.meta.level; facts.unshift(l); }
+  $('subtitle').replaceChildren(...facts);
 }
 function renderCredit(s: Song) {
   const names = creditNames(s.meta.artist);

@@ -1,6 +1,7 @@
 title: Rock Eighths
 artist: TabTrainer
 about: Steady eighth notes on the root through the four-chord progression behind countless pop and rock songs. Keep every note the same length and volume.
+level: easy
 instrument: bass4
 tempo: 120
 key: E

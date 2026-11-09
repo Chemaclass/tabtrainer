@@ -1,6 +1,7 @@
 title: When the Saints Go Marching In
 artist: Traditional (public domain)
 about: Root and fifth over the three main chords of a key (C, F and G). First in half notes, then with the octave added in quarter notes.
+level: easy
 instrument: bass4
 tempo: 100
 key: C

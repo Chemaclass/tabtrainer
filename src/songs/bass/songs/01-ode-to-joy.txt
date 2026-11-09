@@ -1,6 +1,7 @@
 title: Ode to Joy
 artist: Ludwig van Beethoven (public domain)
 about: The melody of Beethoven's Ode to Joy, played on bass. It trains reading a melody that moves step by step, and the long-short rhythm of a dotted quarter note followed by an eighth.
+level: easy
 instrument: bass4
 tempo: 96
 key: C

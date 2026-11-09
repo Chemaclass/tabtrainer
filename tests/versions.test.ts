@@ -66,3 +66,38 @@ describe('song versions', () => {
     expect(r.issues.some(i => /already a version/.test(i.message))).toBe(true);
   });
 });
+
+describe('levels', () => {
+  const SRC = `title: Two ways
+level: easy
+instrument: bass4
+tempo: 90
+key: C
+time: 4/4
+
+== Bass line
+"C" :q 3.3 3.3 5.2 3.3 |
+
+== Melody + chords
+level: hard
+"C" :h (3.3 5.2) :q 5.1 7.1 |
+`;
+  const { song, issues } = parseSong(SRC);
+  it('reads the song level and a version level', () => {
+    expect(issues).toEqual([]);
+    expect(song.meta.level).toBe('easy');
+    expect(song.versions.map(v => v.level)).toEqual([undefined, 'hard']);
+  });
+  it('shows the version level when that version is picked', () => {
+    expect(withVersion(song, 0).meta.level).toBe('easy');
+    expect(withVersion(song, 1).meta.level).toBe('hard');
+  });
+  it('keeps levels through a round trip', () => {
+    const again = parseSong(serializeSong(song)).song;
+    expect(again.meta.level).toBe('easy');
+    expect(again.versions[1].level).toBe('hard');
+  });
+  it('rejects an unknown level', () => {
+    expect(parseSong(SRC.replace('level: easy', 'level: brutal')).issues[0].message).toContain('Level must be one of');
+  });
+});

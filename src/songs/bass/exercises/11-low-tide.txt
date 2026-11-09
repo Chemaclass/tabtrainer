@@ -1,6 +1,7 @@
 title: Low Tide
 artist: TabTrainer
-about: A whole tune to practise most middle-level skills in one go: a theme over a ringing open string, a singing reply higher up the neck, a hard middle part with sixteenth notes and triplets, and a quiet close.
+about: A whole tune to practise most skills in one go: a theme over a ringing open string, a singing reply higher up the neck, a hard middle part with sixteenth notes and triplets, and a quiet close.
+level: hard
 instrument: bass4
 tempo: 84
 key: Em

@@ -17,3 +17,11 @@ describe('song search', () => {
     expect(titles('dawning beethoven')).toEqual([]);
   });
 });
+
+describe('search by level', () => {
+  const rated: SongEntry[] = [{ ...song('Two ways'), levels: ['medium', 'hard'] }, { ...song('Starter'), levels: ['easy'] }];
+  it('finds a song by the level of any of its versions', () => {
+    expect(searchSongs(rated, 'hard').map(s => s.title)).toEqual(['Two ways']);
+    expect(searchSongs(rated, 'easy').map(s => s.title)).toEqual(['Starter']);
+  });
+});

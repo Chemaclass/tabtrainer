@@ -1,6 +1,7 @@
 title: Root and Fifth Groove
 artist: TabTrainer
 about: The root, fifth and octave shape in eighth notes. You will find this shape under most bass lines in pop and rock.
+level: easy
 instrument: bass4
 tempo: 92
 key: C

@@ -1,6 +1,7 @@
 title: A Minor Pentatonic
 artist: TabTrainer
 about: The five-note scale behind most rock and blues fills, in its most common shape at the fifth fret. Up, down, then a short fill built from it.
+level: medium
 instrument: bass4
 tempo: 80
 key: Am

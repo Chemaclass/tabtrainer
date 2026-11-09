@@ -21,6 +21,12 @@ export function songPicker(input: HTMLInputElement, list: HTMLElement, onPick: (
       const t = document.createElement('span'); t.className = 'opt-title'; t.textContent = e.title;
       li.append(t);
       if (e.artist) { const a = document.createElement('span'); a.className = 'opt-artist'; a.textContent = e.artist; li.append(a); }
+      if (e.levels?.length) {
+        const l = document.createElement('span'); l.className = 'opt-level'; l.setAttribute('role', 'img');
+        const words = e.levels.join(', '); l.title = words; l.setAttribute('aria-label', `Level: ${words}`);
+        l.append(...e.levels.map(v => { const d = document.createElement('span'); d.className = `dot dot-${v}`; return d; }));
+        li.append(l);
+      }
       li.onclick = () => pick(e.value);
       li.onmousemove = () => { if (active !== i) { active = i; mark(); } };
       list.append(li);

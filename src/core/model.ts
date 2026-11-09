@@ -40,11 +40,16 @@ export interface Bar {
   line?: number;
 }
 
+export const LEVELS = ['easy', 'medium', 'hard'] as const;
+export type Level = typeof LEVELS[number];
+
 export interface SongMeta {
   title: string;
   artist?: string;
   /** What the song trains, shown under the title. */
   about?: string;
+  /** How hard the song is to play. A version can set its own. */
+  level?: Level;
   /** Link to a recording of the original song. */
   listen?: string;
   tempo: number;
@@ -56,6 +61,8 @@ export interface SongMeta {
 export interface Version {
   name: string;
   bars: Bar[];
+  /** Overrides the song's level for this version. */
+  level?: Level;
 }
 
 export interface Song {
@@ -69,7 +76,7 @@ export interface Song {
 /** The same song, showing another of its versions (index is clamped to the available range). */
 export function withVersion(song: Song, index: number): Song {
   const v = song.versions[Math.max(0, Math.min(index, song.versions.length - 1))];
-  return { ...song, bars: v.bars };
+  return { ...song, bars: v.bars, meta: v.level ? { ...song.meta, level: v.level } : song.meta };
 }
 
 export const barTicks = (b: Pick<Bar, 'beats' | 'beatValue'>): number => (b.beats * PPQ * 4) / b.beatValue;

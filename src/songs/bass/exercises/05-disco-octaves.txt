@@ -1,6 +1,7 @@
 title: Disco Octaves
 artist: TabTrainer
 about: The octave shape (root, then the same note two strings up and two frets higher) bouncing in eighth notes. It trains a relaxed hand that jumps strings in time.
+level: medium
 instrument: bass4
 tempo: 112
 key: Am

@@ -1,6 +1,7 @@
 title: House of the Rising Sun
 artist: Traditional (public domain)
 about: Root, fifth and octave played one note at a time (an arpeggio) in 6/8 time, where you count two groups of three per bar.
+level: medium
 instrument: bass4
 tempo: 78
 key: Am

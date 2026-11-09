@@ -1,6 +1,7 @@
 title: Greensleeves
 artist: Traditional (public domain)
 about: Root and fifth in long notes under an old English folk song in a minor key. It trains feeling 6/8 time as two big beats per bar.
+level: medium
 instrument: bass4
 tempo: 84
 key: Am

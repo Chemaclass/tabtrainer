@@ -1,6 +1,7 @@
 title: Shuffle Blues in E
 artist: TabTrainer
 about: The swing feel of the blues, where each beat splits into a long note and a short one. It trains the 12-bar blues form and the root, fifth, sixth pattern.
+level: medium
 instrument: bass4
 tempo: 120
 key: E

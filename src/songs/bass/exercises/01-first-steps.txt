@@ -1,6 +1,7 @@
 title: First Steps: open strings and roots
 artist: TabTrainer
 about: Start here. Open strings and fretted roots in quarter, half and whole notes, so you learn where each note sits on the neck.
+level: easy
 instrument: bass4
 tempo: 76
 key: C

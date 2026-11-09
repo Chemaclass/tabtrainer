@@ -1,11 +1,11 @@
 import { INSTRUMENTS, customInstrument, type Instrument } from './instruments';
-import { PPQ, barTicks, type Bar, type Note, type NoteEvent, type Song, type Version } from './model';
+import { LEVELS, PPQ, barTicks, type Bar, type Level, type Note, type NoteEvent, type Song, type Version } from './model';
 
 export interface ParseIssue { line: number; col: number; message: string; severity: 'error' | 'warning' }
 export interface ParseResult { song: Song; issues: ParseIssue[] }
 
 const VALUES: Record<string, number> = { w: 4 * PPQ, h: 2 * PPQ, q: PPQ, '8': PPQ / 2, '16': PPQ / 4, '32': PPQ / 8 };
-const HEADER = /^\s*(title|artist|about|listen|instrument|tuning|tempo|key|time|clef)\s*:\s*(.*?)\s*$/i;
+const HEADER = /^\s*(title|artist|about|level|listen|instrument|tuning|tempo|key|time|clef)\s*:\s*(.*?)\s*$/i;
 
 interface Tok { text: string; line: number; col: number }
 
@@ -16,6 +16,7 @@ function tokenize(src: string, firstLine: number): Tok[] {
     const hash = raw.search(/(^|\s)#/);
     const text = hash >= 0 ? raw.slice(0, hash) : raw;
     if (/^\s*@/.test(text)) { toks.push({ text: text.trim(), line, col: text.indexOf('@') + 1 }); return; }
+    if (/^\s*level\s*:/i.test(text)) { toks.push({ text: text.trim(), line, col: text.search(/\S/) + 1 }); return; }
     if (/^\s*==/.test(text)) { toks.push({ text: text.trim(), line, col: text.indexOf('=') + 1 }); return; }
     const re = /"[^"]*"|\{[^}]*\}|<[^>]*>|\([^)]*\)(:[^\s|]+)?|\[[^\]]*\]|\||[^\s|]+/g;
     let mt: RegExpExecArray | null;
@@ -27,6 +28,9 @@ function tokenize(src: string, firstLine: number): Tok[] {
 function isWebAddress(v: string): boolean {
   try { const u = new URL(v); return (u.protocol === 'https:' || u.protocol === 'http:') && u.hostname.includes('.'); } catch { return false; }
 }
+
+const asLevel = (v: string): Level | undefined => LEVELS.find(l => l === v.toLowerCase());
+const LEVEL_HELP = (v: string) => `Level must be one of: ${LEVELS.join(', ')} (got "${v}")`;
 
 export function parseDuration(s: string): { ticks: number; value: string; dots: number; triplet: boolean } | null {
   const r = /^(w|h|q|8|16|32)(\.{0,2})(t?)$/.exec(s);
@@ -43,7 +47,7 @@ export function parseDuration(s: string): { ticks: number; value: string; dots: 
 export function parseSong(src: string): ParseResult {
   const issues: ParseIssue[] = [];
   const lines = src.replace(/\r\n?/g, '\n').split('\n');
-  const meta = { title: 'Untitled', artist: undefined as string | undefined, about: undefined as string | undefined, listen: undefined as string | undefined, tempo: 90, key: 'C', instrument: INSTRUMENTS.bass4 as Instrument };
+  const meta = { title: 'Untitled', artist: undefined as string | undefined, about: undefined as string | undefined, level: undefined as Level | undefined, listen: undefined as string | undefined, tempo: 90, key: 'C', instrument: INSTRUMENTS.bass4 as Instrument };
   let time: [number, number] = [4, 4];
   let tuning: string | null = null; let clef: 'bass' | 'treble' | undefined;
   let bodyStart = 0;
@@ -58,6 +62,7 @@ export function parseSong(src: string): ParseResult {
     if (key === 'title') meta.title = v;
     else if (key === 'artist') meta.artist = v;
     else if (key === 'about') meta.about = v;
+    else if (key === 'level') { const lv = asLevel(v); if (lv) meta.level = lv; else issues.push({ line: i + 1, col: 1, message: LEVEL_HELP(v), severity: 'error' }); }
     else if (key === 'listen') { if (isWebAddress(v)) meta.listen = v; else issues.push({ line: i + 1, col: 1, message: `"listen:" needs a web address starting with https://`, severity: 'error' }); }
     else if (key === 'tempo') { const t = parseFloat(v); if (t >= 20 && t <= 400) meta.tempo = t; else issues.push({ line: i + 1, col: 1, message: `Tempo must be between 20 and 400 (got "${v}")`, severity: 'error' }); }
     else if (key === 'key') meta.key = v;
@@ -73,7 +78,8 @@ export function parseSong(src: string): ParseResult {
 
   const headerTime: [number, number] = [time[0], time[1]];
   const versions: Version[] = [];
-  let versionName = 'Main'; let versionLine = 0;
+  let versionName = 'Main'; let versionLine = 0; let versionLevel: Level | undefined;
+  const version = (): Version => ({ name: versionName, bars, ...(versionLevel ? { level: versionLevel } : {}) });
   let bars: Bar[] = [];
   const st = { cur: null as Bar | null }; let t = 0;
   let dur = parseDuration('q')!;
@@ -122,11 +128,16 @@ export function parseSong(src: string): ParseResult {
       // a new version of the song: finish the current one and start counting bars again
       closeBar(tok);
       const name = s.replace(/^=+/, '').trim() || `Version ${versions.length + 1}`;
-      if (bars.length || versionLine) versions.push({ name: versionName, bars });
+      if (bars.length || versionLine) versions.push(version());
       else if (versions.length === 0 && pendingSection) { /* section before the first version applies to it */ }
-      bars = []; versionName = name; versionLine = tok.line;
+      bars = []; versionName = name; versionLine = tok.line; versionLevel = undefined;
       time = [headerTime[0], headerTime[1]]; dur = parseDuration('q')!; pendingChord = pendingText = pendingLyric = undefined;
       if (versions.some(v => v.name === name)) issues.push({ line: tok.line, col: tok.col, message: `There is already a version called "${name}"`, severity: 'warning' });
+      continue;
+    }
+    if (/^level\s*:/i.test(s)) {
+      const v = s.replace(/^level\s*:/i, '').trim(); const lv = asLevel(v);
+      if (lv) versionLevel = lv; else issues.push({ line: tok.line, col: tok.col, message: LEVEL_HELP(v), severity: 'error' });
       continue;
     }
     if (s === '|') { closeBar(tok); continue; }
@@ -161,7 +172,7 @@ export function parseSong(src: string): ParseResult {
     if (n) pushEvent([n], tok);
   }
   if (st.cur) closeBar({ text: '', line: lines.length, col: 1 });
-  if (bars.length || !versions.length) versions.push({ name: versionName, bars });
+  if (bars.length || !versions.length) versions.push(version());
   if (versions.every(v => !v.bars.length)) issues.push({ line: 1, col: 1, message: 'No bars yet. Add notes like:  :q 3.4 5.4 3.3 5.3 |', severity: 'warning' });
   for (const v of versions) if (!v.bars.length && versions.length > 1) issues.push({ line: 1, col: 1, message: `Version "${v.name}" has no bars`, severity: 'warning' });
   return { song: { meta, bars: versions[0].bars, versions }, issues };

@@ -15,6 +15,7 @@ export function serializeSong(song: Song, barsPerLine = 2): string {
   const out: string[] = [`title: ${meta.title}`];
   if (meta.artist) out.push(`artist: ${meta.artist}`);
   if (meta.about) out.push(`about: ${meta.about}`);
+  if (meta.level) out.push(`level: ${meta.level}`);
   if (meta.listen) out.push(`listen: ${meta.listen}`);
   const preset = Object.values(INSTRUMENTS).find(i => i.id === meta.instrument.id);
   if (preset) out.push(`instrument: ${preset.id}`);
@@ -29,7 +30,7 @@ export function serializeSong(song: Song, barsPerLine = 2): string {
   versions.forEach((v, vi) => {
     // every version restarts from the header's time signature and the default duration
     let dur = ''; let ts = headerTs;
-    if (versions.length > 1) { flush(); if (vi > 0) out.push(''); out.push(`== ${v.name}`); }
+    if (versions.length > 1) { flush(); if (vi > 0) out.push(''); out.push(`== ${v.name}`); if (v.level) out.push(`level: ${v.level}`); }
     v.bars.forEach((b, i) => {
       if (b.section) { flush(); out.push(`@${b.section}`); }
       const parts: string[] = [];

@@ -1,6 +1,7 @@
 title: C Major Scale
 artist: TabTrainer
 about: One finger per fret. Play one octave of the C major scale up and down without moving your hand.
+level: easy
 instrument: bass4
 tempo: 70
 key: C

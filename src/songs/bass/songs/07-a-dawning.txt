@@ -1,6 +1,7 @@
 title: A Dawning
 artist: Ólafur Arnalds, Talos
 about: Two ways to play it: a melodic single-note bass line, and a solo-bass arrangement with melody and chords.
+level: medium
 listen: https://www.youtube.com/watch?v=nEBbhgMp8Ok
 instrument: bass4
 tempo: 88
@@ -8,6 +9,7 @@ key: Ab
 time: 4/4
 
 == Bass line
+level: medium
 @Intro
 "Db" {p} <Ooh> 4.3:h 6.3:q 3.2:q | "Ab/C" 3.3:q. 6.3:8 4.3:h |
 "Db" ~4.3:h 6.2:q 3.2:q | [2/4] r:h |
@@ -73,6 +75,7 @@ time: 4/4
 "Ab" <war is our dawning> 6.3:q 4.4:16 4.4:8. 3.3:q 6.4:q | "Ab" {fermata} <Mm> 4.4:w |
 
 == Solo bass (melody + chords)
+level: hard
 @Intro
 "Db" {p} <Ooh> (3.2 4.3):h (5.2 6.3):h | "Ab/C" (1.2 3.3):h (3.2 4.3):h |
 "Db" (3.2 4.3):w | [2/4] r:h |
