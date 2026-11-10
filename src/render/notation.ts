@@ -37,7 +37,7 @@ export function renderSong(host: HTMLElement, song: Song, opt: RenderOptions): v
 interface Ctx { key: string; clef: 'bass' | 'treble'; tuning: number[]; nStr: number; opt: RenderOptions; barStart: Record<number, number> }
 
 function drawSystem(div: HTMLDivElement, bars: Bar[], prev: Bar | undefined, c: Ctx) {
-  const W = Math.max(480, c.opt.width);
+  const W = Math.max(240, c.opt.width);
   const top = c.opt.showNotation ? 66 : 46;
   const staffH = c.opt.showNotation ? 92 : 0;
   const H = top + staffH + 40 + c.nStr * 13 + 30; // provisional; resized to the real tab bottom below

@@ -27,7 +27,7 @@ const src = $<HTMLTextAreaElement>('src'), sheet = $('sheet'), player = new Play
 let song: Song | null = null;
 let parsed: Song | null = null; // whole song with every version
 let versionIdx = 0;
-let zoom = pref('zoom', 1), showNota = pref('notation', true);
+let zoom = pref('zoom', 1), showNota = pref('notation', matchMedia('(min-width:600px)').matches);
 
 // ---------- song list ----------
 // demo songs live in src/songs/<family>/<kind>/, kind being exercises or songs
@@ -168,8 +168,10 @@ function jumpToLine(line: number) {
 }
 function draw() {
   if (!song) return;
-  const w = sheet.clientWidth - 12;
-  const perLine = Math.max(1, Math.min(6, Math.round((w / zoom) / (showNota ? 300 : 240))));
+  // measure the unzoomed parent: browsers disagree on whether a zoomed element reports its own width zoomed
+  const box = getComputedStyle(sheet.parentElement!);
+  const w = sheet.parentElement!.clientWidth - parseFloat(box.paddingLeft) - parseFloat(box.paddingRight) - 12;
+  const perLine = Math.max(1, Math.min(8, Math.round((w / zoom) / (showNota ? 300 : 240))));
   sheet.style.setProperty('zoom', String(zoom));
   renderSong(sheet, song, { barsPerLine: perLine, showNotation: showNota, width: w / zoom });
 }
@@ -280,6 +282,7 @@ $('notaBtn').onclick = () => setNotation(true);
 $('tabBtn').onclick = () => setNotation(false);
 $('zoomIn').onclick = () => { zoom = Math.min(1.8, +(zoom + 0.1).toFixed(2)); setPref('zoom', zoom); draw(); };
 $('zoomOut').onclick = () => { zoom = Math.max(0.6, +(zoom - 0.1).toFixed(2)); setPref('zoom', zoom); draw(); };
+$('moreBtn').onclick = () => $('moreBtn').setAttribute('aria-expanded', String(document.querySelector('.player')!.classList.toggle('open')));
 $('helpBtn').onclick = () => $<HTMLDialogElement>('help').showModal();
 function flash(msg: string) { const s = $('status'); const old = s.textContent; s.textContent = msg; setTimeout(() => { if (s.textContent === msg) s.textContent = old; }, 2500); }
 // keep removeSong reachable for a future "delete" button (and from the console)
@@ -291,7 +294,7 @@ new ResizeObserver(([e]) => document.documentElement.style.setProperty('--deck-h
 // ---------- start ----------
 $('notaBtn').classList.toggle('on', showNota); $('tabBtn').classList.toggle('on', !showNota);
 setPlayLabel();
-showEditor(pref('editor', true));
+showEditor(pref('editor', matchMedia('(min-width:900px)').matches));
 const lastText = pref<string | null>('last', null), lastPick = pref('picked', '');
 const link = new URLSearchParams(location.search);
 const linked = findBySlug(Object.keys(demos), link.get('song') ?? '');

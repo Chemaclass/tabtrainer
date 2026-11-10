@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>TabTrainer: learn bass and guitar from tab and notation</title>
   <meta name="description" content="Free, open-source tab and notation player for electric bass and guitar. Slow a song down, loop the hard bars, and follow each note as it plays." />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='14' fill='%23111111'/><g stroke='%23fff' stroke-width='3'><line x1='12' y1='20' x2='52' y2='20'/><line x1='12' y1='30' x2='52' y2='30'/><line x1='12' y1='40' x2='52' y2='40'/></g><circle cx='38' cy='30' r='8' fill='%23e0312b'/></svg>" />
@@ -49,7 +49,7 @@
         </div>
       </div>
       <div id="sheet" class="sheet"></div>
-      <p class="tip">Double-click any note to start playing from there. <kbd>Space</kbd> plays or pauses, <kbd>S</kbd> starts auto-scroll.</p>
+      <p class="tip">Double-click any note to start playing from there.<span class="keys"> <kbd>Space</kbd> plays or pauses, <kbd>S</kbd> starts auto-scroll.</span></p>
     </section>
   </main>
 
@@ -63,6 +63,8 @@
       <div class="speed-head"><label class="lbl" for="speed">Speed</label><output id="speedOut">100%</output></div>
       <input id="speed" type="range" min="30" max="130" value="100" />
     </div>
+    <button id="moreBtn" class="more" aria-expanded="false" aria-controls="extras" aria-label="More controls" title="Loop, follow and auto-scroll"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M3 9l4-4 4 4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+    <div id="extras" class="extras">
     <div class="loop">
       <label class="pill"><input id="loopChk" type="checkbox" /><svg width="16" height="14" viewBox="0 0 16 14" aria-hidden="true"><path d="M2 7a4 4 0 0 1 4-4h6M14 7a4 4 0 0 1-4 4H4M10 1l2 2-2 2M6 9l-2 2 2 2" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Loop bars</label>
       <input id="loopA" type="number" min="1" value="1" aria-label="Loop from bar" /><span class="arrow" aria-hidden="true">→</span><input id="loopB" type="number" min="1" value="1" aria-label="Loop to bar" />
@@ -72,6 +74,7 @@
     <div class="scroll">
       <button id="scrollBtn" class="pill dot" title="Slow auto-scroll (S)">Auto-scroll</button>
       <input id="scrollSpeed" type="range" min="3" max="80" value="15" title="Scroll speed (↑/↓ while scrolling)" aria-label="Scroll speed" />
+    </div>
     </div>
   </footer>
 
