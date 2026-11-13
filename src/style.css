@@ -221,3 +221,14 @@ dialog .muted{color:var(--mut)}
   .player{padding:12px 40px}
   .speed{width:280px;max-width:none}
 }
+
+.passage{margin:0 0 12px;font-size:13px;color:var(--mut)}
+.passage p{margin:6px 0}
+.passage-actions{display:flex;flex-wrap:wrap;gap:8px}
+.passage-actions button{min-height:44px}
+.passage-actions button:disabled{opacity:.5;cursor:default}
+.bar-target{fill:transparent;stroke:transparent;stroke-width:2;cursor:pointer}
+.bar-target.in-range{fill:#ffb020;fill-opacity:.14}
+.bar-target.selected{stroke:#2766bb;stroke-dasharray:6 3}
+.bar-target:hover{fill:#2766bb;fill-opacity:.08}
+.bar-target:focus-visible{outline:none;stroke:#2766bb;stroke-width:3}

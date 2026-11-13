@@ -67,6 +67,18 @@ export class Player {
     this.emit(Math.max(this.from, heard));
   }
   private halt() { if (this.timer !== null) clearInterval(this.timer); this.timer = null; if (this.master && this.ctx) this.master.gain.setTargetAtTime(0, this.ctx.currentTime, 0.03); }
+  setRange(range: [number, number] | null, loop: boolean) {
+    const beat = this.playing && this.ctx ? this.from + (this.ctx.currentTime - this.t0) / this.spb() : this.paused;
+    this.range = range; this.loop = loop;
+    const [a, z] = range ?? [0, this.total];
+    if (this.playing) this.play(beat !== null && beat >= a && beat < z ? beat : a);
+  }
+  seek(beat: number) {
+    if (!Number.isFinite(beat) || !this.bars.length) return;
+    const target = Math.max(0, Math.min(this.bars[this.bars.length - 1].start, beat));
+    if (this.playing) this.play(target);
+    else { this.paused = target; this.emit(target); }
+  }
   pause() { if (!this.playing || !this.ctx) return; this.paused = Math.max(this.from, this.from + (this.ctx.currentTime - this.t0) / this.spb() - 0.05); this.halt(); this.emit(this.paused); }
   toggle() { if (this.playing) this.pause(); else this.play(this.paused ?? undefined); }
   stop() { this.halt(); this.paused = null; this.emit(null); }
