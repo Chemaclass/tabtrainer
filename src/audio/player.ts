@@ -74,11 +74,22 @@ export class Player {
     this.to = z;
     if (this.playing && (beat === null || beat < a || beat >= z)) this.play(a);
   }
+  noteAtKey(key: string): TimedNote | undefined {
+    return this.notes.find(note => note.key === key && Number.isFinite(note.beat) && note.beat >= 0 && note.beat < this.total && this.bars.some(bar => bar.bar === note.bar && note.beat >= bar.start && note.beat < bar.start + bar.length));
+  }
+  seekNote(key: string): boolean {
+    const note = this.noteAtKey(key);
+    if (!note) return false;
+    this.setPosition(note.beat); return true;
+  }
+  private setPosition(target: number) {
+    if (this.playing) this.play(target);
+    else { this.paused = target; this.emit(target); }
+  }
   seek(beat: number) {
     if (!Number.isFinite(beat) || !this.bars.length) return;
     const target = Math.max(0, Math.min(this.bars[this.bars.length - 1].start, beat));
-    if (this.playing) this.play(target);
-    else { this.paused = target; this.emit(target); }
+    this.setPosition(target);
   }
   pause() { if (!this.playing || !this.ctx) return; this.paused = Math.max(this.from, this.from + (this.ctx.currentTime - this.t0) / this.spb() - 0.05); this.halt(); this.emit(this.paused); }
   toggle() { if (this.playing) this.pause(); else this.play(this.paused ?? undefined); }
