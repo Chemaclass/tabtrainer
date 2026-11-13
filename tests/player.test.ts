@@ -46,3 +46,50 @@ describe('active passage boundaries', () => {
     expect(p.playing).toBe(false);
   });
 });
+
+describe('note selection', () => {
+  afterEach(() => { vi.useRealTimers(); vi.unstubAllGlobals(); });
+  const note = (beat: number, key: string, bar: number, string = 1) => ({ beat, key, bar, string, fret: 0, midi: 60, ring: 1 });
+  const withNotes = () => {
+    const p = loaded();
+    p.notes = [note(1.5, '1500', 1), note(7 / 3, '2333', 1), note(7 / 3, '2333', 1, 2), note(7, '7000', 2)];
+    return p;
+  };
+  it('selects a note late in the final bar without starting audio', () => {
+    const p = withNotes();
+    expect(p.seekNote('7000')).toBe(true);
+    expect(p.pausedAt).toBe(7); expect(p.playing).toBe(false);
+  });
+  it('uses exact dotted and triplet beats and treats a chord as one onset', () => {
+    const p = withNotes();
+    expect(p.seekNote('1500')).toBe(true); expect(p.pausedAt).toBe(1.5);
+    expect(p.seekNote('2333')).toBe(true); expect(p.pausedAt).toBe(7 / 3);
+  });
+  it('rejects stale keys and invalid timeline positions', () => {
+    const p = withNotes(); p.seekNote('7000');
+    expect(p.seekNote('missing')).toBe(false);
+    p.notes.push(note(8, '8000', 2), note(1, 'badbar', 2), note(NaN, 'nan', 1));
+    for (const key of ['8000', 'badbar', 'nan']) expect(p.seekNote(key)).toBe(false);
+    expect(p.pausedAt).toBe(7);
+  });
+  it('starts playback at the selected exact onset', () => {
+    vi.useFakeTimers();
+    const gain = { gain: { value: 1, setTargetAtTime: vi.fn() }, connect() {} };
+    class AudioContext {
+      currentTime = 0;
+      resume() { return Promise.resolve(); }
+      createGain() { return gain; }
+    }
+    vi.stubGlobal('window', { AudioContext, setInterval, clearInterval });
+    const p = withNotes(); const states: { playing: boolean; beat: number | null }[] = [];
+    p.on(state => states.push(state)); p.seekNote('2333'); p.toggle();
+    expect(states).toEqual([{ playing: false, beat: 7 / 3 }, { playing: true, beat: 7 / 3 }]);
+    p.stop();
+  });
+  it('seeks and continues when already playing', () => {
+    const p = withNotes();
+    vi.spyOn(p, 'playing', 'get').mockReturnValue(true);
+    const play = vi.spyOn(p, 'play').mockImplementation(() => {});
+    expect(p.seekNote('2333')).toBe(true); expect(play).toHaveBeenCalledWith(7 / 3);
+  });
+});

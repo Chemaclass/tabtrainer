@@ -113,6 +113,7 @@ dialog .muted{color:var(--mut)}
 }
 .passage{margin:0 0 12px;font-size:13px;color:var(--mut)}
 .passage p{margin:6px 0}
+#rangeSummary{min-height:40px}
 .passage-actions{display:flex;flex-wrap:wrap;gap:8px}
 .passage-actions button{min-height:44px}
 .bar-target{fill:transparent;stroke:transparent;stroke-width:2;cursor:pointer}
@@ -120,6 +121,9 @@ dialog .muted{color:var(--mut)}
 .bar-target.selected{stroke:#2766bb;stroke-dasharray:6 3}
 .bar-target:hover{fill:#2766bb;fill-opacity:.08}
 .bar-target:focus-visible{outline:none;stroke:#2766bb;stroke-width:3}
+.note-target{fill:transparent;stroke:transparent;stroke-width:2;cursor:pointer}
+.note-target.selected{fill:#2766bb;fill-opacity:.16;stroke:#2766bb}
+.note-target:focus-visible{outline:none;stroke:#2766bb;stroke-width:3}
 @media (max-width:599px){
   .file-menu{position:static}
   .file-actions{right:max(16px,env(safe-area-inset-right))}

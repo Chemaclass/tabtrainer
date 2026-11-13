@@ -17,6 +17,7 @@ TabTrainer is a free, open-source web app. Choose an exercise or song from the l
 - **Playback** with a simple synth. Play, pause and resume, set the speed from 30 to 130%, and loop any range of bars. Press `Space` to play or stop.
 - **Follow along:** each note turns red as it plays, and the page scrolls to keep the current line in view.
 - **Continuous scrolling** at a speed you choose, even without audio. Choose Off, Follow playback, or Continuous under Scrolling. Press `S` to toggle Continuous, and `↑` or `↓` to change its speed.
+- **Start from a note:** select a note, then press Play or Space. Double-click a note to start playback there.
 - **Choose a passage:** select a bar, then press Play. Set loop boundaries from the score or enter bar numbers.
 - **Editor with live preview:** each error or warning names the line it comes from. Drag the divider to resize the editor, or hide it to make room for the score.
 - **Credits and the original:** each song shows who wrote it, and a "Listen to the original" link when the file has one.

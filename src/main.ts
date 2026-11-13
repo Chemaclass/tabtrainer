@@ -161,7 +161,7 @@ window.addEventListener('popstate', event => navigation.visit(event.state, (rout
 
 // ---------- parse + render ----------
 let timer = 0;
-src.addEventListener('input', () => { persistDraft(); clearTimeout(timer); timer = window.setTimeout(() => update(false), 300); });
+src.addEventListener('input', () => { if (selectedNote) player.stop(); persistDraft(); clearTimeout(timer); timer = window.setTimeout(() => update(false), 300); });
 function update(resetLoop: boolean) {
   const { song: all, issues } = parseSong(src.value);
   parsed = all;
@@ -271,14 +271,15 @@ const setPlayLabel = () => {
   b.setAttribute('aria-label', player.playing ? 'Pause' : player.pausedAt !== null ? 'Resume' : 'Play');
 };
 let lit: Element[] = [], litKey: string | null = null, curSys: Element | null = null;
+let selectedNote: { key: string; beat: number; bar: number } | null = null;
 let onsets: number[] = [];
 let playbackWasActive = false;
-player.on(({ beat }) => {
+player.on(({ beat, playing }) => {
   const started = player.playing && !playbackWasActive; playbackWasActive = player.playing;
   if (started && picked) { recordPractice(picked); fillSongList(); }
   setPlayLabel();
-  if (beat === null) { passage.deselect(); showPassage(); lit.forEach(e => e.classList.remove('on')); lit = []; litKey = null; curSys?.classList.remove('cur'); curSys = null; $('barNo').textContent = '–'; return; }
-  const key = onsetAt(onsets, beat);
+  if (beat === null) { selectedNote = null; passage.deselect(); showPassage(); lit.forEach(e => e.classList.remove('on')); lit = []; litKey = null; curSys?.classList.remove('cur'); curSys = null; $('barNo').textContent = '–'; return; }
+  const key = playing ? onsetAt(onsets, beat) : null;
   if (key !== litKey) {
     lit.forEach(e => e.classList.remove('on'));
     lit = key ? [...sheet.querySelectorAll(`[data-key="${key}"]`)] : []; lit.forEach(e => e.classList.add('on')); litKey = key;
@@ -312,16 +313,27 @@ function showPassage() {
   $<HTMLInputElement>('loopB').value = String(state.last);
   $<HTMLInputElement>('loopA').max = $<HTMLInputElement>('loopB').max = String(state.count);
   $<HTMLInputElement>('loopChk').checked = state.repeat;
+  sheet.querySelectorAll<SVGElement>('.note-target').forEach(el => {
+    const selected = el.dataset.key === selectedNote?.key;
+    el.classList.toggle('selected', selected);
+    el.setAttribute('aria-pressed', String(selected));
+  });
   sheet.querySelectorAll<SVGElement>('.bar-target').forEach(el => {
     const bar = +el.dataset.bar!;
     el.classList.toggle('in-range', state.active && passage.includes(bar));
     el.classList.toggle('selected', bar === state.selected);
     el.setAttribute('aria-pressed', String(bar === state.selected));
   });
-  document.querySelector<HTMLElement>('.passage-actions')!.hidden = !state.selected && !state.active;
-  $('rangeSummary').hidden = !state.selected && !state.active;
   for (const id of ['rangeStart', 'rangeEnd']) $<HTMLButtonElement>(id).disabled = !state.selected;
-  $('rangeSummary').textContent = passage.summary();
+  $<HTMLButtonElement>('rangeReset').disabled = !state.selected && !state.active;
+  const note = selectedNote;
+  if (note) {
+    const start = player.bars.find(bar => bar.bar === note.bar)?.start ?? 0;
+    const beatValue = song?.bars.find(bar => bar.index === note.bar)?.beatValue ?? 4;
+    const beat = Number(((note.beat - start) * beatValue / 4 + 1).toFixed(3));
+    const range = state.active ? `Bars ${state.first}-${state.last}, ${state.repeat ? 'repeating' : 'play once'}.` : 'Whole song, play once.';
+    $('rangeSummary').textContent = `Selected note in bar ${note.bar}, beat ${beat}. ${range}`;
+  } else $('rangeSummary').textContent = passage.summary();
 }
 function setPlayerRange() {
   const range = passage.range();
@@ -330,6 +342,7 @@ function setPlayerRange() {
 function applyLoop() {
   if (!song?.bars.length) return;
   setPlayerRange();
+  if (selectedNote && player.range && (selectedNote.beat < player.range[0] || selectedNote.beat >= player.range[1])) selectedNote = null;
   const beat = player.pausedAt;
   if (!player.playing && player.range && (beat === null || beat < player.range[0] || beat >= player.range[1])) {
     passage.selectStart(); player.seek(player.range[0]);
@@ -338,6 +351,7 @@ function applyLoop() {
 }
 function selectBar(bar: number) {
   if (!passage.select(bar)) return;
+  selectedNote = null;
   setPlayerRange();
   const span = player.bars.find(span => span.bar === bar);
   if (span) player.seek(span.start);
@@ -354,14 +368,33 @@ $('rangeReset').onclick = () => {
   applyLoop();
 }));
 
+function selectNote(key: string, bar: number) {
+  const note = player.noteAtKey(key);
+  if (!note || note.bar !== bar || !passage.select(bar)) return false;
+  selectedNote = { key: note.key, beat: note.beat, bar: note.bar };
+  setPlayerRange();
+  player.seekNote(key);
+  showPassage();
+  return true;
+}
 sheet.addEventListener('click', e => {
-  const el = (e.target as Element).closest<SVGElement>('.bar-target');
-  if (el) selectBar(+el.dataset.bar!);
+  const note = (e.target as Element).closest<SVGElement>('.note-target');
+  if (note) { selectNote(note.dataset.key!, +note.dataset.bar!); return; }
+  const bar = (e.target as Element).closest<SVGElement>('.bar-target');
+  if (bar) selectBar(+bar.dataset.bar!);
+});
+sheet.addEventListener('dblclick', e => {
+  const note = (e.target as Element).closest<SVGElement>('.note-target');
+  if (note && selectNote(note.dataset.key!, +note.dataset.bar!)) player.play(selectedNote!.beat);
 });
 sheet.addEventListener('keydown', e => {
-  const el = (e.target as Element).closest<SVGElement>('.bar-target');
-  if (el && e.key === 'Enter') {
-    e.preventDefault(); e.stopPropagation(); selectBar(+el.dataset.bar!);
+  if (e.key !== 'Enter') return;
+  const note = (e.target as Element).closest<SVGElement>('.note-target');
+  const bar = (e.target as Element).closest<SVGElement>('.bar-target');
+  if (note || bar) {
+    e.preventDefault(); e.stopPropagation();
+    if (note) selectNote(note.dataset.key!, +note.dataset.bar!);
+    else if (bar) selectBar(+bar.dataset.bar!);
   }
 });
 

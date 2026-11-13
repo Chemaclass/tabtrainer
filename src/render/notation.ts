@@ -63,7 +63,8 @@ function drawSystem(div: HTMLDivElement, bars: Bar[], prev: Bar | undefined, c: 
       if (bi === 0) new StaveConnector(st, tab).setType('singleLeft').setContext(ctx).draw();
       new StaveConnector(st, tab).setType('singleRight').setContext(ctx).draw();
     }
-    const sn: StaveNote[] = [], tn: (TabNote | GhostNote)[] = [], tags: [StaveNote | null, TabNote, string][] = [];
+    const sn: StaveNote[] = [], tn: (TabNote | GhostNote)[] = [];
+    const targets: { notation: StaveNote | null; tab: TabNote | GhostNote; event: NoteEvent }[] = [];
     const ties: [StaveNote, StaveNote][] = []; const trip: StaveNote[][] = [], ttrip: (TabNote | GhostNote)[][] = [];
     let g: StaveNote[] = [], tg: (TabNote | GhostNote)[] = [];
     const labels: [StaveNote | TabNote | GhostNote, NoteEvent][] = [];
@@ -79,7 +80,6 @@ function drawSystem(div: HTMLDivElement, bars: Bar[], prev: Bar | undefined, c: 
         } else {
           s = new StaveNote({ clef: c.clef, keys: sorted.map(n => vexKey(c.tuning[n.string - 1] + n.fret, c.key)), duration: val, auto_stem: true });
           t = new TabNote({ positions: sorted.map(n => ({ str: n.string, fret: (pi > 0 || n.tie) ? `(${n.fret})` : String(n.fret) })), duration: val });
-          if (pi === 0) tags.push([st ? s : null, t as TabNote, onsetKey(c.barStart[bar.index] + ev.start / PPQ)]);
           if (prevS) ties.push([prevS, s]);
         }
         if (dots) Dot.buildAndAttach([s], { all: true });
@@ -87,7 +87,7 @@ function drawSystem(div: HTMLDivElement, bars: Bar[], prev: Bar | undefined, c: 
         else if (g.length) { trip.push(g); ttrip.push(tg); g = []; tg = []; }
         if (pi === 0 && (ev.chord || ev.text)) labels.push([st ? s : t, ev]);
         if (pi === 0 && ev.lyric) lyricAt.push([t, ev.lyric]);
-        sn.push(s); tn.push(t); prevS = sorted.length ? s : null;
+        sn.push(s); tn.push(t); targets.push({ notation: st ? s : null, tab: t, event: ev }); prevS = sorted.length ? s : null;
       });
     }
     if (g.length) { trip.push(g); ttrip.push(tg); }
@@ -116,21 +116,37 @@ function drawSystem(div: HTMLDivElement, bars: Bar[], prev: Bar | undefined, c: 
     if (bar.section) { ctx.setFont('Inter, Arial, sans-serif', 11, 'bold'); ctx.fillText(bar.section.toUpperCase(), x + 4, top - 28); }
     ctx.restore();
     lyricAt.forEach(([n, words]) => lyrics.push([n.getAbsoluteX() - 2, words]));
-    // tag elements for highlight + click
-    tags.forEach(([s, t, k]) => {
-      for (const o of [s, t]) {
-        if (!o) continue;
-        const id = o.getAttribute('id'); const el = div.querySelector<SVGElement>('#vf-' + CSS.escape(String(id)));
-        if (el) { el.classList.add('note'); el.dataset.key = k; }
-      }
-    });
     const target = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
     target.setAttribute('x', String(x)); target.setAttribute('y', String(top - 18));
     target.setAttribute('width', String(bw)); target.setAttribute('height', String(bottom - top + 42));
     target.setAttribute('tabindex', '0'); target.setAttribute('role', 'button');
     target.setAttribute('aria-label', `Select bar ${bar.index}`);
     target.classList.add('bar-target'); target.dataset.bar = String(bar.index);
-    div.querySelector('svg')!.append(target);
+    const svg = div.querySelector('svg')!;
+    svg.append(target);
+    targets.forEach(({ notation, tab: note, event }, index) => {
+      if (!event.notes.length) return;
+      const key = onsetKey(c.barStart[bar.index] + event.start / PPQ);
+      const center = note.getAbsoluteX() + 5;
+      const left = index ? (targets[index - 1].tab.getAbsoluteX() + 5 + center) / 2 : x;
+      const right = index + 1 < targets.length ? (center + targets[index + 1].tab.getAbsoluteX() + 5) / 2 : x + bw;
+      for (const item of [notation, note]) {
+        if (!item) continue;
+        const id = item.getAttribute('id'); const el = div.querySelector<SVGElement>('#vf-' + CSS.escape(String(id)));
+        if (el) { el.classList.add('note'); el.dataset.key = key; }
+        const ys = item.getYs();
+        const hit = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+        const hitLeft = Math.max(left, center - 12); const hitRight = Math.min(right, center + 12);
+        hit.setAttribute('x', String(hitLeft)); hit.setAttribute('y', String(Math.min(...ys) - 12));
+        hit.setAttribute('width', String(Math.max(0, hitRight - hitLeft)));
+        hit.setAttribute('height', String(Math.max(...ys) - Math.min(...ys) + 24));
+        hit.setAttribute('tabindex', '0'); hit.setAttribute('role', 'button');
+        hit.setAttribute('aria-label', `Select note in bar ${bar.index}, beat ${Number((event.start / PPQ * bar.beatValue / 4 + 1).toFixed(3))}`);
+        hit.setAttribute('aria-pressed', 'false');
+        hit.classList.add('note-target'); hit.dataset.key = key; hit.dataset.bar = String(bar.index);
+        svg.append(hit);
+      }
+    });
     x += bw;
   });
   if (lyrics.length) {
