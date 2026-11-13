@@ -1,6 +1,3 @@
-[hidden]{display:none!important}
-body{padding-bottom:calc(var(--deck-h) + var(--continuation-h,0px))}
-body.library-view{padding-bottom:0}
 .top{position:relative;z-index:8;display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:32px;min-height:64px;padding:0 48px;background:var(--page);border-bottom:1px solid var(--rule)}
 .library-view .top{min-height:72px}
 #homeBtn{padding:0;border:0;min-height:44px}
@@ -69,23 +66,8 @@ body:not(.library-view) .library-nav,body:not(.library-view) #familySelect,body:
 .reading-guide h2{font-size:16px;line-height:24px;font-weight:600;margin:0 0 12px}
 .reading-guide p{font-size:14px;line-height:22px;color:var(--mut);margin:0 0 12px}
 .reading-guide button{min-height:44px;padding:0;text-decoration:underline;font-size:14px}
-.save-state{top:0}
-.viewer{max-width:1600px;width:100%;margin:0 auto}
-.exercise-continuation{position:fixed;bottom:0;left:0;right:0;z-index:6;display:flex;align-items:center;justify-content:space-between;gap:24px;min-height:64px;padding:8px 48px;background:var(--page);border-top:1px solid var(--rule)}
-.exercise-continuation p{font-size:14px;color:var(--mut);margin:0}
-#nextExerciseBtn{display:flex;align-items:center;gap:18px;min-width:0;min-height:44px;padding:0;text-align:left;font-size:14px}
-#nextExerciseBtn>span:first-child{color:var(--mut)}
-#nextExerciseTitle{font-size:14px;overflow-wrap:anywhere}
-.next-arrow{display:flex;align-items:center;justify-content:center;flex:0 0 44px;height:44px;background:var(--ink);color:var(--page);border-radius:6px;font-size:20px}
-.player{bottom:var(--continuation-h,0px)}
-#returnDraftBtn{font-size:12px;text-decoration:underline;min-height:32px}
 @media(min-width:900px){
   .top{position:sticky;top:0}
-  .save-state{top:var(--top-h,64px)}
-  .layout{min-height:calc(100dvh - var(--top-h,64px) - var(--save-state-h,0px) - var(--deck-h) - var(--continuation-h,0px))}
-  .editor{top:calc(var(--top-h,64px) + var(--save-state-h,0px));height:calc(100dvh - var(--top-h,64px) - var(--save-state-h,0px) - var(--deck-h) - var(--continuation-h,0px))}
-  .viewer{padding:28px 64px 32px}
-  .layout:not(.noedit) .viewer{padding:28px 32px}
 }
 @media(max-width:1199px){
   .top{padding:0 24px;gap:20px}
@@ -95,7 +77,6 @@ body:not(.library-view) .library-nav,body:not(.library-view) #familySelect,body:
   .catalogue-mobile-meta{display:block}
   .catalogue-heading{align-items:flex-start}
   #catalogueHint{max-width:19ch}
-  .exercise-continuation{padding-inline:24px}
 }
 @media(max-width:899px){
   .top{display:flex;flex-wrap:wrap;justify-content:space-between;gap:0 12px;min-height:64px;padding:10px 24px 0}
@@ -129,12 +110,6 @@ body:not(.library-view) .library-nav,body:not(.library-view) #familySelect,body:
   .recent-panel h3{font-size:22px;line-height:26px;margin-bottom:8px}
   #recentAbout,#otherRecent{display:none}
   #resumeBtn{margin-top:8px}
-  .exercise-continuation{gap:8px;min-height:60px;padding:8px 24px}
-  .exercise-continuation p{display:none}
-  #nextExerciseBtn{display:grid;grid-template-columns:minmax(0,1fr) 44px;gap:2px 12px;width:100%}
-  #nextExerciseBtn>span:first-child{font-size:12px}
-  #nextExerciseTitle{font-size:14px;line-height:20px}
-  .next-arrow{grid-column:2;grid-row:1/3}
 }
 @media(max-width:599px){
   .top{padding:8px 16px 0;gap:0 8px}
@@ -146,30 +121,8 @@ body:not(.library-view) .library-nav,body:not(.library-view) #familySelect,body:
   .library{padding-inline:24px}
   .explore{flex-wrap:wrap}
 }
-
 .my-song-actions{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:24px}
 .mobile-tab-help{display:none}
-@media(max-width:899px){.mobile-tab-help{display:block;min-height:44px;margin-top:20px;padding:0;text-align:left;text-decoration:underline}}
-
-@media(max-width:599px){select{font-size:16px}.more{width:56px;flex-shrink:0}}
-.pane-head{gap:10px}
-.pane-head .caps{flex-shrink:0}
-.pane-head .status{display:block;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.pane-head .status::before{display:inline-block;vertical-align:1px;margin-right:6px}
-.pane-close{flex-shrink:0;min-width:44px;min-height:36px;padding:4px 8px;font-size:12px;border-color:var(--rule)}
-.pane-close:hover{background:var(--hover)}
-#editorResize{display:none}
-.editor-dragging,.editor-dragging *{cursor:col-resize!important;user-select:none!important}
-@media(min-width:900px){
-  .layout{--editor-height:calc(100dvh - var(--top-h,64px) - var(--save-state-h,0px) - var(--deck-h) - var(--continuation-h,0px))}
-  .layout:not(.noedit){grid-template-columns:var(--editor-width,400px) 8px minmax(0,1fr)}
-  .editor{height:var(--editor-height);border-right:0;overflow-y:auto;overflow-x:hidden}
-  #src{min-height:0}
-  .editor .issues{max-height:min(160px,40%)}
-  #editorResize{display:block;position:sticky;top:calc(var(--top-h,64px) + var(--save-state-h,0px));height:var(--editor-height);background:var(--wash);cursor:col-resize;touch-action:none}
-  #editorResize::before{content:"";position:absolute;top:calc(50% - 12px);left:2px;width:4px;height:24px;border-radius:2px;background:var(--mut);z-index:1}
-  #editorResize::after{content:"";position:absolute;top:0;bottom:0;left:3px;width:2px;background:var(--rule)}
-  #editorResize:hover::after,#editorResize:focus-visible::after{background:var(--mut)}
-  #editorResize:focus-visible{outline:2px solid var(--ink);outline-offset:-2px}
-  .layout.noedit #editorResize{display:none}
+@media(max-width:899px){
+  .mobile-tab-help{display:block;min-height:44px;margin-top:20px;padding:0;text-align:left;text-decoration:underline}
 }

@@ -10,6 +10,8 @@ import '@fontsource/jetbrains-mono/latin-400.css';
 import '@fontsource/jetbrains-mono/latin-600.css';
 import './style.css';
 import './ui/library.css';
+import './ui/practice.css';
+import './ui/player.css';
 import { parseSong } from './core/parser';
 import { buildTimeline, onsetAt, onsetKey, onsetsOf } from './core/timeline';
 import { withVersion, type Song } from './core/model';
