@@ -6,3 +6,11 @@ export function saveSong(title: string, text: string) { const l = read(); l[titl
 export function removeSong(title: string) { const l = read(); delete l[title]; try { localStorage.setItem(LIB, JSON.stringify(l)); } catch { /* ignore */ } }
 export function pref<T>(k: string, def: T): T { try { const v = localStorage.getItem('tabtrainer:' + k); return v === null ? def : JSON.parse(v); } catch { return def; } }
 export function setPref(k: string, v: unknown) { try { localStorage.setItem('tabtrainer:' + k, JSON.stringify(v)); } catch { /* ignore */ } }
+
+export function recentPractice(): string[] {
+  const stored = pref<unknown>('recent', []);
+  return Array.isArray(stored) ? [...new Set(stored.filter((s): s is string => typeof s === 'string' && s.length > 0))].slice(0, 10) : [];
+}
+export function recordPractice(value: string) {
+  if (value) setPref('recent', [value, ...recentPractice().filter(s => s !== value)].slice(0, 10));
+}

@@ -15,7 +15,7 @@ import { withVersion, type Song } from './core/model';
 import { FAMILIES, familyOf, isFamily, type Family } from './core/instruments';
 import { renderSong } from './render/notation';
 import { Player } from './audio/player';
-import { library, saveSong, removeSong, pref, setPref } from './ui/storage';
+import { library, saveSong, removeSong, pref, setPref, recentPractice, recordPractice } from './ui/storage';
 import { findBySlug, songSlug, versionSlug } from './ui/songLink';
 import { AutoScroller } from './ui/scrolling';
 import { songPicker } from './ui/songPicker';
@@ -45,12 +45,12 @@ const songsFor = (f: Family) => ({
   demos: Object.keys(demos).filter(p => demoFamily(p) === f).sort(),
   mine: library().filter(s => familyOfText(s.text) === f),
 });
-const picker = songPicker($<HTMLInputElement>('songSearch'), $('songList'), v => pickSong(v));
+const picker = songPicker($<HTMLInputElement>('songSearch'), $('songList'), v => pickSong(v), $<HTMLSelectElement>('songLevel'), $<HTMLButtonElement>('clearLevel'), $('songResults'), recentPractice);
 const demoGroups: Record<string, string> = { exercises: 'Exercises', songs: 'Songs' };
 function fillSongList() {
   const entries: SongEntry[] = [
-    ...Object.keys(demos).sort().map(p => ({ value: 'demo:' + p, title: titleOf(demos[p]), artist: artistOf(demos[p]), levels: levelsOf(demos[p]), family: demoFamily(p), group: demoGroups[demoKind(p)] ?? 'Songs' })),
-    ...library().map(s => ({ value: 'lib:' + s.title, title: s.title, artist: artistOf(s.text), levels: levelsOf(s.text), family: familyOfText(s.text), group: 'My songs' })),
+    ...Object.keys(demos).sort().map(p => ({ value: 'demo:' + p, title: titleOf(demos[p]), artist: artistOf(demos[p]), levels: levelsOf(demos[p]), about: parseSong(demos[p]).song.meta.about, family: demoFamily(p), group: demoGroups[demoKind(p)] ?? 'Songs' })),
+    ...library().map(s => ({ value: 'lib:' + s.title, title: s.title, artist: artistOf(s.text), levels: levelsOf(s.text), about: parseSong(s.text).song.meta.about, family: familyOfText(s.text), group: 'My songs' })),
   ];
   picker.show(entries, family, picked, entries.find(e => e.value === picked)?.title ?? 'Unsaved song');
 }
@@ -191,6 +191,7 @@ let onsets: number[] = [];
 let playbackWasActive = false;
 player.on(({ beat }) => {
   const started = player.playing && !playbackWasActive; playbackWasActive = player.playing;
+  if (started && picked) { recordPractice(picked); fillSongList(); }
   setPlayLabel();
   if (beat === null) { selectedBar = 0; showPassage(); lit.forEach(e => e.classList.remove('on')); lit = []; litKey = null; curSys?.classList.remove('cur'); curSys = null; $('barNo').textContent = '–'; return; }
   const key = onsetAt(onsets, beat);
