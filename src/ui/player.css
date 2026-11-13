@@ -92,15 +92,27 @@ input[type=range]::-moz-range-thumb{width:var(--thumb);height:var(--thumb);borde
 }
 
 .playback-status{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
-.count-in-display{position:absolute;bottom:100%;left:12px;padding:8px 12px;border-radius:8px 8px 0 0;background:var(--deck);font:600 14px var(--mono);color:var(--led);white-space:nowrap}
+.player-badges{position:absolute;bottom:100%;left:12px;right:12px;display:flex;flex-direction:column;align-items:flex-start;pointer-events:none}
+.count-in-display{max-width:100%;padding:8px 12px;border-radius:8px 8px 0 0;background:var(--deck);font:600 14px var(--mono);color:var(--led)}
 .count-in-display[hidden]{display:none}
-.timing{position:relative;font-size:13px}
-.timing summary{display:flex;align-items:center;min-height:44px;padding:0 14px;border:1px solid var(--deck-line);border-radius:22px;cursor:pointer;list-style:none}
-.timing summary::-webkit-details-marker{display:none}
-.timing summary:hover{background:var(--deck-raise)}
-.timing-controls{position:fixed;bottom:calc(var(--deck-h) + var(--continuation-h,0px) + 8px);right:12px;z-index:1;display:flex;align-items:center;gap:8px;flex-wrap:wrap;width:min(320px,calc(100vw - 24px));max-height:max(0px,calc(100dvh - var(--top-h,64px) - var(--deck-h,0px) - var(--continuation-h,0px) - 16px));overflow:auto;padding:12px;background:var(--deck);border:1px solid var(--deck-line);border-radius:8px;box-shadow:0 4px 16px #0005}
+.timing,.speed-practice{position:relative;font-size:13px}
+.timing summary,.speed-practice summary{display:flex;align-items:center;min-height:44px;padding:0 14px;border:1px solid var(--deck-line);border-radius:22px;cursor:pointer;list-style:none}
+.timing summary::-webkit-details-marker,.speed-practice summary::-webkit-details-marker{display:none}
+.timing summary:hover,.speed-practice summary:hover{background:var(--deck-raise)}
+.timing-controls,.speed-practice-controls{position:fixed;bottom:calc(var(--deck-h) + var(--continuation-h,0px) + 8px);right:12px;z-index:1;display:flex;align-items:center;gap:8px;flex-wrap:wrap;width:min(320px,calc(100vw - 24px));max-height:max(0px,calc(100dvh - var(--top-h,64px) - var(--deck-h,0px) - var(--continuation-h,0px) - 16px));overflow:auto;padding:12px;background:var(--deck);border:1px solid var(--deck-line);border-radius:8px;box-shadow:0 4px 16px #0005}
 .timing-controls label:not(.pill){color:var(--deck-text)}
 .timing-controls select,.timing-controls .dropdown-button{min-height:44px}
 .timing-controls input[type=range]{height:44px;flex:1;min-width:100px}
 .timing-controls .timing-metronome{height:44px}
 #clickVolumeOut{font-family:var(--mono)}
+
+.speed-practice-controls{display:grid;grid-template-columns:1fr auto;gap:8px 12px}
+.speed-practice-controls .pill,.speed-practice-controls p{grid-column:1 / -1;margin:0}
+.speed-practice-controls label:not(.pill){align-self:center;color:var(--deck-text)}
+.speed-practice-controls input[type=number]{width:72px;min-height:44px;padding:6px;border:1px solid var(--control-border);border-radius:5px;background:var(--deck-raise);color:var(--deck-hi);font:600 16px var(--mono)}
+.speed-practice-controls p{font-size:12px;line-height:1.4}
+#speedPracticeError{color:#ffb4a8}
+.speed-practice-progress{max-width:100%;padding:8px 12px;border-radius:8px 8px 0 0;background:var(--deck);font:600 13px var(--mono);color:var(--led);overflow-wrap:anywhere}
+.speed-practice-progress[hidden]{display:none}
+
+.speed-practice-controls .pill:has(input:disabled){opacity:.6;cursor:not-allowed}

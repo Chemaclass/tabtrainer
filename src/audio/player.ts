@@ -1,4 +1,10 @@
 import type { TimedNote, BarSpan } from '../core/timeline';
+import { advanceSpeedPractice, isSpeedPracticeConfig, type SpeedPracticeConfig, type SpeedPracticeProgress } from '../core/speedPractice';
+
+export interface SpeedPracticeState { enabled: boolean; active: boolean; startingSpeed: number | null; speed: number; completed: number; repetitions: number; target: number; reached: boolean }
+export type SpeedPracticeReason = 'enabled' | 'progress' | 'increase' | 'target' | 'reset' | 'ended';
+type Pass = { start: number; end: number; from: number; speed: number; eligible: boolean; id: number; progress: SpeedPracticeProgress };
+export interface LoopCompletion { time: number; traversal: number; full: boolean }
 
 export type PlayerPhase = 'stopped' | 'counting-in' | 'playing' | 'paused';
 export interface PlayerState { playing: boolean; beat: number | null; phase: PlayerPhase; countInRemaining: number | null }
@@ -7,6 +13,16 @@ type SourceKind = 'instrument' | 'count-in' | 'metronome';
 type Scheduled = { node: OscillatorNode; kind: SourceKind; start: number; end: number };
 
 export class Player {
+  private practice: SpeedPracticeConfig | null = null;
+  private baseline: number | null = null;
+  private progress: SpeedPracticeProgress = { speed: 100, completed: 0 };
+  private practiceActive = false;
+  private practiceListeners: ((state: SpeedPracticeState, reason: SpeedPracticeReason) => void)[] = [];
+  private loopListeners: ((event: LoopCompletion) => void)[] = [];
+  private passes: Pass[] = [];
+  private previousPass: Pass | null = null;
+  private nextPassId = 1;
+  private resumeEligible = false;
   private ctx: AudioContext | null = null;
   private master: GainNode | null = null;
   private timer: number | null = null;
@@ -24,7 +40,39 @@ export class Player {
   mute = new Set<number>();
 
   load(tl: { notes: TimedNote[]; bars: BarSpan[]; total: number }, tempo: number) {
-    this.stop(); this.notes = tl.notes; this.bars = tl.bars; this.total = tl.total; this.tempo = tempo;
+    this.endPractice(); this.stop(); this.notes = tl.notes; this.bars = tl.bars; this.total = tl.total; this.tempo = tempo;
+  }
+  get speedPracticeState(): SpeedPracticeState {
+    return { enabled: this.practice !== null, active: this.practiceActive, startingSpeed: this.baseline, speed: Math.round(this.speed * 100), completed: this.progress.completed, repetitions: this.practice?.repetitions ?? 0, target: this.practice?.target ?? 0, reached: this.practice !== null && Math.round(this.speed * 100) >= this.practice.target };
+  }
+  onSpeedPractice(fn: (state: SpeedPracticeState, reason: SpeedPracticeReason) => void) { this.practiceListeners.push(fn); }
+  onLoopComplete(fn: (event: LoopCompletion) => void) { this.loopListeners.push(fn); }
+  private emitPractice(reason: SpeedPracticeReason) { const state = this.speedPracticeState; this.practiceListeners.forEach(fn => fn(state, reason)); }
+  setSpeedPractice(config: SpeedPracticeConfig | null): boolean {
+    this.reconcile();
+    if (config === null) { this.endPractice(); return true; }
+    if (!isSpeedPracticeConfig(config) || !this.loop || config.target < Math.round(this.speed * 100)) return false;
+    if (this.practice) this.endPractice();
+    this.practice = { ...config }; this.baseline = Math.round(this.speed * 100); this.progress = { speed: this.baseline, completed: 0 };
+    this.practiceActive = this.playing;
+    const passageStart = (this.range ?? [0, this.total])[0];
+    this.resumeEligible = this.paused !== null && Math.abs(this.paused - passageStart) < 1e-6;
+    if (this.playing && this.ctx) {
+      const a = (this.range ?? [0, this.total])[0];
+      this.rebuildPractice(this.ctx.currentTime <= this.t0 && Math.abs(this.from - a) < 1e-6);
+    }
+    this.emitPractice('enabled'); return true;
+  }
+  private endPractice() {
+    if (!this.practice) return;
+    this.reconcile();
+    const beat = this.playing && this.ctx ? this.position(this.ctx.currentTime) : null;
+    this.resumeEligible = false;
+    this.practice = null; this.baseline = null; this.practiceActive = false; this.progress = { speed: Math.round(this.speed * 100), completed: 0 }; this.passes = [];
+    if (beat !== null && this.ctx && this.state === 'playing') {
+      this.cancelFuture(); this.from = beat; this.t0 = Math.max(this.ctx.currentTime, this.t0); this.scheduledUntil = this.ctx.currentTime + 1e-6; this.clickScheduledUntil = this.scheduledUntil;
+    } else if (this.playing && this.ctx) { this.cancelFuture(); this.scheduledUntil = this.ctx.currentTime + 1e-6; this.clickScheduledUntil = this.scheduledUntil; }
+    this.emitPractice('ended');
   }
   on(fn: Listener) { this.listeners.push(fn); }
   private emit(beat: number | null) { const s = { playing: this.playing, beat, phase: this.phase, countInRemaining: this.countInRemaining }; this.listeners.forEach(f => f(s)); }
@@ -95,11 +143,59 @@ export class Player {
       this.countStart = now + 0.08; this.countEnd = this.countStart + this.countBeats * this.countStep * this.spb();
       this.t0 = this.countEnd; this.state = 'counting-in';
     } else { this.t0 = now + 0.08; this.state = 'playing'; }
+    if (this.practice) {
+      this.practiceActive = true;
+      const a = (this.range ?? [0, this.total])[0];
+      this.makeFirstPass(this.t0, start, resume ? this.resumeEligible : Math.abs(start - a) < 1e-6);
+    }
     this.scheduledUntil = now; this.clickScheduledUntil = now;
     this.timer = window.setInterval(() => this.tick(), 25);
     this.emit(start);
   }
+  private makeFirstPass(start: number, from: number, eligible: boolean) {
+    this.previousPass = null;
+    this.passes = [{ start, end: start + (this.to - from) * this.spb(), from, speed: this.speed, eligible, id: this.nextPassId++, progress: { ...this.progress } }];
+  }
+  private rebuildPractice(eligible: boolean) {
+    if (!this.ctx) return;
+    const now = this.ctx.currentTime, beat = this.position(now);
+    this.cancelFuture();
+    if (this.state === 'counting-in') this.makeFirstPass(this.t0, this.from, eligible);
+    else this.makeFirstPass(Math.max(now, this.t0), beat, eligible);
+    this.scheduledUntil = now + 1e-6; this.clickScheduledUntil = this.scheduledUntil;
+  }
+  private extendPasses(until: number) {
+    if (!this.practice || !this.passes.length) return;
+    const a = (this.range ?? [0, this.total])[0];
+    let pass = this.passes[this.passes.length - 1];
+    while (pass.end <= until && this.to > a) {
+      const progress = pass.eligible ? advanceSpeedPractice(pass.progress, this.practice) : pass.progress;
+      const speed = progress.speed / 100, duration = (this.to - a) * 60 / (this.tempo * speed);
+      let start = pass.end;
+      if (progress.speed >= this.practice.target && until - start > duration * 2) start += Math.floor((until - start) / duration - 1) * duration;
+      pass = { start, end: start + duration, from: a, speed, eligible: true, id: this.nextPassId++, progress };
+      this.passes.push(pass);
+    }
+  }
+  private reconcile() {
+    if (!this.practice || !this.ctx || !this.playing || !this.passes.length) return;
+    const now = this.ctx.currentTime; this.extendPasses(now);
+    while (this.passes.length > 1 && this.passes[0].end <= now) {
+      const pass = this.passes.shift()!, next = this.passes[0], previous = this.progress;
+      this.previousPass = pass;
+      this.progress = next.progress; this.speed = next.speed;
+      this.loopListeners.forEach(fn => fn({ time: pass.end, traversal: pass.id, full: pass.eligible }));
+      if (pass.eligible && (previous.completed !== this.progress.completed || previous.speed !== this.progress.speed)) {
+        this.emitPractice(previous.speed !== this.progress.speed ? (this.progress.speed >= this.practice.target ? 'target' : 'increase') : 'progress');
+      }
+    }
+  }
   private position(now: number) {
+    if (this.practice && this.passes.length) {
+      this.extendPasses(now);
+      const pass = (this.previousPass && now < this.previousPass.end ? this.previousPass : null) ?? this.passes.find(p => now < p.end) ?? this.passes[this.passes.length - 1];
+      return Math.min(this.to, pass.from + Math.max(0, now - pass.start) * this.tempo * pass.speed / 60);
+    }
     const elapsed = Math.max(0, (now - this.t0) / this.spb());
     const firstLength = this.to - this.from;
     if (!this.loop || elapsed < firstLength) return Math.min(this.to, this.from + elapsed);
@@ -107,6 +203,7 @@ export class Player {
     return length > 0 ? a + (elapsed - firstLength) % length : this.to;
   }
   private scheduleMusic(start: number, clickStart: number, end: number) {
+    if (this.practice && this.passes.length) { this.schedulePracticeMusic(start, clickStart, end); return; }
     const spb = this.spb(), a = (this.range ?? [0, this.total])[0];
     let passStart = this.t0, passFrom = this.from;
     const firstEnd = this.t0 + (this.to - this.from) * spb;
@@ -137,8 +234,27 @@ export class Player {
       passStart = passEnd; passFrom = a;
     }
   }
+  private schedulePracticeMusic(start: number, clickStart: number, end: number) {
+    this.extendPasses(end);
+    for (const pass of this.passes) {
+      if (pass.end <= Math.min(start, clickStart) || pass.start >= end) continue;
+      const spb = 60 / (this.tempo * pass.speed);
+      for (const n of this.notes) {
+        if (n.beat < pass.from - 1e-6 || n.beat >= this.to - 1e-6) continue;
+        const when = pass.start + (n.beat - pass.from) * spb;
+        if (when >= start && when < end && !this.mute.has(n.string)) this.voice(when, n.midi, Math.max(0.15, n.ring * spb), n.soft ? 0.14 : 0.28);
+      }
+      if (this.metronome) for (const b of this.bars) for (let i = 0; i < b.beats; i++) {
+        const beat = b.start + i * 4 / b.beatValue;
+        if (beat < pass.from - 1e-6 || beat >= this.to - 1e-6) continue;
+        const when = pass.start + (beat - pass.from) * spb;
+        if (when >= clickStart && when < end) this.click(when, i === 0, 'metronome');
+      }
+    }
+  }
   private tick() {
     const now = this.ctx!.currentTime, end = now + 0.25;
+    this.reconcile();
     this.sources = this.sources.filter(s => s.end > now);
     if (this.state === 'counting-in') {
       for (let i = 0; i < this.countBeats; i++) {
@@ -163,6 +279,10 @@ export class Player {
     this.halt(); this.state = 'paused'; this.paused = beat; this.resumeMusic = true; this.play();
   }
   setRange(range: [number, number] | null, loop: boolean) {
+    this.reconcile();
+    const old = this.range ?? [0, this.total], next = range ?? [0, this.total];
+    if (this.loop !== loop || old[0] !== next[0] || old[1] !== next[1]) this.endPractice();
+    else if (this.practice) return;
     const beat = this.playing && this.ctx ? this.position(this.ctx.currentTime) : this.paused;
     this.range = range; this.loop = loop;
     const [a, z] = range ?? [0, this.total]; this.to = z;
@@ -191,6 +311,7 @@ export class Player {
     this.setPosition(note.beat); return true;
   }
   private setPosition(target: number) {
+    this.endPractice();
     if (this.state === 'playing') this.restart(target);
     else { if (this.playing) this.halt(); this.state = 'paused'; this.resumeMusic = false; this.paused = target; this.emit(target); }
   }
@@ -201,15 +322,18 @@ export class Player {
   }
   pause() {
     if (!this.playing || !this.ctx) return;
+    this.reconcile();
+    this.resumeEligible = this.passes[0]?.eligible ?? false;
     const counting = this.state === 'counting-in';
     const wrapped = this.loop && this.ctx.currentTime >= this.t0 + (this.to - this.from) * this.spb();
-    const passStart = wrapped ? (this.range ?? [0, this.total])[0] : this.from;
+    const passStart = this.practice && this.passes.length ? this.passes[0].from : wrapped ? (this.range ?? [0, this.total])[0] : this.from;
     this.paused = counting ? this.from : Math.max(passStart, this.position(this.ctx.currentTime) - 0.05);
     this.halt(); this.state = 'paused'; this.resumeMusic = !counting; this.emit(this.paused);
   }
   toggle() { if (this.playing) this.pause(); else this.play(); }
-  stop() { this.halt(); this.state = 'stopped'; this.paused = null; this.resumeMusic = false; this.emit(null); }
+  stop() { this.reconcile(); this.halt(); this.state = 'stopped'; this.paused = null; this.resumeMusic = false; this.passes = []; if (this.practice && this.baseline !== null) { this.speed = this.baseline / 100; this.progress = { speed: this.baseline, completed: 0 }; this.practiceActive = false; this.emitPractice('reset'); } this.emit(null); }
   setSpeed(s: number) {
+    this.endPractice();
     const now = this.ctx?.currentTime ?? 0, beat = this.state === 'playing' ? this.position(now) : null;
     if (this.state === 'counting-in') {
       const oldSpb = this.spb(), elapsed = Math.max(0, (now - this.countStart) / oldSpb), lead = Math.max(0, this.countStart - now);
