@@ -482,7 +482,6 @@ $('zoomIn').onclick = () => { zoom = Math.min(1.8, +(zoom + 0.1).toFixed(2)); se
 $('zoomOut').onclick = () => { zoom = Math.max(0.6, +(zoom - 0.1).toFixed(2)); setPref('zoom', zoom); draw(); };
 $('moreBtn').onclick = () => $('moreBtn').setAttribute('aria-expanded', String(document.querySelector('.player')!.classList.toggle('open')));
 $('syntaxHelpBtn').onclick = () => $<HTMLDialogElement>('help').showModal();
-$('helpBtn').onclick = () => $<HTMLDialogElement>('help').showModal();
 (window as never as { tabtrainer: unknown }).tabtrainer = { player, removeSong, onsetKey };
 
 // the player wraps at narrow widths; reserve exactly its height below the page and the sticky editor
