@@ -9,6 +9,7 @@ import '@fontsource/inter-tight/latin-ext-800.css';
 import '@fontsource/jetbrains-mono/latin-400.css';
 import '@fontsource/jetbrains-mono/latin-600.css';
 import './style.css';
+import './ui/library.css';
 import { parseSong } from './core/parser';
 import { buildTimeline, onsetAt, onsetKey, onsetsOf } from './core/timeline';
 import { withVersion, type Song } from './core/model';
@@ -18,11 +19,23 @@ import { Player } from './audio/player';
 import { library, saveSong, removeSong, pref, setPref, recentPractice, recordPractice } from './ui/storage';
 import { findBySlug, songSlug, versionSlug } from './ui/songLink';
 import { AutoScroller } from './ui/scrolling';
-import { songPicker } from './ui/songPicker';
-import type { SongEntry } from './ui/songSearch';
+import { libraryView } from './ui/libraryView';
+import { isLibraryKind, nextExercise, type CatalogueEntry, type LibraryKind } from './ui/catalogue';
 
 const demos = import.meta.glob('./songs/*/*/*.txt', { query: '?raw', import: 'default', eager: true }) as Record<string, string>;
 const $ = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T;
+
+function navigationState(value: unknown): { index: number; picked: string } | null {
+  if (value && typeof value === 'object' && 'app' in value && value.app === 'tabtrainer' && 'index' in value && typeof value.index === 'number' && Number.isSafeInteger(value.index) && 'picked' in value && typeof value.picked === 'string') return { index: value.index, picked: value.picked };
+  return null;
+}
+const initialNavigation = navigationState(history.state);
+let historyPosition = initialNavigation?.index ?? 0, restoringHistory = false;
+const initialQuery = new URLSearchParams(location.search);
+let screen: 'library' | 'practice' = initialQuery.has('song') || initialQuery.get('view') === 'practice' ? 'practice' : 'library';
+const initialKind = initialQuery.get('kind') ?? pref('libraryKind', 'exercises');
+let libraryKind: LibraryKind = isLibraryKind(initialKind) ? initialKind : 'exercises';
+let catalogueEntries: CatalogueEntry[] = [], bundledEntries: CatalogueEntry[] | null = null;
 
 const src = $<HTMLTextAreaElement>('src'), sheet = $('sheet'), player = new Player();
 let song: Song | null = null;
@@ -31,6 +44,7 @@ let versionIdx = 0;
 let selectedBar = 0;
 let baseline = '', draftStored = true, navigationGeneration = 0;
 let pendingReplacement: (() => void) | null = null;
+let pendingReplacementCancel: (() => void) | null = null;
 let zoom = pref('zoom', 1), showNota = pref('notation', matchMedia('(min-width:600px)').matches);
 
 // ---------- song list ----------
@@ -38,7 +52,7 @@ let zoom = pref('zoom', 1), showNota = pref('notation', matchMedia('(min-width:6
 const familyOfText = (t: string) => familyOf(parseSong(t).song.meta.instrument);
 const demoFamily = (path: string) => path.split('/')[2];
 const demoKind = (path: string) => path.split('/')[3];
-const savedFamily = pref('family', 'bass');
+const savedFamily = initialQuery.get('instrument') ?? pref('family', 'bass');
 let family: Family = isFamily(savedFamily) ? savedFamily : 'bass';
 let picked = '';
 
@@ -47,49 +61,115 @@ const songsFor = (f: Family) => ({
   demos: Object.keys(demos).filter(p => demoFamily(p) === f).sort(),
   mine: library().filter(s => familyOfText(s.text) === f),
 });
-const picker = songPicker($<HTMLInputElement>('songSearch'), $('songList'), v => pickSong(v), $<HTMLSelectElement>('songLevel'), $<HTMLButtonElement>('clearLevel'), $('songResults'), recentPractice);
-const demoGroups: Record<string, string> = { exercises: 'Exercises', songs: 'Songs' };
+const catalogue = libraryView(v => pickSong(v), () => $('newBtn').click(), () => $('openBtn').click());
+function entryFor(value: string, text: string, kind: LibraryKind, instrument: string): CatalogueEntry {
+  const parsed = parseSong(text).song;
+  return { value, title: parsed.meta.title, artist: artistOf(text), levels: parsed.versions.flatMap(v => v.level ?? parsed.meta.level ?? []), about: parsed.meta.about, family: instrument, kind, tempo: parsed.meta.tempo, versions: parsed.versions.length };
+}
 function fillSongList() {
-  const entries: SongEntry[] = [
-    ...Object.keys(demos).sort().map(p => ({ value: 'demo:' + p, title: titleOf(demos[p]), artist: artistOf(demos[p]), levels: levelsOf(demos[p]), about: parseSong(demos[p]).song.meta.about, family: demoFamily(p), group: demoGroups[demoKind(p)] ?? 'Songs' })),
-    ...library().map(s => ({ value: 'lib:' + s.title, title: s.title, artist: artistOf(s.text), levels: levelsOf(s.text), about: parseSong(s.text).song.meta.about, family: familyOfText(s.text), group: 'My songs' })),
-  ];
-  picker.show(entries, family, picked, entries.find(e => e.value === picked)?.title ?? 'Unsaved song');
+  bundledEntries ??= Object.keys(demos).sort().map(path => entryFor('demo:' + path, demos[path], demoKind(path) === 'exercises' ? 'exercises' : 'songs', demoFamily(path)));
+  catalogueEntries = [...bundledEntries, ...library().map(item => entryFor('lib:' + item.title, item.text, 'mine', familyOfText(item.text)))];
+  catalogue.show(catalogueEntries, family, libraryKind, recentPractice());
+  renderPracticeNavigation();
 }
-function showFamily() {
-  document.querySelectorAll<HTMLButtonElement>('[data-family]').forEach(b => { const on = b.dataset.family === family; b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on)); });
-  fillSongList();
+function showFamily() { $<HTMLSelectElement>('familySelect').value = family; fillSongList(); }
+function chooseFamily(f: Family) {
+  if (f === family) return;
+  family = f; setPref('family', f); showFamily(); showLink();
 }
-function chooseFamily(f: Family) { if (f !== family) replaceCurrent(() => loadFamily(f)); }
-function loadFamily(f: Family) {
-  family = f; setPref('family', f);
-  const { demos: ex, mine } = songsFor(f);
-  if (ex.length) loadPickedSong('demo:' + ex[0]); else if (mine.length) loadPickedSong('lib:' + mine[0].title); else { picked = ''; loadText(newSong()); showLink(); }
-  showFamily();
-}
-// one level per version, in the order the versions are listed
-const levelsOf = (t: string) => { const { meta, versions } = parseSong(t).song; return versions.flatMap(v => v.level ?? meta.level ?? []); };
 const titleOf = (t: string) => /^\s*title\s*:\s*(.+)$/im.exec(t)?.[1].trim() ?? 'Untitled';
 const creditNames = (artist = '') => artist.replace(/\s*\(public domain\)\s*$/i, '').split(',').map(n => n.trim()).filter(Boolean);
 // the list names who wrote a song, unless TabTrainer wrote it or nobody knows
-const artistOf = (t: string) => creditNames(/^\s*artist\s*:\s*(.+)$/im.exec(t)?.[1]).filter(n => !/^(tabtrainer|traditional)$/i.test(n)).join(', ');
+const artistOf = (t: string) => creditNames(/^\s*artist\s*:\s*(.+)$/im.exec(t)?.[1]).filter(n => !/^tabtrainer$/i.test(n)).join(', ');
 function loadText(text: string) { if (scrollMode === 'continuous') setScrollMode('off'); clearTimeout(timer); src.value = text; baseline = text; announceSave(''); update(true); persistDraft(); }
-function pickSong(v: string) { if (v !== picked) replaceCurrent(() => loadPickedSong(v)); }
-function loadPickedSong(v: string) {
+function pickSong(v: string) {
+  if (v === picked) { setScreen('practice', true); showLink(true); }
+  else replaceCurrent(() => loadPickedSong(v, true));
+}
+function loadPickedSong(v: string, push = false) {
   const text = v.startsWith('demo:') ? demos[v.slice(5)] : library().find(x => 'lib:' + x.title === v)?.text;
   if (text === undefined) return;
-  picked = v; setPref('picked', v); loadText(text); fillSongList(); showLink();
+  picked = v; setPref('picked', v); screen = 'practice';
+  libraryKind = v.startsWith('demo:') ? demoKind(v.slice(5)) === 'exercises' ? 'exercises' : 'songs' : 'mine';
+  setScreen('practice'); loadText(text); fillSongList(); showLink(push);
+  if (push) { window.scrollTo(0, 0); $('title').focus({ preventScroll: true }); }
 }
 // only bundled songs get a link: "My songs" live in one browser
-function showLink() {
+function showLink(push = false) {
   const query = new URLSearchParams(location.search);
-  if (picked.startsWith('demo:')) query.set('song', songSlug(picked.slice(5))); else query.delete('song');
-  if (picked.startsWith('demo:') && parsed && parsed.versions.length > 1) query.set('version', versionSlug(parsed.versions[versionIdx].name)); else query.delete('version');
-  // keep the slash readable: "?song=bass/a-dawning"
+  if (screen === 'library') {
+    query.delete('song'); query.delete('version'); query.set('view', 'library'); query.set('kind', libraryKind); query.set('instrument', family);
+  } else {
+    query.delete('kind'); query.delete('instrument');
+    if (picked.startsWith('demo:')) { query.set('song', songSlug(picked.slice(5))); query.delete('view'); } else { query.delete('song'); query.set('view', 'practice'); }
+    if (picked.startsWith('demo:') && parsed && parsed.versions.length > 1) query.set('version', versionSlug(parsed.versions[versionIdx].name)); else query.delete('version');
+  }
   const search = query.toString().replace(/%2F/g, '/');
-  history.replaceState(null, '', location.pathname + (search ? '?' + search : '') + location.hash);
+  const url = location.pathname + (search ? '?' + search : '') + location.hash;
+  const changed = url !== location.pathname + location.search + location.hash || navigationState(history.state)?.picked !== picked;
+  if (push && changed) historyPosition++;
+  const state = { app: 'tabtrainer', index: historyPosition, picked };
+  if (push && changed) history.pushState(state, '', url); else history.replaceState(state, '', url);
 }
-document.querySelectorAll<HTMLButtonElement>('[data-family]').forEach(b => { b.onclick = () => isFamily(b.dataset.family!) && chooseFamily(b.dataset.family); });
+function setScreen(next: 'library' | 'practice', focus = false) {
+  if (next === 'library') { player.stop(); if (scrollMode === 'continuous') setScrollMode('off'); }
+  if (next === 'practice' && song) { family = familyOf(song.meta.instrument); setPref('family', family); $<HTMLSelectElement>('familySelect').value = family; }
+  screen = next; document.body.classList.toggle('library-view', next === 'library');
+  $('libraryScreen').hidden = next !== 'library'; $('practiceScreen').hidden = next !== 'practice';
+  document.querySelector<HTMLElement>('.player')!.hidden = next !== 'practice';
+  fillSongList(); showDirtyState();
+  if (next === 'practice') requestAnimationFrame(draw);
+  if (focus) { window.scrollTo(0, 0); $(next === 'library' ? 'libraryTitle' : 'title').focus({ preventScroll: true }); }
+}
+function showLibrary(kind: LibraryKind = libraryKind, push = true) {
+  libraryKind = kind; setPref('libraryKind', kind); setScreen('library', screen !== 'library'); showLink(push);
+}
+function renderPracticeNavigation() {
+  document.querySelectorAll<HTMLButtonElement>('[data-kind]').forEach(button => {
+    if (button.dataset.kind === libraryKind) button.setAttribute('aria-current', 'page'); else button.removeAttribute('aria-current');
+  });
+  const current = catalogueEntries.find(e => e.value === picked);
+  const kind = current?.kind ?? 'mine';
+  $('backLibraryBtn').textContent = kind === 'exercises' ? '← All exercises' : kind === 'songs' ? '← All songs' : '← My songs';
+  $('practiceName').textContent = song?.meta.title ?? 'Your song';
+  const next = nextExercise(catalogueEntries, picked);
+  $('exerciseContinuation').hidden = screen !== 'practice' || kind !== 'exercises';
+  $('nextExerciseBtn').hidden = !next; $('allExercisesBtn').hidden = !!next;
+  if (next) { $('nextExerciseTitle').textContent = next.title; $('nextExerciseBtn').onclick = () => pickSong(next.value); }
+  $('backLibraryBtn').onclick = () => showLibrary(kind);
+}
+$('homeBtn').onclick = () => showLibrary();
+$('allExercisesBtn').onclick = () => showLibrary('exercises');
+$('returnDraftBtn').onclick = () => { setScreen('practice', true); showLink(true); };
+$('libraryOpenBtn').onclick = () => $('openBtn').click();
+$('readTabBtn').onclick = $('readTabMobileBtn').onclick = () => $<HTMLDialogElement>('tabHelp').showModal();
+document.querySelectorAll<HTMLButtonElement>('[data-kind]').forEach(button => { button.onclick = () => { if (isLibraryKind(button.dataset.kind)) showLibrary(button.dataset.kind); }; });
+$<HTMLSelectElement>('familySelect').onchange = e => { const value = (e.target as HTMLSelectElement).value; if (isFamily(value)) chooseFamily(value); };
+window.addEventListener('popstate', event => {
+  if (restoringHistory) { restoringHistory = false; return; }
+  const state = navigationState(event.state), previousPosition = historyPosition;
+  const targetPosition = state?.index ?? previousPosition - 1;
+  const query = new URLSearchParams(location.search), path = findBySlug(Object.keys(demos), query.get('song') ?? '');
+  const wanted = path ? 'demo:' + path : query.get('view') === 'practice' ? state?.picked : null;
+  const open = () => {
+    historyPosition = targetPosition;
+    if (path) {
+      if (picked !== wanted) loadPickedSong('demo:' + path); else setScreen('practice');
+      chooseVersionNamed(query.get('version')); showLink();
+    } else if (query.get('view') === 'practice') {
+      if (wanted && wanted !== picked) loadPickedSong(wanted); else { setScreen('practice'); showLink(); }
+    } else {
+      const kind = query.get('kind'), instrument = query.get('instrument');
+      if (instrument && isFamily(instrument)) { family = instrument; $<HTMLSelectElement>('familySelect').value = family; }
+      showLibrary(isLibraryKind(kind) ? kind : 'exercises', false);
+    }
+  };
+  if (wanted && wanted !== picked && hasChanges()) replaceCurrent(open, () => {
+    const destination = navigationState(history.state)?.index ?? targetPosition;
+    if (previousPosition !== destination) { restoringHistory = true; history.go(previousPosition - destination); }
+  });
+  else open();
+});
 
 // ---------- parse + render ----------
 let timer = 0;
@@ -114,14 +194,14 @@ function update(resetLoop: boolean) {
   renderMeta(s);
   $('about').textContent = s.meta.about ?? ''; $('about').hidden = !s.meta.about;
   const f = familyOf(s.meta.instrument);
-  if (f !== family) { family = f; setPref('family', f); showFamily(); }
+  if (screen === 'practice' && f !== family) { family = f; setPref('family', f); showFamily(); }
   $('barTotal').textContent = String(s.bars.length || '–');
   document.title = `${s.meta.title} · TabTrainer`;
   const wasPlaying = player.playing;
   player.load(buildTimeline(s), s.meta.tempo); onsets = onsetsOf(player.notes);
   if (resetLoop || +$<HTMLInputElement>('loopB').value > s.bars.length) { $<HTMLInputElement>('loopA').value = '1'; $<HTMLInputElement>('loopB').value = String(Math.max(1, s.bars.length)); }
   $<HTMLInputElement>('loopA').max = $<HTMLInputElement>('loopB').max = String(s.bars.length);
-  applyLoop(); draw(); showSpeed(); if (wasPlaying) setPlayLabel();
+  renderPracticeNavigation(); applyLoop(); draw(); showSpeed(); if (wasPlaying) setPlayLabel();
 }
 function renderVersions(all: Song) {
   const box = $('versions'); box.replaceChildren();
@@ -172,7 +252,7 @@ function jumpToLine(line: number) {
   src.focus(); src.setSelectionRange(pos, pos + (lines[line - 1]?.length ?? 0));
 }
 function draw() {
-  if (!song) return;
+  if (!song || screen !== 'practice') return;
   // measure the unzoomed parent: browsers disagree on whether a zoomed element reports its own width zoomed
   const box = getComputedStyle(sheet.parentElement!);
   const w = sheet.parentElement!.clientWidth - parseFloat(box.paddingLeft) - parseFloat(box.paddingRight) - 12;
@@ -233,6 +313,8 @@ function showPassage() {
     el.classList.toggle('selected', n === selectedBar);
     el.setAttribute('aria-pressed', String(n === selectedBar));
   });
+  document.querySelector<HTMLElement>('.passage-actions')!.hidden = !selectedBar && !partial && !player.loop;
+  $('rangeSummary').hidden = !selectedBar && !partial && !player.loop;
   for (const id of ['rangeStart', 'rangeEnd']) $<HTMLButtonElement>(id).disabled = !selectedBar;
   $('rangeSummary').textContent = `${selectedBar ? `Selected bar ${selectedBar}. ` : ''}${partial || player.loop ? `Bars ${a}-${z}, ${player.loop ? 'repeating' : 'play once'}.` : 'Whole song, play once.'}`;
 }
@@ -277,7 +359,7 @@ $('rangeEnd').onclick = () => {
   $<HTMLInputElement>('loopB').value = String(selectedBar);
   applyLoop();
 };
-$('rangeReset').onclick = () => { clearPassage(); player.stop(); selectedBar = 0; showPassage(); };
+$('rangeReset').onclick = () => { clearPassage(); player.stop(); selectedBar = 0; showPassage(); const first = sheet.querySelector<SVGElement>('.bar-target'); if (first) first.focus(); else $('title').focus(); };
 ['loopChk', 'loopA', 'loopB'].forEach(id => $(id).addEventListener('change', applyLoop));
 sheet.addEventListener('click', e => {
   const el = (e.target as Element).closest<SVGElement>('.bar-target');
@@ -318,7 +400,7 @@ $<HTMLSelectElement>('scrollMode').onchange = e => {
 // ---------- keyboard ----------
 document.addEventListener('keydown', e => {
   const t = e.target as HTMLElement;
-  if (t.closest('button, summary, input, select, textarea, dialog') || t.isContentEditable) return;
+  if (screen !== 'practice' || t.closest('button, summary, input, select, textarea, dialog') || t.isContentEditable) return;
   if (e.code === 'Space') { e.preventDefault(); player.toggle(); }
   else if (e.key === 's' || e.key === 'S') { e.preventDefault(); setScrollMode(scrollMode === 'continuous' ? 'off' : 'continuous'); }
   else if (scrollMode === 'continuous' && e.key === 'ArrowUp') { e.preventDefault(); sspeed.value = String(Math.min(80, +sspeed.value + 2)); sspeed.dispatchEvent(new Event('input')); }
@@ -326,7 +408,7 @@ document.addEventListener('keydown', e => {
 });
 
 // ---------- toolbar ----------
-const unpick = () => { picked = ''; setPref('picked', ''); fillSongList(); showLink(); };
+const unpick = () => { picked = ''; libraryKind = 'mine'; setPref('picked', ''); fillSongList(); };
 const fileMenu = document.querySelector<HTMLDetailsElement>('.file-menu')!;
 $('openBtn').onclick = () => $<HTMLInputElement>('openFile').click();
 fileMenu.addEventListener('click', e => {
@@ -346,12 +428,14 @@ fileMenu.addEventListener('keydown', e => {
 });
 function hasChanges() { return src.value !== baseline; }
 function showDirtyState() {
+  $('returnDraftBtn').hidden = screen !== 'library' || !hasChanges();
+  document.querySelector<HTMLElement>('.save-state')!.hidden = !hasChanges() && !$('saveFeedback').textContent;
   $('dirtyState').textContent = hasChanges() ? `Unsaved changes${draftStored ? '' : ' (draft recovery unavailable)'}` : 'No unsaved changes';
 }
 function announceSave(message: string, failed = false) {
   $('saveFeedback').textContent = message;
   $('saveFeedback').classList.toggle('bad', failed);
-  $('recoverDownload').hidden = !failed;
+  $('recoverDownload').hidden = !failed; showDirtyState();
 }
 function persistDraft() {
   draftStored = setPref('draft', { text: src.value, base: baseline, picked });
@@ -359,26 +443,28 @@ function persistDraft() {
   showDirtyState();
   if (!draftStored && hasChanges()) announceSave('Could not keep this draft in the browser. Download a copy.', true);
 }
-function replaceCurrent(action: () => void) {
+function replaceCurrent(action: () => void, cancel: (() => void) | null = null) {
   navigationGeneration++;
   if (!hasChanges()) { action(); return; }
-  if (pendingReplacement) return;
-  pendingReplacement = action;
+  if (pendingReplacement) { pendingReplacement = action; pendingReplacementCancel = cancel; return; }
+  pendingReplacement = action; pendingReplacementCancel = cancel;
   const dialog = $<HTMLDialogElement>('replaceDialog'); dialog.returnValue = 'cancel'; dialog.showModal();
 }
 $<HTMLDialogElement>('replaceDialog').addEventListener('close', () => {
-  const action = pendingReplacement; pendingReplacement = null;
+  const action = pendingReplacement, cancel = pendingReplacementCancel; pendingReplacement = null; pendingReplacementCancel = null;
   const choice = $<HTMLDialogElement>('replaceDialog').returnValue;
   if (action && (choice === 'discard' || (choice === 'save' && saveCurrent()))) action();
+  else if (cancel) cancel();
+  else showLink();
 });
 function saveCurrent(): boolean {
   const title = titleOf(src.value);
   if (library().some(s => s.title === title) && !window.confirm(`Replace "${title}" in your library?`)) return false;
   if (!saveSong(title, src.value)) { announceSave('Could not save in this browser. Your text is still here. Download a copy.', true); return false; }
-  baseline = src.value; picked = 'lib:' + title; setPref('picked', picked); persistDraft(); fillSongList(); showLink();
+  baseline = src.value; picked = 'lib:' + title; libraryKind = 'mine'; setPref('picked', picked); persistDraft(); fillSongList(); showLink();
   announceSave(`Saved "${title}" in this browser`); return true;
 }
-$('newBtn').onclick = () => replaceCurrent(() => { unpick(); loadText(newSong()); showEditor(true); src.focus(); });
+$('newBtn').onclick = () => replaceCurrent(() => { const text = newSong(); unpick(); setScreen('practice'); loadText(text); showLink(true); showEditor(true); src.focus(); });
 $('saveBtn').onclick = () => { saveCurrent(); };
 $('recoverDownload').onclick = () => $('dlBtn').click();
 $('dlBtn').onclick = () => {
@@ -391,7 +477,7 @@ $<HTMLInputElement>('openFile').onchange = async e => {
   const generation = ++navigationGeneration; input.value = '';
   try {
     const text = await file.text();
-    if (generation === navigationGeneration) replaceCurrent(() => { unpick(); loadText(text); });
+    if (generation === navigationGeneration) replaceCurrent(() => { unpick(); setScreen('practice'); loadText(text); showLink(true); });
   } catch { announceSave('Could not open that file. Your current text is still here.', true); }
 };
 const showEditor = (on: boolean) => { document.querySelector('.layout')!.classList.toggle('noedit', !on); $('editBtn').classList.toggle('on', on); $('editBtn').setAttribute('aria-pressed', String(on)); setPref('editor', on); setTimeout(draw, 50); };
@@ -403,12 +489,14 @@ $('tabBtn').onclick = () => setNotation(false);
 $('zoomIn').onclick = () => { zoom = Math.min(1.8, +(zoom + 0.1).toFixed(2)); setPref('zoom', zoom); draw(); };
 $('zoomOut').onclick = () => { zoom = Math.max(0.6, +(zoom - 0.1).toFixed(2)); setPref('zoom', zoom); draw(); };
 $('moreBtn').onclick = () => $('moreBtn').setAttribute('aria-expanded', String(document.querySelector('.player')!.classList.toggle('open')));
+$('syntaxHelpBtn').onclick = () => $<HTMLDialogElement>('help').showModal();
 $('helpBtn').onclick = () => $<HTMLDialogElement>('help').showModal();
-// keep removeSong reachable for a future "delete" button (and from the console)
 (window as never as { tabtrainer: unknown }).tabtrainer = { player, removeSong, onsetKey };
 
 // the player wraps at narrow widths; reserve exactly its height below the page and the sticky editor
 new ResizeObserver(([e]) => document.documentElement.style.setProperty('--deck-h', `${Math.ceil(e.borderBoxSize[0].blockSize)}px`)).observe(document.querySelector('.player')!);
+new ResizeObserver(([e]) => document.documentElement.style.setProperty('--top-h', `${Math.ceil(e.borderBoxSize[0].blockSize)}px`)).observe(document.querySelector('.top')!);
+new ResizeObserver(([e]) => document.documentElement.style.setProperty('--continuation-h', `${Math.ceil(e.borderBoxSize[0].blockSize)}px`)).observe($('exerciseContinuation'));
 new ResizeObserver(([e]) => document.documentElement.style.setProperty('--save-state-h', `${Math.ceil(e.borderBoxSize[0].blockSize)}px`)).observe(document.querySelector('.save-state')!);
 
 // ---------- start ----------
@@ -421,14 +509,15 @@ const link = new URLSearchParams(location.search);
 const linked = findBySlug(Object.keys(demos), link.get('song') ?? '');
 const storedDraft = pref<unknown>('draft', null);
 const draft = storedDraft && typeof storedDraft === 'object' && 'text' in storedDraft && typeof storedDraft.text === 'string' && 'base' in storedDraft && typeof storedDraft.base === 'string' && 'picked' in storedDraft && typeof storedDraft.picked === 'string' ? { text: storedDraft.text, base: storedDraft.base, picked: storedDraft.picked } : null;
-const recover = draft && (draft.text !== draft.base || !linked || draft.picked === 'demo:' + linked);
+const requested = linked ? 'demo:' + linked : initialQuery.get('view') === 'practice' && initialNavigation?.picked.startsWith('lib:') && library().some(s => 'lib:' + s.title === initialNavigation.picked) ? initialNavigation.picked : null;
+const recover = draft && (draft.text !== draft.base || !requested || draft.picked === requested);
 if (recover) {
   picked = draft.picked; src.value = draft.text; baseline = draft.base;
   update(true); showDirtyState();
-  if (linked && draft.picked !== 'demo:' + linked) replaceCurrent(() => { loadPickedSong('demo:' + linked); chooseVersionNamed(link.get('version')); });
+  if (requested && draft.picked !== requested) replaceCurrent(() => { loadPickedSong(requested); chooseVersionNamed(link.get('version')); });
   else if (linked) chooseVersionNamed(link.get('version'));
-} else if (linked) {
-  loadPickedSong('demo:' + linked);
+} else if (requested) {
+  loadPickedSong(requested);
   chooseVersionNamed(link.get('version'));
 } else if (lastText) {
   const pickedText = lastPick.startsWith('demo:') ? demos[lastPick.slice(5)] : library().find(x => 'lib:' + x.title === lastPick)?.text;
@@ -438,5 +527,6 @@ if (recover) {
   picked = 'demo:' + songsFor(family).demos[0];
   loadText(demos[picked.slice(5)]);
 }
-showLink();
 showFamily();
+setScreen(screen);
+showLink();

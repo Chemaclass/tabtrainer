@@ -7,28 +7,21 @@
   <meta name="description" content="Free, open-source tab and notation player for electric bass and guitar. Slow a song down, loop the hard bars, and follow each note as it plays." />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='14' fill='%23111111'/><g stroke='%23fff' stroke-width='3'><line x1='12' y1='20' x2='52' y2='20'/><line x1='12' y1='30' x2='52' y2='30'/><line x1='12' y1='40' x2='52' y2='40'/></g><circle cx='38' cy='30' r='8' fill='%23e0312b'/></svg>" />
 </head>
-<body>
+<body class="library-view">
   <header class="top">
-    <button id="editBtn" class="toggle" aria-controls="editorPane" aria-pressed="false" title="Show or hide the editor"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><rect x="1" y="2" width="12" height="10" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.3"/><path d="M5.5 2v10" stroke="currentColor" stroke-width="1.3"/></svg>Edit song</button>
-    <div class="brand">
+    <button id="homeBtn" class="brand" title="Browse the practice library">
       <svg class="logo" width="22" height="22" viewBox="0 0 22 22" aria-hidden="true"><path d="M1 5h20M1 11h20M1 17h20" stroke="currentColor" stroke-width="1.5"/><circle cx="14" cy="11" r="4" fill="var(--playing)"/></svg>
       TabTrainer
-    </div>
-    <div class="inst-switch" role="group" aria-label="Instrument">
-      <button class="seg" data-family="bass">Bass</button>
-      <button class="seg" data-family="guitar">Guitar</button>
-    </div>
-    <div class="song-pick">
-      <input id="songSearch" type="text" role="combobox" aria-label="Search songs or artists" aria-expanded="false" aria-controls="songList" aria-autocomplete="list" autocomplete="off" spellcheck="false" placeholder="Search songs or artists" />
-      <ul id="songList" role="listbox" aria-label="Songs" hidden></ul>
-    </div>
-    <div class="song-filter">
-      <label for="songLevel" class="sr-only">Difficulty</label>
-      <select id="songLevel"><option value="">All levels</option><option value="easy">Easy</option><option value="medium">Medium</option><option value="hard">Hard</option><option value="unrated">Unrated</option></select>
-      <button id="clearLevel" class="ghost" hidden>Clear level</button>
-    </div>
-    <span id="songResults" class="sr-only" role="status" aria-live="polite"></span>
-    <div class="grow"></div>
+    </button>
+    <nav class="library-nav" aria-label="Practice library">
+      <button data-kind="exercises" aria-current="page">Exercises</button><button data-kind="songs">Songs</button><button data-kind="mine">My songs</button>
+    </nav>
+    <div class="practice-crumb"><button id="backLibraryBtn">← All exercises</button><span aria-hidden="true">/</span><span id="practiceName"></span></div>
+    <div class="header-actions">
+      <label class="sr-only" for="familySelect">Instrument</label>
+      <select id="familySelect"><option value="bass">Bass</option><option value="guitar">Guitar</option></select>
+      <button id="libraryOpenBtn" class="ghost" aria-label="Open a song file"><svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M2 5h5l2 2h7v8H2Z" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span>Open a file</span></button>
+      <button id="editBtn" class="toggle" aria-controls="editorPane" aria-pressed="false">Edit song</button>
     <details class="file-menu">
       <summary>File</summary>
       <nav class="file-actions" aria-label="Song file">
@@ -37,17 +30,41 @@
       <input id="openFile" type="file" accept=".txt,.tab,.tabt,text/plain" hidden />
       <button id="saveBtn" class="ghost" title="Save to this browser's library">Save</button>
       <button id="dlBtn" class="ghost" title="Download the song as a text file">Download</button>
+      <button id="syntaxHelpBtn" class="ghost">Song format help</button>
       </nav>
     </details>
     <button id="helpBtn" class="round" title="How to write songs" aria-label="How to write songs">?</button>
+    </div>
   </header>
 
-  <div class="save-state"><span id="dirtyState">No unsaved changes</span><span id="saveFeedback" role="status" aria-live="polite"></span><button id="recoverDownload" class="ghost" hidden>Download a copy</button></div>
+  <div class="save-state" hidden><span id="dirtyState">No unsaved changes</span><button id="returnDraftBtn" class="ghost" hidden>Return to draft</button><span id="saveFeedback" role="status" aria-live="polite"></span><button id="recoverDownload" class="ghost" hidden>Download a copy</button></div>
   <dialog id="replaceDialog" aria-labelledby="replaceTitle" aria-describedby="replaceHelp">
     <h2 id="replaceTitle">Keep your changes?</h2>
     <p id="replaceHelp">Save this song in this browser before opening another, or discard your changes.</p>
     <form method="dialog" class="replace-actions"><button value="cancel" autofocus>Cancel</button><button value="discard">Discard</button><button value="save">Save</button></form>
   </dialog>
+  <main id="libraryScreen" class="library" aria-labelledby="libraryTitle">
+    <div class="catalogue">
+      <div class="library-intro"><h1 id="libraryTitle" tabindex="-1">Build a skill.</h1><p id="libraryDescription">Short exercises for your hands, timing, and fretboard knowledge.</p></div>
+      <div id="mySongActions" class="my-song-actions" hidden><button id="libraryNewBtn" class="toggle">New song</button><button id="libraryImportBtn" class="toggle">Open a file</button></div>
+      <div class="library-filters">
+        <label class="library-search"><svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><circle cx="7.5" cy="7.5" r="5" stroke="currentColor" stroke-width="1.5" fill="none"/><path d="m11.5 11.5 4 4" stroke="currentColor" stroke-width="1.5"/></svg><input id="songSearch" type="search" aria-label="Search exercises or skills" placeholder="Search exercises or skills" autocomplete="off" /></label>
+        <label for="songLevel" class="sr-only">Difficulty</label><select id="songLevel"><option value="">All levels</option><option value="easy">Easy</option><option value="medium">Medium</option><option value="hard">Hard</option><option value="unrated">Unrated</option></select>
+        <button id="clearLevel" class="ghost" hidden>Clear filters</button>
+      </div>
+      <div class="catalogue-heading"><h2 id="catalogueHeading">Start here</h2><span id="catalogueHint">A suggested order. Start anywhere.</span></div>
+      <p id="songResults" class="sr-only" role="status" aria-live="polite"></p>
+      <ul id="catalogueList" class="catalogue-list"></ul>
+      <div id="catalogueEmpty" class="catalogue-empty" hidden><h2 id="emptyTitle">No exercises match</h2><p id="emptyDescription">Try another search or clear the filters.</p><div><button id="emptyClearBtn" class="toggle">Clear filters</button><button id="emptyNewBtn" class="toggle" hidden>New song</button><button id="emptyOpenBtn" class="toggle" hidden>Open a file</button></div></div>
+      <button id="readTabMobileBtn" class="mobile-tab-help">How to read tab →</button>
+      <div class="explore"><span id="exploreHint">Next: scales, disco, blues, and Latin rhythms.</span><button id="exploreAllBtn">Explore all exercises →</button></div>
+    </div>
+    <aside class="library-aside" aria-label="Practice suggestions">
+      <section id="recentPanel" class="recent-panel" hidden><h2>Recent practice</h2><h3 id="recentTitle"></h3><p id="recentAbout"></p><p id="recentMeta"></p><button id="resumeBtn" class="primary">Continue practising →</button><div id="otherRecent"></div></section>
+      <section class="reading-guide"><h2>First time with tab?</h2><p>Each number is a fret. Each line is a string. Start slowly and let the player guide you.</p><button id="readTabBtn">How to read tab →</button></section>
+    </aside>
+  </main>
+  <div id="practiceScreen" hidden>
   <main class="layout noedit">
     <section id="editorPane" class="editor">
       <div class="pane-head"><span class="caps">Song text</span><span id="status" class="status"></span></div>
@@ -56,7 +73,7 @@
     </section>
     <section class="viewer">
       <div class="song-head">
-        <div><h1 id="title"></h1><div id="credit" class="credit"><span id="byline" class="byline" hidden></span><a id="listen" class="listen" target="_blank" rel="noopener noreferrer" hidden><span class="listen-dot" aria-hidden="true"></span><span class="listen-label">Listen to the original</span><span id="listenHost" class="listen-host"></span></a></div><div id="subtitle" class="meta"></div><p id="about" class="about" hidden></p><div id="versions" class="versions" role="group" aria-label="Versions of this song" hidden></div></div>
+        <div><h1 id="title" tabindex="-1"></h1><div id="credit" class="credit"><span id="byline" class="byline" hidden></span><a id="listen" class="listen" target="_blank" rel="noopener noreferrer" hidden><span class="listen-dot" aria-hidden="true"></span><span class="listen-label">Listen to the original</span><span id="listenHost" class="listen-host"></span></a></div><div id="subtitle" class="meta"></div><p id="about" class="about" hidden></p><div id="versions" class="versions" role="group" aria-label="Versions of this song" hidden></div></div>
         <div class="view-opts" role="group" aria-label="View">
           <button id="notaBtn" class="seg" title="Show standard notation above the tab">Notation + tab</button>
           <button id="tabBtn" class="seg" title="Show the tab only">Tab only</button>
@@ -65,7 +82,7 @@
         </div>
       </div>
       <div class="passage" aria-label="Practice passage">
-        <p id="passageHelp">Select a bar, then Play. Use the buttons to set a loop range. Selecting outside the range clears it.</p>
+        <p id="passageHelp">Select a bar to choose where to start, or set a passage to repeat.</p>
         <div class="passage-actions">
           <button id="rangeStart" class="toggle" disabled>Set loop start</button>
           <button id="rangeEnd" class="toggle" disabled>Set loop end</button>
@@ -78,7 +95,9 @@
     </section>
   </main>
 
-  <footer class="player">
+    <section id="exerciseContinuation" class="exercise-continuation" aria-label="Continue practising" hidden><p>Ready for something else? Return to exercises at any time.</p><button id="nextExerciseBtn"><span>Next exercise</span><strong id="nextExerciseTitle"></strong><span class="next-arrow" aria-hidden="true">→</span></button><button id="allExercisesBtn" hidden>Explore all exercises →</button></section>
+  </div>
+  <footer class="player" hidden>
     <div class="transport">
       <button id="playBtn" class="play" title="Play / pause (Space)" aria-label="Play"></button>
       <button id="stopBtn" class="stop" title="Stop and go back to the start" aria-label="Stop"><span></span></button>
@@ -107,6 +126,15 @@
     </div>
   </footer>
 
+  <dialog id="tabHelp" aria-labelledby="tabHelpTitle">
+    <form method="dialog"><button class="close round" aria-label="Close">✕</button></form><h2 id="tabHelpTitle">Reading your first tab</h2>
+    <p>Each horizontal line is a string. The top line is the highest-sounding string. A number tells you which fret to press. A zero means an open string.</p>
+    <pre>G |-------------|
+D |-------------|
+A |-----3-------|
+E |-0-------3---|</pre>
+    <p>Read from left to right: play the open E string, fret 3 on the A string, then fret 3 on the E string.</p><p>Press Play to hear the rhythm. Start at 50% speed, follow the highlighted notes, and repeat a few bars until they feel comfortable.</p>
+  </dialog>
   <dialog id="help">
     <form method="dialog"><button class="close round" aria-label="Close">✕</button></form>
     <h2>Writing a song</h2>

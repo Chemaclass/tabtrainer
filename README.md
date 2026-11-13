@@ -2,7 +2,7 @@
 
 Learn electric bass and guitar songs from tab and notation. Slow a song down, loop the bars you miss, and follow each note as it plays.
 
-TabTrainer is a free, open-source web app. You write or open a song as plain text, and it draws standard notation and tab together and plays them back.
+TabTrainer is a free, open-source web app. Choose an exercise or song from the library, or open your own plain-text song file. The app draws standard notation and tab together and plays them back.
 
 **Try it:** https://chemaclass.github.io/tabtrainer/
 
@@ -10,7 +10,9 @@ TabTrainer is a free, open-source web app. You write or open a song as plain tex
 
 ## Features
 
-- **Bass exercises and songs:** 10 exercises, from open strings to a Latin tumbao, and 6 public domain songs, from Ode to Joy to House of the Rising Sun. The song picker lists them in separate groups, easiest first, and each one says under its title what it trains.
+- **Practice library:** browse Exercises, Songs, or My songs for bass or guitar. Search titles, artists, and training descriptions, or filter by difficulty. Songs show their available arrangements before you open them.
+- **Exercise order:** start with the first four exercises, explore the full list, and move to the next exercise from the practice screen. You can start anywhere.
+- **Recent practice:** return to a recently played song from the library. Your history stays in this browser.
 - **Notation and tab** drawn one above the other and lined up note for note, with key signatures, ties, triplets and chords.
 - **Playback** with a simple synth. Play, pause and resume, set the speed from 30 to 130%, and loop any range of bars.
 - **Follow along:** each note turns red as it plays, and the page scrolls to keep the current line in view.
