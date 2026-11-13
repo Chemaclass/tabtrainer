@@ -24,6 +24,9 @@ interface Preferences {
   libraryKind: LibraryKind;
   zoom: number;
   notation: boolean;
+  metronome: boolean;
+  countIn: boolean;
+  clickVolume: number;
   speed: number;
   scroll: number;
   editor: boolean;
@@ -41,6 +44,9 @@ const validators: { [K in keyof Preferences]: (value: unknown) => value is Prefe
   libraryKind: isLibraryKind,
   zoom: (value): value is number => finiteBetween(value, 0.6, 1.8),
   notation: isBoolean,
+  metronome: isBoolean,
+  countIn: isBoolean,
+  clickVolume: (value): value is number => finiteBetween(value, 0, 100),
   speed: (value): value is number => finiteBetween(value, 30, 130),
   scroll: (value): value is number => finiteBetween(value, 3, 80),
   editor: isBoolean,
