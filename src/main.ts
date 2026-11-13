@@ -19,6 +19,7 @@ import { Player } from './audio/player';
 import { library, removeSong, pref, setPref, recentPractice, recordPractice } from './ui/storage';
 import { findBySlug, versionSlug } from './ui/songLink';
 import { AutoScroller } from './ui/scrolling';
+import { Passage } from './ui/passage';
 import { Navigation, navigationState, type Route } from './ui/navigation';
 import { DraftSession, titleOf } from './ui/draftSession';
 import { editorResize } from './ui/editorResize';
@@ -40,7 +41,7 @@ const src = $<HTMLTextAreaElement>('src'), sheet = $('sheet'), player = new Play
 let song: Song | null = null;
 let parsed: Song | null = null; // whole song with every version
 let versionIdx = 0;
-let selectedBar = 0;
+const passage = new Passage();
 const draftSession = new DraftSession(() => src.value);
 let zoom = pref('zoom', 1), showNota = pref('notation', matchMedia('(min-width:600px)').matches);
 
@@ -154,7 +155,7 @@ function update(resetLoop: boolean) {
   if (resetLoop) versionIdx = 0;
   versionIdx = Math.min(versionIdx, all.versions.length - 1);
   const s = withVersion(all, versionIdx);
-  song = s; selectedBar = 0;
+  song = s; passage.setSong(s.bars.length, resetLoop);
   renderVersions(all);
   const ul = $('issues'); ul.innerHTML = '';
   issues.forEach(i => {
@@ -173,8 +174,6 @@ function update(resetLoop: boolean) {
   document.title = `${s.meta.title} · TabTrainer`;
   const wasPlaying = player.playing;
   player.load(buildTimeline(s), s.meta.tempo); onsets = onsetsOf(player.notes);
-  if (resetLoop || +$<HTMLInputElement>('loopB').value > s.bars.length) { $<HTMLInputElement>('loopA').value = '1'; $<HTMLInputElement>('loopB').value = String(Math.max(1, s.bars.length)); }
-  $<HTMLInputElement>('loopA').max = $<HTMLInputElement>('loopB').max = String(s.bars.length);
   renderPracticeNavigation(); applyLoop(); draw(); showSpeed(); if (wasPlaying) setPlayLabel();
 }
 function renderVersions(all: Song) {
@@ -194,8 +193,7 @@ function chooseVersion(i: number) {
   if (!parsed || i === versionIdx) return;
   player.stop(); versionIdx = i;
   update(false); showLink();
-  // a different version usually has a different number of bars: reset the loop range to the whole version
-  if (song) { $<HTMLInputElement>('loopA').value = '1'; $<HTMLInputElement>('loopB').value = String(Math.max(1, song.bars.length)); player.stop(); applyLoop(); }
+  if (song) { passage.setSong(song.bars.length, true); player.stop(); applyLoop(); }
 }
 function chooseVersionNamed(slug: string | null) {
   const i = parsed?.versions.findIndex(v => versionSlug(v.name) === slug) ?? -1;
@@ -256,7 +254,7 @@ player.on(({ beat }) => {
   const started = player.playing && !playbackWasActive; playbackWasActive = player.playing;
   if (started && picked) { recordPractice(picked); fillSongList(); }
   setPlayLabel();
-  if (beat === null) { selectedBar = 0; showPassage(); lit.forEach(e => e.classList.remove('on')); lit = []; litKey = null; curSys?.classList.remove('cur'); curSys = null; $('barNo').textContent = '–'; return; }
+  if (beat === null) { passage.deselect(); showPassage(); lit.forEach(e => e.classList.remove('on')); lit = []; litKey = null; curSys?.classList.remove('cur'); curSys = null; $('barNo').textContent = '–'; return; }
   const key = onsetAt(onsets, beat);
   if (key !== litKey) {
     lit.forEach(e => e.classList.remove('on'));
@@ -273,7 +271,7 @@ player.on(({ beat }) => {
   }
 });
 $('playBtn').onclick = () => player.toggle();
-$('stopBtn').onclick = () => { if (scrollMode === 'continuous') setScrollMode('off'); player.stop(); selectedBar = 0; showPassage(); };
+$('stopBtn').onclick = () => { if (scrollMode === 'continuous') setScrollMode('off'); player.stop(); passage.deselect(); showPassage(); };
 const speed = $<HTMLInputElement>('speed');
 const fillRange = (r: HTMLInputElement) => r.style.setProperty('--fill', `${((+r.value - +r.min) / (+r.max - +r.min)) * 100}%`);
 const showSpeed = () => {
@@ -285,62 +283,50 @@ speed.value = String(pref('speed', 100)); player.speed = +speed.value / 100;
 speed.oninput = () => { player.setSpeed(+speed.value / 100); setPref('speed', +speed.value); showSpeed(); };
 document.querySelectorAll<HTMLButtonElement>('[data-speed]').forEach(b => { b.onclick = () => { speed.value = b.dataset.speed!; speed.dispatchEvent(new Event('input')); }; });
 function showPassage() {
-  const a = +$<HTMLInputElement>('loopA').value, z = +$<HTMLInputElement>('loopB').value;
-  const partial = a > 1 || z < (song?.bars.length ?? 0);
+  const state = passage.snapshot();
+  $<HTMLInputElement>('loopA').value = String(state.first);
+  $<HTMLInputElement>('loopB').value = String(state.last);
+  $<HTMLInputElement>('loopA').max = $<HTMLInputElement>('loopB').max = String(state.count);
+  $<HTMLInputElement>('loopChk').checked = state.repeat;
   sheet.querySelectorAll<SVGElement>('.bar-target').forEach(el => {
-    const n = +el.dataset.bar!;
-    el.classList.toggle('in-range', (partial || player.loop) && n >= a && n <= z);
-    el.classList.toggle('selected', n === selectedBar);
-    el.setAttribute('aria-pressed', String(n === selectedBar));
+    const bar = +el.dataset.bar!;
+    el.classList.toggle('in-range', state.active && passage.includes(bar));
+    el.classList.toggle('selected', bar === state.selected);
+    el.setAttribute('aria-pressed', String(bar === state.selected));
   });
-  document.querySelector<HTMLElement>('.passage-actions')!.hidden = !selectedBar && !partial && !player.loop;
-  $('rangeSummary').hidden = !selectedBar && !partial && !player.loop;
-  for (const id of ['rangeStart', 'rangeEnd']) $<HTMLButtonElement>(id).disabled = !selectedBar;
-  $('rangeSummary').textContent = `${selectedBar ? `Selected bar ${selectedBar}. ` : ''}${partial || player.loop ? `Bars ${a}-${z}, ${player.loop ? 'repeating' : 'play once'}.` : 'Whole song, play once.'}`;
+  document.querySelector<HTMLElement>('.passage-actions')!.hidden = !state.selected && !state.active;
+  $('rangeSummary').hidden = !state.selected && !state.active;
+  for (const id of ['rangeStart', 'rangeEnd']) $<HTMLButtonElement>(id).disabled = !state.selected;
+  $('rangeSummary').textContent = passage.summary();
 }
 function applyLoop() {
   if (!song?.bars.length) return;
-  const count = song.bars.length;
-  const bounded = (id: string, fallback: number) => {
-    const input = $<HTMLInputElement>(id);
-    const n = Number.isFinite(input.valueAsNumber) ? Math.trunc(input.valueAsNumber) : fallback;
-    return Math.max(1, Math.min(count, n));
-  };
-  const a = bounded('loopA', 1), z = Math.max(a, bounded('loopB', count));
-  $<HTMLInputElement>('loopA').value = String(a); $<HTMLInputElement>('loopB').value = String(z);
-  const loop = $<HTMLInputElement>('loopChk').checked;
-  player.setRange(loop || a > 1 || z < count ? player.barRange(a, z) : null, loop);
-  const selection = player.bars.find(b => b.bar === selectedBar);
-  if (player.range && (!selection || selection.start < player.range[0] || selection.start >= player.range[1])) selectedBar = a;
+  const range = passage.range();
+  player.setRange(range ? player.barRange(...range) : null, passage.snapshot().repeat);
   const beat = player.pausedAt;
   if (!player.playing && player.range && (beat === null || beat < player.range[0] || beat >= player.range[1])) {
-    selectedBar = a; player.seek(player.range[0]);
+    passage.selectStart(); player.seek(player.range[0]);
   }
   showPassage();
 }
-function clearPassage() {
-  $<HTMLInputElement>('loopA').value = '1';
-  $<HTMLInputElement>('loopB').value = String(song?.bars.length || 1);
-  $<HTMLInputElement>('loopChk').checked = false;
+function selectBar(bar: number) {
+  if (!passage.select(bar)) return;
   applyLoop();
+  const span = player.bars.find(span => span.bar === bar);
+  if (span) player.seek(span.start);
+  showPassage();
 }
-function selectBar(n: number) {
-  const bar = player.bars.find(b => b.bar === n); if (!bar) return;
-  if (player.range && (bar.start < player.range[0] || bar.start >= player.range[1])) clearPassage();
-  selectedBar = n; player.seek(bar.start); showPassage();
-}
-$('rangeStart').onclick = () => {
-  $<HTMLInputElement>('loopA').value = String(selectedBar);
-  applyLoop();
+$('rangeStart').onclick = () => { passage.startAtSelection(); applyLoop(); };
+$('rangeEnd').onclick = () => { passage.endAtSelection(); applyLoop(); };
+$('rangeReset').onclick = () => {
+  passage.clear(); applyLoop(); player.stop(); passage.deselect(); showPassage();
+  const first = sheet.querySelector<SVGElement>('.bar-target'); if (first) first.focus(); else $('title').focus();
 };
-$('rangeEnd').onclick = () => {
-  const a = $<HTMLInputElement>('loopA');
-  a.value = String(Math.min(+a.value, selectedBar));
-  $<HTMLInputElement>('loopB').value = String(selectedBar);
+['loopChk', 'loopA', 'loopB'].forEach(id => $(id).addEventListener('change', () => {
+  passage.setRange($<HTMLInputElement>('loopA').valueAsNumber, $<HTMLInputElement>('loopB').valueAsNumber, $<HTMLInputElement>('loopChk').checked);
   applyLoop();
-};
-$('rangeReset').onclick = () => { clearPassage(); player.stop(); selectedBar = 0; showPassage(); const first = sheet.querySelector<SVGElement>('.bar-target'); if (first) first.focus(); else $('title').focus(); };
-['loopChk', 'loopA', 'loopB'].forEach(id => $(id).addEventListener('change', applyLoop));
+}));
+
 sheet.addEventListener('click', e => {
   const el = (e.target as Element).closest<SVGElement>('.bar-target');
   if (el) selectBar(+el.dataset.bar!);

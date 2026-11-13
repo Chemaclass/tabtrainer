@@ -37,7 +37,7 @@ const finiteBetween = (value: unknown, min: number, max: number): value is numbe
 const isBoolean = (value: unknown): value is boolean => typeof value === 'boolean';
 const isString = (value: unknown): value is string => typeof value === 'string';
 const validators: { [K in keyof Preferences]: (value: unknown) => value is Preferences[K] } = {
-  family: isFamily,
+  family: (value): value is Family => typeof value === 'string' && isFamily(value),
   libraryKind: isLibraryKind,
   zoom: (value): value is number => finiteBetween(value, 0.6, 1.8),
   notation: isBoolean,

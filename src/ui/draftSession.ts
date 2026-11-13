@@ -1,7 +1,7 @@
 import { library, saveSong, setPref, type DraftSnapshot } from './storage';
 
 export const titleOf = (text: string) => /^\s*title\s*:\s*(.+)$/im.exec(text)?.[1].trim() ?? 'Untitled';
-type SaveResult = { status: 'saved'; title: string } | { status: 'cancelled' | 'failed' };
+type SaveResult = { status: 'saved'; title: string } | { status: 'cancelled' } | { status: 'failed' };
 
 export class DraftSession {
   private baseline = '';

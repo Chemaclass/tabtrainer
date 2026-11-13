@@ -13,7 +13,7 @@ export function readRoute(search: string, paths: string[], picked: string | null
   const query = new URLSearchParams(search), path = findBySlug(paths, query.get('song') ?? '');
   if (path || query.get('view') === 'practice') return { screen: 'practice', picked: path ? 'demo:' + path : picked, version: query.get('version') };
   const kind = query.get('kind'), family = query.get('instrument');
-  return { screen: 'library', kind: isLibraryKind(kind) ? kind : 'exercises', family: isFamily(family) ? family : null };
+  return { screen: 'library', kind: isLibraryKind(kind) ? kind : 'exercises', family: family && isFamily(family) ? family : null };
 }
 export function routeSearch(search: string, route: Route): string {
   const query = new URLSearchParams(search);
