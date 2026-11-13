@@ -17,7 +17,6 @@ function pieces(e: NoteEvent): [string, number, boolean][] {
   return out;
 }
 
-/** Draws the song as systems of notation + tab. Every played note, tied ones included, gets data-key=<onset> for highlight / click-to-play. */
 export function renderSong(host: HTMLElement, song: Song, opt: RenderOptions): void {
   host.innerHTML = '';
   const inst = song.meta.instrument; const key = safeKey(song.meta.key.trim());

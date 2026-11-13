@@ -71,7 +71,8 @@ export class Player {
     const beat = this.playing && this.ctx ? this.from + (this.ctx.currentTime - this.t0) / this.spb() : this.paused;
     this.range = range; this.loop = loop;
     const [a, z] = range ?? [0, this.total];
-    if (this.playing) this.play(beat !== null && beat >= a && beat < z ? beat : a);
+    this.to = z;
+    if (this.playing && (beat === null || beat < a || beat >= z)) this.play(a);
   }
   seek(beat: number) {
     if (!Number.isFinite(beat) || !this.bars.length) return;

@@ -28,7 +28,7 @@ describe('active passage boundaries', () => {
   it('extends running playback when a partial range becomes the whole song', () => {
     vi.useFakeTimers();
     let now = 0;
-    const gain = { gain: { value: 1, setTargetAtTime() {} }, connect() {} };
+    const gain = { gain: { value: 1, setTargetAtTime: vi.fn() }, connect() {} };
     class AudioContext {
       get currentTime() { return now; }
       resume() { return Promise.resolve(); }
@@ -36,7 +36,10 @@ describe('active passage boundaries', () => {
     }
     vi.stubGlobal('window', { AudioContext, setInterval, clearInterval });
     const p = loaded(); p.setRange([0, 4], false); p.play();
-    now = 1; p.setRange(null, false);
+    now = 1; p.setRange(null, true);
+    expect(gain.gain.setTargetAtTime).not.toHaveBeenCalled();
+    p.setRange(null, false);
+    expect(gain.gain.setTargetAtTime).not.toHaveBeenCalled();
     now = 3; vi.advanceTimersByTime(25);
     expect(p.playing).toBe(true);
     now = 6; vi.advanceTimersByTime(25);
