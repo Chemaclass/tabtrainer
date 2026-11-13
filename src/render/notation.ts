@@ -17,7 +17,6 @@ function pieces(e: NoteEvent): [string, number, boolean][] {
   return out;
 }
 
-/** Draws the song as systems of notation + tab. Every played note, tied ones included, gets data-key=<onset> for highlight / click-to-play. */
 export function renderSong(host: HTMLElement, song: Song, opt: RenderOptions): void {
   host.innerHTML = '';
   const inst = song.meta.instrument; const key = safeKey(song.meta.key.trim());
@@ -125,6 +124,13 @@ function drawSystem(div: HTMLDivElement, bars: Bar[], prev: Bar | undefined, c: 
         if (el) { el.classList.add('note'); el.dataset.key = k; }
       }
     });
+    const target = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+    target.setAttribute('x', String(x)); target.setAttribute('y', String(top - 18));
+    target.setAttribute('width', String(bw)); target.setAttribute('height', String(bottom - top + 42));
+    target.setAttribute('tabindex', '0'); target.setAttribute('role', 'button');
+    target.setAttribute('aria-label', `Select bar ${bar.index}`);
+    target.classList.add('bar-target'); target.dataset.bar = String(bar.index);
+    div.querySelector('svg')!.append(target);
     x += bw;
   });
   if (lyrics.length) {

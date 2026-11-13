@@ -27,6 +27,7 @@ const src = $<HTMLTextAreaElement>('src'), sheet = $('sheet'), player = new Play
 let song: Song | null = null;
 let parsed: Song | null = null; // whole song with every version
 let versionIdx = 0;
+let selectedBar = 0;
 let zoom = pref('zoom', 1), showNota = pref('notation', matchMedia('(min-width:600px)').matches);
 
 // ---------- song list ----------
@@ -95,7 +96,7 @@ function update(resetLoop: boolean) {
   if (resetLoop) versionIdx = 0;
   versionIdx = Math.min(versionIdx, all.versions.length - 1);
   const s = withVersion(all, versionIdx);
-  song = s;
+  song = s; selectedBar = 0;
   renderVersions(all);
   const ul = $('issues'); ul.innerHTML = '';
   issues.forEach(i => {
@@ -136,7 +137,7 @@ function chooseVersion(i: number) {
   player.stop(); versionIdx = i;
   update(false); showLink();
   // a different version usually has a different number of bars: reset the loop range to the whole version
-  if (song) { $<HTMLInputElement>('loopA').value = '1'; $<HTMLInputElement>('loopB').value = String(Math.max(1, song.bars.length)); applyLoop(); }
+  if (song) { $<HTMLInputElement>('loopA').value = '1'; $<HTMLInputElement>('loopB').value = String(Math.max(1, song.bars.length)); player.stop(); applyLoop(); }
 }
 function chooseVersionNamed(slug: string | null) {
   const i = parsed?.versions.findIndex(v => versionSlug(v.name) === slug) ?? -1;
@@ -174,6 +175,7 @@ function draw() {
   const perLine = Math.max(1, Math.min(8, Math.round((w / zoom) / (showNota ? 300 : 240))));
   sheet.style.setProperty('zoom', String(zoom));
   renderSong(sheet, song, { barsPerLine: perLine, showNotation: showNota, width: w / zoom });
+  showPassage();
 }
 let rz = 0; let lastW = window.innerWidth;
 window.addEventListener('resize', () => { if (Math.abs(window.innerWidth - lastW) < 60) return; lastW = window.innerWidth; clearTimeout(rz); rz = window.setTimeout(draw, 250); });
@@ -187,7 +189,7 @@ let lit: Element[] = [], litKey: string | null = null, curSys: Element | null = 
 let onsets: number[] = [];
 player.on(({ beat }) => {
   setPlayLabel();
-  if (beat === null) { lit.forEach(e => e.classList.remove('on')); lit = []; litKey = null; curSys?.classList.remove('cur'); curSys = null; $('barNo').textContent = '–'; return; }
+  if (beat === null) { selectedBar = 0; showPassage(); lit.forEach(e => e.classList.remove('on')); lit = []; litKey = null; curSys?.classList.remove('cur'); curSys = null; $('barNo').textContent = '–'; return; }
   const key = onsetAt(onsets, beat);
   if (key !== litKey) {
     lit.forEach(e => e.classList.remove('on'));
@@ -204,7 +206,7 @@ player.on(({ beat }) => {
 });
 player.on(s => { if (s.beat === null && scrollWasOn && !player.playing) stopScroll(true); });
 $('playBtn').onclick = () => player.toggle();
-$('stopBtn').onclick = () => player.stop();
+$('stopBtn').onclick = () => { player.stop(); selectedBar = 0; showPassage(); };
 const speed = $<HTMLInputElement>('speed');
 const fillRange = (r: HTMLInputElement) => r.style.setProperty('--fill', `${((+r.value - +r.min) / (+r.max - +r.min)) * 100}%`);
 const showSpeed = () => {
@@ -213,24 +215,70 @@ const showSpeed = () => {
 };
 speed.value = String(pref('speed', 100)); player.speed = +speed.value / 100;
 speed.oninput = () => { player.setSpeed(+speed.value / 100); setPref('speed', +speed.value); showSpeed(); };
+function showPassage() {
+  const a = +$<HTMLInputElement>('loopA').value, z = +$<HTMLInputElement>('loopB').value;
+  const partial = a > 1 || z < (song?.bars.length ?? 0);
+  sheet.querySelectorAll<SVGElement>('.bar-target').forEach(el => {
+    const n = +el.dataset.bar!;
+    el.classList.toggle('in-range', (partial || player.loop) && n >= a && n <= z);
+    el.classList.toggle('selected', n === selectedBar);
+    el.setAttribute('aria-pressed', String(n === selectedBar));
+  });
+  for (const id of ['rangeStart', 'rangeEnd']) $<HTMLButtonElement>(id).disabled = !selectedBar;
+  $('rangeSummary').textContent = `${selectedBar ? `Selected bar ${selectedBar}. ` : ''}${partial || player.loop ? `Bars ${a}-${z}, ${player.loop ? 'repeating' : 'play once'}.` : 'Whole song, play once.'}`;
+}
 function applyLoop() {
   if (!song?.bars.length) return;
-  const a = Math.max(1, +$<HTMLInputElement>('loopA').value || 1), z = Math.max(a, +$<HTMLInputElement>('loopB').value || a);
-  player.loop = $<HTMLInputElement>('loopChk').checked;
-  player.range = player.loop || a > 1 || z < song.bars.length ? player.barRange(a, z) : null;
-}
-['loopChk', 'loopA', 'loopB'].forEach(id => $(id).addEventListener('change', applyLoop));
-// double-click a note (or near one) to start there
-sheet.addEventListener('dblclick', e => {
-  const t = e.target as Element; let el = t.closest<SVGElement>('.note');
-  if (!el) {
-    const sys = t.closest('.system'); if (!sys) return;
-    let best: SVGElement | null = null, bd = 1e9;
-    sys.querySelectorAll<SVGElement>('.note').forEach(n => { const r = n.getBoundingClientRect(); const d = Math.abs((r.left + r.right) / 2 - e.clientX) + Math.abs((r.top + r.bottom) / 2 - e.clientY) * 0.3; if (d < bd) { bd = d; best = n; } });
-    el = best;
+  const count = song.bars.length;
+  const bounded = (id: string, fallback: number) => {
+    const input = $<HTMLInputElement>(id);
+    const n = Number.isFinite(input.valueAsNumber) ? Math.trunc(input.valueAsNumber) : fallback;
+    return Math.max(1, Math.min(count, n));
+  };
+  const a = bounded('loopA', 1), z = Math.max(a, bounded('loopB', count));
+  $<HTMLInputElement>('loopA').value = String(a); $<HTMLInputElement>('loopB').value = String(z);
+  const loop = $<HTMLInputElement>('loopChk').checked;
+  player.setRange(loop || a > 1 || z < count ? player.barRange(a, z) : null, loop);
+  const selection = player.bars.find(b => b.bar === selectedBar);
+  if (player.range && (!selection || selection.start < player.range[0] || selection.start >= player.range[1])) selectedBar = a;
+  const beat = player.pausedAt;
+  if (!player.playing && player.range && (beat === null || beat < player.range[0] || beat >= player.range[1])) {
+    selectedBar = a; player.seek(player.range[0]);
   }
-  if (!el) return; window.getSelection()?.removeAllRanges();
-  player.play(+el.dataset.key! / 1000);
+  showPassage();
+}
+function clearPassage() {
+  $<HTMLInputElement>('loopA').value = '1';
+  $<HTMLInputElement>('loopB').value = String(song?.bars.length || 1);
+  $<HTMLInputElement>('loopChk').checked = false;
+  applyLoop();
+}
+function selectBar(n: number) {
+  const bar = player.bars.find(b => b.bar === n); if (!bar) return;
+  if (player.range && (bar.start < player.range[0] || bar.start >= player.range[1])) clearPassage();
+  selectedBar = n; player.seek(bar.start); showPassage();
+}
+$('rangeStart').onclick = () => {
+  $<HTMLInputElement>('loopA').value = String(selectedBar);
+  applyLoop();
+};
+$('rangeEnd').onclick = () => {
+  const a = $<HTMLInputElement>('loopA');
+  a.value = String(Math.min(+a.value, selectedBar));
+  $<HTMLInputElement>('loopB').value = String(selectedBar);
+  applyLoop();
+};
+$('rangeReset').onclick = () => { clearPassage(); player.stop(); selectedBar = 0; showPassage(); };
+['loopChk', 'loopA', 'loopB'].forEach(id => $(id).addEventListener('change', applyLoop));
+sheet.addEventListener('click', e => {
+  const el = (e.target as Element).closest<SVGElement>('.bar-target');
+  if (el) selectBar(+el.dataset.bar!);
+});
+sheet.addEventListener('keydown', e => {
+  const el = (e.target as Element).closest<SVGElement>('.bar-target');
+  if (el && (e.key === 'Enter' || e.key === ' ')) {
+    e.preventDefault(); e.stopPropagation(); selectBar(+el.dataset.bar!);
+  }
 });
 
 // ---------- auto-scroll ----------

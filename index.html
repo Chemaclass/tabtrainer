@@ -52,8 +52,17 @@
           <button id="zoomOut" class="seg small" title="Smaller" aria-label="Smaller">A−</button><button id="zoomIn" class="seg big" title="Bigger" aria-label="Bigger">A+</button>
         </div>
       </div>
+      <div class="passage" aria-label="Practice passage">
+        <p id="passageHelp">Select a bar, then Play. Use the buttons to set a loop range. Selecting outside the range clears it.</p>
+        <div class="passage-actions">
+          <button id="rangeStart" class="toggle" disabled>Set loop start</button>
+          <button id="rangeEnd" class="toggle" disabled>Set loop end</button>
+          <button id="rangeReset" class="toggle">Clear passage</button>
+        </div>
+        <p id="rangeSummary" role="status" aria-live="polite"></p>
+      </div>
       <div id="sheet" class="sheet"></div>
-      <p class="tip">Double-click any note to start playing from there.<span class="keys"> <kbd>Space</kbd> plays or pauses, <kbd>S</kbd> starts auto-scroll.</span></p>
+      <p class="tip">Select a bar with a click, tap, or Enter, then press Play. Stop returns to the passage start.<span class="keys"> <kbd>Space</kbd> plays or pauses, <kbd>S</kbd> starts auto-scroll.</span></p>
     </section>
   </main>
 
