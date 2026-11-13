@@ -28,6 +28,8 @@ let song: Song | null = null;
 let parsed: Song | null = null; // whole song with every version
 let versionIdx = 0;
 let selectedBar = 0;
+let baseline = '', draftStored = true, navigationGeneration = 0;
+let pendingReplacement: (() => void) | null = null;
 let zoom = pref('zoom', 1), showNota = pref('notation', matchMedia('(min-width:600px)').matches);
 
 // ---------- song list ----------
@@ -57,11 +59,11 @@ function showFamily() {
   document.querySelectorAll<HTMLButtonElement>('[data-family]').forEach(b => { const on = b.dataset.family === family; b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on)); });
   fillSongList();
 }
-function chooseFamily(f: Family) {
-  if (f === family) return;
+function chooseFamily(f: Family) { if (f !== family) replaceCurrent(() => loadFamily(f)); }
+function loadFamily(f: Family) {
   family = f; setPref('family', f);
   const { demos: ex, mine } = songsFor(f);
-  if (ex.length) pickSong('demo:' + ex[0]); else if (mine.length) pickSong('lib:' + mine[0].title); else { picked = ''; loadText(newSong()); showLink(); }
+  if (ex.length) loadPickedSong('demo:' + ex[0]); else if (mine.length) loadPickedSong('lib:' + mine[0].title); else { picked = ''; loadText(newSong()); showLink(); }
   showFamily();
 }
 // one level per version, in the order the versions are listed
@@ -70,8 +72,9 @@ const titleOf = (t: string) => /^\s*title\s*:\s*(.+)$/im.exec(t)?.[1].trim() ?? 
 const creditNames = (artist = '') => artist.replace(/\s*\(public domain\)\s*$/i, '').split(',').map(n => n.trim()).filter(Boolean);
 // the list names who wrote a song, unless TabTrainer wrote it or nobody knows
 const artistOf = (t: string) => creditNames(/^\s*artist\s*:\s*(.+)$/im.exec(t)?.[1]).filter(n => !/^(tabtrainer|traditional)$/i.test(n)).join(', ');
-function loadText(text: string) { src.value = text; update(true); setPref('last', text); }
-function pickSong(v: string) {
+function loadText(text: string) { clearTimeout(timer); src.value = text; baseline = text; announceSave(''); update(true); persistDraft(); }
+function pickSong(v: string) { if (v !== picked) replaceCurrent(() => loadPickedSong(v)); }
+function loadPickedSong(v: string) {
   const text = v.startsWith('demo:') ? demos[v.slice(5)] : library().find(x => 'lib:' + x.title === v)?.text;
   if (text === undefined) return;
   picked = v; setPref('picked', v); loadText(text); fillSongList(); showLink();
@@ -89,7 +92,7 @@ document.querySelectorAll<HTMLButtonElement>('[data-family]').forEach(b => { b.o
 
 // ---------- parse + render ----------
 let timer = 0;
-src.addEventListener('input', () => { clearTimeout(timer); timer = window.setTimeout(() => { update(false); setPref('last', src.value); }, 300); });
+src.addEventListener('input', () => { persistDraft(); clearTimeout(timer); timer = window.setTimeout(() => update(false), 300); });
 function update(resetLoop: boolean) {
   const { song: all, issues } = parseSong(src.value);
   parsed = all;
@@ -325,20 +328,55 @@ fileMenu.addEventListener('keydown', e => {
     e.stopPropagation(); fileMenu.open = false; fileMenu.querySelector('summary')!.focus();
   }
 });
-$('newBtn').onclick = () => { unpick(); loadText(newSong()); showEditor(true); src.focus(); };
-$('saveBtn').onclick = () => {
-  const t = titleOf(src.value);
-  if (library().some(s => s.title === t) && !window.confirm?.call(window, `Replace "${t}" in your library?`)) return;
-  saveSong(t, src.value); picked = 'lib:' + t; setPref('picked', picked); fillSongList(); showLink(); flash(`Saved "${t}" in this browser`);
-};
+function hasChanges() { return src.value !== baseline; }
+function showDirtyState() {
+  $('dirtyState').textContent = hasChanges() ? `Unsaved changes${draftStored ? '' : ' (draft recovery unavailable)'}` : 'No unsaved changes';
+}
+function announceSave(message: string, failed = false) {
+  $('saveFeedback').textContent = message;
+  $('saveFeedback').classList.toggle('bad', failed);
+  $('recoverDownload').hidden = !failed;
+}
+function persistDraft() {
+  draftStored = setPref('draft', { text: src.value, base: baseline, picked });
+  setPref('last', src.value);
+  showDirtyState();
+  if (!draftStored && hasChanges()) announceSave('Could not keep this draft in the browser. Download a copy.', true);
+}
+function replaceCurrent(action: () => void) {
+  navigationGeneration++;
+  if (!hasChanges()) { action(); return; }
+  if (pendingReplacement) return;
+  pendingReplacement = action;
+  const dialog = $<HTMLDialogElement>('replaceDialog'); dialog.returnValue = 'cancel'; dialog.showModal();
+}
+$<HTMLDialogElement>('replaceDialog').addEventListener('close', () => {
+  const action = pendingReplacement; pendingReplacement = null;
+  const choice = $<HTMLDialogElement>('replaceDialog').returnValue;
+  if (action && (choice === 'discard' || (choice === 'save' && saveCurrent()))) action();
+});
+function saveCurrent(): boolean {
+  const title = titleOf(src.value);
+  if (library().some(s => s.title === title) && !window.confirm(`Replace "${title}" in your library?`)) return false;
+  if (!saveSong(title, src.value)) { announceSave('Could not save in this browser. Your text is still here. Download a copy.', true); return false; }
+  baseline = src.value; picked = 'lib:' + title; setPref('picked', picked); persistDraft(); fillSongList(); showLink();
+  announceSave(`Saved "${title}" in this browser`); return true;
+}
+$('newBtn').onclick = () => replaceCurrent(() => { unpick(); loadText(newSong()); showEditor(true); src.focus(); });
+$('saveBtn').onclick = () => { saveCurrent(); };
+$('recoverDownload').onclick = () => $('dlBtn').click();
 $('dlBtn').onclick = () => {
   const blob = new Blob([src.value], { type: 'text/plain' }); const a = document.createElement('a');
   a.href = URL.createObjectURL(blob); a.download = titleOf(src.value).replace(/[^\w\- ]+/g, '').trim().replace(/\s+/g, '-').toLowerCase() + '.txt';
   a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
 };
 $<HTMLInputElement>('openFile').onchange = async e => {
-  const f = (e.target as HTMLInputElement).files?.[0]; if (!f) return;
-  unpick(); loadText(await f.text()); (e.target as HTMLInputElement).value = '';
+  const input = e.target as HTMLInputElement, file = input.files?.[0]; if (!file) return;
+  const generation = ++navigationGeneration; input.value = '';
+  try {
+    const text = await file.text();
+    if (generation === navigationGeneration) replaceCurrent(() => { unpick(); loadText(text); });
+  } catch { announceSave('Could not open that file. Your current text is still here.', true); }
 };
 const showEditor = (on: boolean) => { document.querySelector('.layout')!.classList.toggle('noedit', !on); $('editBtn').classList.toggle('on', on); $('editBtn').setAttribute('aria-pressed', String(on)); setPref('editor', on); setTimeout(draw, 50); };
 $('editBtn').onclick = () => showEditor(document.querySelector('.layout')!.classList.contains('noedit'));
@@ -350,12 +388,12 @@ $('zoomIn').onclick = () => { zoom = Math.min(1.8, +(zoom + 0.1).toFixed(2)); se
 $('zoomOut').onclick = () => { zoom = Math.max(0.6, +(zoom - 0.1).toFixed(2)); setPref('zoom', zoom); draw(); };
 $('moreBtn').onclick = () => $('moreBtn').setAttribute('aria-expanded', String(document.querySelector('.player')!.classList.toggle('open')));
 $('helpBtn').onclick = () => $<HTMLDialogElement>('help').showModal();
-function flash(msg: string) { const s = $('status'); const old = s.textContent; s.textContent = msg; setTimeout(() => { if (s.textContent === msg) s.textContent = old; }, 2500); }
 // keep removeSong reachable for a future "delete" button (and from the console)
 (window as never as { tabtrainer: unknown }).tabtrainer = { player, removeSong, onsetKey };
 
 // the player wraps at narrow widths; reserve exactly its height below the page and the sticky editor
 new ResizeObserver(([e]) => document.documentElement.style.setProperty('--deck-h', `${Math.ceil(e.borderBoxSize[0].blockSize)}px`)).observe(document.querySelector('.player')!);
+new ResizeObserver(([e]) => document.documentElement.style.setProperty('--save-state-h', `${Math.ceil(e.borderBoxSize[0].blockSize)}px`)).observe(document.querySelector('.save-state')!);
 
 // ---------- start ----------
 $('notaBtn').classList.toggle('on', showNota); $('tabBtn').classList.toggle('on', !showNota);
@@ -365,13 +403,21 @@ showEditor(pref('editor', false));
 const lastText = pref<string | null>('last', null), lastPick = pref('picked', '');
 const link = new URLSearchParams(location.search);
 const linked = findBySlug(Object.keys(demos), link.get('song') ?? '');
-if (linked) {
-  pickSong('demo:' + linked);
+const storedDraft = pref<unknown>('draft', null);
+const draft = storedDraft && typeof storedDraft === 'object' && 'text' in storedDraft && typeof storedDraft.text === 'string' && 'base' in storedDraft && typeof storedDraft.base === 'string' && 'picked' in storedDraft && typeof storedDraft.picked === 'string' ? { text: storedDraft.text, base: storedDraft.base, picked: storedDraft.picked } : null;
+const recover = draft && (draft.text !== draft.base || !linked || draft.picked === 'demo:' + linked);
+if (recover) {
+  picked = draft.picked; src.value = draft.text; baseline = draft.base;
+  update(true); showDirtyState();
+  if (linked && draft.picked !== 'demo:' + linked) replaceCurrent(() => { loadPickedSong('demo:' + linked); chooseVersionNamed(link.get('version')); });
+  else if (linked) chooseVersionNamed(link.get('version'));
+} else if (linked) {
+  loadPickedSong('demo:' + linked);
   chooseVersionNamed(link.get('version'));
 } else if (lastText) {
   const pickedText = lastPick.startsWith('demo:') ? demos[lastPick.slice(5)] : library().find(x => 'lib:' + x.title === lastPick)?.text;
-  picked = pickedText === lastText ? lastPick : '';
-  loadText(lastText);
+  picked = pickedText === undefined ? '' : lastPick;
+  loadText(lastText); baseline = pickedText ?? lastText; persistDraft();
 } else {
   picked = 'demo:' + songsFor(family).demos[0];
   loadText(demos[picked.slice(5)]);
