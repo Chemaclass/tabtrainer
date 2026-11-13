@@ -513,11 +513,10 @@ $('notaBtn').classList.toggle('on', showNota); $('tabBtn').classList.toggle('on'
 showNotationState();
 setPlayLabel();
 showEditor(pref('editor', false));
-const lastText = pref<string | null>('last', null), lastPick = pref('picked', '');
+const lastText = pref('last', null), lastPick = pref('picked', '');
 const link = new URLSearchParams(location.search);
 const linked = findBySlug(Object.keys(demos), link.get('song') ?? '');
-const storedDraft = pref<unknown>('draft', null);
-const draft = storedDraft && typeof storedDraft === 'object' && 'text' in storedDraft && typeof storedDraft.text === 'string' && 'base' in storedDraft && typeof storedDraft.base === 'string' && 'picked' in storedDraft && typeof storedDraft.picked === 'string' ? { text: storedDraft.text, base: storedDraft.base, picked: storedDraft.picked } : null;
+const draft = pref('draft', null);
 const requested = linked ? 'demo:' + linked : initialQuery.get('view') === 'practice' && initialNavigation?.picked.startsWith('lib:') && library().some(s => 'lib:' + s.title === initialNavigation.picked) ? initialNavigation.picked : null;
 const recover = draft && (draft.text !== draft.base || !requested || draft.picked === requested);
 if (recover) {

@@ -24,3 +24,25 @@ describe('saving songs', () => {
     expect(saveSong('Song', 'text')).toBe(false); expect(write).not.toHaveBeenCalled();
   });
 });
+
+describe('preferences', () => {
+  function store(value: unknown) {
+    vi.stubGlobal('localStorage', { getItem: () => JSON.stringify(value) });
+  }
+  it('rejects valid JSON with the wrong type or bounds', async () => {
+    const { pref } = await import('../src/ui/storage');
+    store('false'); expect(pref('editor', false)).toBe(false);
+    store({}); expect(pref('picked', '')).toBe('');
+    store(0); expect(pref('speed', 100)).toBe(100);
+    store(100); expect(pref('zoom', 1)).toBe(1);
+    store('piano'); expect(pref('family', 'bass')).toBe('bass');
+  });
+  it('retains valid settings and checks every recovered draft field', async () => {
+    const { pref } = await import('../src/ui/storage');
+    store(0.8); expect(pref('zoom', 1)).toBe(0.8);
+    store(true); expect(pref('notation', false)).toBe(true);
+    store({ text: 'changed', base: 'original', picked: 'lib:Song' });
+    expect(pref('draft', null)).toEqual({ text: 'changed', base: 'original', picked: 'lib:Song' });
+    store({ text: 'changed', base: 12, picked: 'lib:Song' }); expect(pref('draft', null)).toBeNull();
+  });
+});

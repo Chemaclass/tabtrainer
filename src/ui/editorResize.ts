@@ -5,8 +5,7 @@ export function editorWidth(preferred: number, available: number) {
   return { min: 240, max, value: Math.max(240, Math.min(max, Math.round(preferred))) };
 }
 export function editorResize(pane: HTMLElement, handle: HTMLElement, redraw: () => void) {
-  const saved = pref<unknown>('editorWidth', null);
-  let preferred = typeof saved === 'number' && Number.isFinite(saved) ? saved : null;
+  let preferred = pref('editorWidth', null);
   let previous = preferred, dragging = false, startX = 0, startWidth = 0;
   const available = () => pane.parentElement!.clientWidth || window.innerWidth;
   const sync = () => {
