@@ -17,6 +17,7 @@ import { enhanceDropdowns, setSelectValue } from './ui/dropdown';
 import { parseSong } from './core/parser';
 import { buildTimeline, onsetAt, onsetKey, onsetsOf } from './core/timeline';
 import { withVersion, type Song } from './core/model';
+import { isSpeedPracticeConfig } from './core/speedPractice';
 import { FAMILIES, familyOf, isFamily, type Family } from './core/instruments';
 import { renderSong } from './render/notation';
 import { Player } from './audio/player';
@@ -309,18 +310,67 @@ $('stopBtn').onclick = stopPlayback;
 const speed = $<HTMLInputElement>('speed');
 const fillRange = (r: HTMLInputElement) => r.style.setProperty('--fill', `${((+r.value - +r.min) / (+r.max - +r.min)) * 100}%`);
 const showSpeed = () => {
-  const bpm = Math.round(player.tempo * +speed.value / 100), q = document.createElement('span'); q.textContent = `  ♩${bpm}`;
+  speed.value = String(Math.round(player.speed * 100));
+  const bpm = Math.round(player.tempo * player.speed), q = document.createElement('span'); q.textContent = `  ♩${bpm}`;
   $('speedOut').replaceChildren(speed.value + '%', q); fillRange(speed);
   document.querySelectorAll<HTMLButtonElement>('[data-speed]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.speed === speed.value)));
 };
 speed.value = String(pref('speed', 100)); player.speed = +speed.value / 100;
-speed.oninput = () => { player.setSpeed(+speed.value / 100); setPref('speed', +speed.value); showSpeed(); };
+speed.oninput = () => { const value = +speed.value; player.setSpeed(value / 100); setPref('speed', value); showSpeed(); };
 document.querySelectorAll<HTMLButtonElement>('[data-speed]').forEach(b => { b.onclick = () => { speed.value = b.dataset.speed!; speed.dispatchEvent(new Event('input')); }; });
-const timing = document.querySelector<HTMLDetailsElement>('.timing')!;
-document.addEventListener('click', e => { if (!timing.contains(e.target as Node)) timing.open = false; });
-timing.addEventListener('keydown', e => {
-  if (e.key === 'Escape') { e.stopPropagation(); timing.open = false; timing.querySelector('summary')!.focus(); }
+const panels = document.querySelectorAll<HTMLDetailsElement>('.timing, .speed-practice');
+document.addEventListener('click', e => { panels.forEach(panel => { if (!panel.contains(e.target as Node)) panel.open = false; }); });
+panels.forEach(panel => panel.addEventListener('keydown', e => {
+  if (e.key === 'Escape') { e.stopPropagation(); panel.open = false; panel.querySelector('summary')!.focus(); }
+}));
+const practiceEnabled = $<HTMLInputElement>('speedPracticeChk');
+const practiceRepetitions = $<HTMLInputElement>('speedPracticeRepetitions');
+const practiceIncrease = $<HTMLInputElement>('speedPracticeIncrease');
+const practiceTarget = $<HTMLInputElement>('speedPracticeTarget');
+const practiceError = $('speedPracticeError');
+const savedPractice = pref('speedPractice', { repetitions: 4, increase: 5, target: Math.max(100, Math.round(player.speed * 100)) });
+practiceRepetitions.value = String(savedPractice.repetitions); practiceIncrease.value = String(savedPractice.increase); practiceTarget.value = String(savedPractice.target);
+function practiceConfig() {
+  return { repetitions: practiceRepetitions.valueAsNumber, increase: practiceIncrease.valueAsNumber, target: practiceTarget.valueAsNumber };
+}
+function validatePractice() {
+  const config = practiceConfig();
+  const error = !isSpeedPracticeConfig(config) ? 'Enter whole numbers within the shown limits.' : config.target < Math.round(player.speed * 100) ? 'Target must be at least the current speed.' : '';
+  practiceError.textContent = error;
+  return isSpeedPracticeConfig(config) && !error ? config : null;
+}
+function showPractice() {
+  const state = player.speedPracticeState;
+  practiceEnabled.checked = state.enabled;
+  practiceEnabled.disabled = !passage.snapshot().repeat;
+  const progress = $('speedPracticeProgress');
+  progress.hidden = !state.enabled;
+  progress.textContent = state.reached ? `Target reached: ${state.speed}%` : `${state.speed}%, repetition ${state.completed + 1} of ${state.repetitions}, target ${state.target}%`;
+}
+player.onSpeedPractice((state, reason) => {
+  showSpeed(); showPractice();
+  if (reason === 'increase' || reason === 'target' || reason === 'reset') setPref('speed', Math.round(player.speed * 100));
+  if (reason === 'enabled' || reason === 'ended') $('speedPracticeStatus').textContent = '';
+  if (reason === 'increase') $('speedPracticeStatus').textContent = `Speed increased to ${state.speed}%.`;
+  if (reason === 'target') $('speedPracticeStatus').textContent = `Target reached: ${state.speed}%.`;
 });
+practiceEnabled.onchange = () => {
+  if (!practiceEnabled.checked) { player.setSpeedPractice(null); showPractice(); return; }
+  const config = validatePractice();
+  if (!config || !player.setSpeedPractice(config)) {
+    if (config) practiceError.textContent = 'Turn on Loop bars to enable gradual speed increases.';
+    showPractice(); return;
+  }
+  setPref('speedPractice', config); showPractice();
+};
+[practiceRepetitions, practiceIncrease, practiceTarget].forEach(input => input.addEventListener('input', () => {
+  if (player.speedPracticeState.enabled) player.setSpeedPractice(null);
+  validatePractice();
+  const config = practiceConfig();
+  if (isSpeedPracticeConfig(config)) setPref('speedPractice', config);
+  showPractice();
+}));
+showPractice();
 const metronome = $<HTMLInputElement>('metronomeChk');
 const countIn = $<HTMLSelectElement>('countInSelect');
 const clickVolume = $<HTMLInputElement>('clickVolume');
@@ -339,6 +389,7 @@ function showPassage() {
   $<HTMLInputElement>('loopB').value = String(state.last);
   $<HTMLInputElement>('loopA').max = $<HTMLInputElement>('loopB').max = String(state.count);
   $<HTMLInputElement>('loopChk').checked = state.repeat;
+  showPractice();
   sheet.querySelectorAll<SVGElement>('.note-target').forEach(el => {
     const selected = el.dataset.key === selectedNote?.key;
     el.classList.toggle('selected', selected);

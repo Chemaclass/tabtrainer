@@ -302,4 +302,110 @@ describe('audio clock', () => {
     expect(p.pausedAt).toBe(4);
   });
 
+  it('commits gradual increases at full passage boundaries, not while queued', () => {
+    const { p, advance } = setup(bars, 10);
+    p.setRange([0, 4], true); p.setSpeed(0.6);
+    expect(p.setSpeedPractice({ repetitions: 1, increase: 5, target: 70 })).toBe(true);
+    p.play(); advance(3.2);
+    expect(p.speed).toBe(0.6); expect(p.speedPracticeState.completed).toBe(0);
+    advance(3.42); expect(p.speed).toBe(0.65);
+    p.stop(); expect(p.speed).toBe(0.6); expect(p.speedPracticeState.enabled).toBe(true);
+  });
+  it('does not credit a partial play or a seek and ends on seek', () => {
+    const { p, advance } = setup(bars, 10);
+    p.setRange([0, 4], true); p.setSpeedPractice({ repetitions: 1, increase: 5, target: 110 });
+    p.play(2); advance(1.2); expect(p.speed).toBe(1);
+    advance(3.2); expect(p.speed).toBe(1.05);
+    p.seek(0); expect(p.speedPracticeState.enabled).toBe(false);
+  });
+
+  it('schedules notes and clicks at the new speed before committing the boundary', () => {
+    const { p, sounds, advance } = setup(bars, 10);
+    p.notes = [{ beat: 0, key: '0', bar: 1, string: 1, fret: 0, midi: 60, ring: 1 }];
+    p.setRange([0, 4], true); p.setMetronome(true);
+    p.setSpeedPractice({ repetitions: 1, increase: 20, target: 120 }); p.play(); advance(1.9);
+    expect(p.speed).toBe(1);
+    expect(sounds.filter(s => Math.abs(s.start.mock.calls[0][0] - 2.08) < 1e-6)).toHaveLength(3);
+    advance(2.1); expect(p.speed).toBe(1.2);
+    advance(2.3);
+    expect(sounds.some(s => Math.abs(s.start.mock.calls[0][0] - (2.08 + 0.5 / 1.2)) < 1e-6)).toBe(true);
+  });
+  it('cancels queued accelerated audio when disabled and retains the current speed', () => {
+    const { p, sounds, advance } = setup(bars, 10);
+    p.notes = [{ beat: 0, key: '0', bar: 1, string: 1, fret: 0, midi: 60, ring: 1 }];
+    p.setRange([0, 4], true); p.setMetronome(true);
+    p.setSpeedPractice({ repetitions: 1, increase: 20, target: 120 }); p.play(); advance(1.9);
+    const pending = sounds.filter(s => Math.abs(s.start.mock.calls[0][0] - 2.08) < 1e-6);
+    p.setSpeedPractice(null); expect(pending.every(s => s.stop.mock.calls.length === 2)).toBe(true);
+    advance(2.2); expect(p.speed).toBe(1); expect(p.speedPracticeState.enabled).toBe(false);
+  });
+  it('preserves a paused traversal and reconciles a boundary before stop', () => {
+    const { p, advance, jump } = setup(bars, 10);
+    p.setRange([0, 4], true); p.setSpeedPractice({ repetitions: 1, increase: 5, target: 110 });
+    p.play(); advance(1); p.pause(); p.play(); advance(2.25);
+    expect(p.speed).toBe(1.05); p.stop(); expect(p.speed).toBe(1);
+    p.play(); jump(20); expect(p.speed).toBe(1.1);
+  });
+  it('keeps practice for identical range changes and ends it for changed boundaries', () => {
+    const { p } = setup(bars, 10);
+    p.setRange([0, 4], true); p.setSpeedPractice({ repetitions: 2, increase: 5, target: 110 });
+    p.setRange([0, 4], true); expect(p.speedPracticeState.enabled).toBe(true);
+    p.setRange([0, 7], true); expect(p.speedPracticeState.enabled).toBe(false);
+  });
+
+  it('handles a long practice clock jump and stays at the target', () => {
+    const { p, sounds, jump } = setup(bars, 10);
+    p.setRange([0, 1], true); p.setMetronome(true);
+    p.setSpeedPractice({ repetitions: 4, increase: 1, target: 130 }); p.play(); jump(500000);
+    expect(p.speed).toBe(1.3); expect(p.speedPracticeState.reached).toBe(true);
+    expect(sounds.length).toBeLessThanOrEqual(1);
+  });
+  it('starts at the target without increasing and counts in only once', () => {
+    const { p, sounds, advance } = setup(bars, 10);
+    p.setRange([0, 4], true); p.setCountIn(true); p.setSpeedPractice({ repetitions: 1, increase: 5, target: 100 });
+    p.play(); advance(6.2); expect(p.speedPracticeState.reached).toBe(true); expect(p.speed).toBe(1);
+    expect(sounds).toHaveLength(4);
+  });
+  it('retains current speed when changing it manually or loading a song', () => {
+    const { p, advance } = setup(bars, 10);
+    p.setRange([0, 4], true); p.setSpeedPractice({ repetitions: 1, increase: 5, target: 110 });
+    p.play(); advance(2.1); expect(p.speed).toBe(1.05);
+    p.load({ notes: [], bars, total: 10 }, 120); expect(p.speed).toBe(1.05); expect(p.speedPracticeState.enabled).toBe(false);
+    p.setRange([0, 4], true); p.setSpeedPractice({ repetitions: 1, increase: 5, target: 110 }); p.setSpeed(0.8);
+    expect(p.speed).toBe(0.8); expect(p.speedPracticeState.enabled).toBe(false);
+  });
+  it('disables practice while counting in without scheduling an accelerated wrap', () => {
+    const { p, sounds, advance } = setup(bars, 10);
+    p.notes = [{ beat: 0, key: '0', bar: 1, string: 1, fret: 0, midi: 60, ring: 1 }];
+    p.setRange([0, 0.125], true); p.setCountIn(true); p.setMetronome(true);
+    p.setSpeedPractice({ repetitions: 1, increase: 20, target: 120 }); p.play(); advance(1.95);
+    p.setSpeedPractice(null); advance(2.3); expect(p.speed).toBe(1);
+    expect(sounds.some(s => s.start.mock.calls[0][0] > 2.08 && s.stop.mock.calls.length === 1)).toBe(true);
+  });
+  it('preserves eligibility through an unchanged range and a pause before the boundary', () => {
+    const { p, advance } = setup(bars, 10);
+    p.setRange([0, 4], true); p.setSpeedPractice({ repetitions: 1, increase: 5, target: 110 }); p.play();
+    advance(1.9); p.setRange([0, 4], true); p.pause(); expect(p.speed).toBe(1);
+    p.play(); advance(2.3); expect(p.speed).toBe(1.05);
+  });
+
+  it('reschedules the first note and click at the original start when practice is disabled during the lead', () => {
+    const { p, sounds, advance } = setup(bars, 10);
+    p.notes = [{ beat: 0, key: '0', bar: 1, string: 1, fret: 0, midi: 60, ring: 1 }];
+    p.setRange([0, 4], true); p.setMetronome(true);
+    p.setSpeedPractice({ repetitions: 1, increase: 5, target: 110 }); p.play(); advance(0.025);
+    const initial = sounds.filter(s => Math.abs(s.start.mock.calls[0][0] - 0.08) < 1e-6);
+    expect(initial).toHaveLength(3); p.setSpeedPractice(null); advance(0.05);
+    expect(initial.every(s => s.stop.mock.calls.length === 2)).toBe(true);
+    expect(sounds.filter(s => Math.abs(s.start.mock.calls[0][0] - 0.08) < 1e-6 && s.stop.mock.calls.length === 1)).toHaveLength(3);
+  });
+
+  it('does not credit a paused fragment after disabling and enabling a new run', () => {
+    const { p, advance } = setup(bars, 10);
+    const config = { repetitions: 1, increase: 5, target: 110 };
+    p.setRange([0, 4], true); p.setSpeedPractice(config); p.play(); advance(1.9); p.pause();
+    p.setSpeedPractice(null); p.setSpeedPractice(config); p.play(); advance(2.3);
+    expect(p.speed).toBe(1); advance(4.3); expect(p.speed).toBe(1.05);
+  });
+
 });

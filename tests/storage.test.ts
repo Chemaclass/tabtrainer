@@ -55,3 +55,33 @@ describe('preferences', () => {
     store({ text: 'changed', base: 12, picked: 'lib:Song' }); expect(pref('draft', null)).toBeNull();
   });
 });
+
+describe('gradual speed settings', () => {
+  const fallback = { repetitions: 4, increase: 5, target: 100 };
+  it('reads valid settings and rejects malformed or missing values', async () => {
+    const { pref } = await import('../src/ui/storage');
+    let raw: string | null = null;
+    vi.stubGlobal('localStorage', { getItem: () => raw });
+    expect(pref('speedPractice', fallback)).toEqual(fallback);
+    raw = JSON.stringify({ repetitions: 3, increase: 7, target: 80 });
+    expect(pref('speedPractice', fallback)).toEqual({ repetitions: 3, increase: 7, target: 80 });
+    for (const value of [null, [], 'bad', {}, { repetitions: 1.5, increase: 5, target: 100 }, { repetitions: 0, increase: 5, target: 100 }, { repetitions: 4, increase: 21, target: 100 }, { repetitions: 4, increase: 5, target: 131 }, { repetitions: 4, increase: 5, target: null }]) {
+      raw = JSON.stringify(value); expect(pref('speedPractice', fallback)).toEqual(fallback);
+    }
+    raw = '{bad'; expect(pref('speedPractice', fallback)).toEqual(fallback);
+    vi.stubGlobal('localStorage', { getItem: () => { throw Error('blocked'); } });
+    expect(pref('speedPractice', fallback)).toEqual(fallback);
+  });
+  it('only saves valid settings and handles blocked writes', async () => {
+    const { pref } = await import('../src/ui/storage');
+    const values = new Map<string, string>();
+    vi.stubGlobal('localStorage', { getItem: (key: string) => values.get(key) ?? null, setItem: (key: string, value: string) => values.set(key, value) });
+    const valid = { repetitions: 4, increase: 5, target: 80 };
+    const running = { ...valid, enabled: true, completed: 2 };
+    expect(setPref('speedPractice', running)).toBe(true); expect(pref('speedPractice', fallback)).toEqual(valid);
+    expect(setPref('speedPractice', { ...valid, target: Infinity })).toBe(false);
+    expect(pref('speedPractice', fallback)).toEqual(valid);
+    vi.stubGlobal('localStorage', { setItem: () => { throw Error('blocked'); } });
+    expect(setPref('speedPractice', valid)).toBe(false);
+  });
+});

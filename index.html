@@ -103,7 +103,11 @@
       <button id="playBtn" class="play" title="Play / pause (Space plays or stops)" aria-label="Play"></button>
       <button id="stopBtn" class="stop" title="Stop and go back to the start" aria-label="Stop"><span></span></button>
     </div>
-    <span id="countInDisplay" class="count-in-display" aria-hidden="true" hidden></span>
+    <div class="player-badges">
+      <span id="countInDisplay" class="count-in-display" aria-hidden="true" hidden></span>
+      <span id="speedPracticeProgress" class="speed-practice-progress" hidden></span>
+    </div>
+    <span id="speedPracticeStatus" class="playback-status" role="status" aria-live="polite"></span>
     <span id="playbackStatus" class="playback-status" role="status" aria-live="polite"></span>
     <div class="readout"><span class="lbl">Bar</span><span class="led"><b id="barNo">–</b><small> / <span id="barTotal">–</span></small></span></div>
     <div class="speed">
@@ -127,6 +131,17 @@
         <select id="countInSelect"><option value="off">Off</option><option value="bar">One bar</option></select>
         <label for="clickVolume">Click volume <output id="clickVolumeOut">50%</output></label>
         <input id="clickVolume" type="range" min="0" max="100" value="50" />
+      </div>
+    </details>
+    <details class="speed-practice">
+      <summary>Gradual speed</summary>
+      <div class="speed-practice-controls">
+        <label class="pill"><input id="speedPracticeChk" type="checkbox" aria-describedby="speedPracticeHelp speedPracticeError" />Gradual speed</label>
+        <p id="speedPracticeHelp">Turn on Loop bars to enable gradual speed increases. Changing settings turns gradual speed off.</p>
+        <label for="speedPracticeRepetitions">Repetitions per increase</label><input id="speedPracticeRepetitions" type="number" min="1" max="20" step="1" aria-describedby="speedPracticeError" />
+        <label for="speedPracticeIncrease">Increase (percentage points)</label><input id="speedPracticeIncrease" type="number" min="1" max="20" step="1" aria-describedby="speedPracticeError" />
+        <label for="speedPracticeTarget">Target speed (%)</label><input id="speedPracticeTarget" type="number" min="30" max="130" step="1" aria-describedby="speedPracticeError" />
+        <p id="speedPracticeError" role="alert"></p>
       </div>
     </details>
     <div class="grow"></div>

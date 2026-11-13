@@ -1,3 +1,4 @@
+import { isSpeedPracticeConfig, type SpeedPracticeConfig } from '../core/speedPractice';
 import { isFamily, type Family } from '../core/instruments';
 import { isLibraryKind, type LibraryKind } from './catalogue';
 
@@ -28,6 +29,7 @@ interface Preferences {
   countIn: boolean;
   clickVolume: number;
   speed: number;
+  speedPractice: SpeedPracticeConfig;
   scroll: number;
   editor: boolean;
   editorWidth: number | null;
@@ -48,6 +50,7 @@ const validators: { [K in keyof Preferences]: (value: unknown) => value is Prefe
   countIn: isBoolean,
   clickVolume: (value): value is number => finiteBetween(value, 0, 100),
   speed: (value): value is number => finiteBetween(value, 30, 130),
+  speedPractice: isSpeedPracticeConfig,
   scroll: (value): value is number => finiteBetween(value, 3, 80),
   editor: isBoolean,
   editorWidth: (value): value is number | null => value === null || finiteBetween(value, 0, Number.MAX_VALUE),
@@ -64,6 +67,10 @@ export function pref<K extends keyof Preferences>(key: K, fallback: Preferences[
   return validators[key](value) ? value : fallback;
 }
 export function setPref<K extends keyof Preferences>(key: K, value: Preferences[K]): boolean {
+  if (key === 'speedPractice') {
+    if (!isSpeedPracticeConfig(value)) return false;
+    try { localStorage.setItem('tabtrainer:' + key, JSON.stringify({ repetitions: value.repetitions, increase: value.increase, target: value.target })); return true; } catch { return false; }
+  }
   try { localStorage.setItem('tabtrainer:' + key, JSON.stringify(value)); return true; } catch { return false; }
 }
 
