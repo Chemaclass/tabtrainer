@@ -1,0 +1,41 @@
+title: Groove and Fill
+artist: TabTrainer
+about: Hold a repeating groove, add a one-bar fill and return to the groove on the next beat.
+level: medium
+instrument: bass4
+tempo: 88
+key: C
+time: 4/4
+
+== Learn
+level: medium
+@Groove
+"C" :q 3.3 3.3 5.2 3.3 | "C" 3.3 3.3 5.2 3.3 |
+"C" 3.3 3.3 5.2 3.3 | "C" 3.3 3.3 5.2 3.3 |
+"C" 3.3 3.3 5.2 3.3 | "C" 3.3 3.3 5.2 3.3 |
+@Fill
+"C" 3.3 2.2 5.2 2.2 |
+@Return
+"C" 3.3 3.3 5.2 3.3 |
+
+== Develop
+level: medium
+@Groove
+"C" :8 3.3 3.3 :q 5.2 :8 3.3 3.3 :q 3.3 | "C" :8 3.3 3.3 :q 5.2 :8 3.3 3.3 :q 3.3 |
+"C" :8 3.3 3.3 :q 5.2 :8 3.3 3.3 :q 3.3 | "C" :8 3.3 3.3 :q 5.2 :8 3.3 3.3 :q 3.3 |
+"C" :8 3.3 3.3 :q 5.2 :8 3.3 3.3 :q 3.3 | "C" :8 3.3 3.3 :q 5.2 :8 3.3 3.3 :q 3.3 |
+@Fill
+"C" :8 3.3 2.2 5.2 5.1 5.2 2.2 5.3 2.2 |
+@Return
+"C" :8 3.3 3.3 :q 5.2 :8 3.3 3.3 :q 3.3 |
+
+== Challenge
+level: hard
+@Groove
+"C" :8 3.3 r 3.3 5.2 r 3.3 5.2 3.3 | "C" 3.3 r 3.3 5.2 r 3.3 5.2 3.3 |
+"C" 3.3 r 3.3 5.2 r 3.3 5.2 3.3 | "C" 3.3 r 3.3 5.2 r 3.3 5.2 3.3 |
+"C" 3.3 r 3.3 5.2 r 3.3 5.2 3.3 | "C" 3.3 r 3.3 5.2 r 3.3 5.2 3.3 |
+@Fill
+"C" :8 3.3 2.2 :16 5.2 5.1 5.2 2.2 :8 5.3 2.2 3.2 5.2 |
+@Return
+"C" 3.3 r 3.3 5.2 r 3.3 5.2 3.3 |

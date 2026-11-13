@@ -1,0 +1,29 @@
+title: Major and Minor Arpeggios
+artist: TabTrainer
+about: Play the notes of C major and A minor one at a time and hear how their shapes differ.
+level: easy
+instrument: guitar6
+tempo: 72
+key: C
+time: 4/4
+
+== Learn
+level: easy
+@C major
+"C" :q 3.5 2.4 0.3 1.2 | 1.2 0.3 2.4 3.5 |
+@A minor
+"Am" 0.5 2.4 2.3 1.2 | 1.2 2.3 2.4 0.5 |
+
+== Develop
+level: medium
+@C major
+"C" :8 3.5 2.4 0.3 1.2 3.5 2.4 0.3 1.2 | 1.2 0.3 2.4 3.5 1.2 0.3 2.4 3.5 |
+@A minor
+"Am" 0.5 2.4 2.3 1.2 0.5 2.4 2.3 1.2 | 1.2 2.3 2.4 0.5 1.2 2.3 2.4 0.5 |
+
+== Challenge
+level: hard
+@C major
+"C" :8 3.5 2.4 0.3 1.2 0.1 1.2 0.3 2.4 | 3.5 0.3 2.4 1.2 0.3 0.1 1.2 3.5 |
+@A minor
+"Am" 0.5 2.4 2.3 1.2 0.1 1.2 2.3 2.4 | 0.5 2.3 2.4 1.2 2.3 0.1 1.2 0.5 |

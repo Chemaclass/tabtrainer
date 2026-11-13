@@ -1,0 +1,28 @@
+title: String Crossings
+artist: TabTrainer
+about: Move the pick between adjacent strings and then across a skipped string.
+level: easy
+instrument: guitar6
+tempo: 72
+key: Em
+time: 4/4
+
+== Learn
+level: easy
+@Adjacent strings
+:q 0.6 0.5 0.6 0.5 | 0.5 0.4 0.5 0.4 |
+0.4 0.3 0.4 0.3 | 0.2 0.1 0.2 0.1 |
+
+== Develop
+level: medium
+@Adjacent strings
+:8 0.6 0.5 0.6 0.5 0.5 0.4 0.5 0.4 | 0.4 0.3 0.4 0.3 0.3 0.2 0.3 0.2 |
+@Skipping strings
+0.6 0.4 0.6 0.4 0.5 0.3 0.5 0.3 | 0.4 0.2 0.4 0.2 0.3 0.1 0.3 0.1 |
+
+== Challenge
+level: hard
+@Adjacent strings
+:8 0.6 0.5 0.4 0.5 0.4 0.3 0.2 0.3 | 0.3 0.2 0.1 0.2 0.3 0.4 0.5 0.6 |
+@Skipping strings
+0.6 0.4 0.5 0.3 0.4 0.2 0.3 0.1 | 0.1 0.3 0.2 0.4 0.3 0.5 0.4 0.6 |

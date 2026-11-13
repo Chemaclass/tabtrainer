@@ -1,0 +1,28 @@
+title: Finger Independence
+artist: TabTrainer
+about: Give each fretting finger its own turn in a chromatic pattern across the strings.
+level: easy
+instrument: bass4
+tempo: 72
+key: C
+time: 4/4
+
+# This chromatic exercise includes notes outside the C major scale.
+# Place your index finger at fret 2 and your pinky at fret 5.
+== Learn
+level: easy
+@One finger per fret
+:q 2.4 3.4 4.4 5.4 | 2.3 3.3 4.3 5.3 |
+2.2 3.2 4.2 5.2 | 2.1 3.1 4.1 5.1 |
+
+== Develop
+level: medium
+@Reverse the pattern
+:8 2.4 3.4 4.4 5.4 5.4 4.4 3.4 2.4 | 2.3 3.3 4.3 5.3 5.3 4.3 3.3 2.3 |
+2.2 3.2 4.2 5.2 5.2 4.2 3.2 2.2 | 2.1 3.1 4.1 5.1 5.1 4.1 3.1 2.1 |
+
+== Challenge
+level: hard
+@Change finger order
+:8 2.4 4.4 3.4 5.4 5.4 3.4 4.4 2.4 | 2.3 4.3 3.3 5.3 5.3 3.3 4.3 2.3 |
+2.2 4.2 3.2 5.2 5.2 3.2 4.2 2.2 | 2.1 4.1 3.1 5.1 5.1 3.1 4.1 2.1 |

@@ -1,3 +1,4 @@
+import { setSelectValue } from './dropdown';
 import { catalogueMatches, recentEntries, type CatalogueEntry, type LibraryKind } from './catalogue';
 
 const labels = { exercises: 'exercises', songs: 'songs', mine: 'My songs' };
@@ -14,7 +15,7 @@ export function libraryView(onPick: (value: string) => void, onNew: () => void, 
   let entries: CatalogueEntry[] = [], family = 'bass', kind: LibraryKind = 'exercises', recent: string[] = [], expanded = false;
   const search = element<HTMLInputElement>('songSearch'), level = element<HTMLSelectElement>('songLevel');
   const clear = element<HTMLButtonElement>('clearLevel'), list = element('catalogueList');
-  function resetFilters() { search.value = ''; level.value = ''; render(); search.focus(); }
+  function resetFilters() { search.value = ''; setSelectValue(level, ''); render(); search.focus(); }
   search.addEventListener('input', render); level.addEventListener('change', render);
   clear.onclick = resetFilters; element('emptyClearBtn').onclick = resetFilters;
   element('emptyNewBtn').onclick = onNew; element('emptyOpenBtn').onclick = onOpen;
@@ -59,7 +60,7 @@ export function libraryView(onPick: (value: string) => void, onNew: () => void, 
     element('exploreAllBtn').hidden = !foundations;
     element('exploreAllBtn').textContent = `Explore all ${matches.length} exercises →`;
     element('exploreHint').hidden = !foundations;
-    element('exploreHint').textContent = family === 'bass' ? 'Next: scales, disco, blues, and Latin rhythms.' : 'More exercises to build your technique.';
+    element('exploreHint').textContent = 'Next: rhythm, arpeggios, and position shifts.';
     const practised = recentEntries(entries, recent, family), first = practised[0];
     element('recentPanel').hidden = !first;
     if (first) {
@@ -71,7 +72,7 @@ export function libraryView(onPick: (value: string) => void, onNew: () => void, 
   }
   return {
     show(all: CatalogueEntry[], instrument: string, category: LibraryKind, history: string[]) {
-      if (kind !== category || family !== instrument) { search.value = ''; level.value = ''; expanded = false; }
+      if (kind !== category || family !== instrument) { search.value = ''; setSelectValue(level, ''); expanded = false; }
       entries = all; family = instrument; kind = category; recent = history; render();
     },
   };

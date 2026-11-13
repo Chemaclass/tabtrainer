@@ -1,0 +1,28 @@
+title: Major and Minor Arpeggios
+artist: TabTrainer
+about: Play the root, third and fifth of C major and A minor to hear the difference between the chords.
+level: easy
+instrument: bass4
+tempo: 76
+key: C
+time: 4/4
+
+== Learn
+level: easy
+@C major
+"C" :q 3.3 2.2 5.2 3.3 | "C" 3.3 5.2 2.2 3.3 |
+@A minor
+"Am" 0.3 3.3 2.2 0.3 | "Am" 0.3 2.2 3.3 0.3 |
+
+== Develop
+level: medium
+@C major
+"C" :8 3.3 2.2 5.2 5.2 2.2 3.3 2.2 5.2 | "C" 3.3 2.2 5.2 5.1 5.2 2.2 3.3 3.3 |
+@A minor
+"Am" 0.3 3.3 2.2 2.2 3.3 0.3 3.3 2.2 | "Am" 0.3 3.3 2.2 2.1 2.2 3.3 0.3 0.3 |
+
+== Challenge
+level: hard
+@C major and A minor
+"C" :8 3.3 5.2 2.2 5.1 2.2 5.2 3.3 2.2 | "Am" 0.3 2.2 3.3 2.1 3.3 2.2 0.3 3.3 |
+"C" 5.2 2.2 3.3 5.1 5.2 3.3 2.2 5.2 | "Am" 2.2 3.3 0.3 2.1 2.2 3.3 :q 0.3 |

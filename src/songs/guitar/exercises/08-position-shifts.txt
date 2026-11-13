@@ -1,0 +1,33 @@
+title: Position Shifts
+artist: TabTrainer
+about: Move between low and high positions during rests while keeping the beat.
+level: medium
+instrument: guitar6
+tempo: 72
+key: C
+time: 4/4
+
+== Learn
+level: medium
+@Low position
+:q 1.2 3.2 0.1 r | 1.2 3.2 0.1 r |
+@High position
+5.3 7.3 5.2 r | 5.2 7.3 5.3 r |
+
+== Develop
+level: medium
+@Low position
+:8 1.2 3.2 0.1 3.2 :h r | :8 1.2 3.2 0.1 3.2 :h r |
+@High position
+:8 5.3 7.3 5.2 6.2 :h r | :8 6.2 5.2 7.3 5.3 :h r |
+
+== Challenge
+level: hard
+@Low position
+:8 1.2 3.2 0.1 3.2 1.2 3.2 :q r |
+@High position
+:8 5.3 7.3 5.2 6.2 5.2 7.3 :q r |
+@Low position
+:8 0.1 3.2 1.2 3.2 0.1 3.2 :q r |
+@High position
+:8 6.2 5.2 7.3 5.3 7.3 5.2 :q r |

@@ -12,6 +12,8 @@ import './style.css';
 import './ui/library.css';
 import './ui/practice.css';
 import './ui/player.css';
+import './ui/dropdown.css';
+import { enhanceDropdowns, setSelectValue } from './ui/dropdown';
 import { parseSong } from './core/parser';
 import { buildTimeline, onsetAt, onsetKey, onsetsOf } from './core/timeline';
 import { withVersion, type Song } from './core/model';
@@ -19,7 +21,7 @@ import { FAMILIES, familyOf, isFamily, type Family } from './core/instruments';
 import { renderSong } from './render/notation';
 import { Player } from './audio/player';
 import { library, removeSong, pref, setPref, recentPractice, recordPractice } from './ui/storage';
-import { findBySlug, versionSlug } from './ui/songLink';
+import { findBySlug, normalizeSongReference, versionSlug } from './ui/songLink';
 import { AutoScroller } from './ui/scrolling';
 import { Passage } from './ui/passage';
 import { Navigation, navigationState, type Route } from './ui/navigation';
@@ -31,7 +33,9 @@ import { isLibraryKind, nextExercise, type CatalogueEntry, type LibraryKind } fr
 const demos = import.meta.glob('./songs/*/*/*.txt', { query: '?raw', import: 'default', eager: true }) as Record<string, string>;
 const $ = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T;
 
-const initialNavigation = navigationState(history.state);
+const resolvePick = (value: string) => normalizeSongReference(value, Object.keys(demos));
+const storedNavigation = navigationState(history.state);
+const initialNavigation = storedNavigation ? { ...storedNavigation, picked: resolvePick(storedNavigation.picked) } : null;
 const navigation = new Navigation(history, location, Object.keys(demos));
 const initialQuery = new URLSearchParams(location.search);
 let screen: 'library' | 'practice' = initialQuery.has('song') || initialQuery.get('view') === 'practice' ? 'practice' : 'library';
@@ -69,10 +73,10 @@ function entryFor(value: string, text: string, kind: LibraryKind, instrument: st
 function fillSongList() {
   bundledEntries ??= Object.keys(demos).sort().map(path => entryFor('demo:' + path, demos[path], demoKind(path) === 'exercises' ? 'exercises' : 'songs', demoFamily(path)));
   catalogueEntries = [...bundledEntries, ...library().map(item => entryFor('lib:' + item.title, item.text, 'mine', familyOfText(item.text)))];
-  catalogue.show(catalogueEntries, family, libraryKind, recentPractice());
+  catalogue.show(catalogueEntries, family, libraryKind, recentPractice().map(resolvePick));
   renderPracticeNavigation();
 }
-function showFamily() { $<HTMLSelectElement>('familySelect').value = family; fillSongList(); }
+function showFamily() { setSelectValue($<HTMLSelectElement>('familySelect'), family); fillSongList(); }
 function chooseFamily(f: Family) {
   if (f === family) return;
   family = f; setPref('family', f); showFamily(); showLink();
@@ -100,7 +104,7 @@ function showLink(push = false) {
 }
 function setScreen(next: 'library' | 'practice', focus = false) {
   if (next === 'library') { player.stop(); if (scrollMode === 'continuous') setScrollMode('off'); }
-  if (next === 'practice' && song) { family = familyOf(song.meta.instrument); setPref('family', family); $<HTMLSelectElement>('familySelect').value = family; }
+  if (next === 'practice' && song) { family = familyOf(song.meta.instrument); setPref('family', family); setSelectValue($<HTMLSelectElement>('familySelect'), family); }
   screen = next; document.body.classList.toggle('library-view', next === 'library');
   $('libraryScreen').hidden = next !== 'library'; $('practiceScreen').hidden = next !== 'practice';
   document.querySelector<HTMLElement>('.player')!.hidden = next !== 'practice';
@@ -139,7 +143,7 @@ function openRoute(route: Route) {
     showLink();
     return;
   }
-  if (route.family) { family = route.family; $<HTMLSelectElement>('familySelect').value = family; }
+  if (route.family) { family = route.family; setSelectValue($<HTMLSelectElement>('familySelect'), family); }
   showLibrary(route.kind, false);
 }
 window.addEventListener('popstate', event => navigation.visit(event.state, (route, accept, cancel) => {
@@ -357,7 +361,7 @@ const scroller = new AutoScroller({
 });
 function setScrollMode(mode: ScrollMode) {
   scroller.stop(); scrollMode = mode;
-  $<HTMLSelectElement>('scrollMode').value = mode;
+  setSelectValue($<HTMLSelectElement>('scrollMode'), mode);
   $('scrollRate').hidden = mode !== 'continuous';
   $('scrollHelp').textContent = { off: 'Scroll the score yourself.', follow: 'Keep the playing line in view.', continuous: 'Scroll without audio. Play and Pause keep scrolling; Stop and song changes turn it off.' }[mode];
   if (mode === 'continuous') scroller.start();
@@ -471,10 +475,11 @@ $('notaBtn').classList.toggle('on', showNota); $('tabBtn').classList.toggle('on'
 showNotationState();
 setPlayLabel();
 showEditor(pref('editor', false));
-const lastText = pref('last', null), lastPick = pref('picked', '');
+const lastText = pref('last', null), lastPick = resolvePick(pref('picked', ''));
 const link = new URLSearchParams(location.search);
 const linked = findBySlug(Object.keys(demos), link.get('song') ?? '');
-const draft = pref('draft', null);
+const storedDraft = pref('draft', null);
+const draft = storedDraft ? { ...storedDraft, picked: resolvePick(storedDraft.picked) } : null;
 const requested = linked ? 'demo:' + linked : initialQuery.get('view') === 'practice' && initialNavigation?.picked.startsWith('lib:') && library().some(s => 'lib:' + s.title === initialNavigation.picked) ? initialNavigation.picked : null;
 const recover = draft && (draft.text !== draft.base || !requested || draft.picked === requested);
 if (recover) {
@@ -496,3 +501,5 @@ if (recover) {
 showFamily();
 setScreen(screen);
 showLink();
+
+enhanceDropdowns();

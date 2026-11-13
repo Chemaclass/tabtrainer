@@ -18,7 +18,7 @@ describe('onsetAt', () => {
     expect(onsetAt([0, 333, 667, 1000], 2 / 3)).toBe('667');
   });
   it('gives different songs with the same number of onsets their own lookups', () => {
-    const scale = onsetsFor('src/songs/bass/exercises/02-c-major-scale.txt');
+    const scale = onsetsFor('src/songs/bass/exercises/03-c-major-scale.txt');
     const canon = onsetsFor('src/songs/bass/songs/02-canon-in-d.txt');
     expect(scale).toHaveLength(canon.length);
     expect(onsetAt(scale, 1)).toBe('1000');

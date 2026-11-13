@@ -1,0 +1,30 @@
+title: Finger Independence
+artist: TabTrainer
+about: Give each fretting finger its own fret in a chromatic exercise across adjacent strings.
+level: easy
+instrument: guitar6
+tempo: 68
+key: C
+time: 4/4
+
+# Use fingers 1 to 4 on frets 1 to 4; chromatic notes are intentional.
+== Learn
+level: easy
+@Ascending
+:q 1.6 2.6 3.6 4.6 | 1.5 2.5 3.5 4.5 |
+@Descending
+4.4 3.4 2.4 1.4 | 4.3 3.3 2.3 1.3 |
+
+== Develop
+level: medium
+@Ascending
+:8 1.6 2.6 3.6 4.6 1.5 2.5 3.5 4.5 | 1.4 2.4 3.4 4.4 1.3 2.3 3.3 4.3 |
+@Descending
+4.2 3.2 2.2 1.2 4.1 3.1 2.1 1.1 | 4.3 3.3 2.3 1.3 4.4 3.4 2.4 1.4 |
+
+== Challenge
+level: hard
+@Finger pairs
+:8 1.6 3.6 2.6 4.6 1.5 3.5 2.5 4.5 | 1.4 3.4 2.4 4.4 1.3 3.3 2.3 4.3 |
+@Reverse pairs
+4.2 2.2 3.2 1.2 4.1 2.1 3.1 1.1 | 4.3 2.3 3.3 1.3 4.4 2.4 3.4 1.4 |

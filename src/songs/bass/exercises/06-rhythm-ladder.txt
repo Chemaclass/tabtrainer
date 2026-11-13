@@ -1,0 +1,26 @@
+title: Rhythm Ladder
+artist: TabTrainer
+about: Keep the beat steady as you move between quarter notes, eighth notes and sixteenth notes.
+level: easy
+instrument: bass4
+tempo: 72
+key: C
+time: 4/4
+
+== Learn
+level: easy
+@Quarter and eighth notes
+:q 3.3 3.3 3.3 3.3 | :8 3.3 3.3 3.3 3.3 3.3 3.3 3.3 3.3 |
+:q 3.3 3.3 :8 3.3 3.3 3.3 3.3 | :8 3.3 3.3 3.3 3.3 :q 3.3 3.3 |
+
+== Develop
+level: medium
+@Add sixteenth notes
+:q 3.3 3.3 3.3 3.3 | :8 3.3 3.3 3.3 3.3 3.3 3.3 3.3 3.3 |
+:16 3.3 3.3 3.3 3.3 3.3 3.3 3.3 3.3 3.3 3.3 3.3 3.3 3.3 3.3 3.3 3.3 | :q 3.3 :8 3.3 3.3 :16 3.3 3.3 3.3 3.3 :q 3.3 |
+
+== Challenge
+level: hard
+@Mix the subdivisions
+:q 3.3 :8 3.3 3.3 :16 3.3 3.3 3.3 3.3 :8 3.3 3.3 | :16 3.3 3.3 3.3 3.3 :8 3.3 3.3 :q 3.3 :8 3.3 3.3 |
+:8 3.3 3.3 :16 3.3 3.3 3.3 3.3 :q 3.3 :16 3.3 3.3 3.3 3.3 | :16 3.3 3.3 3.3 3.3 :q 3.3 :8 3.3 3.3 :q 3.3 |

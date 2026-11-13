@@ -1,0 +1,28 @@
+title: Position Shifts
+artist: TabTrainer
+about: Shift between two hand positions in time while keeping each note clear.
+level: medium
+instrument: bass4
+tempo: 76
+key: C
+time: 4/4
+
+# Use the rest or ringing note to move between frets 2-5 and 7-10.
+== Learn
+level: medium
+@Frets 2-5
+:q 3.3 5.3 2.2 :q r | 3.3 5.3 2.2 r |
+@Frets 7-10
+:q 8.4 10.4 7.3 r | 8.4 10.4 7.3 r |
+
+== Develop
+level: medium
+@Shift between positions
+:q 3.3 5.3 :h 2.2 | :q 8.4 10.4 :h 7.3 |
+:q 3.3 5.3 :h 2.2 | :q 8.4 10.4 :h 7.3 |
+
+== Challenge
+level: hard
+@Shift and return
+:8 3.3 5.3 2.2 5.2 :h 3.2 | :8 8.4 10.4 7.3 10.3 :h 8.3 |
+:8 3.3 5.3 2.2 5.2 :h 3.2 | :8 8.4 10.4 7.3 10.3 :h 8.4 |

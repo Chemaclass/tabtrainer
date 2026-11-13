@@ -1,0 +1,29 @@
+title: Rhythm Ladder
+artist: TabTrainer
+about: Keep the beat steady while playing quarter, eighth and sixteenth notes.
+level: easy
+instrument: guitar6
+tempo: 64
+key: Em
+time: 4/4
+
+== Learn
+level: easy
+@Quarter notes
+:q 0.6 0.6 0.6 0.6 | 0.5 0.5 0.5 0.5 |
+@Eighth notes
+:8 0.6 0.6 0.6 0.6 0.6 0.6 0.6 0.6 | 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 |
+
+== Develop
+level: medium
+@Quarter and eighth notes
+:q 0.6 0.6 :8 0.6 0.6 0.6 0.6 | :q 0.5 0.5 :8 0.5 0.5 0.5 0.5 |
+@Sixteenth notes
+:16 0.6 0.6 0.6 0.6 0.6 0.6 0.6 0.6 :q 0.6 0.6 | :16 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 :q 0.5 0.5 |
+
+== Challenge
+level: hard
+@Climb
+:q 0.6 :8 0.6 0.6 :16 0.6 0.6 0.6 0.6 :q 0.6 | :q 0.5 :8 0.5 0.5 :16 0.5 0.5 0.5 0.5 :q 0.5 |
+@Descend
+:16 0.6 0.6 0.6 0.6 :8 0.6 0.6 :q 0.6 0.6 | :16 0.5 0.5 0.5 0.5 :8 0.5 0.5 :q 0.5 0.5 |

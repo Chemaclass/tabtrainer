@@ -12,10 +12,12 @@ describe('bundled demo songs', () => {
       expect(issues).toEqual([]);
       expect(song.meta.about, 'every demo says what it trains').toBeTruthy();
       expect(song.meta.level, 'every demo says how hard it is').toBeTruthy();
-      expect(song.bars.length).toBeGreaterThan(3);
+      for (const version of song.versions) {
+        expect(version.bars.length, version.name).toBeGreaterThan(3);
+      }
       const again = parseSong(serializeSong(song));
       expect(again.issues).toEqual([]);
-      expect(again.song.bars.map(b => b.events)).toEqual(song.bars.map(b => b.events));
+      expect(again.song.versions.map(v => v.bars.map(b => b.events))).toEqual(song.versions.map(v => v.bars.map(b => b.events)));
     });
   }
 });

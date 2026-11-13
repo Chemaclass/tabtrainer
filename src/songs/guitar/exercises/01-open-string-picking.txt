@@ -1,0 +1,29 @@
+title: Open String Picking
+artist: TabTrainer
+about: Pick all six open strings with steady timing and controlled string changes.
+level: easy
+instrument: guitar6
+tempo: 72
+key: Em
+time: 4/4
+
+== Learn
+level: easy
+@Low strings
+:q 0.6 0.6 0.5 0.5 | 0.4 0.4 0.5 0.6 |
+@High strings
+0.3 0.3 0.2 0.2 | 0.1 0.1 0.2 0.3 |
+
+== Develop
+level: medium
+@Across the strings
+:8 0.6 0.6 0.5 0.5 0.4 0.4 0.3 0.3 | 0.2 0.2 0.1 0.1 0.2 0.2 0.3 0.3 |
+@Back down
+0.4 0.4 0.5 0.5 0.6 0.6 0.5 0.5 | 0.4 0.4 0.3 0.3 0.2 0.2 0.1 0.1 |
+
+== Challenge
+level: hard
+@Across the strings
+:8 0.6 0.5 0.4 0.3 0.2 0.1 0.2 0.3 | 0.4 0.5 0.6 0.5 0.4 0.3 0.2 0.1 |
+@String skips
+0.6 0.4 0.5 0.3 0.4 0.2 0.3 0.1 | 0.1 0.3 0.2 0.4 0.3 0.5 0.4 0.6 |

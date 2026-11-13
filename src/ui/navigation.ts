@@ -1,6 +1,6 @@
 import { isFamily, type Family } from '../core/instruments';
 import { isLibraryKind, type LibraryKind } from './catalogue';
-import { findBySlug, songSlug } from './songLink';
+import { findBySlug, normalizeSongReference, songSlug } from './songLink';
 
 export type Route = { screen: 'library'; kind: LibraryKind; family: Family | null }
   | { screen: 'practice'; picked: string | null; version: string | null };
@@ -11,7 +11,7 @@ export function navigationState(value: unknown): NavigationState | null {
 }
 export function readRoute(search: string, paths: string[], picked: string | null = null): Route {
   const query = new URLSearchParams(search), path = findBySlug(paths, query.get('song') ?? '');
-  if (path || query.get('view') === 'practice') return { screen: 'practice', picked: path ? 'demo:' + path : picked, version: query.get('version') };
+  if (path || query.get('view') === 'practice') return { screen: 'practice', picked: path ? 'demo:' + path : picked ? normalizeSongReference(picked, paths) : null, version: query.get('version') };
   const kind = query.get('kind'), family = query.get('instrument');
   return { screen: 'library', kind: isLibraryKind(kind) ? kind : 'exercises', family: family && isFamily(family) ? family : null };
 }
@@ -37,7 +37,7 @@ export class Navigation {
   show(route: Route, picked: string, push = false) {
     const search = routeSearch(this.location.search, route);
     const url = this.location.pathname + (search ? '?' + search : '') + this.location.hash;
-    const changed = url !== this.location.pathname + this.location.search + this.location.hash || navigationState(this.history.state)?.picked !== picked;
+    const changed = url !== this.location.pathname + this.location.search + this.location.hash || normalizeSongReference(navigationState(this.history.state)?.picked ?? '', this.paths) !== picked;
     if (push && changed) this.position++;
     const state = { app: 'tabtrainer', index: this.position, picked };
     if (push && changed) this.history.pushState(state, '', url); else this.history.replaceState(state, '', url);

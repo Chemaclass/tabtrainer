@@ -6,14 +6,14 @@
 .library-nav button[aria-current=page]{border-bottom-color:var(--ink);color:var(--ink);font-weight:600}
 .library-nav button:hover{color:var(--ink)}
 .header-actions{display:flex;align-items:center;justify-content:flex-end;gap:16px;min-width:0}
-#familySelect{height:44px;min-width:100px;background-color:var(--page)}
+:is(#familySelect,[data-select="familySelect"]){height:44px;min-width:100px;background-color:var(--page)}
 #libraryOpenBtn{display:flex;align-items:center;justify-content:center;gap:8px;min-height:44px;white-space:nowrap}
 #libraryOpenBtn svg{display:none}
 .practice-crumb{display:flex;align-items:center;justify-content:center;gap:18px;min-width:0;font-size:14px}
 #backLibraryBtn{white-space:nowrap;font-weight:600;min-height:44px}
 #practiceName{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:32ch}
 .library-view .practice-crumb,.library-view #editBtn,.library-view .file-menu,.library-view #helpBtn{display:none}
-body:not(.library-view) .library-nav,body:not(.library-view) #familySelect,body:not(.library-view) #libraryOpenBtn{display:none}
+body:not(.library-view) .library-nav,body:not(.library-view) .dropdown:has([data-select="familySelect"]),body:not(.library-view) #familySelect,body:not(.library-view) #libraryOpenBtn{display:none}
 .library{display:grid;grid-template-columns:minmax(0,900px) minmax(220px,1fr);gap:64px;padding:44px 64px 40px;max-width:1600px;margin:0 auto}
 .catalogue{min-width:0}
 .library-intro{margin-bottom:24px}
@@ -25,7 +25,7 @@ body:not(.library-view) .library-nav,body:not(.library-view) #familySelect,body:
 .library-search svg{flex-shrink:0}
 #songSearch{min-width:0;width:100%;height:44px;padding:0;color:var(--ink);font:400 14px/20px var(--ui);border:0;background:transparent;outline:none}
 #songSearch::placeholder{color:var(--mut)}
-#songLevel{height:48px;padding:0 36px 0 14px;background-color:var(--page);max-width:160px}
+:is(#songLevel,[data-select="songLevel"]){height:48px;padding:0 36px 0 14px;background-color:var(--page);max-width:160px}
 #clearLevel{min-height:44px;text-decoration:underline}
 .catalogue-heading{display:flex;align-items:baseline;justify-content:space-between;gap:16px;padding:10px 0 14px;border-bottom:1px solid var(--ink)}
 .catalogue-heading h2{margin:0;font-size:18px;line-height:24px;font-weight:600}
@@ -94,7 +94,7 @@ body:not(.library-view) .library-nav,body:not(.library-view) #familySelect,body:
   .library-filters{gap:12px;margin-bottom:20px}
   .library-search{flex-basis:100%;height:48px;padding:0 14px}
   #songSearch{font-size:16px}
-  #songLevel{height:44px}
+  :is(#songLevel,[data-select="songLevel"]){height:44px}
   .catalogue-heading h2{font-size:16px;line-height:22px}
   #catalogueHint{font-size:12px;line-height:18px}
   .catalogue-row{padding:18px 0}
@@ -113,7 +113,7 @@ body:not(.library-view) .library-nav,body:not(.library-view) #familySelect,body:
 }
 @media(max-width:599px){
   .top{padding:8px 16px 0;gap:0 8px}
-  #familySelect{min-width:92px;padding:6px 32px 6px 10px}
+  :is(#familySelect,[data-select="familySelect"]){min-width:92px;padding:6px 32px 6px 10px}
   #libraryOpenBtn{width:44px;padding:0}
   .header-actions #helpBtn{display:none}
   .header-actions .toggle{padding:0 10px;font-size:13px}

@@ -1,0 +1,13 @@
+.dropdown{display:inline-flex;min-width:0}
+.dropdown-button{min-height:44px;max-width:100%;padding:8px 36px 8px 12px;text-align:left;border:1px solid var(--control-border);background:var(--page) var(--select-arrow) no-repeat right 12px center;background-size:14px;white-space:nowrap}
+.dropdown-button:hover{border-color:var(--control-hover)}
+.dropdown-list{position:fixed;z-index:30;overflow:auto;overscroll-behavior:contain;padding:4px;background:var(--page);color:var(--ink);border:1px solid var(--control-border);border-radius:8px;box-shadow:0 8px 28px rgba(0,0,0,.2)}
+.dropdown-list[hidden]{display:none}
+.dropdown-option{position:relative;display:flex;align-items:center;min-height:44px;padding:8px 36px 8px 12px;border-radius:4px;cursor:pointer}
+.dropdown-option:hover,.dropdown-option.active{background:var(--hover)}
+.dropdown-option[aria-selected=true]::after{content:'✓';position:absolute;right:12px;font-weight:600}
+.dropdown-option[aria-disabled=true]{opacity:.5;cursor:default}
+.player .dropdown-button{background-color:var(--deck-raise);color:var(--deck-hi)}
+.player .dropdown-list{background:var(--deck-raise);color:var(--deck-hi)}
+.player .dropdown-option:hover,.player .dropdown-option.active{background:var(--deck-line)}
+@media(max-width:599px){.dropdown-button{font-size:16px}}

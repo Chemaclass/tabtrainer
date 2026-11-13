@@ -1,0 +1,27 @@
+title: String Crossings
+artist: TabTrainer
+about: Move between adjacent strings and then skip a string while keeping your picking even.
+level: easy
+instrument: bass4
+tempo: 80
+key: C
+time: 4/4
+
+== Learn
+level: easy
+@Adjacent strings
+:q 3.4 3.3 3.4 3.3 | 3.3 2.2 3.3 2.2 |
+2.2 2.1 2.2 2.1 | 3.3 3.4 3.3 3.4 |
+
+== Develop
+level: medium
+@Adjacent strings
+:8 3.4 3.3 3.4 3.3 3.4 3.3 3.4 3.3 | 3.3 2.2 3.3 2.2 3.3 2.2 3.3 2.2 |
+@Skip a string
+3.4 2.2 3.4 2.2 3.4 2.2 3.4 2.2 | 3.3 2.1 3.3 2.1 3.3 2.1 3.3 2.1 |
+
+== Challenge
+level: hard
+@Adjacent and skipped strings
+:8 3.4 3.3 2.2 3.3 3.4 2.2 3.4 2.2 | 3.3 2.2 2.1 2.2 3.3 2.1 3.3 2.1 |
+3.4 2.2 3.3 2.1 3.3 2.2 3.4 2.2 | 3.3 2.1 2.2 3.4 2.2 3.3 2.1 3.3 |
