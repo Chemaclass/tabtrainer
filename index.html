@@ -103,6 +103,8 @@
       <button id="playBtn" class="play" title="Play / pause (Space plays or stops)" aria-label="Play"></button>
       <button id="stopBtn" class="stop" title="Stop and go back to the start" aria-label="Stop"><span></span></button>
     </div>
+    <span id="countInDisplay" class="count-in-display" aria-hidden="true" hidden></span>
+    <span id="playbackStatus" class="playback-status" role="status" aria-live="polite"></span>
     <div class="readout"><span class="lbl">Bar</span><span class="led"><b id="barNo">–</b><small> / <span id="barTotal">–</span></small></span></div>
     <div class="speed">
       <div class="speed-head"><label class="lbl" for="speed">Speed</label><output id="speedOut">100%</output></div>
@@ -111,12 +113,22 @@
         <button data-speed="50" aria-pressed="false">50%</button><button data-speed="75" aria-pressed="false">75%</button><button data-speed="100" aria-pressed="true">100%</button>
       </div>
     </div>
-    <button id="moreBtn" class="more" aria-expanded="false" aria-controls="extras" title="Loop, follow and auto-scroll"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M3 9l4-4 4 4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>Loop / more</button>
+    <button id="moreBtn" class="more" aria-expanded="false" aria-controls="extras" title="Loop, timing, follow and auto-scroll"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M3 9l4-4 4 4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>Loop / more</button>
     <div id="extras" class="extras">
     <div class="loop">
       <label class="pill"><input id="loopChk" type="checkbox" /><svg width="16" height="14" viewBox="0 0 16 14" aria-hidden="true"><path d="M2 7a4 4 0 0 1 4-4h6M14 7a4 4 0 0 1-4 4H4M10 1l2 2-2 2M6 9l-2 2 2 2" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Loop bars</label>
       <input id="loopA" type="number" min="1" value="1" aria-label="Loop from bar" /><span class="arrow" aria-hidden="true">→</span><input id="loopB" type="number" min="1" value="1" aria-label="Loop to bar" />
     </div>
+    <details class="timing">
+      <summary>Timing</summary>
+      <div class="timing-controls">
+        <label class="pill timing-metronome"><input id="metronomeChk" type="checkbox" />Metronome</label>
+        <label for="countInSelect">Count-in</label>
+        <select id="countInSelect"><option value="off">Off</option><option value="bar">One bar</option></select>
+        <label for="clickVolume">Click volume <output id="clickVolumeOut">50%</output></label>
+        <input id="clickVolume" type="range" min="0" max="100" value="50" />
+      </div>
+    </details>
     <div class="grow"></div>
     <div class="scroll">
       <label class="lbl" for="scrollMode">Scrolling</label>

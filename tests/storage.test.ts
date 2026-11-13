@@ -37,6 +37,15 @@ describe('preferences', () => {
     store(100); expect(pref('zoom', 1)).toBe(1);
     store('piano'); expect(pref('family', 'bass')).toBe('bass');
   });
+  it('validates practice timing preferences and falls back when storage is blocked', async () => {
+    const { pref } = await import('../src/ui/storage');
+    store(true); expect(pref('metronome', false)).toBe(true); expect(pref('countIn', false)).toBe(true);
+    store('true'); expect(pref('metronome', false)).toBe(false); expect(pref('countIn', false)).toBe(false);
+    for (const value of [0, 50, 100]) { store(value); expect(pref('clickVolume', 50)).toBe(value); }
+    for (const value of [-1, 101, '50', null]) { store(value); expect(pref('clickVolume', 50)).toBe(50); }
+    vi.stubGlobal('localStorage', { getItem: () => { throw Error('blocked'); } });
+    expect(pref('metronome', false)).toBe(false); expect(pref('countIn', false)).toBe(false); expect(pref('clickVolume', 50)).toBe(50);
+  });
   it('retains valid settings and checks every recovered draft field', async () => {
     const { pref } = await import('../src/ui/storage');
     store(0.8); expect(pref('zoom', 1)).toBe(0.8);

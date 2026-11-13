@@ -268,16 +268,25 @@ window.addEventListener('resize', () => { if (Math.abs(window.innerWidth - lastW
 // ---------- player wiring ----------
 const setPlayLabel = () => {
   const b = $('playBtn'); b.classList.toggle('pause', player.playing);
-  b.setAttribute('aria-label', player.playing ? 'Pause' : player.pausedAt !== null ? 'Resume' : 'Play');
+  b.setAttribute('aria-label', player.playing ? 'Pause' : player.canResume ? 'Resume' : 'Play');
 };
 let lit: Element[] = [], litKey: string | null = null, curSys: Element | null = null;
 let selectedNote: { key: string; beat: number; bar: number } | null = null;
 let onsets: number[] = [];
 let playbackWasActive = false;
-player.on(({ beat, playing }) => {
+let lastPhase = player.phase;
+player.on(({ beat, playing, phase, countInRemaining }) => {
+  const display = $('countInDisplay');
+  display.hidden = phase !== 'counting-in';
+  display.textContent = phase === 'counting-in' ? `Count-in: ${countInRemaining ?? ''}` : '';
+  if (phase !== lastPhase) {
+    $('playbackStatus').textContent = phase === 'counting-in' ? 'Counting in' : phase === 'playing' ? 'Playing' : phase === 'paused' ? 'Paused' : 'Stopped';
+    lastPhase = phase;
+  }
+  setPlayLabel();
+  if (phase === 'counting-in') { playbackWasActive = false; return; }
   const started = player.playing && !playbackWasActive; playbackWasActive = player.playing;
   if (started && picked) { recordPractice(picked); fillSongList(); }
-  setPlayLabel();
   if (beat === null) { selectedNote = null; passage.deselect(); showPassage(); lit.forEach(e => e.classList.remove('on')); lit = []; litKey = null; curSys?.classList.remove('cur'); curSys = null; $('barNo').textContent = '–'; return; }
   const key = playing ? onsetAt(onsets, beat) : null;
   if (key !== litKey) {
@@ -307,6 +316,23 @@ const showSpeed = () => {
 speed.value = String(pref('speed', 100)); player.speed = +speed.value / 100;
 speed.oninput = () => { player.setSpeed(+speed.value / 100); setPref('speed', +speed.value); showSpeed(); };
 document.querySelectorAll<HTMLButtonElement>('[data-speed]').forEach(b => { b.onclick = () => { speed.value = b.dataset.speed!; speed.dispatchEvent(new Event('input')); }; });
+const timing = document.querySelector<HTMLDetailsElement>('.timing')!;
+document.addEventListener('click', e => { if (!timing.contains(e.target as Node)) timing.open = false; });
+timing.addEventListener('keydown', e => {
+  if (e.key === 'Escape') { e.stopPropagation(); timing.open = false; timing.querySelector('summary')!.focus(); }
+});
+const metronome = $<HTMLInputElement>('metronomeChk');
+const countIn = $<HTMLSelectElement>('countInSelect');
+const clickVolume = $<HTMLInputElement>('clickVolume');
+metronome.checked = pref('metronome', false); player.setMetronome(metronome.checked);
+setSelectValue(countIn, pref('countIn', false) ? 'bar' : 'off'); player.setCountIn(countIn.value === 'bar');
+clickVolume.value = String(pref('clickVolume', 50)); player.setClickVolume(+clickVolume.value / 100);
+const showClickVolume = () => { $('clickVolumeOut').textContent = `${clickVolume.value}%`; fillRange(clickVolume); };
+showClickVolume();
+metronome.onchange = () => { player.setMetronome(metronome.checked); setPref('metronome', metronome.checked); };
+countIn.onchange = () => { const enabled = countIn.value === 'bar'; player.setCountIn(enabled); setPref('countIn', enabled); };
+clickVolume.oninput = () => { player.setClickVolume(+clickVolume.value / 100); setPref('clickVolume', +clickVolume.value); showClickVolume(); };
+
 function showPassage() {
   const state = passage.snapshot();
   $<HTMLInputElement>('loopA').value = String(state.first);
@@ -424,7 +450,7 @@ $<HTMLSelectElement>('scrollMode').onchange = e => {
 };
 
 // ---------- keyboard ----------
-const shortcut = playbackShortcut(() => screen === 'practice', () => player.playing, () => player.play(player.pausedAt ?? undefined), stopPlayback);
+const shortcut = playbackShortcut(() => screen === 'practice', () => player.playing, () => player.play(), stopPlayback);
 document.addEventListener('keydown', shortcut.keydown, true);
 document.addEventListener('keyup', shortcut.keyup, true);
 window.addEventListener('blur', shortcut.blur);

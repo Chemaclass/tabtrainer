@@ -25,3 +25,9 @@ describe('onsetAt', () => {
     expect(onsetAt(canon, 1)).toBe('0');
   });
 });
+
+it('retains the written meter for each bar', () => {
+  const song = parseSong(readFileSync('src/songs/bass/songs/02-canon-in-d.txt', 'utf8')).song;
+  const timeline = buildTimeline(song);
+  expect(timeline.bars[0]).toMatchObject({ beats: song.bars[0].beats, beatValue: song.bars[0].beatValue });
+});

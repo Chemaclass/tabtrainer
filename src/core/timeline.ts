@@ -16,7 +16,7 @@ export interface TimedNote {
   soft?: boolean;
 }
 
-export interface BarSpan { bar: number; start: number; length: number }
+export interface BarSpan { bar: number; start: number; length: number; beats: number; beatValue: number }
 
 export const onsetKey = (beat: number) => String(Math.round(beat * 1000));
 
@@ -26,7 +26,7 @@ export function buildTimeline(song: Song): { notes: TimedNote[]; bars: BarSpan[]
   let pos = 0;
   for (const b of song.bars) {
     const len = barTicks(b) / PPQ;
-    bars.push({ bar: b.index, start: pos, length: len });
+    bars.push({ bar: b.index, start: pos, length: len, beats: b.beats, beatValue: b.beatValue });
     for (const e of b.events) {
       const beat = pos + e.start / PPQ;
       for (const n of e.notes) {
