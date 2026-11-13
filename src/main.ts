@@ -17,8 +17,9 @@ import { FAMILIES, familyOf, isFamily, type Family } from './core/instruments';
 import { renderSong } from './render/notation';
 import { Player } from './audio/player';
 import { library, removeSong, pref, setPref, recentPractice, recordPractice } from './ui/storage';
-import { findBySlug, songSlug, versionSlug } from './ui/songLink';
+import { findBySlug, versionSlug } from './ui/songLink';
 import { AutoScroller } from './ui/scrolling';
+import { Navigation, navigationState, type Route } from './ui/navigation';
 import { DraftSession, titleOf } from './ui/draftSession';
 import { editorResize } from './ui/editorResize';
 import { libraryView } from './ui/libraryView';
@@ -27,12 +28,8 @@ import { isLibraryKind, nextExercise, type CatalogueEntry, type LibraryKind } fr
 const demos = import.meta.glob('./songs/*/*/*.txt', { query: '?raw', import: 'default', eager: true }) as Record<string, string>;
 const $ = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T;
 
-function navigationState(value: unknown): { index: number; picked: string } | null {
-  if (value && typeof value === 'object' && 'app' in value && value.app === 'tabtrainer' && 'index' in value && typeof value.index === 'number' && Number.isSafeInteger(value.index) && 'picked' in value && typeof value.picked === 'string') return { index: value.index, picked: value.picked };
-  return null;
-}
 const initialNavigation = navigationState(history.state);
-let historyPosition = initialNavigation?.index ?? 0, restoringHistory = false;
+const navigation = new Navigation(history, location, Object.keys(demos));
 const initialQuery = new URLSearchParams(location.search);
 let screen: 'library' | 'practice' = initialQuery.has('song') || initialQuery.get('view') === 'practice' ? 'practice' : 'library';
 const initialKind = initialQuery.get('kind') ?? pref('libraryKind', 'exercises');
@@ -93,22 +90,10 @@ function loadPickedSong(v: string, push = false) {
   setScreen('practice'); loadText(text); fillSongList(); showLink(push);
   if (push) { window.scrollTo(0, 0); $('title').focus({ preventScroll: true }); }
 }
-// only bundled songs get a link: "My songs" live in one browser
 function showLink(push = false) {
-  const query = new URLSearchParams(location.search);
-  if (screen === 'library') {
-    query.delete('song'); query.delete('version'); query.set('view', 'library'); query.set('kind', libraryKind); query.set('instrument', family);
-  } else {
-    query.delete('kind'); query.delete('instrument');
-    if (picked.startsWith('demo:')) { query.set('song', songSlug(picked.slice(5))); query.delete('view'); } else { query.delete('song'); query.set('view', 'practice'); }
-    if (picked.startsWith('demo:') && parsed && parsed.versions.length > 1) query.set('version', versionSlug(parsed.versions[versionIdx].name)); else query.delete('version');
-  }
-  const search = query.toString().replace(/%2F/g, '/');
-  const url = location.pathname + (search ? '?' + search : '') + location.hash;
-  const changed = url !== location.pathname + location.search + location.hash || navigationState(history.state)?.picked !== picked;
-  if (push && changed) historyPosition++;
-  const state = { app: 'tabtrainer', index: historyPosition, picked };
-  if (push && changed) history.pushState(state, '', url); else history.replaceState(state, '', url);
+  const route: Route = screen === 'library' ? { screen, kind: libraryKind, family }
+    : { screen, picked, version: parsed && parsed.versions.length > 1 ? versionSlug(parsed.versions[versionIdx].name) : null };
+  navigation.show(route, picked, push);
 }
 function setScreen(next: 'library' | 'practice', focus = false) {
   if (next === 'library') { player.stop(); if (scrollMode === 'continuous') setScrollMode('off'); }
@@ -144,31 +129,21 @@ $('libraryOpenBtn').onclick = () => $('openBtn').click();
 $('readTabBtn').onclick = $('readTabMobileBtn').onclick = () => $<HTMLDialogElement>('tabHelp').showModal();
 document.querySelectorAll<HTMLButtonElement>('[data-kind]').forEach(button => { button.onclick = () => { if (isLibraryKind(button.dataset.kind)) showLibrary(button.dataset.kind); }; });
 $<HTMLSelectElement>('familySelect').onchange = e => { const value = (e.target as HTMLSelectElement).value; if (isFamily(value)) chooseFamily(value); };
-window.addEventListener('popstate', event => {
-  if (restoringHistory) { restoringHistory = false; return; }
-  const state = navigationState(event.state), previousPosition = historyPosition;
-  const targetPosition = state?.index ?? previousPosition - 1;
-  const query = new URLSearchParams(location.search), path = findBySlug(Object.keys(demos), query.get('song') ?? '');
-  const wanted = path ? 'demo:' + path : query.get('view') === 'practice' ? state?.picked : null;
-  const open = () => {
-    historyPosition = targetPosition;
-    if (path) {
-      if (picked !== wanted) loadPickedSong('demo:' + path); else setScreen('practice');
-      chooseVersionNamed(query.get('version')); showLink();
-    } else if (query.get('view') === 'practice') {
-      if (wanted && wanted !== picked) loadPickedSong(wanted); else { setScreen('practice'); showLink(); }
-    } else {
-      const kind = query.get('kind'), instrument = query.get('instrument');
-      if (instrument && isFamily(instrument)) { family = instrument; $<HTMLSelectElement>('familySelect').value = family; }
-      showLibrary(isLibraryKind(kind) ? kind : 'exercises', false);
-    }
-  };
-  if (wanted && wanted !== picked && hasChanges()) replaceCurrent(open, () => {
-    const destination = navigationState(history.state)?.index ?? targetPosition;
-    if (previousPosition !== destination) { restoringHistory = true; history.go(previousPosition - destination); }
-  });
+function openRoute(route: Route) {
+  if (route.screen === 'practice') {
+    if (route.picked && route.picked !== picked) loadPickedSong(route.picked); else setScreen('practice');
+    if (route.picked?.startsWith('demo:')) chooseVersionNamed(route.version);
+    showLink();
+    return;
+  }
+  if (route.family) { family = route.family; $<HTMLSelectElement>('familySelect').value = family; }
+  showLibrary(route.kind, false);
+}
+window.addEventListener('popstate', event => navigation.visit(event.state, (route, accept, cancel) => {
+  const open = () => { accept(); openRoute(route); };
+  if (route.screen === 'practice' && route.picked && route.picked !== picked && hasChanges()) replaceCurrent(open, cancel);
   else open();
-});
+}));
 
 // ---------- parse + render ----------
 let timer = 0;
