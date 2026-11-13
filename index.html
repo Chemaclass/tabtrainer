@@ -22,6 +22,12 @@
       <input id="songSearch" type="text" role="combobox" aria-label="Search songs or artists" aria-expanded="false" aria-controls="songList" aria-autocomplete="list" autocomplete="off" spellcheck="false" placeholder="Search songs or artists" />
       <ul id="songList" role="listbox" aria-label="Songs" hidden></ul>
     </div>
+    <div class="song-filter">
+      <label for="songLevel" class="sr-only">Difficulty</label>
+      <select id="songLevel"><option value="">All levels</option><option value="easy">Easy</option><option value="medium">Medium</option><option value="hard">Hard</option><option value="unrated">Unrated</option></select>
+      <button id="clearLevel" class="ghost" hidden>Clear level</button>
+    </div>
+    <span id="songResults" class="sr-only" role="status" aria-live="polite"></span>
     <div class="grow"></div>
     <details class="file-menu">
       <summary>File</summary>
@@ -68,7 +74,7 @@
         <p id="rangeSummary" role="status" aria-live="polite"></p>
       </div>
       <div id="sheet" class="sheet"></div>
-      <p class="tip">Select a bar with a click, tap, or Enter, then press Play. Stop returns to the passage start.<span class="keys"> <kbd>Space</kbd> plays or pauses, <kbd>S</kbd> starts auto-scroll.</span></p>
+      <p class="tip">Select a bar with a click, tap, or Enter, then press Play. Stop returns to the passage start.<span class="keys"> <kbd>Space</kbd> plays or pauses, <kbd>S</kbd> toggles continuous scrolling; <kbd>↑</kbd>/<kbd>↓</kbd> change its speed.</span></p>
     </section>
   </main>
 
@@ -81,6 +87,9 @@
     <div class="speed">
       <div class="speed-head"><label class="lbl" for="speed">Speed</label><output id="speedOut">100%</output></div>
       <input id="speed" type="range" min="30" max="130" value="100" />
+      <div class="speed-presets" role="group" aria-label="Speed presets">
+        <button data-speed="50" aria-pressed="false">50%</button><button data-speed="75" aria-pressed="false">75%</button><button data-speed="100" aria-pressed="true">100%</button>
+      </div>
     </div>
     <button id="moreBtn" class="more" aria-expanded="false" aria-controls="extras" title="Loop, follow and auto-scroll"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M3 9l4-4 4 4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>Loop / more</button>
     <div id="extras" class="extras">
@@ -89,10 +98,11 @@
       <input id="loopA" type="number" min="1" value="1" aria-label="Loop from bar" /><span class="arrow" aria-hidden="true">→</span><input id="loopB" type="number" min="1" value="1" aria-label="Loop to bar" />
     </div>
     <div class="grow"></div>
-    <label class="pill dot"><input id="followChk" type="checkbox" checked />Follow</label>
     <div class="scroll">
-      <button id="scrollBtn" class="pill dot" title="Slow auto-scroll (S)">Auto-scroll</button>
-      <input id="scrollSpeed" type="range" min="3" max="80" value="15" title="Scroll speed (↑/↓ while scrolling)" aria-label="Scroll speed" />
+      <label class="lbl" for="scrollMode">Scrolling</label>
+      <select id="scrollMode" aria-describedby="scrollHelp"><option value="off">Off</option><option value="follow" selected>Follow playback</option><option value="continuous">Continuous</option></select>
+      <span id="scrollHelp">Keep the playing line in view.</span>
+      <div id="scrollRate" hidden><label for="scrollSpeed">Scroll speed</label><input id="scrollSpeed" type="range" min="3" max="80" value="15" /></div>
     </div>
     </div>
   </footer>

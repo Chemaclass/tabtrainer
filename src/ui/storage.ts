@@ -17,3 +17,12 @@ export function saveSong(title: string, text: string): boolean {
 export function removeSong(title: string) { try { const songs = read(); delete songs[title]; localStorage.setItem(LIB, JSON.stringify(songs)); } catch { /* storage unavailable */ } }
 export function pref<T>(k: string, def: T): T { try { const v = localStorage.getItem('tabtrainer:' + k); return v === null ? def : JSON.parse(v); } catch { return def; } }
 export function setPref(k: string, v: unknown): boolean { try { localStorage.setItem('tabtrainer:' + k, JSON.stringify(v)); return true; } catch { return false; } }
+
+export function recentPractice(): string[] {
+  const stored = pref<unknown>('recent', []);
+  return Array.isArray(stored) ? [...new Set(stored.filter((s): s is string => typeof s === 'string' && s.length > 0))].slice(0, 10) : [];
+}
+export function recordPractice(value: string) {
+  if (value) setPref('recent', [value, ...recentPractice().filter(s => s !== value)].slice(0, 10));
+}
+
