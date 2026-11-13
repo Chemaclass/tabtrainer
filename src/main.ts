@@ -31,9 +31,11 @@ import { editorResize } from './ui/editorResize';
 import { libraryView } from './ui/libraryView';
 import { hasPracticeLevels } from './ui/practiceLevels';
 import { categoryCounts, isLibraryKind, nextExercise, type CatalogueEntry, type LibraryKind } from './ui/catalogue';
+import { dismissHelpOnBackdrop } from './ui/helpDialogs';
 
 const demos = import.meta.glob('./songs/*/*/*.txt', { query: '?raw', import: 'default', eager: true }) as Record<string, string>;
 const $ = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T;
+['help', 'tabHelp'].forEach(id => dismissHelpOnBackdrop($<HTMLDialogElement>(id)));
 
 const resolvePick = (value: string) => normalizeSongReference(value, Object.keys(demos));
 const storedNavigation = navigationState(history.state);
