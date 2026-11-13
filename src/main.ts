@@ -301,10 +301,13 @@ function showPassage() {
   for (const id of ['rangeStart', 'rangeEnd']) $<HTMLButtonElement>(id).disabled = !state.selected;
   $('rangeSummary').textContent = passage.summary();
 }
-function applyLoop() {
-  if (!song?.bars.length) return;
+function setPlayerRange() {
   const range = passage.range();
   player.setRange(range ? player.barRange(...range) : null, passage.snapshot().repeat);
+}
+function applyLoop() {
+  if (!song?.bars.length) return;
+  setPlayerRange();
   const beat = player.pausedAt;
   if (!player.playing && player.range && (beat === null || beat < player.range[0] || beat >= player.range[1])) {
     passage.selectStart(); player.seek(player.range[0]);
@@ -313,7 +316,7 @@ function applyLoop() {
 }
 function selectBar(bar: number) {
   if (!passage.select(bar)) return;
-  applyLoop();
+  setPlayerRange();
   const span = player.bars.find(span => span.bar === bar);
   if (span) player.seek(span.start);
   showPassage();
