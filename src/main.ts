@@ -251,7 +251,7 @@ $('scrollBtn').onclick = () => (scrolling ? stopScroll() : startScroll());
 // ---------- keyboard ----------
 document.addEventListener('keydown', e => {
   const t = e.target as HTMLElement;
-  if (t === src || t.tagName === 'INPUT' || t.tagName === 'SELECT' || t.isContentEditable) return;
+  if (t.closest('button, summary, input, select, textarea, dialog') || t.isContentEditable) return;
   if (e.code === 'Space') { e.preventDefault(); player.toggle(); }
   else if (e.key === 's' || e.key === 'S') { e.preventDefault(); if (scrolling) stopScroll(); else startScroll(); }
   else if (scrolling && e.key === 'ArrowUp') { e.preventDefault(); sspeed.value = String(+sspeed.value + 2); fillRange(sspeed); }
@@ -260,6 +260,23 @@ document.addEventListener('keydown', e => {
 
 // ---------- toolbar ----------
 const unpick = () => { picked = ''; setPref('picked', ''); fillSongList(); showLink(); };
+const fileMenu = document.querySelector<HTMLDetailsElement>('.file-menu')!;
+$('openBtn').onclick = () => $<HTMLInputElement>('openFile').click();
+fileMenu.addEventListener('click', e => {
+  if ((e.target as Element).closest('button')) {
+    const returnFocus = fileMenu.contains(document.activeElement);
+    fileMenu.open = false;
+    if (returnFocus) fileMenu.querySelector('summary')!.focus();
+  }
+});
+document.addEventListener('click', e => {
+  if (!fileMenu.contains(e.target as Node)) fileMenu.open = false;
+});
+fileMenu.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    e.stopPropagation(); fileMenu.open = false; fileMenu.querySelector('summary')!.focus();
+  }
+});
 $('newBtn').onclick = () => { unpick(); loadText(newSong()); showEditor(true); src.focus(); };
 $('saveBtn').onclick = () => {
   const t = titleOf(src.value);
@@ -277,7 +294,8 @@ $<HTMLInputElement>('openFile').onchange = async e => {
 };
 const showEditor = (on: boolean) => { document.querySelector('.layout')!.classList.toggle('noedit', !on); $('editBtn').classList.toggle('on', on); $('editBtn').setAttribute('aria-pressed', String(on)); setPref('editor', on); setTimeout(draw, 50); };
 $('editBtn').onclick = () => showEditor(document.querySelector('.layout')!.classList.contains('noedit'));
-const setNotation = (on: boolean) => { showNota = on; setPref('notation', on); $('notaBtn').classList.toggle('on', on); $('tabBtn').classList.toggle('on', !on); draw(); };
+const showNotationState = () => { $('notaBtn').setAttribute('aria-pressed', String(showNota)); $('tabBtn').setAttribute('aria-pressed', String(!showNota)); };
+const setNotation = (on: boolean) => { showNota = on; setPref('notation', on); $('notaBtn').classList.toggle('on', on); $('tabBtn').classList.toggle('on', !on); showNotationState(); draw(); };
 $('notaBtn').onclick = () => setNotation(true);
 $('tabBtn').onclick = () => setNotation(false);
 $('zoomIn').onclick = () => { zoom = Math.min(1.8, +(zoom + 0.1).toFixed(2)); setPref('zoom', zoom); draw(); };
@@ -293,8 +311,9 @@ new ResizeObserver(([e]) => document.documentElement.style.setProperty('--deck-h
 
 // ---------- start ----------
 $('notaBtn').classList.toggle('on', showNota); $('tabBtn').classList.toggle('on', !showNota);
+showNotationState();
 setPlayLabel();
-showEditor(pref('editor', matchMedia('(min-width:900px)').matches));
+showEditor(pref('editor', false));
 const lastText = pref<string | null>('last', null), lastPick = pref('picked', '');
 const link = new URLSearchParams(location.search);
 const linked = findBySlug(Object.keys(demos), link.get('song') ?? '');
