@@ -54,6 +54,7 @@ let parsed: Song | null = null; // whole song with every version
 let versionIdx = 0;
 const passage = new Passage();
 const draftSession = new DraftSession(() => src.value);
+let continuationDismissed = false;
 let zoom = pref('zoom', 1), showNota = pref('notation', matchMedia('(min-width:600px)').matches);
 
 // ---------- song list ----------
@@ -132,7 +133,7 @@ function renderPracticeNavigation() {
   $('practiceName').textContent = song?.meta.title ?? 'Your song';
   $('practiceContext').textContent = `${song ? familyOf(song.meta.instrument) : family} / ${kind === 'exercises' ? 'exercise' : kind === 'songs' ? 'song' : 'your song'}`;
   const next = nextExercise(catalogueEntries, picked);
-  $('exerciseContinuation').hidden = screen !== 'practice' || kind !== 'exercises';
+  $('exerciseContinuation').hidden = screen !== 'practice' || kind !== 'exercises' || continuationDismissed;
   $('nextExerciseBtn').hidden = !next; $('allExercisesBtn').hidden = !!next;
   if (next) { $('nextExerciseTitle').textContent = next.title; $('nextExerciseBtn').onclick = () => pickSong(next.value); }
   $('backLibraryBtn').onclick = () => showLibrary(kind);
@@ -590,7 +591,18 @@ $('notaBtn').onclick = () => setNotation(true);
 $('tabBtn').onclick = () => setNotation(false);
 $('zoomIn').onclick = () => { zoom = Math.min(1.8, +(zoom + 0.1).toFixed(2)); setPref('zoom', zoom); draw(); };
 $('zoomOut').onclick = () => { zoom = Math.max(0.6, +(zoom - 0.1).toFixed(2)); setPref('zoom', zoom); draw(); };
-$('moreBtn').onclick = () => $('moreBtn').setAttribute('aria-expanded', String(document.querySelector('.player')!.classList.toggle('open')));
+const setPlayerExpanded = (open: boolean) => { document.querySelector('.player')!.classList.toggle('open', open); $('moreBtn').setAttribute('aria-expanded', String(open)); setPref('playerExpanded', open); };
+setPlayerExpanded(pref('playerExpanded', false));
+$('moreBtn').onclick = () => setPlayerExpanded($('moreBtn').getAttribute('aria-expanded') !== 'true');
+const setPlayerMinimized = (minimized: boolean) => {
+  document.documentElement.classList.toggle('player-min', minimized);
+  const label = minimized ? 'Show the controls' : 'Hide the controls', button = $('minimizeBtn');
+  button.setAttribute('aria-expanded', String(!minimized)); button.setAttribute('aria-label', label); button.title = label;
+  setPref('playerMinimized', minimized);
+};
+setPlayerMinimized(pref('playerMinimized', false));
+$('minimizeBtn').onclick = () => { setPlayerMinimized(!document.documentElement.classList.contains('player-min')); draw(); };
+$('closeContinuationBtn').onclick = () => { continuationDismissed = true; $('playBtn').focus(); $('exerciseContinuation').hidden = true; };
 $('syntaxHelpBtn').onclick = () => $<HTMLDialogElement>('help').showModal();
 (window as never as { tabtrainer: unknown }).tabtrainer = { player, removeSong, onsetKey };
 

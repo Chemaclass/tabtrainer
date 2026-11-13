@@ -42,5 +42,6 @@ export function editorResize(pane: HTMLElement, handle: HTMLElement, redraw: () 
     event.preventDefault(); event.stopPropagation(); preferred = editorWidth(value, available()).value;
     setPref('editorWidth', preferred); sync(); redraw();
   });
-  window.addEventListener('resize', () => { sync(); }); sync();
+  window.addEventListener('resize', () => { sync(); });
+  new ResizeObserver(() => sync()).observe(pane.parentElement!); sync();
 }

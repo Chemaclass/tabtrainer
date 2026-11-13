@@ -32,6 +32,8 @@ interface Preferences {
   speedPractice: SpeedPracticeConfig;
   scroll: number;
   editor: boolean;
+  playerExpanded: boolean;
+  playerMinimized: boolean;
   editorWidth: number | null;
   picked: string;
   last: string | null;
@@ -53,6 +55,8 @@ const validators: { [K in keyof Preferences]: (value: unknown) => value is Prefe
   speedPractice: isSpeedPracticeConfig,
   scroll: (value): value is number => finiteBetween(value, 3, 80),
   editor: isBoolean,
+  playerExpanded: isBoolean,
+  playerMinimized: isBoolean,
   editorWidth: (value): value is number | null => value === null || finiteBetween(value, 0, Number.MAX_VALUE),
   picked: isString,
   last: (value): value is string | null => value === null || isString(value),
