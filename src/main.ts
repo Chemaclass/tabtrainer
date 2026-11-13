@@ -137,7 +137,7 @@ function chooseVersion(i: number) {
   player.stop(); versionIdx = i;
   update(false); showLink();
   // a different version usually has a different number of bars: reset the loop range to the whole version
-  if (song) { $<HTMLInputElement>('loopA').value = '1'; $<HTMLInputElement>('loopB').value = String(Math.max(1, song.bars.length)); applyLoop(); }
+  if (song) { $<HTMLInputElement>('loopA').value = '1'; $<HTMLInputElement>('loopB').value = String(Math.max(1, song.bars.length)); player.stop(); applyLoop(); }
 }
 function chooseVersionNamed(slug: string | null) {
   const i = parsed?.versions.findIndex(v => versionSlug(v.name) === slug) ?? -1;
