@@ -22,6 +22,12 @@
       <input id="songSearch" type="text" role="combobox" aria-label="Search songs or artists" aria-expanded="false" aria-controls="songList" aria-autocomplete="list" autocomplete="off" spellcheck="false" placeholder="Search songs or artists" />
       <ul id="songList" role="listbox" aria-label="Songs" hidden></ul>
     </div>
+    <div class="song-filter">
+      <label for="songLevel" class="sr-only">Difficulty</label>
+      <select id="songLevel"><option value="">All levels</option><option value="easy">Easy</option><option value="medium">Medium</option><option value="hard">Hard</option><option value="unrated">Unrated</option></select>
+      <button id="clearLevel" class="ghost" hidden>Clear level</button>
+    </div>
+    <span id="songResults" class="sr-only" role="status" aria-live="polite"></span>
     <div class="grow"></div>
     <details class="file-menu">
       <summary>File</summary>
