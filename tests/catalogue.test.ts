@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { catalogueMatches, nextExercise, recentEntries, type CatalogueEntry } from '../src/ui/catalogue';
+import { catalogueMatches, categoryCounts, difficultyLabel, nextExercise, recentEntries, type CatalogueEntry } from '../src/ui/catalogue';
 
 const entry = (value: string, kind: CatalogueEntry['kind'] = 'exercises', family = 'bass'): CatalogueEntry => ({ value, title: value, artist: '', kind, family, tempo: 90, versions: 1, levels: ['easy'] });
 const entries = [entry('Open strings'), { ...entry('Scale'), about: 'One finger per fret', levels: ['medium', 'hard'] }, entry('Song', 'songs'), entry('Saved', 'mine'), entry('Guitar exercise', 'exercises', 'guitar')];
@@ -19,4 +19,15 @@ describe('practice catalogue', () => {
   it('ignores missing recent entries and other instruments without inventing progress', () => {
     expect(recentEntries(entries, ['missing', 'Guitar exercise', 'Song', 'Song', 'Open strings'], 'bass').map(e => e.value)).toEqual(['Song', 'Open strings']);
   });
+});
+
+it('counts every entry in the selected instrument independently of filters', () => {
+  expect(categoryCounts(entries, 'bass')).toEqual({ exercises: 2, songs: 1, mine: 1 });
+  expect(categoryCounts(entries, 'guitar')).toEqual({ exercises: 1, songs: 0, mine: 0 });
+});
+it('summarizes ordered unique difficulty levels', () => {
+  expect(difficultyLabel(['hard', 'easy', 'easy'])).toBe('Easy to hard');
+  expect(difficultyLabel(['hard', 'medium'])).toBe('Medium to hard');
+  expect(difficultyLabel(['easy'])).toBe('Easy');
+  expect(difficultyLabel([])).toBe('Unrated');
 });

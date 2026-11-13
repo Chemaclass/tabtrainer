@@ -40,7 +40,7 @@ kbd{font:600 12px var(--mono);padding:1px 5px;border:1px solid var(--rule);borde
 .toggle:hover,.toggle.on{background:var(--wash)}
 .round{width:40px;height:40px;padding:0;border-color:var(--rule);border-radius:20px}
 .round:hover{background:var(--wash)}
-.song-head{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;margin-bottom:12px;flex-wrap:wrap}
+.song-head{display:flex;justify-content:space-between;align-items:flex-start;gap:24px;margin-bottom:24px;flex-wrap:wrap}
 .song-head h1{margin:0 0 10px;font:800 28px/32px var(--display);letter-spacing:-.025em;overflow-wrap:anywhere}
 .credit{display:flex;flex-wrap:wrap;align-items:center;gap:8px 16px;margin:-2px 0 8px}
 .credit[hidden],.byline[hidden],.listen[hidden]{display:none}
@@ -51,20 +51,20 @@ kbd{font:600 12px var(--mono);padding:1px 5px;border:1px solid var(--rule);borde
 .listen-dot{flex:none;width:24px;height:24px;border-radius:50%;background:var(--playing) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10'%3E%3Cpath d='M2.8 1.2 8.8 5 2.8 8.8Z' fill='%23fff'/%3E%3C/svg%3E") center/10px no-repeat}
 .listen-host{font:400 12px/16px var(--mono);color:var(--mut)}
 .listen-host::after{content:" ↗"}
-.meta{display:flex;flex-wrap:wrap;gap:6px 18px;color:var(--mut)}
-.about{max-width:64ch;margin:8px 0 0;font-size:15px;line-height:22px;color:var(--ink)}
+.meta{display:flex;flex-wrap:wrap;align-items:center;gap:6px 18px;color:var(--mut);font-size:13px;line-height:20px}
+.about{max-width:64ch;margin:12px 0 0;font-size:16px;line-height:24px;color:var(--ink)}
 .lvl{align-self:center;padding:0 8px;border:1px solid var(--rule);border-radius:999px;font:600 11px/18px var(--ui);letter-spacing:.04em;text-transform:uppercase;color:var(--mut);white-space:nowrap}
 .lvl::before{content:"";display:inline-block;width:6px;height:6px;margin-right:6px;border-radius:50%;vertical-align:1px;background:#2e9e5b}
 .lvl-medium::before{background:#d39a1c}
 .lvl-hard::before{background:#d2483a}
 .meta .num{font:400 13px/20px var(--mono);color:var(--ink)}
-.view-opts{display:flex;align-items:center;gap:2px;padding:3px;border:1px solid var(--rule);border-radius:8px}
-.view-opts .divider{height:16px;margin:0 4px}
-.seg{padding:8px 12px;font-size:13px;border-radius:5px}
+.view-opts{display:flex;align-items:center;gap:0;padding:2px;border:1px solid var(--rule);border-radius:8px;max-width:100%}
+.view-opts .divider{height:16px;margin:0 2px}
+.seg{min-height:44px;padding:8px 12px;font-size:13px;border-radius:5px;white-space:nowrap}
 .seg.on{background:var(--ink);color:var(--page)}
-.versions{display:flex;flex-wrap:wrap;align-items:center;gap:4px;margin:14px 0 0;padding:3px;border:1px solid var(--rule);border-radius:8px;width:max-content;max-width:100%}
+.versions{display:flex;flex-wrap:wrap;align-items:center;gap:4px;padding:4px;background:var(--wash);border-radius:8px;width:max-content;max-width:100%}
 .versions[hidden]{display:none}
-.seg.small,.seg.big{width:40px;padding:8px 0;font-weight:600}
+.seg.small,.seg.big{width:44px;min-width:44px;padding:8px 0;font-weight:600}
 .seg.small{font-size:12px}
 .seg.big{font-size:15px}
 .sheet{background:#fff;color:#000;overflow-x:auto}
@@ -103,10 +103,7 @@ dialog .muted{color:var(--mut)}
   :root{--deck-h:76px}
   .toggle{height:44px}
   .round{width:32px;height:32px}
-  .song-head{gap:16px;margin-bottom:16px}
   .song-head h1{font-size:40px;line-height:44px}
-  .seg{padding:5px 12px}
-  .seg.small,.seg.big{width:30px;padding:5px 0}
   dialog{padding:28px 32px}
   dialog h2{font-size:28px;line-height:32px}
 }

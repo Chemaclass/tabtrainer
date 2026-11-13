@@ -28,7 +28,8 @@ import { Navigation, navigationState, type Route } from './ui/navigation';
 import { DraftSession, titleOf } from './ui/draftSession';
 import { editorResize } from './ui/editorResize';
 import { libraryView } from './ui/libraryView';
-import { isLibraryKind, nextExercise, type CatalogueEntry, type LibraryKind } from './ui/catalogue';
+import { hasPracticeLevels } from './ui/practiceLevels';
+import { categoryCounts, isLibraryKind, nextExercise, type CatalogueEntry, type LibraryKind } from './ui/catalogue';
 
 const demos = import.meta.glob('./songs/*/*/*.txt', { query: '?raw', import: 'default', eager: true }) as Record<string, string>;
 const $ = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T;
@@ -65,10 +66,10 @@ const songsFor = (f: Family) => ({
   demos: Object.keys(demos).filter(p => demoFamily(p) === f).sort(),
   mine: library().filter(s => familyOfText(s.text) === f),
 });
-const catalogue = libraryView(v => pickSong(v), () => $('newBtn').click(), () => $('openBtn').click());
+const catalogue = libraryView(v => pickSong(v), () => $('newBtn').click(), () => $('openBtn').click(), () => { showLibrary('exercises'); $('libraryTitle').focus({ preventScroll: true }); });
 function entryFor(value: string, text: string, kind: LibraryKind, instrument: string): CatalogueEntry {
   const parsed = parseSong(text).song;
-  return { value, title: parsed.meta.title, artist: artistOf(text), levels: parsed.versions.flatMap(v => v.level ?? parsed.meta.level ?? []), about: parsed.meta.about, family: instrument, kind, tempo: parsed.meta.tempo, versions: parsed.versions.length };
+  return { value, title: parsed.meta.title, artist: artistOf(text), levels: parsed.versions.flatMap(v => v.level ?? parsed.meta.level ?? []), about: parsed.meta.about, family: instrument, kind, tempo: parsed.meta.tempo, versions: parsed.versions.length, practiceLevels: hasPracticeLevels(parsed.versions.map(v => v.name)) };
 }
 function fillSongList() {
   bundledEntries ??= Object.keys(demos).sort().map(path => entryFor('demo:' + path, demos[path], demoKind(path) === 'exercises' ? 'exercises' : 'songs', demoFamily(path)));
@@ -116,13 +117,16 @@ function showLibrary(kind: LibraryKind = libraryKind, push = true) {
   libraryKind = kind; setPref('libraryKind', kind); setScreen('library', screen !== 'library'); showLink(push);
 }
 function renderPracticeNavigation() {
+  const counts = categoryCounts(catalogueEntries, family);
   document.querySelectorAll<HTMLButtonElement>('[data-kind]').forEach(button => {
+    if (isLibraryKind(button.dataset.kind)) button.querySelector<HTMLElement>('.nav-count')!.textContent = String(counts[button.dataset.kind]);
     if (button.dataset.kind === libraryKind) button.setAttribute('aria-current', 'page'); else button.removeAttribute('aria-current');
   });
   const current = catalogueEntries.find(e => e.value === picked);
   const kind = current?.kind ?? 'mine';
   $('backLibraryBtn').textContent = kind === 'exercises' ? '← All exercises' : kind === 'songs' ? '← All songs' : '← My songs';
   $('practiceName').textContent = song?.meta.title ?? 'Your song';
+  $('practiceContext').textContent = `${song ? familyOf(song.meta.instrument) : family} / ${kind === 'exercises' ? 'exercise' : kind === 'songs' ? 'song' : 'your song'}`;
   const next = nextExercise(catalogueEntries, picked);
   $('exerciseContinuation').hidden = screen !== 'practice' || kind !== 'exercises';
   $('nextExerciseBtn').hidden = !next; $('allExercisesBtn').hidden = !!next;
@@ -184,8 +188,18 @@ function update(resetLoop: boolean) {
 }
 function renderVersions(all: Song) {
   const box = $('versions'); box.replaceChildren();
-  box.hidden = all.versions.length < 2;
-  if (box.hidden) return;
+  const details = $('versionDetails'); details.hidden = all.versions.length < 2;
+  if (details.hidden) return;
+  const levels = hasPracticeLevels(all.versions.map(v => v.name));
+  $('versionLabel').textContent = levels ? 'Practice level' : 'Arrangement';
+  box.setAttribute('aria-label', levels ? 'Practice level' : 'Arrangement');
+  const help = $('versionHelp');
+  help.hidden = !levels;
+  help.textContent = levels ? [
+    'Start slowly and get comfortable with the pattern.',
+    'Build a steady rhythm as you practise.',
+    'Try the pattern, then raise the speed when you are ready.',
+  ][versionIdx] : '';
   all.versions.forEach((v, i) => {
     const b = document.createElement('button');
     b.type = 'button'; b.textContent = v.name; b.className = 'seg' + (i === versionIdx ? ' on' : '');
@@ -213,7 +227,7 @@ function renderMeta(s: Song) {
   $('subtitle').replaceChildren(...facts);
 }
 function renderCredit(s: Song) {
-  const names = creditNames(s.meta.artist);
+  const names = creditNames(s.meta.artist).filter(n => !/^tabtrainer$/i.test(n));
   const byline = $('byline'); byline.hidden = !names.length;
   const traditional = names.length === 1 && /^traditional$/i.test(names[0]);
   byline.replaceChildren(...(traditional ? [] : [document.createTextNode('by ')]), ...names.flatMap((n, i) => {

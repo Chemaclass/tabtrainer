@@ -14,7 +14,7 @@
       TabTrainer
     </button>
     <nav class="library-nav" aria-label="Practice library">
-      <button data-kind="exercises" aria-current="page">Exercises</button><button data-kind="songs">Songs</button><button data-kind="mine">My songs</button>
+      <button data-kind="exercises" aria-current="page">Exercises <span class="nav-count">0</span></button><button data-kind="songs">Songs <span class="nav-count">0</span></button><button data-kind="mine">My songs <span class="nav-count">0</span></button>
     </nav>
     <div class="practice-crumb"><button id="backLibraryBtn">← All exercises</button><span aria-hidden="true">/</span><span id="practiceName"></span></div>
     <div class="header-actions">
@@ -45,7 +45,7 @@
   </dialog>
   <main id="libraryScreen" class="library" aria-labelledby="libraryTitle">
     <div class="catalogue">
-      <div class="library-intro"><h1 id="libraryTitle" tabindex="-1">Build a skill.</h1><p id="libraryDescription">Short exercises for your hands, timing, and fretboard knowledge.</p></div>
+      <div class="library-intro"><div id="libraryContext" class="library-context">Bass / Exercises</div><h1 id="libraryTitle" tabindex="-1">Build a skill.</h1><p id="libraryDescription">Short exercises for your hands, timing, and fretboard knowledge.</p></div>
       <div id="mySongActions" class="my-song-actions" hidden><button id="libraryNewBtn" class="toggle">New song</button><button id="libraryImportBtn" class="toggle">Open a file</button></div>
       <div class="library-filters">
         <label class="library-search"><svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><circle cx="7.5" cy="7.5" r="5" stroke="currentColor" stroke-width="1.5" fill="none"/><path d="m11.5 11.5 4 4" stroke="currentColor" stroke-width="1.5"/></svg><input id="songSearch" type="search" aria-label="Search exercises or skills" placeholder="Search exercises or skills" autocomplete="off" /></label>
@@ -55,13 +55,13 @@
       <div class="catalogue-heading"><h2 id="catalogueHeading">Start here</h2><span id="catalogueHint">A suggested order. Start anywhere.</span></div>
       <p id="songResults" class="sr-only" role="status" aria-live="polite"></p>
       <ul id="catalogueList" class="catalogue-list"></ul>
-      <div id="catalogueEmpty" class="catalogue-empty" hidden><h2 id="emptyTitle">No exercises match</h2><p id="emptyDescription">Try another search or clear the filters.</p><div><button id="emptyClearBtn" class="toggle">Clear filters</button><button id="emptyNewBtn" class="toggle" hidden>New song</button><button id="emptyOpenBtn" class="toggle" hidden>Open a file</button></div></div>
+      <div id="catalogueEmpty" class="catalogue-empty" hidden><h2 id="emptyTitle">No exercises match</h2><p id="emptyDescription">Try another search or clear the filters.</p><div><button id="emptyClearBtn" class="toggle">Clear filters</button><button id="emptyExercisesBtn" class="toggle" hidden>Browse exercises</button><button id="emptyNewBtn" class="toggle" hidden>New song</button><button id="emptyOpenBtn" class="toggle" hidden>Open a file</button></div></div>
       <button id="readTabMobileBtn" class="mobile-tab-help">How to read tab →</button>
       <div class="explore"><span id="exploreHint">Next: scales, disco, blues, and Latin rhythms.</span><button id="exploreAllBtn">Explore all exercises →</button></div>
     </div>
     <aside class="library-aside" aria-label="Practice suggestions">
       <section id="recentPanel" class="recent-panel" hidden><h2>Recent practice</h2><h3 id="recentTitle"></h3><p id="recentAbout"></p><p id="recentMeta"></p><button id="resumeBtn" class="primary">Continue practising →</button><div id="otherRecent"></div></section>
-      <section class="reading-guide"><h2>First time with tab?</h2><p>Each number is a fret. Each line is a string. Start slowly and let the player guide you.</p><button id="readTabBtn">How to read tab →</button></section>
+      <section class="reading-guide"><div class="guide-card"><h2>Make a little progress.</h2><p>Start slowly. A few comfortable bars are a good practice session.</p><button id="readTabBtn">How to read tab →</button></div><ol><li>Choose a comfortable level.</li><li>Try 50% or 75% speed.</li><li>Loop a few bars until they feel comfortable.</li></ol></section>
     </aside>
   </main>
   <div id="practiceScreen" hidden>
@@ -74,7 +74,7 @@
     <div id="editorResize" title="Drag to resize, double-click to reset" role="separator" tabindex="0" aria-label="Editor width" aria-orientation="vertical" aria-controls="editorPane" aria-valuemin="240" aria-valuemax="720" aria-valuenow="400" aria-describedby="editorResizeHelp"><span id="editorResizeHelp" class="sr-only">Drag to resize. Use Left and Right arrows, Home or End. Double-click to reset the width.</span></div>
     <section class="viewer">
       <div class="song-head">
-        <div><h1 id="title" tabindex="-1"></h1><div id="credit" class="credit"><span id="byline" class="byline" hidden></span><a id="listen" class="listen" target="_blank" rel="noopener noreferrer" hidden><span class="listen-dot" aria-hidden="true"></span><span class="listen-label">Listen to the original</span><span id="listenHost" class="listen-host"></span></a></div><div id="subtitle" class="meta"></div><p id="about" class="about" hidden></p><div id="versions" class="versions" role="group" aria-label="Versions of this song" hidden></div></div>
+        <div><p id="practiceContext" class="practice-context"></p><h1 id="title" tabindex="-1"></h1><div id="credit" class="credit"><span id="byline" class="byline" hidden></span><a id="listen" class="listen" target="_blank" rel="noopener noreferrer" hidden><span class="listen-dot" aria-hidden="true"></span><span class="listen-label">Listen to the original</span><span id="listenHost" class="listen-host"></span></a></div><div id="subtitle" class="meta"></div><p id="about" class="about" hidden></p></div>
         <div class="view-opts" role="group" aria-label="View">
           <button id="notaBtn" class="seg" title="Show standard notation above the tab">Notation + tab</button>
           <button id="tabBtn" class="seg" title="Show the tab only">Tab only</button>
@@ -82,6 +82,7 @@
           <button id="zoomOut" class="seg small" title="Smaller" aria-label="Smaller">A−</button><button id="zoomIn" class="seg big" title="Bigger" aria-label="Bigger">A+</button>
         </div>
       </div>
+      <div id="versionDetails" class="version-details" hidden><span id="versionLabel" class="version-label"></span><div id="versions" class="versions" role="group" aria-label="Arrangements"></div><p id="versionHelp" class="version-help" aria-live="polite"></p></div>
       <div class="passage" aria-label="Practice passage">
         <p id="passageHelp">Select a bar to choose where to start, or set a passage to repeat.</p>
         <div class="passage-actions">

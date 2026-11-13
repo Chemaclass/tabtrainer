@@ -73,3 +73,17 @@
   #nextExerciseTitle{font-size:14px;line-height:20px}
   .next-arrow{grid-column:2;grid-row:1/3}
 }
+
+.practice-context{margin:0 0 12px;color:var(--mut);font-size:12px;font-weight:600;line-height:16px;letter-spacing:.08em;text-transform:uppercase}
+.version-details{display:flex;align-items:center;gap:20px;flex-wrap:wrap;padding:16px 0;margin-bottom:20px;border-block:1px solid var(--rule)}
+.version-details[hidden],.version-help[hidden]{display:none}
+.version-label{min-width:90px;color:var(--mut);font-size:13px;line-height:20px}
+.version-help{margin:0;color:var(--mut);font-size:14px;line-height:20px}
+.versions .seg{padding-inline:18px;font-size:14px}
+@media(max-width:599px){
+  .view-opts .seg:not(.small):not(.big){padding-inline:7px}
+  .versions .seg{padding-inline:10px}
+  .version-details{gap:8px 12px}
+  .version-label{flex-basis:100%}
+  .version-help{flex-basis:100%}
+}
