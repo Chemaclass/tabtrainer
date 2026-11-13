@@ -13,7 +13,7 @@
 *{box-sizing:border-box}
 body{margin:0;background:var(--page);color:var(--ink);font:400 14px/20px var(--ui);padding-bottom:var(--deck-h);-webkit-font-smoothing:antialiased;-webkit-text-size-adjust:100%;touch-action:manipulation}
 button,.btn,select{font:500 14px/20px var(--ui);color:var(--ink);background:none;border:1px solid transparent;border-radius:6px;padding:6px 10px;cursor:pointer}
-button:focus-visible,.btn:focus-visible,select:focus-visible,input:focus-visible,.pill:has(input:focus-visible){outline:2px solid var(--ink);outline-offset:2px}
+summary:focus-visible,button:focus-visible,.btn:focus-visible,select:focus-visible,input:focus-visible,.pill:has(input:focus-visible){outline:2px solid var(--ink);outline-offset:2px}
 .player :focus-visible,.player .pill:has(input:focus-visible){outline-color:var(--led)}
 .grow{flex:1}
 .caps,.lbl{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase}
@@ -22,8 +22,7 @@ kbd{font:600 12px var(--mono);padding:1px 5px;border:1px solid var(--rule);borde
 
 /* top bar */
 .top{position:relative;z-index:5;display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:10px max(16px,env(safe-area-inset-right)) 10px max(16px,env(safe-area-inset-left));background:var(--page);border-bottom:1px solid var(--rule)}
-.top .brand{order:1}.top .grow{order:2}.top #editBtn{order:3}.top #helpBtn{order:4}.top .inst-switch{order:5}.top .song-pick{order:6}.top .file-actions{order:7;width:100%}
-.top:has(~ .layout.noedit) .file-actions{display:none}
+.top .brand{order:1}.top .grow{order:2}.top #editBtn{order:3}.top #helpBtn{order:4}.top .inst-switch{order:5}.top .song-pick{order:6}.top .file-menu{order:4}
 .brand{display:flex;align-items:center;gap:10px;font:800 17px var(--display);letter-spacing:-.02em;white-space:nowrap}
 .song-pick{position:relative;flex:1 1 160px;min-width:0}
 #songSearch{width:100%;height:40px;padding:0 32px 0 12px;font:500 16px/20px var(--ui);color:var(--ink);border:1px solid var(--rule);border-radius:6px;cursor:pointer;text-overflow:ellipsis;background:var(--page) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12'%3E%3Cpath d='M3 4.5 6 7.5 9 4.5' fill='none' stroke='%235c5c5c' stroke-width='1.5'/%3E%3C/svg%3E") no-repeat right 12px center}
@@ -39,9 +38,15 @@ kbd{font:600 12px var(--mono);padding:1px 5px;border:1px solid var(--rule);borde
 #songList .opt-level{margin-left:auto;flex:none;display:flex;align-items:center;align-self:center;gap:5px}
 .lvl-dot{width:8px;height:8px;border-radius:50%;background:#2e9e5b}.lvl-dot-medium{background:#d39a1c}.lvl-dot-hard{background:#d2483a}
 #songList .empty{padding:12px 10px;color:var(--mut)}
-.file-actions{display:flex;gap:2px}
+.file-menu{position:relative}
+.file-menu summary{display:flex;align-items:center;min-height:44px;padding:0 12px;border:1px solid var(--rule);border-radius:6px;cursor:pointer;list-style:none;font-weight:500}
+.file-menu summary::-webkit-details-marker{display:none}
+.file-menu summary::after{content:"▾";margin-left:8px}
+.file-menu[open] summary{background:var(--wash)}
+.file-actions{position:absolute;right:0;top:calc(100% + 4px);min-width:160px;display:flex;flex-direction:column;padding:4px;background:var(--page);border:1px solid var(--rule);border-radius:8px;box-shadow:0 8px 28px rgba(0,0,0,.14)}
+.file-actions button{min-height:44px;text-align:left}
 .ghost:hover,.seg:hover{background:var(--wash)}
-.toggle{display:flex;align-items:center;gap:6px;height:40px;padding:0 12px;border-color:var(--rule)}
+.toggle{display:flex;align-items:center;gap:6px;height:44px;padding:0 12px;border-color:var(--rule)}
 .toggle:hover{background:var(--wash)}
 .toggle.on{background:var(--wash)}
 .round{width:40px;height:40px;padding:0;border-color:var(--rule);border-radius:20px}
@@ -65,9 +70,9 @@ kbd{font:600 12px var(--mono);padding:1px 5px;border:1px solid var(--rule);borde
 
 /* score */
 .viewer{padding:20px max(16px,env(safe-area-inset-right)) 24px max(16px,env(safe-area-inset-left));min-width:0}
-.song-head{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;margin-bottom:20px;flex-wrap:wrap}
+.song-head{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;margin-bottom:12px;flex-wrap:wrap}
 .song-head h1{margin:0 0 10px;font:800 28px/32px var(--display);letter-spacing:-.025em;overflow-wrap:anywhere}
-.credit{display:flex;flex-wrap:wrap;align-items:center;gap:8px 16px;margin:-2px 0 14px}
+.credit{display:flex;flex-wrap:wrap;align-items:center;gap:8px 16px;margin:-2px 0 8px}
 .credit[hidden],.byline[hidden],.listen[hidden]{display:none}
 .byline{font-size:17px;line-height:24px;color:var(--mut)}
 .byline b{font-weight:600;color:var(--ink)}
@@ -77,7 +82,7 @@ kbd{font:600 12px var(--mono);padding:1px 5px;border:1px solid var(--rule);borde
 .listen-host{font:400 12px/16px var(--mono);color:var(--mut)}
 .listen-host::after{content:" ↗"}
 .meta{display:flex;flex-wrap:wrap;gap:6px 18px;color:var(--mut)}
-.about{max-width:64ch;margin:14px 0 0;font-size:15px;line-height:22px;color:var(--ink)}
+.about{max-width:64ch;margin:8px 0 0;font-size:15px;line-height:22px;color:var(--ink)}
 .lvl{align-self:center;padding:0 8px;border:1px solid var(--rule);border-radius:999px;font:600 11px/18px var(--ui);letter-spacing:.04em;text-transform:uppercase;color:var(--mut);white-space:nowrap}
 .lvl::before{content:"";display:inline-block;width:6px;height:6px;margin-right:6px;border-radius:50%;vertical-align:1px;background:#2e9e5b}
 .lvl-medium::before{background:#d39a1c}.lvl-hard::before{background:#d2483a}
@@ -119,7 +124,7 @@ kbd{font:600 12px var(--mono);padding:1px 5px;border:1px solid var(--rule);borde
 .led b{font-weight:600;display:inline-block;min-width:2ch;text-align:right}
 .led small{font-size:13px;color:var(--deck-dim)}
 .speed{display:flex;flex-direction:column;gap:4px;flex:1;min-width:60px}
-.more{width:40px;height:40px;border-radius:20px;border-color:var(--deck-line);padding:0;display:grid;place-items:center;color:var(--deck-text)}
+.more{min-width:44px;min-height:44px;gap:4px;font-size:12px;border-radius:20px;border-color:var(--deck-line);padding:4px 8px;display:grid;place-items:center;color:var(--deck-text)}
 .more:hover{background:var(--deck-raise)}
 .more svg{transition:transform .15s}
 .player.open .more svg{transform:rotate(180deg)}
@@ -163,7 +168,6 @@ dialog .muted{color:var(--mut)}
 
 /* tablets */
 @media (min-width:600px){
-  .top .file-actions,.top:has(~ .layout.noedit) .file-actions{display:flex;width:auto}
   .top .song-pick{flex:1 1 220px}
   .viewer{padding:28px 32px}
   .song-head h1{font-size:34px;line-height:38px}
@@ -179,18 +183,18 @@ dialog .muted{color:var(--mut)}
 @media (min-width:900px){
   :root{--deck-h:76px}
   .top{position:sticky;top:0;flex-wrap:nowrap;gap:16px;height:56px;padding:0 24px 0 16px}
-  .top .brand,.top .grow,.top #editBtn,.top #helpBtn,.top .inst-switch,.top .song-pick,.top .file-actions{order:0}
+  .top .brand,.top .grow,.top #editBtn,.top #helpBtn,.top .inst-switch,.top .song-pick,.top .file-menu{order:0}
   .top .song-pick{flex:0 1 340px;min-width:140px}
   #songSearch{height:34px;font-size:14px}
   #songList [role=option]{padding:7px 10px}
-  .toggle{height:32px}
+  .toggle{height:44px}
   .round{width:32px;height:32px}
   .layout{grid-template-columns:400px minmax(0,1fr);min-height:calc(100dvh - 56px - var(--deck-h))}
   .editor{position:sticky;top:56px;height:calc(100dvh - 56px - var(--deck-h));border-right:1px solid var(--rule);border-bottom:0}
   .pane-head{padding:0 20px}
   #src{min-height:200px;font:400 13px/22px var(--mono);padding:16px 20px}
-  .viewer{padding:36px 56px 32px}
-  .song-head{gap:24px;margin-bottom:28px}
+  .viewer{padding:20px 40px 32px}
+  .song-head{gap:16px;margin-bottom:16px}
   .song-head h1{font-size:40px;line-height:44px}
   .seg{padding:5px 12px}
   .seg.small,.seg.big{width:30px;padding:5px 0}
@@ -214,8 +218,8 @@ dialog .muted{color:var(--mut)}
 /* extra large screens */
 @media (min-width:1600px){
   .layout{grid-template-columns:480px minmax(0,1fr)}
-  .viewer{padding:44px 72px 40px}
-  .song-head h1{font-size:48px;line-height:52px}
+  .viewer{padding:24px 56px 40px}
+  .song-head h1{font-size:40px;line-height:44px}
   .about{font-size:16px;line-height:24px}
   #src{font-size:14px;line-height:24px}
   .player{padding:12px 40px}
@@ -232,3 +236,11 @@ dialog .muted{color:var(--mut)}
 .bar-target.selected{stroke:#2766bb;stroke-dasharray:6 3}
 .bar-target:hover{fill:#2766bb;fill-opacity:.08}
 .bar-target:focus-visible{outline:none;stroke:#2766bb;stroke-width:3}
+
+@media (max-width:599px){
+  .file-menu{position:static}.file-actions{right:max(16px,env(safe-area-inset-right))}
+  .top .brand{flex:1}.top .grow{display:none}
+  .top #helpBtn{order:5}.top .inst-switch{order:6}.top .song-pick{order:7;flex-basis:100%}
+  .player{gap:8px}.transport{gap:6px}.stop{width:44px;height:44px}.readout{display:none}
+  .seg{min-height:44px}.seg.small,.seg.big{width:44px}
+}
