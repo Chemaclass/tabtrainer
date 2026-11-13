@@ -1,0 +1,152 @@
+[hidden]{display:none!important}
+body{padding-bottom:calc(var(--deck-h) + var(--continuation-h,0px))}
+body.library-view{padding-bottom:0}
+.top{position:relative;z-index:8;display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:32px;min-height:64px;padding:0 48px;background:var(--page);border-bottom:1px solid var(--rule)}
+.library-view .top{min-height:72px}
+#homeBtn{padding:0;border:0;min-height:44px}
+.library-nav{display:flex;justify-content:center;align-items:stretch;gap:36px;align-self:stretch}
+.library-nav button{border-radius:0;border:0;border-bottom:3px solid transparent;color:var(--mut);padding:0;min-height:52px;font-size:15px}
+.library-nav button[aria-current=page]{border-bottom-color:var(--ink);color:var(--ink);font-weight:600}
+.library-nav button:hover{color:var(--ink)}
+.header-actions{display:flex;align-items:center;justify-content:flex-end;gap:16px;min-width:0}
+#familySelect{border-color:var(--rule);height:44px;min-width:90px;background:var(--page)}
+#libraryOpenBtn{display:flex;align-items:center;justify-content:center;gap:8px;min-height:44px;white-space:nowrap}
+#libraryOpenBtn svg{display:none}
+.practice-crumb{display:flex;align-items:center;justify-content:center;gap:18px;min-width:0;font-size:14px}
+#backLibraryBtn{white-space:nowrap;font-weight:600;min-height:44px}
+#practiceName{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:32ch}
+.library-view .practice-crumb,.library-view #editBtn,.library-view .file-menu,.library-view #helpBtn{display:none}
+body:not(.library-view) .library-nav,body:not(.library-view) #familySelect,body:not(.library-view) #libraryOpenBtn{display:none}
+.library{display:grid;grid-template-columns:minmax(0,900px) minmax(220px,1fr);gap:64px;padding:44px 64px 40px;max-width:1600px;margin:0 auto}
+.catalogue{min-width:0}
+.library-intro{margin-bottom:24px}
+.library-intro h1{font:800 48px/52px var(--display);letter-spacing:-.025em;margin:0 0 12px}
+.library-intro p{font-size:16px;line-height:24px;color:var(--mut);margin:0}
+.library-filters{display:flex;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:28px}
+.library-search{display:flex;align-items:center;gap:12px;flex:1 1 200px;min-width:0;height:48px;border:1px solid var(--rule);border-radius:6px;padding:0 16px;color:var(--mut)}
+.library-search:focus-within{outline:2px solid var(--ink);outline-offset:2px}
+.library-search svg{flex-shrink:0}
+#songSearch{min-width:0;width:100%;height:44px;padding:0;color:var(--ink);font:400 14px/20px var(--ui);border:0;background:transparent;outline:none}
+#songSearch::placeholder{color:var(--mut)}
+#songLevel{height:48px;border-color:var(--rule);padding:0 14px;background:var(--page);max-width:150px}
+#clearLevel{min-height:44px;text-decoration:underline}
+.catalogue-heading{display:flex;align-items:baseline;justify-content:space-between;gap:16px;padding:10px 0 14px;border-bottom:1px solid var(--ink)}
+.catalogue-heading h2{margin:0;font-size:18px;line-height:24px;font-weight:600}
+#catalogueHint{font-size:13px;color:var(--mut);text-align:right}
+.catalogue-list{padding:0;margin:0;list-style:none}
+.catalogue-row{display:flex;align-items:center;gap:20px;width:100%;padding:22px 12px;border:0;border-bottom:1px solid var(--rule);border-radius:0;text-align:left;background:var(--page)}
+.catalogue-row:hover{background:var(--wash)}
+.catalogue-row:focus-visible{outline-offset:-2px}
+.exercise-number{flex:0 0 36px;font:400 15px/22px var(--mono);color:var(--mut)}
+.catalogue-copy{display:flex;flex:1;min-width:0;flex-direction:column;gap:6px}
+.catalogue-copy strong{font-size:18px;line-height:24px;font-weight:600;overflow-wrap:anywhere}
+.catalogue-description{font-size:14px;line-height:20px;color:var(--mut);font-weight:400;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.catalogue-level{flex:0 0 66px;font-size:13px;line-height:18px;text-transform:capitalize;font-weight:400}
+.catalogue-tempo{flex:0 0 76px;font:400 13px/20px var(--mono);color:var(--mut)}
+.catalogue-arrow{display:flex;align-items:center;justify-content:center;flex:0 0 44px;height:44px;border:1px solid var(--rule);border-radius:50%;font-size:20px}
+.catalogue-mobile-meta{display:none;font-size:13px;line-height:18px;color:var(--mut);font-weight:400;text-transform:capitalize}
+.catalogue-arrangements{font-size:13px;line-height:18px;color:var(--mut);font-weight:400}
+.explore{display:flex;align-items:center;justify-content:space-between;gap:16px;padding-top:24px;font-size:14px}
+.explore span{color:var(--mut)}
+.explore button{min-height:44px;padding:0;font-size:14px;font-weight:600;text-decoration:underline}
+.catalogue-empty{padding:40px 0}
+.catalogue-empty h2{font:800 26px/32px var(--display);margin:0 0 12px}
+.catalogue-empty p{color:var(--mut);margin:0 0 20px}
+.catalogue-empty>div{display:flex;flex-wrap:wrap;gap:12px}
+.library-aside{padding-top:10px;min-width:0}
+.recent-panel{padding:24px;background:var(--wash);border-radius:10px;margin-bottom:28px}
+.recent-panel h2{font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;line-height:18px;margin:0 0 18px}
+.recent-panel h3{font:800 26px/30px var(--display);letter-spacing:-.02em;margin:0 0 14px;overflow-wrap:anywhere}
+.recent-panel p{font-size:14px;line-height:22px;color:var(--mut);margin:0 0 12px}
+#recentAbout{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+#recentMeta{text-transform:capitalize}
+.primary{display:flex;align-items:center;justify-content:center;min-height:46px;background:var(--led);color:var(--deck);font-weight:600;padding:10px 16px}
+#resumeBtn{width:100%;margin-top:18px}
+.primary:hover{filter:brightness(.96)}
+#otherRecent{display:flex;flex-direction:column;gap:4px}
+#otherRecent:empty{display:none}
+#otherRecent button{min-height:44px;text-align:left;border-top:1px solid var(--rule);border-radius:0;font-size:13px;padding:12px 0 4px}
+.reading-guide h2{font-size:16px;line-height:24px;font-weight:600;margin:0 0 12px}
+.reading-guide p{font-size:14px;line-height:22px;color:var(--mut);margin:0 0 12px}
+.reading-guide button{min-height:44px;padding:0;text-decoration:underline;font-size:14px}
+.save-state{top:0}
+.viewer{max-width:1600px;width:100%;margin:0 auto}
+.exercise-continuation{position:fixed;bottom:0;left:0;right:0;z-index:6;display:flex;align-items:center;justify-content:space-between;gap:24px;min-height:64px;padding:8px 48px;background:var(--page);border-top:1px solid var(--rule)}
+.exercise-continuation p{font-size:14px;color:var(--mut);margin:0}
+#nextExerciseBtn{display:flex;align-items:center;gap:18px;min-width:0;min-height:44px;padding:0;text-align:left;font-size:14px}
+#nextExerciseBtn>span:first-child{color:var(--mut)}
+#nextExerciseTitle{font-size:14px;overflow-wrap:anywhere}
+.next-arrow{display:flex;align-items:center;justify-content:center;flex:0 0 44px;height:44px;background:var(--ink);color:var(--page);border-radius:6px;font-size:20px}
+.player{bottom:var(--continuation-h,0px)}
+#returnDraftBtn{font-size:12px;text-decoration:underline;min-height:32px}
+@media(min-width:900px){
+  .top{position:sticky;top:0}
+  .save-state{top:var(--top-h,64px)}
+  .layout{min-height:calc(100dvh - var(--top-h,64px) - var(--save-state-h,0px) - var(--deck-h) - var(--continuation-h,0px))}
+  .editor{top:calc(var(--top-h,64px) + var(--save-state-h,0px));height:calc(100dvh - var(--top-h,64px) - var(--save-state-h,0px) - var(--deck-h) - var(--continuation-h,0px))}
+  .viewer{padding:28px 64px 32px}
+  .layout:not(.noedit) .viewer{padding:28px 32px}
+}
+@media(max-width:1199px){
+  .top{padding:0 24px;gap:20px}
+  .library{padding:36px 32px;gap:32px;grid-template-columns:minmax(0,1fr) 260px}
+  .catalogue-row{gap:16px;padding:20px 4px}
+  .catalogue-level,.catalogue-tempo,.catalogue-arrangements{display:none}
+  .catalogue-mobile-meta{display:block}
+  .catalogue-heading{align-items:flex-start}
+  #catalogueHint{max-width:19ch}
+  .exercise-continuation{padding-inline:24px}
+}
+@media(max-width:899px){
+  .top{display:flex;flex-wrap:wrap;justify-content:space-between;gap:0 12px;min-height:64px;padding:10px 24px 0}
+  .library-view .top{min-height:64px}
+  .header-actions{gap:8px;min-height:44px}
+  .library-nav{width:100%;order:3;gap:0}
+  .library-nav button{flex:1;min-height:52px}
+  .practice-crumb{order:3;width:100%;justify-content:flex-start;gap:12px;height:44px}
+  #practiceName{max-width:45vw}
+  #libraryOpenBtn svg{display:block}
+  #libraryOpenBtn span{display:none}
+  .library{display:flex;flex-direction:column;padding:28px 24px 32px;gap:24px}
+  .library-intro h1{font-size:36px;line-height:40px;letter-spacing:-.02em;margin-bottom:10px}
+  .library-intro p{font-size:15px;line-height:22px}
+  .library-filters{gap:12px;margin-bottom:20px}
+  .library-search{flex-basis:100%;height:48px;padding:0 14px}
+  #songSearch{font-size:16px}
+  #songLevel{height:44px}
+  .catalogue-heading h2{font-size:16px;line-height:22px}
+  #catalogueHint{font-size:12px;line-height:18px}
+  .catalogue-row{padding:18px 0}
+  .catalogue-copy strong{font-size:17px;line-height:23px}
+  .exercise-number{flex-basis:24px;font-size:13px}
+  .catalogue-arrow{flex-basis:44px}
+  .catalogue-description{font-size:14px;line-height:20px}
+  .library-aside{display:none;padding:0;order:-1}
+  .library-aside:has(#recentPanel:not([hidden])){display:block}
+  .reading-guide{display:none}
+  .recent-panel{padding:18px;margin:0}
+  .recent-panel h2{margin-bottom:8px}
+  .recent-panel h3{font-size:22px;line-height:26px;margin-bottom:8px}
+  #recentAbout,#otherRecent{display:none}
+  #resumeBtn{margin-top:8px}
+  .exercise-continuation{gap:8px;min-height:60px;padding:8px 24px}
+  .exercise-continuation p{display:none}
+  #nextExerciseBtn{display:grid;grid-template-columns:minmax(0,1fr) 44px;gap:2px 12px;width:100%}
+  #nextExerciseBtn>span:first-child{font-size:12px}
+  #nextExerciseTitle{font-size:14px;line-height:20px}
+  .next-arrow{grid-column:2;grid-row:1/3}
+}
+@media(max-width:599px){
+  .top{padding:8px 16px 0;gap:0 8px}
+  #familySelect{min-width:76px;padding:6px 8px}
+  #libraryOpenBtn{width:44px;padding:0}
+  .header-actions #helpBtn{display:none}
+  .header-actions .toggle{padding:0 10px;font-size:13px}
+  .file-menu summary{font-size:13px;padding:0 10px}
+  .library{padding-inline:24px}
+  .explore{flex-wrap:wrap}
+}
+
+.my-song-actions{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:24px}
+.mobile-tab-help{display:none}
+@media(max-width:899px){.mobile-tab-help{display:block;min-height:44px;margin-top:20px;padding:0;text-align:left;text-decoration:underline}}
