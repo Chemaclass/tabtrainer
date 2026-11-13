@@ -24,6 +24,7 @@ import { library, removeSong, pref, setPref, recentPractice, recordPractice } fr
 import { findBySlug, normalizeSongReference, versionSlug } from './ui/songLink';
 import { AutoScroller } from './ui/scrolling';
 import { Passage } from './ui/passage';
+import { playbackShortcut } from './ui/playbackShortcut';
 import { Navigation, navigationState, type Route } from './ui/navigation';
 import { DraftSession, titleOf } from './ui/draftSession';
 import { editorResize } from './ui/editorResize';
@@ -291,7 +292,8 @@ player.on(({ beat }) => {
   }
 });
 $('playBtn').onclick = () => player.toggle();
-$('stopBtn').onclick = () => { if (scrollMode === 'continuous') setScrollMode('off'); player.stop(); passage.deselect(); showPassage(); };
+function stopPlayback() { if (scrollMode === 'continuous') setScrollMode('off'); player.stop(); passage.deselect(); showPassage(); }
+$('stopBtn').onclick = stopPlayback;
 const speed = $<HTMLInputElement>('speed');
 const fillRange = (r: HTMLInputElement) => r.style.setProperty('--fill', `${((+r.value - +r.min) / (+r.max - +r.min)) * 100}%`);
 const showSpeed = () => {
@@ -356,7 +358,7 @@ sheet.addEventListener('click', e => {
 });
 sheet.addEventListener('keydown', e => {
   const el = (e.target as Element).closest<SVGElement>('.bar-target');
-  if (el && (e.key === 'Enter' || e.key === ' ')) {
+  if (el && e.key === 'Enter') {
     e.preventDefault(); e.stopPropagation(); selectBar(+el.dataset.bar!);
   }
 });
@@ -387,11 +389,14 @@ $<HTMLSelectElement>('scrollMode').onchange = e => {
 };
 
 // ---------- keyboard ----------
+const shortcut = playbackShortcut(() => screen === 'practice', () => player.playing, () => player.play(player.pausedAt ?? undefined), stopPlayback);
+document.addEventListener('keydown', shortcut.keydown, true);
+document.addEventListener('keyup', shortcut.keyup, true);
+window.addEventListener('blur', shortcut.blur);
 document.addEventListener('keydown', e => {
   const t = e.target as HTMLElement;
   if (screen !== 'practice' || t.closest('button, summary, input, select, textarea, dialog, [role=separator]') || t.isContentEditable) return;
-  if (e.code === 'Space') { e.preventDefault(); player.toggle(); }
-  else if (e.key === 's' || e.key === 'S') { e.preventDefault(); setScrollMode(scrollMode === 'continuous' ? 'off' : 'continuous'); }
+  if (e.key === 's' || e.key === 'S') { e.preventDefault(); setScrollMode(scrollMode === 'continuous' ? 'off' : 'continuous'); }
   else if (scrollMode === 'continuous' && e.key === 'ArrowUp') { e.preventDefault(); sspeed.value = String(Math.min(80, +sspeed.value + 2)); sspeed.dispatchEvent(new Event('input')); }
   else if (scrollMode === 'continuous' && e.key === 'ArrowDown') { e.preventDefault(); sspeed.value = String(Math.max(3, +sspeed.value - 2)); sspeed.dispatchEvent(new Event('input')); }
 });

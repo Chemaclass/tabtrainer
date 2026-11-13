@@ -14,6 +14,7 @@ describe('bundled demo songs', () => {
       expect(song.meta.level, 'every demo says how hard it is').toBeTruthy();
       for (const version of song.versions) {
         expect(version.bars.length, version.name).toBeGreaterThan(3);
+        if (f.includes('/exercises/') && version.name === 'Challenge') expect(version.bars.length, 'Challenge has enough material to practise').toBeGreaterThanOrEqual(16);
       }
       const again = parseSong(serializeSong(song));
       expect(again.issues).toEqual([]);
