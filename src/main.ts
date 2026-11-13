@@ -306,7 +306,13 @@ player.on(({ beat, playing, phase, countInRemaining }) => {
   }
 });
 $('playBtn').onclick = () => player.toggle();
-function stopPlayback() { if (scrollMode === 'continuous') setScrollMode('off'); player.stop(); passage.deselect(); showPassage(); }
+function stopPlayback() {
+  if (scrollMode === 'continuous') setScrollMode('off');
+  const note = selectedNote, bar = passage.snapshot().selected;
+  player.stop(); passage.deselect();
+  if (note) selectNote(note.key, note.bar); else if (bar) selectBar(bar);
+  showPassage();
+}
 $('stopBtn').onclick = stopPlayback;
 const speed = $<HTMLInputElement>('speed');
 const fillRange = (r: HTMLInputElement) => r.style.setProperty('--fill', `${((+r.value - +r.min) / (+r.max - +r.min)) * 100}%`);
@@ -502,7 +508,7 @@ $<HTMLSelectElement>('scrollMode').onchange = e => {
 };
 
 // ---------- keyboard ----------
-const shortcut = playbackShortcut(() => screen === 'practice', () => player.playing, () => player.play(), stopPlayback);
+const shortcut = playbackShortcut(() => screen === 'practice', () => player.playing, () => player.play(), () => player.pause());
 document.addEventListener('keydown', shortcut.keydown, true);
 document.addEventListener('keyup', shortcut.keyup, true);
 window.addEventListener('blur', shortcut.blur);

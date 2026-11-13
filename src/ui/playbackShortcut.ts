@@ -22,7 +22,7 @@ function hasNativeSpace(target: EventTarget | null): boolean {
   return Boolean((target as ShortcutTarget).closest(nativeControls));
 }
 
-export function playbackShortcut(active: () => boolean, playing: () => boolean, play: () => void, stop: () => void) {
+export function playbackShortcut(active: () => boolean, playing: () => boolean, play: () => void, pause: () => void) {
   let claimed = false;
   const consume = (event: ShortcutEvent) => { event.preventDefault(); event.stopPropagation(); };
   return {
@@ -32,7 +32,7 @@ export function playbackShortcut(active: () => boolean, playing: () => boolean, 
       if (!active() || event.repeat || event.isComposing || event.shiftKey || event.ctrlKey || event.altKey || event.metaKey || hasNativeSpace(event.target)) return;
       claimed = true;
       consume(event);
-      if (playing()) stop(); else play();
+      if (playing()) pause(); else play();
     },
     keyup(event: ShortcutEvent) {
       if (event.code !== 'Space' || !claimed) return;

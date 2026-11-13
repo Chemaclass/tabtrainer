@@ -15,24 +15,24 @@ function target(selector: string) {
 
 describe('playback shortcut', () => {
   it('plays once for a held press and consumes its release', () => {
-    const play = vi.fn(), stop = vi.fn();
-    const shortcut = playbackShortcut(() => true, () => false, play, stop);
+    const play = vi.fn(), pause = vi.fn();
+    const shortcut = playbackShortcut(() => true, () => false, play, pause);
     const down = event(), repeat = event({ repeat: true }), up = event();
     shortcut.keydown(down); shortcut.keydown(repeat); shortcut.keyup(up);
     expect(play).toHaveBeenCalledOnce();
-    expect(stop).not.toHaveBeenCalled();
+    expect(pause).not.toHaveBeenCalled();
     for (const e of [down, repeat, up]) {
       expect(e.preventDefault).toHaveBeenCalledOnce();
       expect(e.stopPropagation).toHaveBeenCalledOnce();
     }
   });
 
-  it('stops while playing and plays again after release', () => {
+  it('pauses while playing and plays again after release', () => {
     let playing = true;
-    const stop = vi.fn(() => { playing = false; }), play = vi.fn();
-    const shortcut = playbackShortcut(() => true, () => playing, play, stop);
+    const pause = vi.fn(() => { playing = false; }), play = vi.fn();
+    const shortcut = playbackShortcut(() => true, () => playing, play, pause);
     shortcut.keydown(event()); shortcut.keyup(event()); shortcut.keydown(event());
-    expect(stop).toHaveBeenCalledOnce();
+    expect(pause).toHaveBeenCalledOnce();
     expect(play).toHaveBeenCalledOnce();
   });
 
