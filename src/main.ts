@@ -16,9 +16,10 @@ import { withVersion, type Song } from './core/model';
 import { FAMILIES, familyOf, isFamily, type Family } from './core/instruments';
 import { renderSong } from './render/notation';
 import { Player } from './audio/player';
-import { library, saveSong, removeSong, pref, setPref, recentPractice, recordPractice } from './ui/storage';
+import { library, removeSong, pref, setPref, recentPractice, recordPractice } from './ui/storage';
 import { findBySlug, songSlug, versionSlug } from './ui/songLink';
 import { AutoScroller } from './ui/scrolling';
+import { DraftSession, titleOf } from './ui/draftSession';
 import { editorResize } from './ui/editorResize';
 import { libraryView } from './ui/libraryView';
 import { isLibraryKind, nextExercise, type CatalogueEntry, type LibraryKind } from './ui/catalogue';
@@ -43,9 +44,7 @@ let song: Song | null = null;
 let parsed: Song | null = null; // whole song with every version
 let versionIdx = 0;
 let selectedBar = 0;
-let baseline = '', draftStored = true, navigationGeneration = 0;
-let pendingReplacement: (() => void) | null = null;
-let pendingReplacementCancel: (() => void) | null = null;
+const draftSession = new DraftSession(() => src.value);
 let zoom = pref('zoom', 1), showNota = pref('notation', matchMedia('(min-width:600px)').matches);
 
 // ---------- song list ----------
@@ -78,11 +77,10 @@ function chooseFamily(f: Family) {
   if (f === family) return;
   family = f; setPref('family', f); showFamily(); showLink();
 }
-const titleOf = (t: string) => /^\s*title\s*:\s*(.+)$/im.exec(t)?.[1].trim() ?? 'Untitled';
 const creditNames = (artist = '') => artist.replace(/\s*\(public domain\)\s*$/i, '').split(',').map(n => n.trim()).filter(Boolean);
 // the list names who wrote a song, unless TabTrainer wrote it or nobody knows
 const artistOf = (t: string) => creditNames(/^\s*artist\s*:\s*(.+)$/im.exec(t)?.[1]).filter(n => !/^tabtrainer$/i.test(n)).join(', ');
-function loadText(text: string) { if (scrollMode === 'continuous') setScrollMode('off'); clearTimeout(timer); src.value = text; baseline = text; announceSave(''); update(true); persistDraft(); }
+function loadText(text: string) { if (scrollMode === 'continuous') setScrollMode('off'); clearTimeout(timer); src.value = text; draftSession.accept(text); announceSave(''); update(true); persistDraft(); }
 function pickSong(v: string) {
   if (v === picked) { setScreen('practice', true); showLink(true); }
   else replaceCurrent(() => loadPickedSong(v, true));
@@ -433,11 +431,11 @@ fileMenu.addEventListener('keydown', e => {
     e.stopPropagation(); fileMenu.open = false; fileMenu.querySelector('summary')!.focus();
   }
 });
-function hasChanges() { return src.value !== baseline; }
+const hasChanges = () => draftSession.hasChanges();
 function showDirtyState() {
   $('returnDraftBtn').hidden = screen !== 'library' || !hasChanges();
   document.querySelector<HTMLElement>('.save-state')!.hidden = !hasChanges() && !$('saveFeedback').textContent;
-  $('dirtyState').textContent = hasChanges() ? `Unsaved changes${draftStored ? '' : ' (draft recovery unavailable)'}` : 'No unsaved changes';
+  $('dirtyState').textContent = hasChanges() ? `Unsaved changes${draftSession.stored ? '' : ' (draft recovery unavailable)'}` : 'No unsaved changes';
 }
 function announceSave(message: string, failed = false) {
   $('saveFeedback').textContent = message;
@@ -445,30 +443,24 @@ function announceSave(message: string, failed = false) {
   $('recoverDownload').hidden = !failed; showDirtyState();
 }
 function persistDraft() {
-  draftStored = setPref('draft', { text: src.value, base: baseline, picked });
-  setPref('last', src.value);
+  draftSession.persist(picked);
   showDirtyState();
-  if (!draftStored && hasChanges()) announceSave('Could not keep this draft in the browser. Download a copy.', true);
+  if (!draftSession.stored && hasChanges()) announceSave('Could not keep this draft in the browser. Download a copy.', true);
 }
 function replaceCurrent(action: () => void, cancel: (() => void) | null = null) {
-  navigationGeneration++;
-  if (!hasChanges()) { action(); return; }
-  if (pendingReplacement) { pendingReplacement = action; pendingReplacementCancel = cancel; return; }
-  pendingReplacement = action; pendingReplacementCancel = cancel;
-  const dialog = $<HTMLDialogElement>('replaceDialog'); dialog.returnValue = 'cancel'; dialog.showModal();
+  draftSession.replace(action, cancel, () => {
+    const dialog = $<HTMLDialogElement>('replaceDialog'); dialog.returnValue = 'cancel'; dialog.showModal();
+  });
 }
 $<HTMLDialogElement>('replaceDialog').addEventListener('close', () => {
-  const action = pendingReplacement, cancel = pendingReplacementCancel; pendingReplacement = null; pendingReplacementCancel = null;
-  const choice = $<HTMLDialogElement>('replaceDialog').returnValue;
-  if (action && (choice === 'discard' || (choice === 'save' && saveCurrent()))) action();
-  else if (cancel) cancel();
-  else showLink();
+  draftSession.resolve($<HTMLDialogElement>('replaceDialog').returnValue, saveCurrent, showLink);
 });
 function saveCurrent(): boolean {
-  const title = titleOf(src.value);
-  if (library().some(s => s.title === title) && !window.confirm(`Replace "${title}" in your library?`)) return false;
-  if (!saveSong(title, src.value)) { announceSave('Could not save in this browser. Your text is still here. Download a copy.', true); return false; }
-  baseline = src.value; picked = 'lib:' + title; libraryKind = 'mine'; setPref('picked', picked); persistDraft(); fillSongList(); showLink();
+  const result = draftSession.save(title => window.confirm(`Replace "${title}" in your library?`));
+  if (result.status === 'cancelled') return false;
+  if (result.status === 'failed') { announceSave('Could not save in this browser. Your text is still here. Download a copy.', true); return false; }
+  const { title } = result;
+  picked = 'lib:' + title; libraryKind = 'mine'; setPref('picked', picked); persistDraft(); fillSongList(); showLink();
   announceSave(`Saved "${title}" in this browser`); return true;
 }
 $('newBtn').onclick = () => replaceCurrent(() => { const text = newSong(); unpick(); setScreen('practice'); loadText(text); showLink(true); showEditor(true); src.focus(); });
@@ -481,10 +473,10 @@ $('dlBtn').onclick = () => {
 };
 $<HTMLInputElement>('openFile').onchange = async e => {
   const input = e.target as HTMLInputElement, file = input.files?.[0]; if (!file) return;
-  const generation = ++navigationGeneration; input.value = '';
+  const generation = draftSession.beginNavigation(); input.value = '';
   try {
     const text = await file.text();
-    if (generation === navigationGeneration) replaceCurrent(() => { unpick(); setScreen('practice'); loadText(text); showLink(true); });
+    if (draftSession.isCurrent(generation)) replaceCurrent(() => { unpick(); setScreen('practice'); loadText(text); showLink(true); });
   } catch { announceSave('Could not open that file. Your current text is still here.', true); }
 };
 const showEditor = (on: boolean) => { document.querySelector('.layout')!.classList.toggle('noedit', !on); $('editBtn').classList.toggle('on', on); $('editBtn').setAttribute('aria-pressed', String(on)); setPref('editor', on); setTimeout(draw, 50); };
@@ -520,7 +512,7 @@ const draft = pref('draft', null);
 const requested = linked ? 'demo:' + linked : initialQuery.get('view') === 'practice' && initialNavigation?.picked.startsWith('lib:') && library().some(s => 'lib:' + s.title === initialNavigation.picked) ? initialNavigation.picked : null;
 const recover = draft && (draft.text !== draft.base || !requested || draft.picked === requested);
 if (recover) {
-  picked = draft.picked; src.value = draft.text; baseline = draft.base;
+  picked = draft.picked; src.value = draft.text; draftSession.recover(draft);
   update(true); showDirtyState();
   if (requested && draft.picked !== requested) replaceCurrent(() => { loadPickedSong(requested); chooseVersionNamed(link.get('version')); });
   else if (linked) chooseVersionNamed(link.get('version'));
@@ -530,7 +522,7 @@ if (recover) {
 } else if (lastText) {
   const pickedText = lastPick.startsWith('demo:') ? demos[lastPick.slice(5)] : library().find(x => 'lib:' + x.title === lastPick)?.text;
   picked = pickedText === undefined ? '' : lastPick;
-  loadText(lastText); baseline = pickedText ?? lastText; persistDraft();
+  loadText(lastText); draftSession.accept(pickedText ?? lastText); persistDraft();
 } else {
   picked = 'demo:' + songsFor(family).demos[0];
   loadText(demos[picked.slice(5)]);
