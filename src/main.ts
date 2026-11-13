@@ -17,6 +17,7 @@ import { renderSong } from './render/notation';
 import { Player } from './audio/player';
 import { library, saveSong, removeSong, pref, setPref, recentPractice, recordPractice } from './ui/storage';
 import { findBySlug, songSlug, versionSlug } from './ui/songLink';
+import { AutoScroller } from './ui/scrolling';
 import { songPicker } from './ui/songPicker';
 import type { SongEntry } from './ui/songSearch';
 
@@ -70,7 +71,7 @@ const titleOf = (t: string) => /^\s*title\s*:\s*(.+)$/im.exec(t)?.[1].trim() ?? 
 const creditNames = (artist = '') => artist.replace(/\s*\(public domain\)\s*$/i, '').split(',').map(n => n.trim()).filter(Boolean);
 // the list names who wrote a song, unless TabTrainer wrote it or nobody knows
 const artistOf = (t: string) => creditNames(/^\s*artist\s*:\s*(.+)$/im.exec(t)?.[1]).filter(n => !/^(tabtrainer|traditional)$/i.test(n)).join(', ');
-function loadText(text: string) { src.value = text; update(true); setPref('last', text); }
+function loadText(text: string) { if (scrollMode === 'continuous') setScrollMode('off'); src.value = text; update(true); setPref('last', text); }
 function pickSong(v: string) {
   const text = v.startsWith('demo:') ? demos[v.slice(5)] : library().find(x => 'lib:' + x.title === v)?.text;
   if (text === undefined) return;
@@ -189,8 +190,8 @@ let lit: Element[] = [], litKey: string | null = null, curSys: Element | null = 
 let onsets: number[] = [];
 let playbackWasActive = false;
 player.on(({ beat }) => {
-  if (player.playing && !playbackWasActive && picked) { recordPractice(picked); fillSongList(); }
-  playbackWasActive = player.playing;
+  const started = player.playing && !playbackWasActive; playbackWasActive = player.playing;
+  if (started && picked) { recordPractice(picked); fillSongList(); }
   setPlayLabel();
   if (beat === null) { selectedBar = 0; showPassage(); lit.forEach(e => e.classList.remove('on')); lit = []; litKey = null; curSys?.classList.remove('cur'); curSys = null; $('barNo').textContent = '–'; return; }
   const key = onsetAt(onsets, beat);
@@ -201,23 +202,25 @@ player.on(({ beat }) => {
   const bar = player.barAt(beat); $('barNo').textContent = bar ? String(bar) : '–';
   if (bar) {
     const sys = [...sheet.querySelectorAll<HTMLElement>('.system')].find(s => bar >= +s.dataset.first! && bar <= +s.dataset.last!) ?? null;
-    if (sys && sys !== curSys) {
-      curSys?.classList.remove('cur'); sys.classList.add('cur'); curSys = sys;
-      if ($<HTMLInputElement>('followChk').checked) { stopScroll(); const r = sys.getBoundingClientRect(); window.scrollTo({ top: window.scrollY + r.top - window.innerHeight * 0.28, behavior: 'smooth' }); }
+    if (sys) {
+      const changed = sys !== curSys;
+      if (changed) { curSys?.classList.remove('cur'); sys.classList.add('cur'); curSys = sys; }
+      if (scrollMode === 'follow' && player.playing && (changed || started)) { const r = sys.getBoundingClientRect(); window.scrollTo({ top: window.scrollY + r.top - window.innerHeight * 0.28, behavior: 'smooth' }); }
     }
   }
 });
-player.on(s => { if (s.beat === null && scrollWasOn && !player.playing) stopScroll(true); });
 $('playBtn').onclick = () => player.toggle();
-$('stopBtn').onclick = () => { player.stop(); selectedBar = 0; showPassage(); };
+$('stopBtn').onclick = () => { if (scrollMode === 'continuous') setScrollMode('off'); player.stop(); selectedBar = 0; showPassage(); };
 const speed = $<HTMLInputElement>('speed');
 const fillRange = (r: HTMLInputElement) => r.style.setProperty('--fill', `${((+r.value - +r.min) / (+r.max - +r.min)) * 100}%`);
 const showSpeed = () => {
   const bpm = Math.round(player.tempo * +speed.value / 100), q = document.createElement('span'); q.textContent = `  ♩${bpm}`;
   $('speedOut').replaceChildren(speed.value + '%', q); fillRange(speed);
+  document.querySelectorAll<HTMLButtonElement>('[data-speed]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.speed === speed.value)));
 };
 speed.value = String(pref('speed', 100)); player.speed = +speed.value / 100;
 speed.oninput = () => { player.setSpeed(+speed.value / 100); setPref('speed', +speed.value); showSpeed(); };
+document.querySelectorAll<HTMLButtonElement>('[data-speed]').forEach(b => { b.onclick = () => { speed.value = b.dataset.speed!; speed.dispatchEvent(new Event('input')); }; });
 function showPassage() {
   const a = +$<HTMLInputElement>('loopA').value, z = +$<HTMLInputElement>('loopB').value;
   const partial = a > 1 || z < (song?.bars.length ?? 0);
@@ -285,28 +288,38 @@ sheet.addEventListener('keydown', e => {
 });
 
 // ---------- auto-scroll ----------
-let scrolling = false, scrollWasOn = false, last = 0, acc = 0;
+type ScrollMode = 'off' | 'follow' | 'continuous';
+let scrollMode: ScrollMode = 'follow';
 const sspeed = $<HTMLInputElement>('scrollSpeed'); sspeed.value = String(pref('scroll', 15));
 fillRange(sspeed);
 sspeed.oninput = () => { setPref('scroll', +sspeed.value); fillRange(sspeed); };
-function stepScroll(ts: number) {
-  if (!scrolling) return;
-  if (last) { acc += (+sspeed.value * (ts - last)) / 1000; const px = Math.floor(acc); if (px >= 1) { window.scrollBy(0, px); acc -= px; } }
-  if (window.innerHeight + window.scrollY >= document.body.scrollHeight - 2) { stopScroll(); return; }
-  last = ts; requestAnimationFrame(stepScroll);
+const scroller = new AutoScroller({
+  request: callback => requestAnimationFrame(callback), cancel: id => cancelAnimationFrame(id),
+  scroll: pixels => window.scrollBy(0, pixels), speed: () => +sspeed.value,
+  atBottom: () => window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 2,
+  ended: () => setScrollMode('off'),
+});
+function setScrollMode(mode: ScrollMode) {
+  scroller.stop(); scrollMode = mode;
+  $<HTMLSelectElement>('scrollMode').value = mode;
+  $('scrollRate').hidden = mode !== 'continuous';
+  $('scrollHelp').textContent = { off: 'Scroll the score yourself.', follow: 'Keep the playing line in view.', continuous: 'Scroll without audio. Play and Pause keep scrolling; Stop and song changes turn it off.' }[mode];
+  if (mode === 'continuous') scroller.start();
+  if (mode === 'follow') { curSys?.classList.remove('cur'); curSys = null; }
 }
-function startScroll() { scrolling = true; last = 0; acc = 0; $('scrollBtn').classList.add('on'); $('scrollBtn').textContent = 'Scrolling'; requestAnimationFrame(stepScroll); }
-function stopScroll(remember = false) { scrollWasOn = remember ? scrolling : false; scrolling = false; $('scrollBtn').classList.remove('on'); $('scrollBtn').textContent = 'Auto-scroll'; }
-$('scrollBtn').onclick = () => (scrolling ? stopScroll() : startScroll());
+$<HTMLSelectElement>('scrollMode').onchange = e => {
+  const value = (e.target as HTMLSelectElement).value;
+  if (value === 'off' || value === 'follow' || value === 'continuous') setScrollMode(value);
+};
 
 // ---------- keyboard ----------
 document.addEventListener('keydown', e => {
   const t = e.target as HTMLElement;
   if (t.closest('button, summary, input, select, textarea, dialog') || t.isContentEditable) return;
   if (e.code === 'Space') { e.preventDefault(); player.toggle(); }
-  else if (e.key === 's' || e.key === 'S') { e.preventDefault(); if (scrolling) stopScroll(); else startScroll(); }
-  else if (scrolling && e.key === 'ArrowUp') { e.preventDefault(); sspeed.value = String(+sspeed.value + 2); fillRange(sspeed); }
-  else if (scrolling && e.key === 'ArrowDown') { e.preventDefault(); sspeed.value = String(Math.max(3, +sspeed.value - 2)); fillRange(sspeed); }
+  else if (e.key === 's' || e.key === 'S') { e.preventDefault(); setScrollMode(scrollMode === 'continuous' ? 'off' : 'continuous'); }
+  else if (scrollMode === 'continuous' && e.key === 'ArrowUp') { e.preventDefault(); sspeed.value = String(Math.min(80, +sspeed.value + 2)); sspeed.dispatchEvent(new Event('input')); }
+  else if (scrollMode === 'continuous' && e.key === 'ArrowDown') { e.preventDefault(); sspeed.value = String(Math.max(3, +sspeed.value - 2)); sspeed.dispatchEvent(new Event('input')); }
 });
 
 // ---------- toolbar ----------

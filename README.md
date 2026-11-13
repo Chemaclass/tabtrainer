@@ -14,7 +14,7 @@ TabTrainer is a free, open-source web app. You write or open a song as plain tex
 - **Notation and tab** drawn one above the other and lined up note for note, with key signatures, ties, triplets and chords.
 - **Playback** with a simple synth. Play, pause and resume, set the speed from 30 to 130%, and loop any range of bars.
 - **Follow along:** each note turns red as it plays, and the page scrolls to keep the current line in view.
-- **Auto-scroll** at a speed you choose. Press `S` to start or stop it, and `↑` or `↓` to change the speed.
+- **Continuous scrolling** at a speed you choose, even without audio. Choose Off, Follow playback, or Continuous under Scrolling. Press `S` to toggle Continuous, and `↑` or `↓` to change its speed.
 - **Choose a passage:** select a bar, then press Play. Set loop boundaries from the score or enter bar numbers.
 - **Editor with live preview:** each error or warning names the line it comes from.
 - **Credits and the original:** each song shows who wrote it, and a "Listen to the original" link when the file has one.

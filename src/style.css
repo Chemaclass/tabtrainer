@@ -258,3 +258,12 @@ dialog .muted{color:var(--mut)}
 @media(min-width:900px){.top{gap:10px}.top .song-filter{order:0}.top .song-pick{flex:1 1 200px}.song-filter select{max-width:100px}#clearLevel{font-size:12px;padding:4px}}
 
 @media(max-width:599px){.top .song-filter{order:6}}
+
+.speed-presets{display:flex;gap:4px}
+.speed-presets button{color:var(--deck-text);padding:4px 8px;font-size:12px;min-height:32px}
+.speed-presets button[aria-pressed=true]{background:var(--deck-raise);color:var(--led)}
+.scroll{flex-wrap:wrap;max-width:340px;gap:6px 10px}
+.scroll select{background:var(--deck-raise);color:var(--deck-hi);min-height:44px;max-width:100%}
+#scrollHelp{flex-basis:100%;font-size:12px;line-height:16px;color:var(--deck-text)}
+#scrollRate:not([hidden]){display:flex;align-items:center;gap:10px;width:100%;font-size:12px}
+@media(max-width:599px){.speed-presets button{min-height:44px;padding:4px}.scroll{max-width:none;width:100%}}
