@@ -48,9 +48,7 @@ input[type=range]::-moz-range-thumb{width:var(--thumb);height:var(--thumb);borde
 .scroll select{background-color:var(--deck-raise);color:var(--deck-hi);min-height:44px;max-width:100%}
 #scrollHelp{flex-basis:100%;font-size:12px;line-height:16px;color:var(--deck-text)}
 #scrollRate:not([hidden]){display:flex;align-items:center;gap:10px;width:100%;font-size:12px}
-@media(prefers-color-scheme:dark){
-  .player{border-top:1px solid var(--deck-line)}
-}
+[data-theme=dark] .player{border-top:1px solid var(--deck-line)}
 @media(min-width:600px){
   .player{gap:12px 20px;padding:10px 20px}
   .speed{min-width:160px;max-width:260px}

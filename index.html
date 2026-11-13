@@ -6,6 +6,11 @@
   <title>TabTrainer: learn bass and guitar from tab and notation</title>
   <meta name="description" content="Free, open-source tab and notation player for electric bass and guitar. Slow a song down, loop the hard bars, and follow each note as it plays." />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='14' fill='%23111111'/><g stroke='%23fff' stroke-width='3'><line x1='12' y1='20' x2='52' y2='20'/><line x1='12' y1='30' x2='52' y2='30'/><line x1='12' y1='40' x2='52' y2='40'/></g><circle cx='38' cy='30' r='8' fill='%23e0312b'/></svg>" />
+  <script>
+    let theme = null;
+    try { theme = JSON.parse(localStorage.getItem('tabtrainer:theme')); } catch { /* storage unavailable */ }
+    document.documentElement.dataset.theme = theme === 'light' || theme === 'dark' ? theme : matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  </script>
 </head>
 <body class="library-view">
   <header class="top">
@@ -21,6 +26,7 @@
       <label class="sr-only" for="familySelect">Instrument</label>
       <select id="familySelect" aria-label="Instrument"><option value="bass">Bass</option><option value="guitar">Guitar</option></select>
       <button id="libraryOpenBtn" class="ghost" aria-label="Open a song file"><svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M2 5h5l2 2h7v8H2Z" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span>Open a file</span></button>
+      <button id="themeBtn" class="round theme-toggle" aria-label="Switch to dark theme" title="Switch to dark theme"><svg class="moon" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M13.5 9.6A5.5 5.5 0 0 1 6.4 2.5a5.5 5.5 0 1 0 7.1 7.1Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg><svg class="sun" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="3" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 1v1.5M8 13.5V15M1 8h1.5M13.5 8H15M3 3l1 1M12 12l1 1M3 13l1-1M12 4l1-1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></button>
       <button id="editBtn" class="toggle" aria-controls="editorPane" aria-pressed="false">Edit song</button>
     <details class="file-menu">
       <summary>File</summary>

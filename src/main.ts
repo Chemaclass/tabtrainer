@@ -609,6 +609,18 @@ const setPlayerMinimized = (minimized: boolean) => {
 setPlayerMinimized(pref('playerMinimized', false));
 $('minimizeBtn').onclick = () => { setPlayerMinimized(!document.documentElement.classList.contains('player-min')); draw(); };
 $('closeContinuationBtn').onclick = () => { continuationDismissed = true; $('playBtn').focus(); $('exerciseContinuation').hidden = true; };
+const systemDark = matchMedia('(prefers-color-scheme: dark)');
+const showTheme = (theme: 'light' | 'dark') => {
+  document.documentElement.dataset.theme = theme;
+  const label = `Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`;
+  $('themeBtn').setAttribute('aria-label', label); $('themeBtn').title = label;
+};
+showTheme(pref('theme', null) ?? (systemDark.matches ? 'dark' : 'light'));
+systemDark.addEventListener('change', e => { if (pref('theme', null) === null) showTheme(e.matches ? 'dark' : 'light'); });
+$('themeBtn').onclick = () => {
+  const next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+  setPref('theme', next === (systemDark.matches ? 'dark' : 'light') ? null : next); showTheme(next);
+};
 $('syntaxHelpBtn').onclick = () => $<HTMLDialogElement>('help').showModal();
 (window as never as { tabtrainer: unknown }).tabtrainer = { player, removeSong, onsetKey };
 

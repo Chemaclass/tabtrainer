@@ -32,6 +32,8 @@ describe('preferences', () => {
   it('rejects valid JSON with the wrong type or bounds', async () => {
     const { pref } = await import('../src/ui/storage');
     store('false'); expect(pref('editor', false)).toBe(false);
+    store('dark'); expect(pref('theme', null)).toBe('dark');
+    store('blue'); expect(pref('theme', null)).toBeNull();
     store({}); expect(pref('picked', '')).toBe('');
     store(0); expect(pref('speed', 100)).toBe(100);
     store(100); expect(pref('zoom', 1)).toBe(1);
