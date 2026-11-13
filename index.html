@@ -42,6 +42,12 @@
     <button id="helpBtn" class="round" title="How to write songs" aria-label="How to write songs">?</button>
   </header>
 
+  <div class="save-state"><span id="dirtyState">No unsaved changes</span><span id="saveFeedback" role="status" aria-live="polite"></span><button id="recoverDownload" class="ghost" hidden>Download a copy</button></div>
+  <dialog id="replaceDialog" aria-labelledby="replaceTitle" aria-describedby="replaceHelp">
+    <h2 id="replaceTitle">Keep your changes?</h2>
+    <p id="replaceHelp">Save this song in this browser before opening another, or discard your changes.</p>
+    <form method="dialog" class="replace-actions"><button value="cancel" autofocus>Cancel</button><button value="discard">Discard</button><button value="save">Save</button></form>
+  </dialog>
   <main class="layout noedit">
     <section id="editorPane" class="editor">
       <div class="pane-head"><span class="caps">Song text</span><span id="status" class="status"></span></div>
