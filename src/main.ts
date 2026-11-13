@@ -19,6 +19,7 @@ import { Player } from './audio/player';
 import { library, saveSong, removeSong, pref, setPref, recentPractice, recordPractice } from './ui/storage';
 import { findBySlug, songSlug, versionSlug } from './ui/songLink';
 import { AutoScroller } from './ui/scrolling';
+import { editorResize } from './ui/editorResize';
 import { libraryView } from './ui/libraryView';
 import { isLibraryKind, nextExercise, type CatalogueEntry, type LibraryKind } from './ui/catalogue';
 
@@ -189,7 +190,7 @@ function update(resetLoop: boolean) {
   });
   const errs = issues.filter(i => i.severity === 'error').length;
   $('status').textContent = errs ? `${errs} error${errs > 1 ? 's' : ''}` : `${s.bars.length} bar${s.bars.length === 1 ? '' : 's'} · ${s.meta.instrument.name}`;
-  $('status').classList.toggle('bad', errs > 0);
+  $('status').classList.toggle('bad', errs > 0); $('status').title = $('status').textContent ?? '';
   $('title').textContent = s.meta.title;
   renderMeta(s);
   $('about').textContent = s.meta.about ?? ''; $('about').hidden = !s.meta.about;
@@ -259,7 +260,13 @@ function draw() {
   const perLine = Math.max(1, Math.min(8, Math.round((w / zoom) / (showNota ? 300 : 240))));
   sheet.style.setProperty('zoom', String(zoom));
   renderSong(sheet, song, { barsPerLine: perLine, showNotation: showNota, width: w / zoom });
+  lit = litKey ? [...sheet.querySelectorAll(`[data-key="${litKey}"]`)] : [];
+  lit.forEach(element => element.classList.add('on'));
+  curSys = systemAt(Number($('barNo').textContent)); curSys?.classList.add('cur');
   showPassage();
+}
+function systemAt(bar: number) {
+  return [...sheet.querySelectorAll<HTMLElement>('.system')].find(system => bar >= +system.dataset.first! && bar <= +system.dataset.last!) ?? null;
 }
 let rz = 0; let lastW = window.innerWidth;
 window.addEventListener('resize', () => { if (Math.abs(window.innerWidth - lastW) < 60) return; lastW = window.innerWidth; clearTimeout(rz); rz = window.setTimeout(draw, 250); });
@@ -284,7 +291,7 @@ player.on(({ beat }) => {
   }
   const bar = player.barAt(beat); $('barNo').textContent = bar ? String(bar) : '–';
   if (bar) {
-    const sys = [...sheet.querySelectorAll<HTMLElement>('.system')].find(s => bar >= +s.dataset.first! && bar <= +s.dataset.last!) ?? null;
+    const sys = systemAt(bar);
     if (sys) {
       const changed = sys !== curSys;
       if (changed) { curSys?.classList.remove('cur'); sys.classList.add('cur'); curSys = sys; }
@@ -400,7 +407,7 @@ $<HTMLSelectElement>('scrollMode').onchange = e => {
 // ---------- keyboard ----------
 document.addEventListener('keydown', e => {
   const t = e.target as HTMLElement;
-  if (screen !== 'practice' || t.closest('button, summary, input, select, textarea, dialog') || t.isContentEditable) return;
+  if (screen !== 'practice' || t.closest('button, summary, input, select, textarea, dialog, [role=separator]') || t.isContentEditable) return;
   if (e.code === 'Space') { e.preventDefault(); player.toggle(); }
   else if (e.key === 's' || e.key === 'S') { e.preventDefault(); setScrollMode(scrollMode === 'continuous' ? 'off' : 'continuous'); }
   else if (scrollMode === 'continuous' && e.key === 'ArrowUp') { e.preventDefault(); sspeed.value = String(Math.min(80, +sspeed.value + 2)); sspeed.dispatchEvent(new Event('input')); }
@@ -481,6 +488,8 @@ $<HTMLInputElement>('openFile').onchange = async e => {
   } catch { announceSave('Could not open that file. Your current text is still here.', true); }
 };
 const showEditor = (on: boolean) => { document.querySelector('.layout')!.classList.toggle('noedit', !on); $('editBtn').classList.toggle('on', on); $('editBtn').setAttribute('aria-pressed', String(on)); setPref('editor', on); setTimeout(draw, 50); };
+editorResize($('editorPane'), $('editorResize'), draw);
+$('hideEditorBtn').onclick = () => { showEditor(false); $('editBtn').focus(); };
 $('editBtn').onclick = () => showEditor(document.querySelector('.layout')!.classList.contains('noedit'));
 const showNotationState = () => { $('notaBtn').setAttribute('aria-pressed', String(showNota)); $('tabBtn').setAttribute('aria-pressed', String(!showNota)); };
 const setNotation = (on: boolean) => { showNota = on; setPref('notation', on); $('notaBtn').classList.toggle('on', on); $('tabBtn').classList.toggle('on', !on); showNotationState(); draw(); };

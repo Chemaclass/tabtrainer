@@ -18,7 +18,7 @@ TabTrainer is a free, open-source web app. Choose an exercise or song from the l
 - **Follow along:** each note turns red as it plays, and the page scrolls to keep the current line in view.
 - **Continuous scrolling** at a speed you choose, even without audio. Choose Off, Follow playback, or Continuous under Scrolling. Press `S` to toggle Continuous, and `↑` or `↓` to change its speed.
 - **Choose a passage:** select a bar, then press Play. Set loop boundaries from the score or enter bar numbers.
-- **Editor with live preview:** each error or warning names the line it comes from.
+- **Editor with live preview:** each error or warning names the line it comes from. Drag the divider to resize the editor, or hide it to make room for the score.
 - **Credits and the original:** each song shows who wrote it, and a "Listen to the original" link when the file has one.
 - **Several versions of a song:** keep the plain bass line and a solo arrangement in one file, and switch between them with buttons under the title.
 - **Instrument first:** pick bass or guitar, then a song for it. Bass has 4, 5 or 6 strings and guitar has 6. Both take a custom tuning, and ukulele song files open under guitar.

@@ -67,10 +67,11 @@
   <div id="practiceScreen" hidden>
   <main class="layout noedit">
     <section id="editorPane" class="editor">
-      <div class="pane-head"><span class="caps">Song text</span><span id="status" class="status"></span></div>
+      <div class="pane-head"><span class="caps">Song text</span><span id="status" class="status"></span><button id="hideEditorBtn" class="pane-close" title="Hide editor" aria-label="Hide editor">Hide</button></div>
       <textarea id="src" spellcheck="false" aria-label="Song source"></textarea>
       <ul id="issues" class="issues"></ul>
     </section>
+    <div id="editorResize" title="Drag to resize, double-click to reset" role="separator" tabindex="0" aria-label="Editor width" aria-orientation="vertical" aria-controls="editorPane" aria-valuemin="240" aria-valuemax="720" aria-valuenow="400" aria-describedby="editorResizeHelp"><span id="editorResizeHelp" class="sr-only">Drag to resize. Use Left and Right arrows, Home or End. Double-click to reset the width.</span></div>
     <section class="viewer">
       <div class="song-head">
         <div><h1 id="title" tabindex="-1"></h1><div id="credit" class="credit"><span id="byline" class="byline" hidden></span><a id="listen" class="listen" target="_blank" rel="noopener noreferrer" hidden><span class="listen-dot" aria-hidden="true"></span><span class="listen-label">Listen to the original</span><span id="listenHost" class="listen-host"></span></a></div><div id="subtitle" class="meta"></div><p id="about" class="about" hidden></p><div id="versions" class="versions" role="group" aria-label="Versions of this song" hidden></div></div>
