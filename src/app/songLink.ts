@@ -20,3 +20,9 @@ export function normalizeSongReference(value: string, paths: string[]): string {
 // Points at the static page the build writes per song, so link previews show the song's own title.
 export const shareUrl = (root: string, path: string, version: string | null) =>
   `${root}${songSlug(path)}/${version ? `?${new URLSearchParams({ version })}` : ''}`;
+// Only the build writes the per-song pages, so the dev server links to the query instead.
+export function songShareLink(root: string, picked: string, version: string | null, dev: boolean): string | null {
+  const path = bundledPath(picked);
+  if (path === null) return null;
+  return dev ? `${root}?${new URLSearchParams({ song: songSlug(path), ...version && { version } })}` : shareUrl(root, path, version);
+}

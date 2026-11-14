@@ -49,6 +49,15 @@ export class PassagePlayback {
 
   deselect() { this.note = null; this.passage.deselect(); }
 
+  summary(songBars: readonly { index: number; beatValue: number }[]): string {
+    const note = this.note, state = this.passage.snapshot();
+    if (!note) return this.passage.summary();
+    const start = this.player.bars.find(bar => bar.bar === note.bar)?.start ?? 0;
+    const beatValue = songBars.find(bar => bar.index === note.bar)?.beatValue ?? 4;
+    const range = state.active ? `Bars ${state.first}-${state.last}, ${state.repeat ? 'repeating' : 'play once'}.` : 'Whole song, play once.';
+    return `Selected note in bar ${note.bar}, beat ${beatInBar(note.beat, start, beatValue)}. ${range}`;
+  }
+
   private syncRange() {
     const range = this.passage.range();
     this.player.setRange(range ? this.player.barRange(...range) : null, this.passage.snapshot().repeat);

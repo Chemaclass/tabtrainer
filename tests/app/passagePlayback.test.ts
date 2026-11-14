@@ -137,6 +137,25 @@ describe('passage playback', () => {
     expect(playback.selectedNote).toBeNull();
     expect(passage.snapshot().selected).toBe(0);
   });
+
+  it('summarises the passage when no note is selected', () => {
+    const { playback } = setup();
+    playback.selectBar(2);
+    expect(playback.summary([])).toBe('Selected bar 2. Whole song, play once.');
+  });
+
+  it('summarises the selected note and the whole song', () => {
+    const { playback } = setup();
+    playback.selectNote('2000', 1);
+    expect(playback.summary([{ index: 1, beatValue: 4 }])).toBe('Selected note in bar 1, beat 3. Whole song, play once.');
+  });
+
+  it('summarises the selected note inside a repeating range', () => {
+    const { playback, passage } = setup();
+    passage.setRange(1, 2, true);
+    playback.selectNote('2000', 1);
+    expect(playback.summary([{ index: 1, beatValue: 8 }])).toBe('Selected note in bar 1, beat 5. Bars 1-2, repeating.');
+  });
 });
 
 describe('beat in bar', () => {

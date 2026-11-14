@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { readdirSync } from 'node:fs';
-import { findBySlug, normalizeSongReference, songSlug, versionSlug } from '../../src/app/songLink';
+import { findBySlug, normalizeSongReference, songShareLink, songSlug, versionSlug } from '../../src/app/songLink';
 
 describe('song links', () => {
   it('names a song by family and file name, without the order number', () => {
@@ -31,5 +31,20 @@ describe('exercise reordering', () => {
     expect(normalizeSongReference('demo:./songs/guitar/exercises/01-arpeggios.txt', paths)).toBe('demo:' + paths[1]);
     expect(normalizeSongReference('lib:My song', paths)).toBe('lib:My song');
     expect(normalizeSongReference('demo:missing', paths)).toBe('demo:missing');
+  });
+});
+
+describe('share links', () => {
+  const root = 'https://example.org/tabtrainer/', ref = 'demo:./songs/bass/songs/07-a-dawning.txt';
+  it('links to the page the build writes for a bundled song', () => {
+    expect(songShareLink(root, ref, null, false)).toBe(`${root}bass/a-dawning/`);
+    expect(songShareLink(root, ref, 'easy', false)).toBe(`${root}bass/a-dawning/?version=easy`);
+  });
+  it('links to the query on the dev server', () => {
+    expect(songShareLink(root, ref, 'easy', true)).toBe(`${root}?song=bass%2Fa-dawning&version=easy`);
+    expect(songShareLink(root, ref, null, true)).toBe(`${root}?song=bass%2Fa-dawning`);
+  });
+  it('has no link for a saved song', () => {
+    expect(songShareLink(root, 'lib:Mine', null, false)).toBeNull();
   });
 });

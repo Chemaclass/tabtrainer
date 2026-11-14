@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
-import { Songbook } from '../../src/app/songbook';
+import { Songbook, newSongText } from '../../src/app/songbook';
+import { parseSong } from '../../src/core/parser';
 import type { Saved } from '../../src/app/storage';
 
 const song = (title: string, instrument: string, extra = '') => `title: ${title}\nartist: TabTrainer\ninstrument: ${instrument}\ntempo: 80\n${extra}\n:q 3.3 |\n`;
@@ -77,5 +78,14 @@ describe('songbook', () => {
   it('keeps the bundled paths for links and history', () => {
     const { book } = songbook();
     expect(book.paths).toEqual(Object.keys(bundled));
+  });
+});
+
+describe('new song', () => {
+  it('starts a song for the chosen instrument that parses without errors', () => {
+    const { song, issues } = parseSong(newSongText('guitar'));
+    expect(song.meta.title).toBe('New song');
+    expect(song.meta.instrument.name).toBe(parseSong('instrument: guitar6\n').song.meta.instrument.name);
+    expect(issues.filter(issue => issue.severity === 'error')).toEqual([]);
   });
 });

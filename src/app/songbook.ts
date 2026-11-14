@@ -1,5 +1,5 @@
 import { parseSong } from '../core/parser';
-import { familyOf, type Family } from '../core/instruments';
+import { FAMILIES, familyOf, type Family } from '../core/instruments';
 import { artistOf } from './credits';
 import { hasPracticeLevels } from './practiceLevels';
 import { bundledPath, bundledRef, savedRef } from './songRef';
@@ -9,6 +9,7 @@ import type { Saved } from './storage';
 // bundled songs live in src/songs/<family>/<kind>/, kind being exercises or songs
 const folderFamily = (path: string) => path.split('/')[2];
 const folderKind = (path: string): LibraryKind => path.split('/')[3] === 'exercises' ? 'exercises' : 'songs';
+export const newSongText = (family: Family) => `title: New song\ninstrument: ${FAMILIES[family]}\ntempo: 90\nkey: C\ntime: 4/4\n\n@Intro\n"C" :q 3.3 3.3 5.2 3.3 |\n`;
 const familyOfText = (text: string) => familyOf(parseSong(text).song.meta.instrument);
 
 function entryFor(value: string, text: string, kind: LibraryKind, family: string): CatalogueEntry {
