@@ -4,21 +4,28 @@ import { findBySlug, normalizeSongReference, songSlug } from './songLink';
 import { bundledPath, bundledRef } from './songRef';
 
 export type Route = { screen: 'library'; kind: LibraryKind; family: Family | null }
-  | { screen: 'practice'; picked: string | null; version: string | null };
+  | { screen: 'practice'; picked: string | null; version: string | null }
+  | { screen: 'jam'; groove: string };
 interface NavigationState { index: number; picked: string }
 export function navigationState(value: unknown): NavigationState | null {
   if (value && typeof value === 'object' && 'app' in value && value.app === 'tabtrainer' && 'index' in value && typeof value.index === 'number' && Number.isSafeInteger(value.index) && 'picked' in value && typeof value.picked === 'string') return { index: value.index, picked: value.picked };
   return null;
 }
 export function readRoute(search: string, paths: string[], picked: string | null = null): Route {
-  const query = new URLSearchParams(search), path = findBySlug(paths, query.get('song') ?? '');
+  const query = new URLSearchParams(search);
+  if (query.get('view') === 'jam') return { screen: 'jam', groove: query.get('groove') ?? '' };
+  const path = findBySlug(paths, query.get('song') ?? '');
   if (path || query.get('view') === 'practice') return { screen: 'practice', picked: path ? bundledRef(path) : picked ? normalizeSongReference(picked, paths) : null, version: query.get('version') };
   const kind = query.get('kind'), family = query.get('instrument');
   return { screen: 'library', kind: isLibraryKind(kind) ? kind : 'exercises', family: family && isFamily(family) ? family : null };
 }
 export function routeSearch(search: string, route: Route): string {
   const query = new URLSearchParams(search);
-  if (route.screen === 'library') {
+  if (route.screen !== 'jam') query.delete('groove');
+  if (route.screen === 'jam') {
+    query.delete('song'); query.delete('version'); query.delete('kind'); query.delete('instrument');
+    query.set('view', 'jam'); query.set('groove', route.groove);
+  } else if (route.screen === 'library') {
     query.delete('song'); query.delete('version'); query.set('view', 'library'); query.set('kind', route.kind);
     if (route.family) query.set('instrument', route.family); else query.delete('instrument');
   } else {

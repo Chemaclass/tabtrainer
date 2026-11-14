@@ -3,6 +3,7 @@ import { enhanceDropdowns } from './ui/shell/dropdown';
 import { buildTimeline, onsetKey } from './core/timeline';
 import { familyOf, type Family } from './core/instruments';
 import { Player } from './audio/player';
+import { LoopEngine } from './audio/loopEngine';
 import { library, removeSong, pref, recordPractice } from './app/storage';
 import { songShareLink } from './app/songLink';
 import { bundledPath } from './app/songRef';
@@ -14,6 +15,7 @@ import { Passage } from './app/passage';
 import { PassagePlayback } from './app/passagePlayback';
 import { Navigation, navigationState, type Route } from './app/navigation';
 import { DraftSession } from './app/draftSession';
+import { Jam, bundledGrooves } from './app/jam';
 import { draftFlow } from './ui/editor/draftFlow';
 import { editorPane } from './ui/editor/editorPane';
 import { saveState } from './ui/editor/saveState';
@@ -32,6 +34,7 @@ import { transport } from './ui/player/transport';
 import { scoreView } from './ui/practice/scoreView';
 import { songHeader } from './ui/practice/songHeader';
 import { helpDialogs } from './ui/shell/helpDialogs';
+import { jamView } from './ui/jam/jamView';
 import { publishLayoutHeights } from './ui/shell/layoutMetrics';
 import { screens } from './ui/shell/screens';
 import { theme } from './ui/shell/theme';
@@ -46,9 +49,13 @@ const openSong = new OpenSong();
 const passage = new Passage();
 const passagePlayback = new PassagePlayback(player, passage);
 const draftSession = new DraftSession(() => editor.text());
+const jam = new Jam(bundledGrooves(import.meta.glob('./grooves/*.txt', { query: '?raw', import: 'default', eager: true }) as Record<string, string>));
+if (workspace.screen === 'jam') jam.choose(new URLSearchParams(location.search).get('groove') ?? '');
+const loop = new LoopEngine();
 
 helpDialogs();
-const view = screens(chooseFamily);
+const view = screens(chooseFamily, () => showJam(jam.slug));
+const jamming = jamView(jam, loop, () => workspace.screen === 'jam');
 const saveView = saveState(draftSession, workspace, () => files.download(), () => { setScreen('practice', true); showLink(true); });
 const score = scoreView({
   redraw: draw,
@@ -75,6 +82,7 @@ const playback = playbackView(player, { transport: transportView, score, follows
   stopped: () => { passagePlayback.deselect(); passages.show(); },
 });
 player.on(playback.show);
+player.on(state => { if (state.playing) jamming.stop(); });
 const drafts = draftFlow(draftSession, workspace, saveView, { saved: () => { songs.fill(); showLink(); }, stayed: () => showLink() });
 const files = songFile(draftSession, {
   onNew: startNewSong,
@@ -87,8 +95,8 @@ const editor = editorPane(draw);
 editor.onEdit(() => { if (passagePlayback.selectedNote) player.stop(); drafts.persist(); }, () => update(false));
 playerPanel(draw);
 theme();
-tuner(() => ({ family: workspace.family, instrument: workspace.screen === 'practice' ? openSong.song?.meta.instrument ?? null : null }), () => player.pause());
 fretboardSheet();
+tuner(() => ({ family: workspace.family, instrument: workspace.screen === 'practice' ? openSong.song?.meta.instrument ?? null : null }), () => { player.pause(); jamming.stop(); });
 Object.assign(window, { tabtrainer: { player, removeSong, onsetKey } });
 publishLayoutHeights();
 
@@ -97,13 +105,14 @@ function chooseFamily(family: Family) {
   if (workspace.chooseFamily(family)) { showFamily(); showLink(); }
 }
 function unpick() { workspace.unpick(); songs.fill(); }
-function showLink(push = false) { navigation.show(workspace.route(openSong.versionSlug()), workspace.picked, push); }
+function showLink(push = false) { navigation.show(workspace.route(openSong.versionSlug(), jam.slug), workspace.picked, push); }
 function showTitle() {
   const practising = workspace.screen === 'practice';
-  view.showTitle(practising ? openSong.song : null, practising ? bundledPath(workspace.picked) : null);
+  view.showTitle(practising ? openSong.song : null, practising ? bundledPath(workspace.picked) : null, workspace.screen === 'jam' ? jam.groove.title : null);
 }
 function setScreen(next: Screen, focus = false) {
-  if (next === 'library') { player.stop(); scrolling.stopContinuous(); }
+  if (next !== 'practice') { player.stop(); scrolling.stopContinuous(); }
+  if (next !== 'jam') jamming.stop();
   const song = openSong.song;
   workspace.enter(next, song ? familyOf(song.meta.instrument) : null);
   if (next === 'practice' && song) view.showFamily(workspace.family);
@@ -115,6 +124,11 @@ function setScreen(next: Screen, focus = false) {
 function showLibrary(kind = workspace.kind, push = true) {
   const arriving = workspace.screen !== 'library';
   workspace.chooseKind(kind); setScreen('library', arriving); showLink(push);
+}
+function showJam(slug: string, push = true) {
+  const arriving = workspace.screen !== 'jam';
+  if (jam.choose(slug)) jamming.show();
+  setScreen('jam', arriving); showLink(push);
 }
 function pickSong(ref: string) {
   if (ref === workspace.picked) { setScreen('practice', true); showLink(true); }
@@ -132,6 +146,7 @@ function startNewSong() {
   drafts.replace(() => { const text = newSongText(workspace.family); unpick(); setScreen('practice'); loadText(text); showLink(true); editor.show(true); editor.focus(); });
 }
 function openRoute(route: Route) {
+  if (route.screen === 'jam') { showJam(route.groove, false); return; }
   if (route.screen === 'practice') {
     if (route.picked && route.picked !== workspace.picked) loadPickedSong(route.picked); else setScreen('practice');
     if (route.picked && bundledPath(route.picked) !== null) chooseVersionNamed(route.version);

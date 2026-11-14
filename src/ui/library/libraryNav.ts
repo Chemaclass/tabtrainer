@@ -4,7 +4,7 @@ export function libraryNav(onKind: (kind: LibraryKind) => void) {
   const buttons = [...document.querySelectorAll<HTMLButtonElement>('[data-kind]')];
   buttons.forEach(button => { button.onclick = () => { if (isLibraryKind(button.dataset.kind)) onKind(button.dataset.kind); }; });
   return {
-    show(counts: Record<LibraryKind, number>, current: LibraryKind) {
+    show(counts: Record<LibraryKind, number>, current: LibraryKind | null) {
       buttons.forEach(button => {
         const kind = button.dataset.kind;
         if (isLibraryKind(kind)) {

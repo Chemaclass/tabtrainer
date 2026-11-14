@@ -91,7 +91,7 @@
       TabTrainer
     </a>
     <nav class="library-nav" aria-label="Practice library">
-      <button data-kind="exercises" aria-current="page">Exercises <span class="nav-count">0</span></button><button data-kind="songs">Songs <span class="nav-count">0</span></button><button data-kind="mine">My songs <span class="nav-count">0</span></button>
+      <button data-kind="exercises" aria-current="page">Exercises <span class="nav-count">0</span></button><button data-kind="songs">Songs <span class="nav-count">0</span></button><button data-kind="mine">My songs <span class="nav-count">0</span></button><button id="jamNavBtn">Jam</button>
     </nav>
     <div class="practice-crumb"><button id="backLibraryBtn">← All exercises</button><span aria-hidden="true">/</span><span id="practiceName"></span></div>
     <div class="header-actions">
@@ -143,6 +143,17 @@
       <section id="recentPanel" class="recent-panel" hidden><h2>Recent practice</h2><h3 id="recentTitle"></h3><p id="recentAbout"></p><p id="recentMeta"></p><button id="resumeBtn" class="primary">Continue practising →</button><div id="otherRecent"></div></section>
       <section class="reading-guide"><div class="guide-card"><h2>Make a little progress.</h2><p>Start slowly. A few comfortable bars are a good practice session.</p><button id="readTabBtn">How to read tab →</button></div><ol><li>Choose a comfortable level.</li><li>Try 50% or 75% speed.</li><li>Loop a few bars until they feel comfortable.</li></ol></section>
     </aside>
+  </main>
+  <main id="jamScreen" class="jam" aria-labelledby="jamTitle" hidden>
+    <div class="jam-intro"><div id="jamContext" class="library-context">Jam</div><h1 id="jamTitle" tabindex="-1"></h1><p id="jamAbout"></p></div>
+    <div class="jam-controls">
+      <button id="jamPlay" class="primary jam-play" title="Play or stop (Space)">Play</button>
+      <div class="jam-tempo"><div class="jam-tempo-head"><label for="jamTempo">Tempo</label><output id="jamTempoOut" for="jamTempo"></output></div><input id="jamTempo" type="range" min="40" max="220" step="1" /></div>
+      <div class="jam-key"><label for="jamKey">Key</label><select id="jamKey"></select></div>
+    </div>
+    <h2 id="jamBarsTitle" class="jam-bars-title">Progression</h2>
+    <ol id="jamBars" class="jam-bars" aria-labelledby="jamBarsTitle"></ol>
+    <p class="tip">Play along in any position you like. The outlined bar is the one you hear.<span class="keys"> <kbd>Space</kbd> plays or stops.</span></p>
   </main>
   <footer class="site-footer"><a href="./">What is TabTrainer?</a> Free and open source. Made by <a href="https://chemaclass.com" target="_blank" rel="noopener">Chemaclass</a> · <a href="https://github.com/Chemaclass/tabtrainer" target="_blank" rel="noopener">Source code on GitHub</a></footer>
   <div id="practiceScreen" hidden>
@@ -322,6 +333,8 @@ time: 4/4
       <tr><td><code>== Bass line</code></td><td>starts another version of the song, on its own line. Versions share the header. Switch between them with the buttons under the title</td></tr>
       <tr><td><code># ...</code></td><td>comment</td></tr>
     </table>
+    <h2>Jam</h2>
+    <p>Open Jam from the top bar to improvise over a looping groove of drums and keys. Press Play or <kbd>Space</kbd>, then pick a tempo and a key. The chord names follow the key, and the outlined bar is the one you hear. Changes to tempo and key are heard from the next bar. The app remembers both for each groove.</p>
     <p class="muted">The app saves your songs in this browser. Use Download and Open to move a song to another device or share it.</p>
     <footer class="dialog-credit">Made by <a href="https://chemaclass.com" target="_blank" rel="noopener">Chemaclass</a> · <a href="https://github.com/Chemaclass/tabtrainer" target="_blank" rel="noopener">Source code on GitHub</a></footer>
   </dialog>

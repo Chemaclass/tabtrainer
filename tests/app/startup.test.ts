@@ -18,6 +18,11 @@ describe('startup plan', () => {
     expect(plan({ search: '?song=bass/groove' })).toEqual({ kind: 'open', ref: 'demo:' + groove });
   });
 
+  it('stays on jam when its link also names a song', () => {
+    expect(plan({ search: '?view=jam&song=bass/groove' })).toEqual({ kind: 'first' });
+    expect(plan({ search: '?view=jam&song=bass/groove', draft: edited('lib:My riff') })).toMatchObject({ kind: 'recover', offer: null });
+  });
+
   it('ignores a share link to a song that does not exist', () => {
     expect(plan({ search: '?song=bass/gone' })).toEqual({ kind: 'first' });
   });

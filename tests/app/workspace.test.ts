@@ -110,4 +110,12 @@ describe('workspace', () => {
     workspace.openSong('demo:./songs/bass/songs/01-groove.txt', 'songs');
     expect(workspace.route('develop')).toEqual({ screen: 'practice', picked: 'demo:./songs/bass/songs/01-groove.txt', version: 'develop' });
   });
+
+  it('opens jam from its link and describes it as a route with the groove', () => {
+    const workspace = Workspace.fromQuery('?view=jam&groove=blues-shuffle');
+    expect(workspace.screen).toBe('jam');
+    expect(workspace.route(null, 'blues-shuffle')).toEqual({ screen: 'jam', groove: 'blues-shuffle' });
+    workspace.enter('library', null);
+    expect(workspace.route(null, 'blues-shuffle').screen).toBe('library');
+  });
 });

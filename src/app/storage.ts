@@ -22,6 +22,7 @@ export function saveSong(title: string, text: string): boolean {
 }
 export function removeSong(title: string) { try { const songs = read(); delete songs[title]; localStorage.setItem(LIB, JSON.stringify(songs)); } catch { /* storage unavailable */ } }
 export interface DraftSnapshot { text: string; base: string; picked: string }
+export interface JamChoice { key?: unknown; tempo?: unknown }
 interface Preferences {
   family: Family;
   libraryKind: LibraryKind;
@@ -44,6 +45,7 @@ interface Preferences {
   recent: string[];
   tunings: Tunings;
   fretboardSheet: FretboardChoice;
+  jam: Record<string, JamChoice>;
 }
 const finiteBetween = (value: unknown, min: number, max: number): value is number => typeof value === 'number' && Number.isFinite(value) && value >= min && value <= max;
 const isBoolean = (value: unknown): value is boolean => typeof value === 'boolean';
@@ -70,6 +72,7 @@ const validators: { [K in keyof Preferences]: (value: unknown) => value is Prefe
   recent: (value): value is string[] => Array.isArray(value) && value.every(isString),
   tunings: isTunings,
   fretboardSheet: isFretboardChoice,
+  jam: (value): value is Record<string, JamChoice> => !!value && typeof value === 'object' && !Array.isArray(value),
 };
 function readPreference(key: keyof Preferences): unknown {
   try { return JSON.parse(localStorage.getItem('tabtrainer:' + key) ?? 'null'); } catch { return null; }

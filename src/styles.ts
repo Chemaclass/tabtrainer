@@ -15,3 +15,4 @@ import './ui/player/player.css';
 import './ui/shell/dropdown.css';
 import './ui/tuner/tuner.css';
 import './ui/fretboard/fretboard.css';
+import './ui/jam/jam.css';
