@@ -1,6 +1,6 @@
 import { fretboardPositions, type FretPosition } from './fretboard';
 import { degreeInterval } from './harmony';
-import { pitchClass } from './theory';
+import { FLAT_FIFTH, HALF_STEP, OCTAVE, ROOT, SHARP_FIFTH, pitchClass } from './theory';
 
 export type MoveId = 'root-fifth' | 'root-fifth-octave' | 'arpeggio' | 'root-fifth-below' | 'approach-below' | 'approach-above' | 'approach-scale';
 
@@ -13,8 +13,6 @@ export interface MoveChord { intervals: readonly number[] }
 export interface Walk { from: number; to: number; scale: readonly number[] }
 
 export interface MoveNote extends FretPosition { order: number }
-
-const ROOT = 0, HALF_STEP = 1, FLAT_FIFTH = 6, SHARP_FIFTH = 8, OCTAVE = 12;
 
 const fifthOf = (chord: MoveChord) => degreeInterval(chord, '5');
 
@@ -123,7 +121,8 @@ export function placeMove(tuning: readonly number[], rootPitchClass: number, sha
   const roots = positions.filter(position => position.pitchClass === pitchClass(rootPitchClass));
   for (const shape of shapes) {
     const candidates = placements(shape, roots, positions);
-    if (candidates.length) return mostCompact(candidates).map((position, index) => ({ ...position, order: index + 1 }));
+    if (!candidates.length) continue;
+    return mostCompact(candidates).map((position, index) => ({ ...position, order: index + 1 }));
   }
   return null;
 }

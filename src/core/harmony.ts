@@ -1,4 +1,4 @@
-import { isKey, pitchClass, pitchClassOf, safeKey, scaleStepName } from './theory';
+import { ACCIDENTAL_SHIFTS, FLAT_FIFTH, MAJOR_SCALE, MAJOR_SECOND, MAJOR_SIXTH, MINOR_SEVENTH, MINOR_THIRD, OCTAVE, PERFECT_FIFTH, PERFECT_FOURTH, ROOT, SHARP_FIFTH, isKey, keyRootName, pitchClass, pitchClassOf, safeKey, scaleStepName } from './theory';
 
 export type Quality = 'major' | 'minor' | '7' | 'm7' | 'maj7' | 'mMaj7' | 'm7b5' | 'dim' | 'dim7' | 'aug' | 'maj7#5' | 'sus4' | '5';
 
@@ -9,8 +9,7 @@ export interface Chord { root: number; name: string; intervals: number[]; tones:
 export type BassDegree = '1' | '2' | '3' | '5' | '6' | 'b7' | '8';
 export const BASS_DEGREES: readonly BassDegree[] = ['1', '2', '3', '5', '6', 'b7', '8'];
 
-const ROMANS = ['i', 'ii', 'iii', 'iv', 'v', 'vi', 'vii'];
-const MAJOR_SCALE = [0, 2, 4, 5, 7, 9, 11];
+export const ROMAN_NUMERALS: readonly string[] = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII'];
 
 export const QUALITIES: Readonly<Record<Quality, { readonly intervals: readonly number[]; readonly suffix: string }>> = {
   major: { intervals: [0, 4, 7], suffix: '' },
@@ -44,15 +43,17 @@ export function parseNumeral(text: string): NumeralResult {
   const r = /^(b|#)?(VII|VI|IV|V|III|II|I|vii|vi|iv|v|iii|ii|i)(.*)$/.exec(text);
   if (!r) return { error: `Unknown chord "${text}": use roman numerals like I7, iv or bVII` };
   const [, accidental, roman, suffix] = r;
-  const quality = qualityOf(suffix, roman === roman.toLowerCase());
+  const isLowerCase = roman === roman.toLowerCase();
+  const quality = qualityOf(suffix, isLowerCase);
   if (!quality) return { error: `Unknown chord quality "${suffix}" in "${text}": use 7, maj7, m7, m7b5, dim, sus4 or 5` };
-  const shift = accidental === 'b' ? -1 : accidental === '#' ? 1 : 0;
-  const step = ROMANS.indexOf(roman.toLowerCase());
-  return { numeral: { text, step, degree: pitchClass(MAJOR_SCALE[step] + shift), quality } };
+  const shift = ACCIDENTAL_SHIFTS[accidental ?? ''] ?? 0;
+  const step = ROMAN_NUMERALS.indexOf(roman.toUpperCase());
+  const degree = pitchClass(MAJOR_SCALE[step] + shift);
+  return { numeral: { text, step, degree, quality } };
 }
 
 export function keyTonic(key: string): number | null {
-  return isKey(key) ? pitchClassOf(key.replace(/m$/, '')) : null;
+  return isKey(key) ? pitchClassOf(keyRootName(key)) : null;
 }
 
 const TONIC: Numeral = { text: 'I', step: 0, degree: 0, quality: 'major' };
@@ -63,28 +64,32 @@ export function chordAt(progression: readonly Numeral[], key: string, bar: numbe
   const numeral = progression.length ? progression[wrap(bar, progression.length)] : TONIC;
   const { intervals, suffix } = QUALITIES[numeral.quality];
   const root = pitchClass((keyTonic(key) ?? 0) + numeral.degree);
-  return { root, name: scaleStepName(root, key, numeral.step) + suffix, intervals: [...intervals], tones: intervals.map(i => pitchClass(root + i)) };
+  const name = scaleStepName(root, key, numeral.step) + suffix;
+  const tones = intervals.map(interval => pitchClass(root + interval));
+  return { root, name, intervals: [...intervals], tones };
 }
 
 export function degreeInterval(chord: { readonly intervals: readonly number[] }, degree: BassDegree): number {
   switch (degree) {
-    case '1': return 0;
-    case '2': return 2;
+    case '1': return ROOT;
+    case '2': return MAJOR_SECOND;
     // A power chord has no third, so the bass doubles the root rather than choose one for it
-    case '3': return chord.intervals.find(i => i >= 3 && i <= 5) ?? 0;
-    case '5': return chord.intervals.find(i => i >= 6 && i <= 8) ?? 7;
-    case '6': return 9;
+    case '3': return chord.intervals.find(i => i >= MINOR_THIRD && i <= PERFECT_FOURTH) ?? ROOT;
+    case '5': return chord.intervals.find(i => i >= FLAT_FIFTH && i <= SHARP_FIFTH) ?? PERFECT_FIFTH;
+    case '6': return MAJOR_SIXTH;
     // A major seventh chord keeps its own seventh, so the bass never clashes with it
-    case 'b7': return chord.intervals.find(i => i >= 10) ?? 10;
-    case '8': return 12;
+    case 'b7': return chord.intervals.find(i => i >= MINOR_SEVENTH) ?? MINOR_SEVENTH;
+    case '8': return OCTAVE;
   }
 }
 
 export const OWN_PROGRESSION = 'groove';
 export interface ProgressionPreset { slug: string; name: string }
 
+export const TWELVE_BAR_BLUES = 'I7 IV7 I7 I7 IV7 IV7 I7 I7 V7 IV7 I7 V7';
+
 const PRESETS: readonly (ProgressionPreset & { text: string })[] = [
-  { slug: '12-bar-blues', name: '12 bar blues', text: 'I7 IV7 I7 I7 IV7 IV7 I7 I7 V7 IV7 I7 V7' },
+  { slug: '12-bar-blues', name: '12 bar blues', text: TWELVE_BAR_BLUES },
   { slug: 'minor-blues', name: 'Minor blues', text: 'i7 iv7 i7 i7 iv7 iv7 i7 i7 bVI7 V7 i7 V7' },
   { slug: 'i-iv-v', name: 'I IV V', text: 'I IV I V' },
   { slug: 'i-v-vi-iv', name: 'I V vi IV', text: 'I V vi IV' },
@@ -112,4 +117,9 @@ export function presetProgression(slug: string, own: readonly Numeral[]): Numera
 }
 
 const MINOR_QUALITIES: readonly Quality[] = ['minor', 'm7', 'mMaj7', 'm7b5', 'dim'];
-export const isMinorProgression = (progression: readonly Numeral[]) => progression.length > 0 && progression[0].degree === 0 && MINOR_QUALITIES.includes(progression[0].quality);
+
+export function isMinorProgression(progression: readonly Numeral[]): boolean {
+  const first = progression[0];
+  if (!first) return false;
+  return first.degree === ROOT && MINOR_QUALITIES.includes(first.quality);
+}

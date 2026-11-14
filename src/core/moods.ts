@@ -1,3 +1,4 @@
+import { TWELVE_BAR_BLUES } from './harmony';
 import type { ScaleId } from './scales';
 
 export type MoodId = 'happy' | 'sad' | 'epic' | 'dark' | 'dreamy' | 'bluesy' | 'funky' | 'tense';
@@ -10,8 +11,6 @@ export interface Mood {
   progressions: readonly string[];
   why: string;
 }
-
-const TWELVE_BAR_BLUES = 'I7 IV7 I7 I7 IV7 IV7 I7 I7 V7 IV7 I7 V7';
 
 export const MOODS: readonly Mood[] = [
   {

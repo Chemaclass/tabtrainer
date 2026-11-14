@@ -12,7 +12,8 @@ export function fretboardPositions(tuning: readonly number[], pitchClasses: read
   const positions: FretPosition[] = [];
   tuning.forEach((open, stringIndex) => {
     for (let fret = Math.max(0, firstFret); fret <= lastFret; fret++) {
-      const midi = open + fret, pc = pitchClass(midi);
+      const midi = open + fret;
+      const pc = pitchClass(midi);
       if (wanted.has(pc)) positions.push({ stringIndex, fret, midi, pitchClass: pc });
     }
   });
@@ -21,7 +22,8 @@ export function fretboardPositions(tuning: readonly number[], pitchClasses: read
 
 export interface FretWindow { first: number; last: number }
 
-export const POSITION_SPAN = 4, STRETCH_SPAN = 5;
+const POSITION_SPAN = 4;
+const STRETCH_SPAN = 5;
 
 /**
  * One window per wanted fret of the lowest string from firstFret to lastFret. A window spans 4 frets,
