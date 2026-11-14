@@ -4,7 +4,7 @@ import { buildTimeline, onsetKey } from './core/timeline';
 import { familyOf, type Family } from './core/instruments';
 import { Player } from './audio/player';
 import { LoopEngine } from './audio/loopEngine';
-import { library, removeSong, pref, recordPractice } from './app/storage';
+import { library, removeSong, pref, recordPractice, savedGrooves } from './app/storage';
 import { songShareLink } from './app/songLink';
 import { bundledPath } from './app/songRef';
 import { Songbook, newSongText } from './app/songbook';
@@ -37,6 +37,7 @@ import { scoreView } from './ui/practice/scoreView';
 import { songHeader } from './ui/practice/songHeader';
 import { helpDialogs } from './ui/shell/helpDialogs';
 import { jamFretboardView } from './ui/jam/jamFretboard';
+import { grooveEditor } from './ui/jam/grooveEditor';
 import { jamView } from './ui/jam/jamView';
 import { mixerView } from './ui/jam/mixer';
 import { publishLayoutHeights } from './ui/shell/layoutMetrics';
@@ -53,7 +54,7 @@ const openSong = new OpenSong();
 const passage = new Passage();
 const passagePlayback = new PassagePlayback(player, passage);
 const draftSession = new DraftSession(() => editor.text());
-const jam = new Jam(bundledGrooves(import.meta.glob('./grooves/*.txt', { query: '?raw', import: 'default', eager: true }) as Record<string, string>));
+const jam = new Jam(bundledGrooves(import.meta.glob('./grooves/*.txt', { query: '?raw', import: 'default', eager: true }) as Record<string, string>), () => savedGrooves.list());
 const linkedRoute = readRoute(location.search, songbook.paths);
 if (linkedRoute.screen === 'jam') jam.open(linkedRoute.groove, linkedRoute.setup);
 const loop = new LoopEngine();
@@ -64,12 +65,13 @@ const mixer = new Mixer(workspace.family);
 const jamFretboard = jamFretboardView(jam, mixer, new JamFretboardSettings(), loop);
 const jamming = jamView(jam, loop, {
   active: () => workspace.screen === 'jam',
-  choose: slug => showJam(slug),
+  choose: chooseGroove,
   changed: () => showLink(),
   chordsChanged: bars => jamFretboard.show(bars),
   shareLink: () => jamShareLink(new URL(import.meta.env.BASE_URL, location.origin).href, jam.slug, jam.setup, import.meta.env.DEV),
 });
 const mixing = mixerView(mixer, loop, () => jamFretboard.show());
+const grooveEditing = grooveEditor(jam, { played: showJamGroove, saved: keepSavedGroove, deleted: showAfterDelete });
 const saveView = saveState(draftSession, workspace, () => files.download(), () => { setScreen('practice', true); showLink(true); });
 const score = scoreView({
   redraw: draw,
@@ -82,6 +84,7 @@ const songs = songList(songbook, workspace, openSong, { pick: pickSong, showLibr
 window.addEventListener('popstate', event => navigation.visit(event.state, (route, accept, cancel) => {
   const open = () => { accept(); openRoute(route); };
   if (route.screen === 'practice' && route.picked && route.picked !== workspace.picked && draftSession.hasChanges()) drafts.replace(open, cancel);
+  else if (route.screen === 'jam' && !grooveEditing.mayChoose(route.groove)) cancel();
   else open();
 }));
 const transportView = transport(player, () => { scrolling.stopContinuous(); passagePlayback.stop(); passages.show(); });
@@ -141,12 +144,37 @@ function showLibrary(kind = workspace.kind, push = true) {
 }
 function showJam(slug: string, push = true, setup: JamSetup = {}) {
   const arriving = workspace.screen !== 'jam';
-  if (jam.open(slug, setup)) jamming.show();
+  if (jam.open(slug, setup)) {
+    grooveEditing.follow();
+    jamming.show();
+  }
   if (mixer.followLibrary(workspace.family)) {
     mixing.show();
     jamFretboard.show();
   }
   setScreen('jam', arriving); showLink(push);
+}
+function chooseGroove(slug: string) {
+  if (grooveEditing.mayChoose(slug)) showJam(slug);
+}
+function showJamGroove() {
+  jamming.show();
+  showLink();
+}
+function refreshMyGrooves() {
+  jam.refreshMine();
+  jamming.showGrooveList();
+}
+function keepSavedGroove(slug: string) {
+  refreshMyGrooves();
+  jam.keepDraftAs(slug);
+  grooveEditing.follow();
+  showJamGroove();
+}
+function showAfterDelete() {
+  refreshMyGrooves();
+  grooveEditing.follow();
+  showJamGroove();
 }
 function pickSong(ref: string) {
   if (ref === workspace.picked) { setScreen('practice', true); showLink(true); }

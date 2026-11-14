@@ -1,4 +1,4 @@
-import { library, saveSong, setPref, type DraftSnapshot } from './storage';
+import { savedSongs, setPref, type DraftSnapshot, type SavedTexts } from './storage';
 
 export const titleOf = (text: string) => /^\s*title\s*:\s*(.+)$/im.exec(text)?.[1].trim() ?? 'Untitled';
 type SaveResult = { status: 'saved'; title: string } | { status: 'cancelled' } | { status: 'failed' };
@@ -9,7 +9,7 @@ export class DraftSession {
   private pending: { action: () => void; cancel: (() => void) | null } | null = null;
   stored = true;
 
-  constructor(private text: () => string) {}
+  constructor(private text: () => string, private store: SavedTexts = savedSongs) {}
 
   hasChanges() { return this.text() !== this.baseline; }
   accept(text = this.text()) { this.baseline = text; }
@@ -20,8 +20,8 @@ export class DraftSession {
   }
   save(confirm: (title: string) => boolean): SaveResult {
     const title = titleOf(this.text());
-    if (library().some(song => song.title === title) && !confirm(title)) return { status: 'cancelled' };
-    if (!saveSong(title, this.text())) return { status: 'failed' };
+    if (this.store.has(title) && !confirm(title)) return { status: 'cancelled' };
+    if (!this.store.save(title, this.text())) return { status: 'failed' };
     this.accept();
     return { status: 'saved', title };
   }

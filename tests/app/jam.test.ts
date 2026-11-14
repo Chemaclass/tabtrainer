@@ -1,7 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { readFileSync, readdirSync } from 'node:fs';
-import { JAM_SWING, Jam, MIXER_PARTS, Mixer, bundledGrooves, jamKeys } from '../../src/app/jam';
-import { grooveSlug } from '../../src/app/jamLink';
+import { JAM_SWING, Jam, MIXER_PARTS, Mixer, NEW_GROOVE_TEXT, bundledGrooves, jamKeys, playableGroove } from '../../src/app/jam';
+import { grooveSlug, mineGrooveSlug } from '../../src/app/jamLink';
+import type { Saved } from '../../src/app/storage';
 import { parseGroove } from '../../src/core/groove';
 
 const files = Object.fromEntries(readdirSync('src/grooves').filter(name => name.endsWith('.txt')).map(name => [`./grooves/${name}`, readFileSync(`src/grooves/${name}`, 'utf8')]));
@@ -185,6 +186,85 @@ describe('jam progression and swing', () => {
     stored.set('tabtrainer:jam', JSON.stringify({ 'blues-shuffle': { progression: 'polka', swing: 'lots' } }));
     const jam = new Jam(bundledGrooves(files));
     expect([jam.progression, jam.swing]).toEqual(['groove', 66]);
+  });
+});
+
+describe('my grooves', () => {
+  const mine = 'title: Mine\ngenre: rock\ntempo: 120\nkey: G\ntime: 4/4\nprogression: I V\nkick: x...x...\n';
+  const saved = (text = mine): Saved[] => [{ title: 'Mine', text, updated: 1 }];
+
+  it('starts from a template that plays without issues', () => {
+    const { playable, issues } = playableGroove(NEW_GROOVE_TEXT);
+    expect(issues).toEqual([]);
+    expect(playable?.title).toBe('My groove');
+  });
+  it('refuses to play a groove with any issue', () => {
+    const { playable, issues } = playableGroove(mine.replace('x...x...', 'x..'));
+    expect(playable).toBeNull();
+    expect(issues[0].line).toBe(7);
+  });
+  it('lists saved grooves after the bundled ones and opens them by their slug', () => {
+    const jam = new Jam(bundledGrooves(files), () => saved());
+    const last = jam.list[jam.list.length - 1];
+    expect([last.slug, last.mine, last.text]).toEqual([mineGrooveSlug('Mine'), true, mine]);
+    expect(jam.open(mineGrooveSlug('Mine'))).toBe(true);
+    expect([jam.groove.title, jam.key, jam.tempo]).toEqual(['Mine', 'G', 120]);
+  });
+  it('picks up a saved groove and falls back to the first one when the chosen groove is deleted', () => {
+    let items: Saved[] = [];
+    const jam = new Jam(bundledGrooves(files), () => items);
+    items = saved();
+    jam.refreshMine();
+    expect(jam.choose(mineGrooveSlug('Mine'))).toBe(true);
+    items = saved(mine.replace('tempo: 120', 'tempo: 90'));
+    jam.refreshMine();
+    expect([jam.slug, jam.entry.groove.tempo]).toEqual([mineGrooveSlug('Mine'), 90]);
+    items = [];
+    jam.refreshMine();
+    expect(jam.slug).toBe('blues-shuffle');
+  });
+  it('plays a draft with its own headers and follows the ones the player changes', () => {
+    const jam = new Jam(bundledGrooves(files));
+    jam.setProgression('ii-v-i');
+    const draft = playableGroove(mine).playable!;
+    jam.preview(draft);
+    expect([jam.previewing, jam.groove.title, jam.key, jam.tempo, jam.progression]).toEqual([true, 'Mine', 'G', 120, 'groove']);
+    jam.setKey('D');
+    jam.preview(playableGroove(mine.replace('tempo: 120', 'tempo: 130')).playable!);
+    expect([jam.key, jam.tempo]).toEqual(['D', 130]);
+    jam.preview(playableGroove(mine.replace('key: G', 'key: Em')).playable!);
+    expect(jam.key).toBe('Em');
+    expect(jam.timeline().bars.map(bar => bar.chord.name)).toEqual(['E', 'B']);
+  });
+  it('keeps the chosen setup when the draft is the groove as written', () => {
+    const jam = new Jam(bundledGrooves(files));
+    jam.setTempo(70);
+    jam.setKey('C');
+    jam.preview(playableGroove(jam.entry.text).playable!);
+    expect([jam.previewing, jam.tempo, jam.key]).toEqual([true, 70, 'C']);
+  });
+  it('remembers the setup a draft plays with once it is saved', () => {
+    let items: Saved[] = [];
+    const jam = new Jam(bundledGrooves(files), () => items);
+    jam.preview(playableGroove(mine).playable!);
+    jam.preview(playableGroove(mine.replace('tempo: 120', 'tempo: 130')).playable!);
+    items = saved(mine.replace('tempo: 120', 'tempo: 130'));
+    jam.refreshMine();
+    expect(jam.keepDraftAs(mineGrooveSlug('Mine'))).toBe(true);
+    expect(jam.keepDraftAs('nowhere')).toBe(false);
+    expect([jam.previewing, jam.slug, jam.tempo]).toEqual([false, mineGrooveSlug('Mine'), 130]);
+    const reloaded = new Jam(bundledGrooves(files), () => items);
+    reloaded.choose(mineGrooveSlug('Mine'));
+    expect([reloaded.tempo, reloaded.key]).toEqual([130, 'G']);
+  });
+  it('keeps the choices of the replaced groove while a draft plays and restores them after', () => {
+    const jam = new Jam(bundledGrooves(files));
+    jam.setTempo(100);
+    jam.preview(playableGroove(mine).playable!);
+    jam.setTempo(150);
+    expect(jam.endPreview()).toBe(true);
+    expect(jam.endPreview()).toBe(false);
+    expect([jam.groove.title, jam.tempo]).toEqual(['Blues shuffle in A', 100]);
   });
 });
 

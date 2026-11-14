@@ -152,7 +152,7 @@
           <div id="jamPicker" class="jam-picker">
             <h1 id="jamTitle" tabindex="-1"><button id="jamPickerButton" class="jam-picker-button" type="button" aria-expanded="false" aria-controls="jamGrooves" aria-describedby="jamPickerHint"><span id="jamTitleText"></span><svg class="jam-picker-chevron" viewBox="0 0 22 22" aria-hidden="true"><path d="M5 8l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button></h1>
             <span id="jamPickerHint" hidden>Choose another groove</span>
-            <nav id="jamGrooves" class="jam-grooves" aria-label="Grooves" hidden><ul id="jamGrooveList" class="jam-groove-list"></ul></nav>
+            <nav id="jamGrooves" class="jam-grooves" aria-label="Grooves" hidden><ul id="jamGrooveList" class="jam-groove-list" aria-label="Bundled grooves"></ul><p id="jamMineHeading" class="jam-groove-group">Mine</p><ul id="jamMineList" class="jam-groove-list" aria-labelledby="jamMineHeading"></ul><p id="jamMineEmpty" class="jam-groove-empty">Grooves you save appear here.</p></nav>
           </div>
         </div>
         <div class="jam-transport">
@@ -161,6 +161,17 @@
         </div>
         <p id="jamAbout" class="jam-about"></p>
       </div>
+      <section id="grooveEditor" class="groove-editor" aria-labelledby="grooveEditorTitle" hidden>
+        <div class="pane-head"><h2 id="grooveEditorTitle" class="caps">Groove text</h2><span id="grooveStatus" class="status" role="status"></span><button id="grooveEditorHide" class="pane-close" type="button" aria-label="Hide groove text">Hide</button></div>
+        <textarea id="grooveSource" class="source-text" spellcheck="false" aria-labelledby="grooveEditorTitle" aria-describedby="grooveStatus"></textarea>
+        <ul id="grooveIssues" class="issues" aria-label="Problems"></ul>
+        <div class="groove-editor-actions">
+          <button id="grooveSave" type="button" title="Save in this browser under Mine">Save</button>
+          <button id="grooveDownload" type="button" title="Download the groove as a text file">Download</button>
+          <button id="grooveDelete" type="button" hidden>Delete</button>
+          <p id="grooveFeedback" class="groove-feedback" role="status" aria-live="polite"></p>
+        </div>
+      </section>
       <h2 id="jamBarsTitle" class="sr-only">Chords</h2>
       <ol id="jamBars" class="jam-bars" aria-labelledby="jamBarsTitle"></ol>
       <section class="jam-fretboard" aria-labelledby="jamFretboardTitle">
@@ -198,6 +209,15 @@
           <button id="jamRoom" type="button" class="jam-room">Drum room</button>
         </div>
       </section>
+      <section class="jam-section jam-write" aria-labelledby="jamWriteHeading">
+        <h2 id="jamWriteHeading" class="jam-section-heading">My grooves</h2>
+        <div class="jam-write-actions">
+          <button id="grooveEdit" class="toggle" type="button" aria-pressed="false" aria-controls="grooveEditor">Edit text</button>
+          <button id="grooveNew" type="button">New</button>
+          <button id="grooveOpen" type="button">Open file</button>
+          <input id="grooveOpenFile" type="file" accept=".txt,text/plain" hidden />
+        </div>
+      </section>
       <section class="jam-section jam-share" aria-labelledby="jamShareHeading">
         <h2 id="jamShareHeading" class="jam-section-heading">Share</h2>
         <div class="jam-share-row"><p id="jamShareHint" class="jam-share-hint">Key, tempo, chords and swing</p><button id="jamShare" class="jam-share-button" type="button" aria-describedby="jamShareHint" title="Copy a link that opens this groove with its key, tempo and progression">Copy link</button></div>
@@ -210,7 +230,7 @@
   <main class="layout noedit">
     <section id="editorPane" class="editor">
       <div class="pane-head"><span class="caps">Song text</span><span id="status" class="status"></span><button id="hideEditorBtn" class="pane-close" title="Hide editor" aria-label="Hide editor">Hide</button></div>
-      <textarea id="src" spellcheck="false" aria-label="Song source"></textarea>
+      <textarea id="src" class="source-text" spellcheck="false" aria-label="Song source"></textarea>
       <ul id="issues" class="issues"></ul>
     </section>
     <div id="editorResize" title="Drag to resize, double-click to reset" role="separator" tabindex="0" aria-label="Editor width" aria-orientation="vertical" aria-controls="editorPane" aria-valuemin="240" aria-valuemax="720" aria-valuenow="400" aria-describedby="editorResizeHelp"><span id="editorResizeHelp" class="sr-only">Drag to resize. Use Left and Right arrows, Home or End. Double-click to reset the width.</span></div>
@@ -423,6 +443,7 @@ time: 4/4
     <p>Count-in plays one bar of clicks before the loop starts, at the click volume from the practice Timing menu. Copy link copies an address that opens the groove with your key, tempo, progression and swing.</p>
     <h2>Writing a groove</h2>
     <p>A groove is plain text: the same header lines as a song, then one line of steps per part.</p>
+    <p>In Jam, My grooves has Edit text, New and Open file. The groove text opens above the chords. While every line reads cleanly, the loop plays what you type from the next bar; while a line has a problem, the list names its line and the last working version keeps playing. Save keeps the groove in this browser under Mine in the groove list. Download saves it as a text file, and Delete removes a saved groove after asking.</p>
 <pre>title: My shuffle
 genre: blues
 about: A twelve bar shuffle to practise blues lines.

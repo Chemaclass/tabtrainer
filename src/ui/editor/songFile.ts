@@ -1,6 +1,7 @@
-import { titleOf, type DraftSession } from '../../app/draftSession';
+import type { DraftSession } from '../../app/draftSession';
 import { closeOnChoice, closeOnOutside } from '../shell/disclosure';
 import { byId, one } from '../dom';
+import { downloadText } from './textFile';
 
 type Announce = (message: string, failed?: boolean, offerDownload?: boolean) => void;
 
@@ -8,11 +9,7 @@ export function songFile(draftSession: DraftSession, handlers: { onNew: () => vo
   const source = byId('src', HTMLTextAreaElement), input = byId('openFile', HTMLInputElement);
   const fileMenu = one('.file-menu', HTMLDetailsElement);
   const open = () => input.click();
-  const download = () => {
-    const blob = new Blob([source.value], { type: 'text/plain' }); const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob); a.download = titleOf(source.value).replace(/[^\w\- ]+/g, '').trim().replace(/\s+/g, '-').toLowerCase() + '.txt';
-    a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
-  };
+  const download = () => downloadText(source.value);
   byId('openBtn').onclick = open;
   closeOnChoice(fileMenu); closeOnOutside(fileMenu);
   byId('newBtn').onclick = handlers.onNew;

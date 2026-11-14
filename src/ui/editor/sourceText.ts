@@ -1,0 +1,47 @@
+import type { ParseIssue } from '../../core/parser';
+
+const SETTLE_MS = 300;
+const nothing = () => undefined;
+
+const LINE_BREAK_LENGTH = 1;
+
+function lineStart(lines: readonly string[], line: number): number {
+  const before = lines.slice(0, line - 1);
+  return before.reduce((start, text) => start + text.length + LINE_BREAK_LENGTH, 0);
+}
+
+export function selectLine(source: HTMLTextAreaElement, line: number) {
+  const lines = source.value.split('\n');
+  const start = lineStart(lines, line);
+  const length = lines[line - 1]?.length ?? 0;
+  source.focus();
+  source.setSelectionRange(start, start + length);
+}
+
+function issueItem(issue: ParseIssue, source: HTMLTextAreaElement): HTMLLIElement {
+  const item = document.createElement('li');
+  const button = document.createElement('button');
+  item.className = issue.severity;
+  button.type = 'button';
+  button.className = 'issue-link';
+  button.textContent = `Line ${issue.line}: ${issue.message}`;
+  button.addEventListener('click', () => selectLine(source, issue.line));
+  item.append(button);
+  return item;
+}
+
+/** Lists the issues, each one a button that selects its line in the source. */
+export function showIssueList(list: HTMLElement, issues: readonly ParseIssue[], source: HTMLTextAreaElement) {
+  list.replaceChildren(...issues.map(issue => issueItem(issue, source)));
+}
+
+/** Runs settled once typing pauses, and immediately on every keystroke. */
+export function settledInput(source: HTMLTextAreaElement, settled: () => void, immediately: () => void = nothing) {
+  let pending = 0;
+  source.addEventListener('input', () => {
+    immediately();
+    clearTimeout(pending);
+    pending = window.setTimeout(settled, SETTLE_MS);
+  });
+  return { cancel: () => clearTimeout(pending) };
+}

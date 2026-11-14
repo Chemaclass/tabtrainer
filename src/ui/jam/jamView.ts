@@ -18,6 +18,8 @@ interface JamViewHandlers {
 
 const COUNT_IN_BAR = 'bar';
 const COUNT_IN_OFF = 'off';
+const SHARE_HINT = 'Key, tempo, chords and swing';
+const NO_SHARE_HINT = 'Links open bundled grooves as written. Download a file to share your own.';
 
 interface SwingTexts { shown: string; spoken: string }
 
@@ -62,6 +64,7 @@ export function jamView(jam: Jam, engine: LoopEngine, { active, choose, changed,
   const bars = byId('jamBars', HTMLOListElement);
   const share = byId('jamShare', HTMLButtonElement);
   const shareStatus = byId('jamShareStatus');
+  const shareHint = byId('jamShareHint');
   const summary = byId('jamGrooveSummary');
   const title = byId('jamTitleText');
   const context = byId('jamContext');
@@ -206,6 +209,12 @@ export function jamView(jam: Jam, engine: LoopEngine, { active, choose, changed,
     showSummary();
   }
 
+  function showShare() {
+    const shareable = !jam.entry.mine && !jam.previewing;
+    share.hidden = !shareable;
+    shareHint.textContent = shareable ? SHARE_HINT : NO_SHARE_HINT;
+  }
+
   function showGroove() {
     const { groove } = jam;
     title.textContent = groove.title;
@@ -221,6 +230,7 @@ export function jamView(jam: Jam, engine: LoopEngine, { active, choose, changed,
     showSwing();
     showChords();
     picker.show();
+    showShare();
     shareStatus.textContent = '';
     engine.setTempo(jam.tempo);
   }
@@ -229,6 +239,7 @@ export function jamView(jam: Jam, engine: LoopEngine, { active, choose, changed,
   showPlaying(false);
   return {
     show,
+    showGrooveList: picker.fill,
     stop() { if (engine.playing) engine.stop(); },
   };
 }
