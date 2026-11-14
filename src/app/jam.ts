@@ -2,6 +2,7 @@ import { parseGroove, type Groove } from '../core/groove';
 import { buildGrooveTimeline, type GrooveTimeline } from '../core/grooveTimeline';
 import { OWN_PROGRESSION, isMinorProgression, keyTonic, presetProgression, type Numeral } from '../core/harmony';
 import { isFamily, type Family } from '../core/instruments';
+import { grooveSlug, type JamSetup } from './jamLink';
 import { pref, setPref, type JamChoice } from './storage';
 
 export interface BundledGroove { slug: string; groove: Groove }
@@ -10,8 +11,6 @@ export const JAM_TEMPO = { min: 40, max: 220 } as const;
 export const JAM_SWING = { min: 50, max: 66 } as const;
 const MAJOR_KEYS: readonly string[] = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B'];
 const MINOR_KEYS: readonly string[] = ['Cm', 'C#m', 'Dm', 'Ebm', 'Em', 'Fm', 'F#m', 'Gm', 'G#m', 'Am', 'Bbm', 'Bm'];
-
-export const grooveSlug = (path: string) => (path.split('/').pop() ?? '').replace(/\.txt$/, '').replace(/^\d+-/, '');
 
 export function bundledGrooves(files: Record<string, string>): BundledGroove[] {
   return Object.keys(files).sort().map(path => ({ slug: grooveSlug(path), groove: parseGroove(files[path]).groove }));
@@ -29,6 +28,8 @@ function jamKey(keys: readonly string[], key: string, fallback: string): string 
   const tonic = keyTonic(key) ?? keyTonic(fallback);
   return keys.find(k => keyTonic(k) === tonic) ?? keys[0];
 }
+
+const within = (value: number | undefined, { min, max }: { min: number; max: number }): value is number => value !== undefined && value >= min && value <= max;
 
 const clamp = (value: number, { min, max }: { min: number; max: number }) => Math.round(Math.min(max, Math.max(min, value)));
 const isFiniteNumber = (value: unknown): value is number => typeof value === 'number' && Number.isFinite(value);
@@ -54,6 +55,7 @@ export class Jam {
   get tempo() { return this.chosenTempo; }
   get progression() { return this.chosenProgression; }
   get swing() { return this.chosenSwing; }
+  get setup(): Required<JamSetup> { return { key: this.chosenKey, tempo: this.chosenTempo, progression: this.chosenProgression, swing: this.chosenSwing }; }
   get keys(): readonly string[] {
     if (this.chosenProgression === OWN_PROGRESSION) return jamKeys(this.groove);
     return isMinorProgression(this.chords()) ? MINOR_KEYS : MAJOR_KEYS;
@@ -65,6 +67,19 @@ export class Jam {
     this.index = index;
     this.load();
     return true;
+  }
+
+  open(slug: string, setup: JamSetup = {}): boolean {
+    const moved = this.choose(slug);
+    if (this.slug !== slug) return moved;
+    const { key, tempo, progression, swing } = setup;
+    const changes = [
+      progression !== undefined && this.setProgression(progression),
+      key !== undefined && this.setKey(this.keys.find(k => keyTonic(k) === keyTonic(key)) ?? key),
+      within(tempo, JAM_TEMPO) && this.setTempo(tempo),
+      within(swing, JAM_SWING) && this.setSwing(swing),
+    ];
+    return moved || changes.includes(true);
   }
 
   setKey(key: string): boolean {

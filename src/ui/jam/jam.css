@@ -3,6 +3,8 @@
 .jam-intro h1{font:800 48px/52px var(--display);letter-spacing:-.025em;margin:0 0 12px;overflow-wrap:anywhere}
 .jam-intro p{max-width:64ch;margin:0;font-size:16px;line-height:24px;color:var(--mut)}
 .jam-intro p[hidden]{display:none}
+.jam-share{display:flex;flex-wrap:wrap;align-items:center;gap:8px 16px;margin-top:16px}
+.jam-share-status{min-width:0;font-size:14px;line-height:20px;color:var(--mut);overflow-wrap:anywhere}
 .jam-controls{display:flex;flex-wrap:wrap;align-items:flex-end;gap:20px 32px;margin-bottom:32px;padding:20px;border:1px solid var(--rule);border-radius:12px}
 .jam-play{min-width:120px;font-size:16px}
 .jam-play.on{background:var(--ink);color:var(--page)}
@@ -12,7 +14,7 @@
 #jamTempoOut{font:600 15px var(--mono)}
 .jam-tempo input[type=range]{width:100%;height:44px}
 .jam-key{display:flex;flex-direction:column;gap:8px}
-:is(#jamKey,[data-select="jamKey"],#jamProgression,[data-select="jamProgression"]){min-width:110px;height:44px;background-color:var(--page)}
+:is(#jamKey,[data-select="jamKey"],#jamProgression,[data-select="jamProgression"],#jamCountIn,[data-select="jamCountIn"]){min-width:110px;height:44px;background-color:var(--page)}
 #jamSwingOut{font:600 15px var(--mono)}
 .jam-grooves{margin-bottom:28px}
 .jam-groove-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px;margin:0;padding:0;list-style:none}

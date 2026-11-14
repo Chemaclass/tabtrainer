@@ -109,6 +109,50 @@ describe('LoopEngine changes while playing', () => {
   });
 });
 
+describe('LoopEngine count-in', () => {
+  it('clicks one bar at the groove tempo and starts the loop on the next beat', () => {
+    const { engine, synth, drumTimes, states, advance } = setup();
+    const click = vi.spyOn(synth, 'click');
+    engine.setCountIn(true); engine.setClickVolume(0.7);
+    engine.play(); advance(1);
+    expect(click.mock.calls.map(c => [c[0], c[1], c[2], c[3]])).toEqual([0, 1, 2, 3].map(i => [START + i * 0.75, i === 0, 'count-in', 0.7]));
+    expect(drumTimes()).toHaveLength(0);
+    expect(states.at(-1)).toMatchObject({ playing: true, countingIn: true, bar: null });
+    advance(START + 4 * 0.75 + 0.1);
+    expect(close(Math.min(...drumTimes()), START + 4 * 0.75, 1e-9)).toBe(true);
+    expect(states.at(-1)).toMatchObject({ playing: true, countingIn: false, bar: 0 });
+  });
+  it('keeps the count-in in time with a tempo change and starts the loop after the last click', () => {
+    const { engine, synth, drumTimes, advance } = setup();
+    const click = vi.spyOn(synth, 'click');
+    engine.setCountIn(true);
+    engine.play(); advance(START + 0.75 + 0.1);
+    engine.setTempo(120);
+    advance(START + 1.5 + 2 * 0.5 + 0.1);
+    const kept = click.mock.calls.slice(-2).map(c => c[0]);
+    expect(click).toHaveBeenCalledTimes(6);
+    expect(close(kept[0], START + 1.5, 1e-9) && close(kept[1], START + 1.5 + 0.5, 1e-9)).toBe(true);
+    expect(close(Math.min(...drumTimes()), START + 1.5 + 2 * 0.5, 1e-9)).toBe(true);
+  });
+  it('cancels the count-in on stop', () => {
+    const { engine, synth, drumTimes, advance } = setup();
+    const cancel = vi.spyOn(synth, 'cancel');
+    engine.setCountIn(true);
+    engine.play(); advance(1);
+    engine.stop();
+    expect(cancel).toHaveBeenCalledWith('count-in');
+    advance(5);
+    expect(drumTimes()).toHaveLength(0);
+  });
+  it('starts at once with the count-in off', () => {
+    const { engine, synth, drumTimes, advance } = setup();
+    const click = vi.spyOn(synth, 'click');
+    engine.play(); advance(0.3);
+    expect(click).not.toHaveBeenCalled();
+    expect(close(Math.min(...drumTimes()), START, 1e-9)).toBe(true);
+  });
+});
+
 describe('LoopEngine stop and parts', () => {
   it('stop silences backing sound and cancels future hits', () => {
     const audio = fakeAudio();
