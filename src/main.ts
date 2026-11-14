@@ -25,7 +25,8 @@ import { library, removeSong, pref, setPref, recentPractice, recordPractice } fr
 import { findBySlug, normalizeSongReference, shareUrl, songSlug, versionSlug } from './app/songLink';
 import { AutoScroller } from './app/scrolling';
 import { bundledPath, bundledRef, isSavedRef, savedRef } from './app/songRef';
-import { artistOf, shownCredits } from './app/credits';
+import { shownCredits } from './app/credits';
+import { Songbook } from './app/songbook';
 import { Passage } from './app/passage';
 import { playbackShortcut } from './app/playbackShortcut';
 import { Navigation, navigationState, type Route } from './app/navigation';
@@ -37,19 +38,19 @@ import { categoryCounts, isLibraryKind, nextExercise, type CatalogueEntry, type 
 import { dismissHelpOnBackdrop } from './ui/shell/helpDialogs';
 import { byId, one } from './ui/dom';
 
-const demos = import.meta.glob('./songs/*/*/*.txt', { query: '?raw', import: 'default', eager: true }) as Record<string, string>;
+const songbook = new Songbook(import.meta.glob('./songs/*/*/*.txt', { query: '?raw', import: 'default', eager: true }) as Record<string, string>, library);
 const $ = byId;
 ['help', 'tabHelp'].forEach(id => dismissHelpOnBackdrop($(id, HTMLDialogElement)));
 
-const resolvePick = (value: string) => normalizeSongReference(value, Object.keys(demos));
+const resolvePick = (value: string) => normalizeSongReference(value, songbook.paths);
 const storedNavigation = navigationState(history.state);
 const initialNavigation = storedNavigation ? { ...storedNavigation, picked: resolvePick(storedNavigation.picked) } : null;
-const navigation = new Navigation(history, location, Object.keys(demos));
+const navigation = new Navigation(history, location, songbook.paths);
 const initialQuery = new URLSearchParams(location.search);
 let screen: 'library' | 'practice' = initialQuery.has('song') || initialQuery.get('view') === 'practice' ? 'practice' : 'library';
 const initialKind = initialQuery.get('kind') ?? pref('libraryKind', 'exercises');
 let libraryKind: LibraryKind = isLibraryKind(initialKind) ? initialKind : 'exercises';
-let catalogueEntries: CatalogueEntry[] = [], bundledEntries: CatalogueEntry[] | null = null;
+let catalogueEntries: CatalogueEntry[] = [];
 
 const src = $('src', HTMLTextAreaElement), sheet = $('sheet'), player = new Player();
 let song: Song | null = null;
@@ -61,27 +62,14 @@ let continuationDismissed = false;
 let zoom = pref('zoom', 1), showNota = pref('notation', matchMedia('(min-width:600px)').matches);
 
 // ---------- song list ----------
-// demo songs live in src/songs/<family>/<kind>/, kind being exercises or songs
-const familyOfText = (t: string) => familyOf(parseSong(t).song.meta.instrument);
-const demoFamily = (path: string) => path.split('/')[2];
-const demoKind = (path: string) => path.split('/')[3];
 const savedFamily = initialQuery.get('instrument') ?? pref('family', 'bass');
 let family: Family = isFamily(savedFamily) ? savedFamily : 'bass';
 let picked = '';
 
 const newSong = () => `title: New song\ninstrument: ${FAMILIES[family]}\ntempo: 90\nkey: C\ntime: 4/4\n\n@Intro\n"C" :q 3.3 3.3 5.2 3.3 |\n`;
-const songsFor = (f: Family) => ({
-  demos: Object.keys(demos).filter(p => demoFamily(p) === f).sort(),
-  mine: library().filter(s => familyOfText(s.text) === f),
-});
 const catalogue = libraryView(v => pickSong(v), () => $('newBtn').click(), () => $('openBtn').click(), () => { showLibrary('exercises'); $('libraryTitle').focus({ preventScroll: true }); });
-function entryFor(value: string, text: string, kind: LibraryKind, instrument: string): CatalogueEntry {
-  const parsed = parseSong(text).song;
-  return { value, title: parsed.meta.title, artist: artistOf(text), levels: parsed.versions.flatMap(v => v.level ?? parsed.meta.level ?? []), about: parsed.meta.about, family: instrument, kind, tempo: parsed.meta.tempo, versions: parsed.versions.length, practiceLevels: hasPracticeLevels(parsed.versions.map(v => v.name)) };
-}
 function fillSongList() {
-  bundledEntries ??= Object.keys(demos).sort().map(path => entryFor(bundledRef(path), demos[path], demoKind(path) === 'exercises' ? 'exercises' : 'songs', demoFamily(path)));
-  catalogueEntries = [...bundledEntries, ...library().map(item => entryFor(savedRef(item.title), item.text, 'mine', familyOfText(item.text)))];
+  catalogueEntries = songbook.entries();
   catalogue.show(catalogueEntries, family, libraryKind, recentPractice().map(resolvePick));
   renderPracticeNavigation();
 }
@@ -96,11 +84,10 @@ function pickSong(v: string) {
   else replaceCurrent(() => loadPickedSong(v, true));
 }
 function loadPickedSong(v: string, push = false) {
-  const path = bundledPath(v);
-  const text = path !== null ? demos[path] : library().find(x => savedRef(x.title) === v)?.text;
+  const text = songbook.text(v);
   if (text === undefined) return;
   picked = v; setPref('picked', v); screen = 'practice';
-  libraryKind = path !== null ? demoKind(path) === 'exercises' ? 'exercises' : 'songs' : 'mine';
+  libraryKind = songbook.kind(v);
   setScreen('practice'); loadText(text); fillSongList(); showLink(push);
   if (push) { window.scrollTo(0, 0); $('title').focus({ preventScroll: true }); }
 }
@@ -659,7 +646,7 @@ setPlayLabel();
 showEditor(pref('editor', false));
 const lastText = pref('last', null), lastPick = resolvePick(pref('picked', ''));
 const link = new URLSearchParams(location.search);
-const linked = findBySlug(Object.keys(demos), link.get('song') ?? '');
+const linked = findBySlug(songbook.paths, link.get('song') ?? '');
 const storedDraft = pref('draft', null);
 const draft = storedDraft ? { ...storedDraft, picked: resolvePick(storedDraft.picked) } : null;
 const requested = linked ? bundledRef(linked) : initialQuery.get('view') === 'practice' && initialNavigation && isSavedRef(initialNavigation.picked) && library().some(s => savedRef(s.title) === initialNavigation.picked) ? initialNavigation.picked : null;
@@ -673,14 +660,12 @@ if (recover) {
   loadPickedSong(requested);
   chooseVersionNamed(link.get('version'));
 } else if (lastText) {
-  const lastPath = bundledPath(lastPick);
-  const pickedText = lastPath !== null ? demos[lastPath] : library().find(x => savedRef(x.title) === lastPick)?.text;
+  const pickedText = songbook.text(lastPick);
   picked = pickedText === undefined ? '' : lastPick;
   loadText(lastText); draftSession.accept(pickedText ?? lastText); persistDraft();
 } else {
-  const firstPath = songsFor(family).demos[0];
-  picked = bundledRef(firstPath);
-  loadText(demos[firstPath]);
+  picked = songbook.firstBundled(family);
+  loadText(songbook.text(picked) ?? '');
 }
 showFamily();
 setScreen(screen);
