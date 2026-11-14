@@ -1,0 +1,27 @@
+.fretboard{width:min(820px,calc(100% - 24px))}
+.fretboard .close{width:44px;height:44px}
+.fretboard-controls{display:flex;flex-wrap:wrap;align-items:flex-end;gap:12px 16px;margin:16px 0}
+.fretboard-field{display:grid;gap:4px;min-width:0}
+.fretboard-field label{font:600 11px/16px var(--ui);letter-spacing:.08em;text-transform:uppercase;color:var(--mut)}
+.fretboard-controls .toggle{min-height:44px;padding:0 14px}
+.fretboard-controls .toggle[aria-pressed=true]{background:var(--ink);color:var(--page);border-color:var(--ink)}
+.fretboard-summary{margin:0 0 12px;font:600 15px/22px var(--mono)}
+.fretboard-board{max-width:100%;overflow-x:auto;overscroll-behavior-x:contain;padding:4px 0;border-radius:8px}
+.fretboard-board:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.fretboard-svg{display:block}
+.fretboard-svg text{font:400 11px var(--mono);text-anchor:middle}
+.fb-string{stroke:var(--mut)}
+.fb-fret{stroke:var(--control-border);stroke-width:1.5}
+.fb-nut{stroke:var(--ink);stroke-width:5}
+.fb-inlay{fill:var(--deck-line)}
+.fb-fret-number,.fb-string-name{fill:var(--mut)}
+.fb-string-name{font-size:12px}
+.fb-mark text{font-weight:600}
+.fb-mark[data-role=scale] circle{fill:var(--ink)}
+.fb-mark[data-role=scale] text{fill:var(--page)}
+.fb-mark[data-role=root] rect{fill:var(--led);stroke:var(--ink);stroke-width:2}
+.fb-mark[data-role=root] text{fill:#111}
+@media(max-width:599px){
+  .fretboard{padding:16px 12px}
+  .fretboard-controls{gap:10px 12px}
+}

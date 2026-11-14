@@ -11,6 +11,8 @@
 :is(#familySelect,[data-select="familySelect"]){height:44px;min-width:100px;background-color:var(--page)}
 #libraryOpenBtn{display:flex;align-items:center;justify-content:center;gap:8px;min-height:44px;white-space:nowrap}
 #libraryOpenBtn svg{display:none}
+.tool-open{display:flex;align-items:center;justify-content:center;gap:8px;min-height:44px;min-width:44px;white-space:nowrap}
+.tool-open svg{flex-shrink:0}
 .theme-toggle{display:grid;place-items:center;flex-shrink:0;width:44px;height:44px;color:var(--ink)}
 @media(min-width:900px) and (pointer:fine){.theme-toggle{width:32px;height:32px}}
 .theme-toggle .sun,[data-theme=dark] .theme-toggle .moon{display:none}
@@ -100,6 +102,8 @@ body:not(.library-view) .library-nav,body:not(.library-view) .dropdown:has([data
   #practiceName{max-width:45vw}
   #libraryOpenBtn svg{display:block}
   #libraryOpenBtn span{display:none}
+  .tool-open{width:44px;padding:0}
+  .tool-open span{display:none}
   .library{display:flex;flex-direction:column;padding:28px 24px 32px;gap:24px}
   .library-intro h1{font-size:36px;line-height:40px;letter-spacing:-.02em;margin-bottom:10px}
   .library-intro p{font-size:15px;line-height:22px}
@@ -125,6 +129,7 @@ body:not(.library-view) .library-nav,body:not(.library-view) .dropdown:has([data
 }
 @media(max-width:599px){
   .top{padding:8px 16px 0;gap:0 8px}
+  .header-actions{gap:6px}
   :is(#familySelect,[data-select="familySelect"]){min-width:92px;padding:6px 32px 6px 10px}
   #libraryOpenBtn{width:44px;padding:0}
   .header-actions .toggle{padding:0 10px;font-size:13px}
@@ -139,7 +144,7 @@ body:not(.library-view) .library-nav,body:not(.library-view) .dropdown:has([data
 @media(max-width:899px){
   .mobile-tab-help{display:block;min-height:44px;margin-top:20px;padding:0;text-align:left;text-decoration:underline}
 }
-@media(max-width:359px){
+@media(max-width:459px){
   .brand{gap:0;font-size:0}
 }
 #shareBtn[hidden]{display:none}

@@ -1,0 +1,32 @@
+import { describe, expect, it } from 'vitest';
+import { fretboardPositions } from '../../src/core/fretboard';
+import { INSTRUMENTS } from '../../src/core/instruments';
+import { scaleNotes } from '../../src/core/scales';
+
+const aMinorPentatonic = scaleNotes(9, 'minor-pentatonic').map(n => n.pitchClass);
+const fretsOn = (tuning: number[], stringIndex: number, first = 0, last = 12) =>
+  fretboardPositions(tuning, aMinorPentatonic, first, last).filter(p => p.stringIndex === stringIndex).map(p => p.fret);
+
+describe('fretboard positions', () => {
+  it('finds A minor pentatonic on a 4 string bass', () => {
+    const tuning = INSTRUMENTS.bass4.tuning;
+    expect(fretsOn(tuning, 3)).toEqual([0, 3, 5, 8, 10, 12]);
+    expect(fretsOn(tuning, 2)).toEqual([0, 3, 5, 7, 10, 12]);
+    expect(fretsOn(tuning, 1)).toEqual([0, 2, 5, 7, 10, 12]);
+    expect(fretsOn(tuning, 0)).toEqual([0, 2, 5, 7, 9, 12]);
+  });
+  it('adds the low B string of a 5 string bass', () => {
+    expect(fretsOn(INSTRUMENTS.bass5.tuning, 4)).toEqual([1, 3, 5, 8, 10]);
+  });
+  it('returns the midi note and pitch class of each match', () => {
+    const [first] = fretboardPositions(INSTRUMENTS.bass4.tuning, [9], 0, 12);
+    expect(first).toEqual({ stringIndex: 0, fret: 2, midi: INSTRUMENTS.bass4.tuning[0] + 2, pitchClass: 9 });
+  });
+  it('keeps to the fret range and never goes below the open string', () => {
+    expect(fretsOn(INSTRUMENTS.bass4.tuning, 3, 5, 8)).toEqual([5, 8]);
+    expect(fretboardPositions([40], [4], -3, 0).map(p => p.fret)).toEqual([0]);
+  });
+  it('accepts pitch classes outside 0 to 11', () => {
+    expect(fretboardPositions([40], [16], 0, 12).map(p => p.fret)).toEqual([0, 12]);
+  });
+});

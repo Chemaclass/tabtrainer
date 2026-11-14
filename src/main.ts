@@ -18,6 +18,7 @@ import { draftFlow } from './ui/editor/draftFlow';
 import { editorPane } from './ui/editor/editorPane';
 import { saveState } from './ui/editor/saveState';
 import { songFile } from './ui/editor/songFile';
+import { fretboardSheet } from './ui/fretboard/fretboardSheet';
 import { songList } from './ui/library/songList';
 import { passageView } from './ui/player/passageView';
 import { playbackView } from './ui/player/playbackView';
@@ -87,6 +88,7 @@ editor.onEdit(() => { if (passagePlayback.selectedNote) player.stop(); drafts.pe
 playerPanel(draw);
 theme();
 tuner(() => ({ family: workspace.family, instrument: workspace.screen === 'practice' ? openSong.song?.meta.instrument ?? null : null }), () => player.pause());
+fretboardSheet();
 Object.assign(window, { tabtrainer: { player, removeSong, onsetKey } });
 publishLayoutHeights();
 
