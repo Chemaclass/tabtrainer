@@ -1,10 +1,10 @@
 import type { TimedNote, BarSpan } from '../core/timeline';
 import { Synth } from './synth';
-import { advanceSpeedPractice, isSpeedPracticeConfig, type SpeedPracticeConfig, type SpeedPracticeProgress } from '../core/speedPractice';
+import { PracticePasses } from './practicePasses';
+import { isSpeedPracticeConfig, type SpeedPracticeConfig, type SpeedPracticeProgress } from '../core/speedPractice';
 
 export interface SpeedPracticeState { enabled: boolean; active: boolean; startingSpeed: number | null; speed: number; completed: number; repetitions: number; target: number; reached: boolean }
 export type SpeedPracticeReason = 'enabled' | 'progress' | 'increase' | 'target' | 'reset' | 'ended';
-type Pass = { start: number; end: number; from: number; speed: number; eligible: boolean; id: number; progress: SpeedPracticeProgress };
 export interface LoopCompletion { time: number; traversal: number; full: boolean }
 
 export type PlayerPhase = 'stopped' | 'counting-in' | 'playing' | 'paused';
@@ -18,9 +18,7 @@ export class Player {
   private practiceActive = false;
   private practiceListeners: ((state: SpeedPracticeState, reason: SpeedPracticeReason) => void)[] = [];
   private loopListeners: ((event: LoopCompletion) => void)[] = [];
-  private passes: Pass[] = [];
-  private previousPass: Pass | null = null;
-  private nextPassId = 1;
+  private passes = new PracticePasses();
   private resumeEligible = false;
   private synth = new Synth();
   private timer: number | null = null;
@@ -63,7 +61,7 @@ export class Player {
     this.reconcile();
     const beat = this.playing && this.synth.started ? this.position(this.synth.now) : null;
     this.resumeEligible = false;
-    this.practice = null; this.baseline = null; this.practiceActive = false; this.progress = { speed: Math.round(this.speed * 100), completed: 0 }; this.passes = [];
+    this.practice = null; this.baseline = null; this.practiceActive = false; this.progress = { speed: Math.round(this.speed * 100), completed: 0 }; this.passes.clear();
     if (beat !== null && this.synth.started && this.state === 'playing') {
       this.synth.cancelFuture(); this.from = beat; this.t0 = Math.max(this.synth.now, this.t0); this.rescheduleFrom(this.synth.now);
     } else if (this.playing && this.synth.started) { this.synth.cancelFuture(); this.rescheduleFrom(this.synth.now); }
@@ -107,8 +105,7 @@ export class Player {
     this.emit(start);
   }
   private makeFirstPass(start: number, from: number, eligible: boolean) {
-    this.previousPass = null;
-    this.passes = [{ start, end: start + (this.to - from) * this.spb(), from, speed: this.speed, eligible, id: this.nextPassId++, progress: { ...this.progress } }];
+    this.passes.begin({ start, end: start + (this.to - from) * this.spb(), from, speed: this.speed, eligible, progress: { ...this.progress } });
   }
   private rebuildPractice(eligible: boolean) {
     if (!this.synth.started) return;
@@ -119,35 +116,24 @@ export class Player {
     this.rescheduleFrom(now);
   }
   private extendPasses(until: number) {
-    if (!this.practice || !this.passes.length) return;
-    const a = this.passageStart();
-    let pass = this.passes[this.passes.length - 1];
-    while (pass.end <= until && this.to > a) {
-      const progress = pass.eligible ? advanceSpeedPractice(pass.progress, this.practice) : pass.progress;
-      const speed = progress.speed / 100, duration = (this.to - a) * 60 / (this.tempo * speed);
-      let start = pass.end;
-      if (progress.speed >= this.practice.target && until - start > duration * 2) start += Math.floor((until - start) / duration - 1) * duration;
-      pass = { start, end: start + duration, from: a, speed, eligible: true, id: this.nextPassId++, progress };
-      this.passes.push(pass);
-    }
+    if (this.practice) this.passes.extend(until, { from: this.passageStart(), to: this.to, tempo: this.tempo }, this.practice);
   }
   private reconcile() {
-    if (!this.practice || !this.synth.started || !this.playing || !this.passes.length) return;
+    if (!this.practice || !this.synth.started || !this.playing || this.passes.isEmpty) return;
     const now = this.synth.now; this.extendPasses(now);
-    while (this.passes.length > 1 && this.passes[0].end <= now) {
-      const pass = this.passes.shift()!, next = this.passes[0], previous = this.progress;
-      this.previousPass = pass;
+    for (const { finished, next } of this.passes.finish(now)) {
+      const previous = this.progress;
       this.progress = next.progress; this.speed = next.speed;
-      this.loopListeners.forEach(fn => fn({ time: pass.end, traversal: pass.id, full: pass.eligible }));
-      if (pass.eligible && (previous.completed !== this.progress.completed || previous.speed !== this.progress.speed)) {
+      this.loopListeners.forEach(fn => fn({ time: finished.end, traversal: finished.id, full: finished.eligible }));
+      if (finished.eligible && (previous.completed !== this.progress.completed || previous.speed !== this.progress.speed)) {
         this.emitPractice(previous.speed !== this.progress.speed ? (this.progress.speed >= this.practice.target ? 'target' : 'increase') : 'progress');
       }
     }
   }
   private position(now: number) {
-    if (this.practice && this.passes.length) {
+    if (this.practice && !this.passes.isEmpty) {
       this.extendPasses(now);
-      const pass = (this.previousPass && now < this.previousPass.end ? this.previousPass : null) ?? this.passes.find(p => now < p.end) ?? this.passes[this.passes.length - 1];
+      const pass = this.passes.at(now)!;
       return Math.min(this.to, pass.from + Math.max(0, now - pass.start) * this.tempo * pass.speed / 60);
     }
     const elapsed = Math.max(0, (now - this.t0) / this.spb());
@@ -171,7 +157,7 @@ export class Player {
     }
   }
   private scheduleMusic(start: number, clickStart: number, end: number) {
-    if (this.practice && this.passes.length) { this.schedulePracticeMusic(start, clickStart, end); return; }
+    if (this.practice && !this.passes.isEmpty) { this.schedulePracticeMusic(start, clickStart, end); return; }
     const spb = this.spb(), a = this.passageStart();
     let passStart = this.t0, passFrom = this.from;
     const firstEnd = this.t0 + (this.to - this.from) * spb;
@@ -190,8 +176,7 @@ export class Player {
   }
   private schedulePracticeMusic(start: number, clickStart: number, end: number) {
     this.extendPasses(end);
-    for (const pass of this.passes) {
-      if (pass.end <= Math.min(start, clickStart) || pass.start >= end) continue;
+    for (const pass of this.passes.overlapping(Math.min(start, clickStart), end)) {
       this.schedulePass(pass.start, pass.from, 60 / (this.tempo * pass.speed), start, clickStart, end);
     }
   }
@@ -265,15 +250,15 @@ export class Player {
   pause() {
     if (!this.playing || !this.synth.started) return;
     this.reconcile();
-    this.resumeEligible = this.passes[0]?.eligible ?? false;
+    this.resumeEligible = this.passes.current?.eligible ?? false;
     const counting = this.state === 'counting-in';
     const wrapped = this.loop && this.synth.now >= this.t0 + (this.to - this.from) * this.spb();
-    const passStart = this.practice && this.passes.length ? this.passes[0].from : wrapped ? this.passageStart() : this.from;
+    const passStart = this.practice && this.passes.current ? this.passes.current.from : wrapped ? this.passageStart() : this.from;
     this.paused = counting ? this.from : Math.max(passStart, this.position(this.synth.now) - 0.05);
     this.halt(); this.state = 'paused'; this.resumeMusic = !counting; this.emit(this.paused);
   }
   toggle() { if (this.playing) this.pause(); else this.play(); }
-  stop() { this.reconcile(); this.halt(); this.state = 'stopped'; this.paused = null; this.resumeMusic = false; this.passes = []; if (this.practice && this.baseline !== null) { this.speed = this.baseline / 100; this.progress = { speed: this.baseline, completed: 0 }; this.practiceActive = false; this.emitPractice('reset'); } this.emit(null); }
+  stop() { this.reconcile(); this.halt(); this.state = 'stopped'; this.paused = null; this.resumeMusic = false; this.passes.clear(); if (this.practice && this.baseline !== null) { this.speed = this.baseline / 100; this.progress = { speed: this.baseline, completed: 0 }; this.practiceActive = false; this.emitPractice('reset'); } this.emit(null); }
   setSpeed(s: number) {
     this.endPractice();
     const now = this.synth.now, beat = this.state === 'playing' ? this.position(now) : null;
