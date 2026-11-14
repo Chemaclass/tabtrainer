@@ -1,11 +1,11 @@
-import { APPROACH, HALF_STEP_BELOW, type Drum, type Groove, type GrooveGrid, type KeysVoice } from './groove';
+import { APPROACH, FILL_BEATS, HALF_STEP_BELOW, type Drum, type DrumKitName, type Groove, type GrooveGrid, type KeysVoice } from './groove';
 import { chordAt, degreeInterval, keyTonic, type BassDegree, type Chord } from './harmony';
 import { pitchClass, safeKey } from './theory';
 
 export interface DrumHit { beat: number; bar: number; drum: Drum; velocity: number }
 export interface PitchedHit { beat: number; bar: number; length: number; midi: number[]; velocity: number }
 export interface GrooveBar { bar: number; start: number; length: number; chord: Chord }
-export interface GrooveTimeline { bars: GrooveBar[]; drums: DrumHit[]; bass: PitchedHit[]; keys: PitchedHit[]; total: number; voice: KeysVoice }
+export interface GrooveTimeline { bars: GrooveBar[]; drums: DrumHit[]; bass: PitchedHit[]; keys: PitchedHit[]; total: number; voice: KeysVoice; kit: DrumKitName }
 
 const VELOCITY: Record<string, number> = { X: 1, x: 0.8, o: 0.45 };
 const BASS_VELOCITY = 0.8;
@@ -13,6 +13,14 @@ export const BASS_RANGE = { low: 28, high: 55 } as const;
 export const KEYS_RANGE = { low: 57, high: 68 } as const;
 export const POWER_CHORD_RANGE = { low: 45, high: 68 } as const;
 const EPSILON = 1e-9;
+// A descending sixteenth note run over the last two beats of the progression
+const FILL: readonly { drum: Drum; steps: string }[] = [
+  { drum: 'snare', steps: 'Xx......' },
+  { drum: 'hightom', steps: '..xx....' },
+  { drum: 'midtom', steps: '....xx..' },
+  { drum: 'lowtom', steps: '......XX' },
+  { drum: 'kick', steps: 'X.....X.' },
+];
 
 // 66 is how drum machines name a triplet shuffle, so it lands on exactly two thirds
 const swingRatio = (swing: number) => (swing === 66 ? 2 / 3 : swing / 100);
@@ -160,13 +168,39 @@ function swingPair(groove: Groove): number {
   return !lengths.some(l => near(l, 0.5)) && lengths.some(l => near(l, 0.25)) ? 0.5 : 1;
 }
 
+interface Placement { pair: number; ratio: number }
+
+function stepOffset(offset: number, stepLength: number, { pair, ratio }: Placement): number {
+  return isBinary(stepLength) ? swung(offset, pair, ratio) : offset;
+}
+
+function fillHits(bar: GrooveBar, placement: Placement): DrumHit[] {
+  const fillStart = bar.length - FILL_BEATS;
+  const hits: DrumHit[] = [];
+  for (const { drum, steps } of FILL) {
+    const stepLength = FILL_BEATS / steps.length;
+    [...steps].forEach((step, i) => {
+      if (isRest(step)) return;
+      const beat = bar.start + stepOffset(fillStart + i * stepLength, stepLength, placement);
+      hits.push({ beat, bar: bar.bar, drum, velocity: VELOCITY[step] });
+    });
+  }
+  return hits;
+}
+
+function withFill(drums: DrumHit[], bar: GrooveBar, placement: Placement): DrumHit[] {
+  if (bar.length < FILL_BEATS) return drums;
+  const fillStart = bar.start + bar.length - FILL_BEATS - EPSILON;
+  const kept = drums.filter(hit => hit.bar !== bar.bar || hit.beat < fillStart);
+  return [...kept, ...fillHits(bar, placement)];
+}
+
 export function buildGrooveTimeline(groove: Groove, key: string = groove.key): GrooveTimeline {
   key = safeKey(key);
   const tonic = keyTonic(key) ?? 0;
   const barLength = (groove.time[0] * 4) / groove.time[1];
-  const ratio = groove.time[1] >= 8 ? 0.5 : swingRatio(groove.swing);
-  const pair = swingPair(groove);
-  const timeline: GrooveTimeline = { bars: [], drums: [], bass: [], keys: [], total: groove.progression.length * barLength, voice: groove.voice };
+  const placement: Placement = { pair: swingPair(groove), ratio: groove.time[1] >= 8 ? 0.5 : swingRatio(groove.swing) };
+  const timeline: GrooveTimeline = { bars: [], drums: [], bass: [], keys: [], total: groove.progression.length * barLength, voice: groove.voice, kit: groove.kit };
   const bass = bassLine(groove, key, tonic);
 
   groove.progression.forEach((_, bar) => {
@@ -178,7 +212,7 @@ export function buildGrooveTimeline(groove: Groove, key: string = groove.key): G
     for (const grid of groove.grids) {
       const steps = grid.bars[bar % grid.bars.length];
       const stepLength = barLength / steps.length;
-      const at = (i: number) => start + (i >= steps.length ? barLength : isBinary(stepLength) ? swung(i * stepLength, pair, ratio) : i * stepLength);
+      const at = (i: number) => start + (i >= steps.length ? barLength : stepOffset(i * stepLength, stepLength, placement));
       steps.forEach((step, i) => {
         if (isRest(step)) return;
         if (grid.part !== 'bass' && grid.part !== 'keys') {
@@ -194,6 +228,8 @@ export function buildGrooveTimeline(groove: Groove, key: string = groove.key): G
     }
   });
 
+  const lastBar = timeline.bars.at(-1);
+  if (groove.fill && lastBar) timeline.drums = withFill(timeline.drums, lastBar, placement);
   for (const hits of [timeline.drums, timeline.bass, timeline.keys]) hits.sort((a, b) => a.beat - b.beat);
   return timeline;
 }

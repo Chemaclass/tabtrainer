@@ -2,16 +2,34 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { DrumKit } from '../../src/audio/drumKit';
 import { Synth } from '../../src/audio/synth';
 import { DRUMS, type Drum } from '../../src/core/groove';
-import { fakeAudio, type FakeSource } from './fakeAudio';
+import { fakeAudio, type FakeGain, type FakeSource } from './fakeAudio';
 
 afterEach(() => { vi.useRealTimers(); vi.unstubAllGlobals(); });
+
+type FakeFilter = ReturnType<typeof fakeAudio>['filters'][number] & { frequency: { value: number } };
 
 const setup = () => {
   const audio = fakeAudio();
   const synth = new Synth(); synth.ensure();
   return { ...audio, synth, kit: new DrumKit(synth), out: synth.output };
 };
-const added = (sources: FakeSource[], play: () => void) => { const n = sources.length; play(); return sources.slice(n); };
+
+function recorder(audio: ReturnType<typeof setup>) {
+  return (play: () => void) => {
+    const sources = audio.sources.length, gains = audio.gains.length, filters = audio.filters.length;
+    play();
+    return {
+      sources: audio.sources.slice(sources),
+      gains: audio.gains.slice(gains),
+      filters: audio.filters.slice(filters) as FakeFilter[],
+    };
+  };
+}
+
+const stopAt = (s: FakeSource) => s.stop.mock.calls.at(-1)![0] as number;
+const firstStop = (s: FakeSource) => s.stop.mock.calls[0][0] as number;
+const peakOf = (g: FakeGain) => g.gain.exponentialRampToValueAtTime.mock.calls[0][0] as number;
+const cutoffs = (filters: FakeFilter[], type: string) => filters.filter(f => f.type === type).map(f => f.frequency.value);
 
 describe('DrumKit', () => {
   it('generates one noise buffer and reuses it for every hit', () => {
@@ -22,62 +40,139 @@ describe('DrumKit', () => {
     expect(noise.length).toBeGreaterThan(0);
     expect(noise.every(s => s.buffer === buffers[0] && s.loop)).toBe(true);
   });
-  it('builds the kick from a falling sine body and a short noise click', () => {
-    const { kit, out, sources } = setup();
-    const kick = added(sources, () => kit.play('kick', 1, 1, out));
-    const body = kick.find(s => s.kind === 'oscillator')!;
+  it('builds the kick from a sine body that falls in pitch and a short noise click', () => {
+    const audio = setup();
+    const kick = recorder(audio)(() => audio.kit.play('kick', 1, 1, audio.out));
+    const body = kick.sources.find(s => s.kind === 'oscillator')!;
     expect(body.type).toBe('sine');
-    const first = body.frequency.setValueAtTime.mock.calls[0][0] as number;
-    const ramps = body.frequency.exponentialRampToValueAtTime.mock.calls.map(c => c[0] as number);
-    expect(ramps.length).toBeGreaterThan(0);
-    expect(ramps.every(f => f < first)).toBe(true);
-    const click = kick.filter(s => s.kind === 'noise');
+    const [start] = body.frequency.setValueAtTime.mock.calls[0] as number[];
+    const [end] = body.frequency.exponentialRampToValueAtTime.mock.calls[0] as number[];
+    expect(end).toBeLessThan(start / 2);
+    const click = kick.sources.filter(s => s.kind === 'noise');
     expect(click).toHaveLength(1);
-    expect(click[0].stop.mock.calls[0][0] - 1).toBeLessThan(0.05);
+    expect(firstStop(click[0]) - 1).toBeLessThan(0.05);
+  });
+  it('builds the snare from two tuned body modes and one noise source split into a short snap and a longer wire tail', () => {
+    const audio = setup();
+    const snare = recorder(audio)(() => audio.kit.play('snare', 1, 1, audio.out));
+    const modes = snare.sources.filter(s => s.kind === 'oscillator');
+    expect(modes.map(m => m.type)).toEqual(['triangle', 'triangle']);
+    expect(modes[1].frequency.value / modes[0].frequency.value).toBeGreaterThan(1.5);
+    expect(snare.sources.filter(s => s.kind === 'noise')).toHaveLength(1);
+    expect(cutoffs(snare.filters, 'bandpass')).toHaveLength(2);
+    const decays = snare.gains.map(g => g.gain.setTargetAtTime.mock.calls[0][2] as number);
+    const [, snap, wires] = decays;
+    expect(wires).toBeGreaterThan(snap * 3);
+  });
+  it('builds the hi-hat from six detuned square waves through a band pass and a high pass', () => {
+    const audio = setup();
+    const hat = recorder(audio)(() => audio.kit.play('hat', 1, 1, audio.out));
+    expect(hat.sources).toHaveLength(6);
+    expect(hat.sources.every(s => s.kind === 'oscillator' && s.type === 'square')).toBe(true);
+    const lowest = hat.sources[0].frequency.value;
+    expect(hat.sources.map(s => +((s.frequency.value / lowest) * 2).toFixed(2))).toEqual([2, 3, 4.16, 5.43, 6.79, 8.21]);
+    expect(new Set(hat.sources.map(s => s.detune.value)).size).toBe(6);
+    expect(hat.filters.map(f => f.type)).toEqual(['bandpass', 'highpass']);
   });
   it('gives each drum its own voice', () => {
-    const { kit, out, sources } = setup();
-    const shape = (drum: Drum) => added(sources, () => kit.play(drum, 1, 1, out)).map(s => `${s.kind}:${s.type}`).sort().join(',');
-    const kick = shape('kick'), snare = shape('snare'), rim = shape('rim'), hat = shape('hat'), ride = shape('ride');
-    expect(snare).toContain('oscillator:triangle');
-    expect(rim).toContain('oscillator:triangle');
-    expect(hat).toBe('noise:');
-    expect(ride).toContain('oscillator:square');
-    expect(new Set([kick, snare, rim, hat, ride]).size).toBe(5);
+    const audio = setup();
+    const record = recorder(audio);
+    const shape = (drum: Drum) => record(() => audio.kit.play(drum, 1, 1, audio.out)).sources.map(s => `${s.kind}:${s.type}:${Math.round(s.frequency.value)}`).sort().join(',');
+    const shapes = DRUMS.filter(drum => !drum.endsWith('hat') || drum === 'hat').map(shape);
+    expect(new Set(shapes).size).toBe(shapes.length);
   });
-  it('keeps the rim click short and without the snare wires', () => {
-    const { kit, out, sources, filters } = setup();
-    const before = filters.length;
-    const rim = added(sources, () => kit.play('rim', 1, 1, out));
-    expect(Math.max(...rim.map(s => (s.stop.mock.calls[0][0] as number) - 1))).toBeLessThan(0.2);
-    expect(filters.slice(before).map(f => f.type)).not.toContain('highpass');
+  it('rings the closed, pedal, half open and open hi-hat for longer and longer', () => {
+    const audio = setup();
+    const record = recorder(audio);
+    const length = (drum: Drum, when: number) => firstStop(record(() => audio.kit.play(drum, when, 1, audio.out)).sources[0]) - when;
+    const [pedal, closed, half, open] = [length('pedalhat', 0), length('hat', 2), length('halfhat', 4), length('openhat', 6)];
+    expect(pedal).toBeLessThan(closed);
+    expect(half).toBeGreaterThan(closed * 2);
+    expect(open).toBeGreaterThan(half * 2);
   });
-  it('lets an open hat ring longer than a closed hat and chokes it at the next closed hat', () => {
-    const { kit, out, sources, gains } = setup();
-    const length = (drum: 'hat' | 'openhat', when: number) => (added(sources, () => kit.play(drum, when, 1, out))[0].stop.mock.calls[0][0] as number) - when;
-    expect(length('openhat', 0)).toBeGreaterThan(length('hat', 2) * 4);
-    kit.play('openhat', 4, 1, out);
-    const open = gains[gains.length - 1];
-    kit.play('hat', 4.25, 1, out);
-    expect(open.gain.setTargetAtTime).toHaveBeenLastCalledWith(0, 4.25, expect.any(Number));
+  for (const choke of ['hat', 'pedalhat'] as const) {
+    it(`chokes a ringing open hi-hat at the next ${choke}`, () => {
+      const audio = setup();
+      const open = recorder(audio)(() => audio.kit.play('openhat', 4, 1, audio.out));
+      audio.kit.play(choke, 4.25, 1, audio.out);
+      expect(open.gains[0].gain.setTargetAtTime).toHaveBeenLastCalledWith(0, 4.25, expect.any(Number));
+      expect(open.sources.every(s => stopAt(s) < 4.35)).toBe(true);
+    });
+  }
+  it('lets a closed and an open hi-hat on the same step both ring, whichever lands first', () => {
+    const audio = setup();
+    const record = recorder(audio);
+    const open = record(() => audio.kit.play('openhat', 4, 1, audio.out, -0.004));
+    audio.kit.play('hat', 4, 1, audio.out, 0.004);
+    expect(open.sources.every(s => s.stop.mock.calls.length === 1)).toBe(true);
   });
-  it('plays a soft hit quieter than an accent and skips a silent one', () => {
-    const { kit, out, gains, sources } = setup();
-    const peak = (velocity: number) => { const n = gains.length; kit.play('snare', 1, velocity, out); return gains[n].gain.setValueAtTime.mock.calls[0][0] as number; };
-    expect(peak(0.45)).toBeLessThan(peak(1) / 2);
-    expect(added(sources, () => kit.play('kick', 1, 0, out))).toHaveLength(0);
+  it('forgets ringing drums after a reset, so a restart cannot revive a cancelled tail', () => {
+    const audio = setup();
+    const record = recorder(audio);
+    const open = record(() => audio.kit.play('openhat', 4, 1, audio.out));
+    audio.synth.cancel('backing', 4);
+    audio.kit.reset();
+    audio.kit.play('hat', 4.05, 1, audio.out);
+    expect(open.sources.every(s => stopAt(s) === 4)).toBe(true);
+  });
+  it('cuts the ring of a drum short when the same drum is struck again, and leaves other drums ringing', () => {
+    const audio = setup();
+    const record = recorder(audio);
+    const first = record(() => audio.kit.play('snare', 1, 1, audio.out));
+    const kick = record(() => audio.kit.play('kick', 1.05, 1, audio.out));
+    record(() => audio.kit.play('snare', 1.1, 1, audio.out));
+    expect(first.sources.every(s => stopAt(s) < 1.25)).toBe(true);
+    expect(first.gains.every(g => g.gain.setTargetAtTime.mock.calls.at(-1)![1] === 1.1)).toBe(true);
+    expect(kick.sources.every(s => s.stop.mock.calls.length === 1)).toBe(true);
+  });
+  it('cuts the ride tail short when the ride or its bell is struck again', () => {
+    const audio = setup();
+    const record = recorder(audio);
+    const first = record(() => audio.kit.play('ride', 1, 1, audio.out));
+    const natural = stopAt(first.sources[0]);
+    const bell = record(() => audio.kit.play('bell', 1.3, 1, audio.out));
+    expect(natural).toBeGreaterThan(3);
+    expect(first.sources.every(s => stopAt(s) < 1.7)).toBe(true);
+    expect(bell.filters.find(f => f.type === 'bandpass')!.frequency.value).toBeLessThan(first.filters.find(f => f.type === 'bandpass')!.frequency.value);
+  });
+  it('plays a soft hit quieter and darker than an accent of the same drum, and skips a silent one', () => {
+    const audio = setup();
+    const record = recorder(audio);
+    for (const drum of ['snare', 'hat', 'ride', 'kick'] as const) {
+      const soft = record(() => audio.kit.play(drum, 1, 0.45, audio.out));
+      const accent = record(() => audio.kit.play(drum, 1, 1, audio.out));
+      expect(peakOf(soft.gains[0]), drum).toBeLessThan(peakOf(accent.gains[0]) / 2);
+      expect(cutoffs(soft.filters, 'bandpass')[0], drum).toBeLessThan(cutoffs(accent.filters, 'bandpass')[0]);
+    }
+    expect(record(() => audio.kit.play('kick', 1, 0, audio.out)).sources).toHaveLength(0);
+  });
+  it('tunes the toms from high to low', () => {
+    const audio = setup();
+    const record = recorder(audio);
+    const pitch = (drum: Drum) => record(() => audio.kit.play(drum, 1, 1, audio.out)).sources.find(s => s.kind === 'oscillator')!.frequency.value;
+    expect(pitch('hightom')).toBeGreaterThan(pitch('midtom'));
+    expect(pitch('midtom')).toBeGreaterThan(pitch('lowtom'));
+  });
+  it('sounds different with the jazz kit than with the rock kit', () => {
+    const audio = setup();
+    const record = recorder(audio);
+    const sound = (drum: Drum, kit: 'rock' | 'jazz') => {
+      const hit = record(() => audio.kit.play(drum, 1, 1, audio.out, 0, kit));
+      return hit.sources.map(s => s.frequency.value).concat(hit.gains.map(g => g.gain.setTargetAtTime.mock.calls[0][2] as number));
+    };
+    for (const drum of ['kick', 'snare', 'hat', 'ride'] as const) expect(sound(drum, 'jazz'), drum).not.toEqual(sound(drum, 'rock'));
   });
   it('moves a hit by its offset but cancels it by its grid time', () => {
-    const { kit, out, sources, synth } = setup();
-    const hit = added(sources, () => kit.play('snare', 2, 1, out, -0.004));
-    expect(hit.every(s => Math.abs((s.start.mock.calls[0][0] as number) - 1.996) < 1e-9)).toBe(true);
-    synth.cancelFuture('backing', 1.999);
-    expect(hit.every(s => s.stop.mock.calls.length === 2)).toBe(true);
+    const audio = setup();
+    const hit = recorder(audio)(() => audio.kit.play('snare', 2, 1, audio.out, -0.004));
+    expect(hit.sources.every(s => Math.abs((s.start.mock.calls[0][0] as number) - 1.996) < 1e-9)).toBe(true);
+    audio.synth.cancelFuture('backing', 1.999);
+    expect(hit.sources.every(s => s.stop.mock.calls.length === 2)).toBe(true);
   });
   it('tracks every hit as backing sound so it can be cancelled', () => {
     const { kit, out, sources, synth } = setup();
-    for (const drum of DRUMS) kit.play(drum, 1, 0.8, out);
+    DRUMS.forEach((drum, i) => kit.play(drum, 1 + i * 0.01, 0.8, out));
     synth.cancel('backing');
-    expect(sources.every(s => s.stop.mock.calls.length === 2)).toBe(true);
+    expect(sources.every(s => s.stop.mock.calls.length >= 2)).toBe(true);
   });
 });

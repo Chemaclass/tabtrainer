@@ -125,6 +125,29 @@ describe('buildGrooveTimeline', () => {
     }
     expect(buildGrooveTimeline(blues).voice).toBe('keys');
   });
+  it('passes the drum kit on', () => {
+    expect(buildGrooveTimeline(blues).kit).toBe('blues');
+    expect(buildGrooveTimeline(parseGroove('progression: I\nkick: x...\n').groove).kit).toBe('rock');
+  });
+  it('plays a tom fill over the last two beats of the progression only when the groove turns fills on', () => {
+    const src = 'progression: I IV V I\nhat: xxxxxxxx\nsnare: ..x...x.\nkick: x...x...\n';
+    const plain = buildGrooveTimeline(parseGroove(src).groove);
+    const filled = buildGrooveTimeline(parseGroove(`fill: on\n${src}`).groove);
+    const toms = (t: typeof filled) => t.drums.filter(h => h.drum.endsWith('tom'));
+    expect(toms(plain)).toEqual([]);
+    expect(filled.drums.filter(h => h.bar < 3)).toEqual(plain.drums.filter(h => h.bar < 3));
+    expect(toms(filled).length).toBeGreaterThan(0);
+    expect(toms(filled).every(h => h.bar === 3 && h.beat >= 14)).toBe(true);
+    const fillBeats = filled.drums.filter(h => h.beat >= 14);
+    expect(fillBeats.some(h => h.drum === 'hat')).toBe(false);
+    expect(fillBeats.map(h => h.drum)).toEqual(['snare', 'kick', 'snare', 'hightom', 'hightom', 'midtom', 'midtom', 'lowtom', 'kick', 'lowtom']);
+    expect(filled.drums.filter(h => h.bar === 3 && h.beat < 14)).toEqual(plain.drums.filter(h => h.bar === 3 && h.beat < 14));
+  });
+  it('swings the fill with the groove', () => {
+    const t = buildGrooveTimeline(parseGroove('swing: 66\nfill: on\nprogression: I\nhat: xxxxxxxx\n').groove);
+    expect(t.drums.find(h => h.drum === 'midtom')!.beat).toBeCloseTo(3, 9);
+    expect(t.drums.filter(h => h.drum === 'snare').map(h => h.beat)).toEqual([2, expect.closeTo(2 + 1 / 3, 9)]);
+  });
   it('uses the groove key by default and falls back to C for an unknown key', () => {
     expect(buildGrooveTimeline(blues).bars[0].chord.name).toBe('A7');
     expect(buildGrooveTimeline(blues, 'H').bars[0].chord.name).toBe('C7');

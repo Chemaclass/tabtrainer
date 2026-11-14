@@ -6,6 +6,8 @@ key: E
 time: 4/4
 swing: 50
 progression: I bVII IV I | I bVII IV V
+kit: rock
+fill: on
 
 # eight straight eighths per bar: 1 & 2 & 3 & 4 &
 crash: x....... | ........ | ........ | ........ | x....... | ........ | ........ | ........

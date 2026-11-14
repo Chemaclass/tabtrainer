@@ -3,8 +3,8 @@ import { readFileSync } from 'node:fs';
 import { DEFAULT_HUMANIZE, humanize, LoopEngine, type LoopState } from '../../src/audio/loopEngine';
 import { Synth } from '../../src/audio/synth';
 import { parseGroove } from '../../src/core/groove';
-import { buildGrooveTimeline } from '../../src/core/grooveTimeline';
-import { fakeAudio } from './fakeAudio';
+import { buildGrooveTimeline, type GrooveTimeline } from '../../src/core/grooveTimeline';
+import { countingAudio, fakeAudio, type FakeGain } from './fakeAudio';
 
 afterEach(() => { vi.useRealTimers(); vi.unstubAllGlobals(); });
 
@@ -16,7 +16,7 @@ const close = (a: number, b: number, within = 1e-3) => Math.abs(a - b) < within;
 function setup(timeline = inA, tempo = 80) {
   const audio = fakeAudio();
   const synth = new Synth();
-  const kit = { play: vi.fn() };
+  const kit = { play: vi.fn(), reset: vi.fn() };
   const keys = vi.spyOn(synth, 'keys');
   const bass = vi.spyOn(synth, 'voice');
   const cancelFuture = vi.spyOn(synth, 'cancelFuture');
@@ -248,7 +248,99 @@ describe('LoopEngine voices and limiter', () => {
     expect(limiter.ratio.value).toBeGreaterThanOrEqual(12);
     expect(limiter.threshold.value).toBeLessThan(0);
     const out = gains.find(g => g.outputs.includes(limiter))!;
-    for (const bus of [kit.play.mock.calls[0][3], bass.mock.calls[0][4], keys.mock.calls[0][4]]) expect((bus as unknown as { outputs: unknown[] }).outputs).toEqual([out]);
+    for (const bus of [bass.mock.calls[0][4], keys.mock.calls[0][4]]) expect((bus as unknown as { outputs: unknown[] }).outputs).toEqual([out]);
+    const drums = kit.play.mock.calls[0][3] as unknown as { outputs: unknown[] };
+    expect(drums.outputs[0]).toBe(out);
+  });
+});
+
+describe('LoopEngine drum room', () => {
+  it('sends the drums alone through a room built from a generated impulse, mixed into the backing', () => {
+    const { engine, convolvers, kit, bass, advance } = setup();
+    engine.play(); advance(1);
+    expect(convolvers).toHaveLength(1);
+    const [room] = convolvers;
+    expect(room.buffer).toBeTruthy();
+    const drums = kit.play.mock.calls[0][3] as unknown as { outputs: unknown[] };
+    expect(drums.outputs).toContain(room);
+    expect((bass.mock.calls[0][4] as unknown as { outputs: unknown[] }).outputs).not.toContain(room);
+    const wet = room.outputs[0] as FakeGain;
+    expect(wet.outputs).toEqual([drums.outputs[0]]);
+    expect(wet.gain.value).toBeGreaterThan(0);
+    expect(wet.gain.value).toBeLessThan(0.5);
+  });
+  it('unplugs the drums from the room when it is off and plugs them back in', () => {
+    const { engine, convolvers, kit, advance } = setup();
+    engine.setRoom(false);
+    engine.play(); advance(1);
+    const drums = kit.play.mock.calls[0][3] as unknown as FakeGain;
+    const [room] = convolvers;
+    expect(drums.outputs).not.toContain(room);
+    engine.setRoom(true);
+    expect(drums.outputs).toContain(room);
+    engine.setRoom(false);
+    expect(drums.outputs).not.toContain(room);
+  });
+  it('forgets ringing drums on stop', () => {
+    const { engine, kit, advance } = setup();
+    engine.play(); advance(1);
+    engine.stop();
+    expect(kit.reset).toHaveBeenCalled();
+  });
+});
+
+describe('LoopEngine drummer feel', () => {
+  const groove = (header: string) => buildGrooveTimeline(parseGroove(`${header}\nprogression: I IV\nhat: xxxxxxxx\nsnare: ..x...x.\nkick: x...x...\n`).groove);
+  const offsets = (header: string, drum: string) => {
+    const { engine, kit, advance } = setup(groove(header), 120);
+    engine.play(); advance(20);
+    return kit.play.mock.calls.filter(c => c[0] === drum).map(c => c[4] as number);
+  };
+  const spread = (values: number[]) => Math.max(...values) - Math.min(...values);
+
+  it('passes the groove kit to the drums', () => {
+    const { engine, kit, advance } = setup(groove('kit: jazz'), 120);
+    engine.play(); advance(2);
+    expect(kit.play.mock.calls.every(c => c[5] === 'jazz')).toBe(true);
+  });
+  it('keeps a funk or metal drummer tighter to the grid than a reggae or blues drummer, and a drum machine exact', () => {
+    const snare = (kit: string) => spread(offsets(`kit: ${kit}`, 'snare'));
+    expect(snare('funk')).toBeLessThan(snare('reggae'));
+    expect(snare('metal')).toBeLessThan(snare('blues'));
+    expect(offsets('kit: electronic', 'snare').every(o => o === 0)).toBe(true);
+  });
+  it('lays the reggae hats behind the beat', () => {
+    const hats = offsets('kit: reggae', 'hat');
+    expect(hats.reduce((sum, o) => sum + o, 0) / hats.length).toBeGreaterThan(0.008);
+    const rock = offsets('kit: rock', 'hat');
+    expect(Math.abs(rock.reduce((sum, o) => sum + o, 0) / rock.length)).toBeLessThan(0.003);
+  });
+});
+
+describe('LoopEngine with the synthesized kit', () => {
+  const funk = buildGrooveTimeline(parseGroove(readFileSync('src/grooves/04-funk-sixteenths.txt', 'utf8')).groove);
+
+  function liveSoundsEachSecond(timeline: GrooveTimeline, minutes: number) {
+    const audio = countingAudio();
+    const engine = new LoopEngine({ synth: new Synth() });
+    engine.setTimeline(timeline); engine.setTempo(220);
+    engine.play();
+    const live: number[] = [];
+    for (let second = 1; second <= minutes * 60; second++) {
+      audio.advance(second);
+      live.push(audio.liveAt(second));
+    }
+    return { live, started: audio.started() };
+  }
+
+  it('plays the funk groove at 220 bpm for five minutes without growing the number of live sounds', () => {
+    const { live, started } = liveSoundsEachSecond(funk, 5);
+    expect(started).toBeGreaterThan(10000);
+    expect(Math.max(...live.slice(-60))).toBeLessThanOrEqual(Math.max(...live.slice(0, 60)));
+  });
+  it('keeps the funk drums at 220 bpm under 40 live sources', () => {
+    const { live } = liveSoundsEachSecond({ ...funk, bass: [], keys: [] }, 1);
+    expect(Math.max(...live)).toBeLessThan(40);
   });
 });
 

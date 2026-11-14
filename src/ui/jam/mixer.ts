@@ -5,11 +5,14 @@ import { byId, fillRange } from '../dom';
 
 const PART_NAMES: Record<MixerPart, string> = { drums: 'Drums', bass: 'Bass', keys: 'Keys' };
 
-export function mixerView(mixer: Mixer, engine: Pick<LoopEngine, 'setPartGain'>, playsChanged: () => void) {
+export function mixerView(mixer: Mixer, engine: Pick<LoopEngine, 'setPartGain' | 'setRoom'>, playsChanged: () => void) {
   const plays = [...document.querySelectorAll<HTMLInputElement>('input[name="jamPlays"]')];
+  const room = byId('jamRoom', HTMLButtonElement);
   const rows = MIXER_PARTS.map(part => row(part));
   byId('jamMixer').replaceChildren(...rows.map(r => r.element));
 
+  room.onclick = () => { mixer.setRoom(!mixer.room); engine.setRoom(mixer.room); show(); };
+  engine.setRoom(mixer.room);
   for (const input of plays) {
     input.onchange = () => {
       if (!input.checked || !isFamily(input.value) || !mixer.setPlays(input.value)) return;
@@ -38,6 +41,7 @@ export function mixerView(mixer: Mixer, engine: Pick<LoopEngine, 'setPartGain'>,
 
   function show() {
     for (const input of plays) input.checked = input.value === mixer.plays;
+    room.setAttribute('aria-pressed', String(mixer.room));
     for (const { part, element, mute, volume, out } of rows) {
       const { volume: level, muted } = mixer.level(part);
       mute.setAttribute('aria-pressed', String(muted));

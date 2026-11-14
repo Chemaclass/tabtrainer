@@ -6,6 +6,7 @@ key: A
 time: 4/4
 swing: 66
 progression: I7 IV7 I7 I7 | IV7 IV7 I7 I7 | V7 IV7 I7 V7
+kit: blues
 
 # eight swung eighths per bar: 1 & 2 & 3 & 4 &
 crash: x....... | ........ | ........ | ........ | ........ | ........ | ........ | ........ | ........ | ........ | ........ | ........

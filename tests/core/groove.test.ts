@@ -88,6 +88,27 @@ describe('parseGroove', () => {
     expect(groove.voice).toBe('keys');
     expect(issues).toEqual([expect.objectContaining({ line: 6, message: expect.stringMatching(/"banjo".*keys, organ, drive/) })]);
   });
+  it('reads the drum kit and warns about an unknown one', () => {
+    expect(parseGroove(head).groove.kit).toBe('rock');
+    expect(parseGroove(`${head}kit: jazz\n`).groove.kit).toBe('jazz');
+    const { groove, issues } = parseGroove(`${head}kit: toy\n`);
+    expect(groove.kit).toBe('rock');
+    expect(issues).toEqual([expect.objectContaining({ line: 6, message: expect.stringMatching(/"toy".*rock, blues, funk, reggae, jazz, metal, electronic/) })]);
+  });
+  it('leaves fills off unless the groove turns them on', () => {
+    expect(parseGroove(head).groove.fill).toBe(false);
+    expect(parseGroove(`${head}fill: on\n`).groove.fill).toBe(true);
+    expect(parseGroove(`${head}fill: off\n`).groove.fill).toBe(false);
+    expect(parseGroove('time: 3/8\nfill: on\nprogression: I\n').issues).toEqual([expect.objectContaining({ line: 2, message: expect.stringContaining('at least 2 beats') })]);
+    const { groove, issues } = parseGroove(`${head}fill: yes\n`);
+    expect(groove.fill).toBe(false);
+    expect(issues).toEqual([expect.objectContaining({ line: 6, message: expect.stringContaining('on or off') })]);
+  });
+  it('reads toms, the bell and every hi-hat state as drum lines', () => {
+    const { groove, issues } = parseGroove(`${head}halfhat: x.......\npedalhat: ..x.....\nbell: ....x...\nhightom: x.......\nmidtom: ..x.....\nlowtom: ....x...\n`);
+    expect(issues).toEqual([]);
+    expect(groove.grids.map(g => g.part)).toEqual(['halfhat', 'pedalhat', 'bell', 'hightom', 'midtom', 'lowtom']);
+  });
   it('warns when there is no progression', () => {
     expect(parseGroove('title: Empty\n').issues).toEqual([expect.objectContaining({ message: expect.stringContaining('No progression') })]);
   });
