@@ -1,5 +1,5 @@
-import { setSelectValue } from './dropdown';
-import { catalogueMatches, categoryCounts, difficultyLabel, recentEntries, type CatalogueEntry, type LibraryKind } from '../app/catalogue';
+import { setSelectValue } from '../shell/dropdown';
+import { catalogueMatches, categoryCounts, difficultyLabel, recentEntries, type CatalogueEntry, type LibraryKind } from '../../app/catalogue';
 
 const labels = { exercises: 'exercises', songs: 'songs', mine: 'My songs' };
 const intro = {

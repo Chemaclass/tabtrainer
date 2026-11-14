@@ -1,5 +1,5 @@
-import { pref, setPref } from '../app/storage';
-import { editorWidth } from '../app/editorWidth';
+import { pref, setPref } from '../../app/storage';
+import { editorWidth } from '../../app/editorWidth';
 
 export function editorResize(pane: HTMLElement, handle: HTMLElement, redraw: () => void) {
   let preferred = pref('editorWidth', null);
