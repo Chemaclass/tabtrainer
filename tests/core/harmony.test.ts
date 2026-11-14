@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { OWN_PROGRESSION, PROGRESSION_PRESETS, chordAt, degreeInterval, isMinorProgression, keyTonic, parseNumeral, presetProgression, type Numeral } from '../../src/core/harmony';
-import { pitchClassName, pitchClassOf, vexKey } from '../../src/core/theory';
+import { degreeName, letterName, pitchClassName, pitchClassOf, vexKey } from '../../src/core/theory';
 
 const progression = (text: string): Numeral[] => text.split(' ').map(t => {
   const r = parseNumeral(t);
@@ -124,6 +124,12 @@ describe('progression presets', () => {
 describe('pitch class names', () => {
   it('reads and spells pitch classes', () => {
     expect(['C', 'F#', 'Bb', 'Cb', 'H'].map(pitchClassOf)).toEqual([0, 6, 10, 11, null]);
+    expect(['A', 'C#', 'E', 'G', 'G#', 'Bb'].map(note => degreeName('A', note))).toEqual(['1', '3', '5', 'b7', '7', 'b2']);
+    expect(degreeName('Eb', 'Gb')).toBe('b3');
+    expect(degreeName('D#', 'F##')).toBe('3');
+    expect(letterName(7, 'D#', 2)).toBe('F##');
+    expect(letterName(8, 'E', 2)).toBe('G#');
+    expect(['F##', 'Bbb'].map(pitchClassOf)).toEqual([7, 9]);
     expect(pitchClassName(3, 'A')).toBe('D#');
     expect(pitchClassName(3, 'Bb')).toBe('Eb');
     expect(keyTonic('F#m')).toBe(6);

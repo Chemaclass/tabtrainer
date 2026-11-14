@@ -58,11 +58,15 @@ describe('preferences', () => {
   });
   it('keeps a valid fretboard choice and drops a damaged one', async () => {
     const { pref } = await import('../../src/app/storage');
-    const fallback = { root: 0, scale: 'major' as const, instrument: 'bass4', labels: 'names' as const, chord: null, sevenths: false, position: null };
+    const fallback = { root: 0, scale: 'major' as const, instrument: 'bass4', labels: 'names' as const, chord: null, sevenths: false, position: null, progression: null, bar: null, move: null };
     store({ root: 3, scale: 'blues', instrument: 'guitar6', labels: 'degrees', chord: 2, sevenths: true, position: 5 });
-    expect(pref('fretboardSheet', fallback)).toEqual({ root: 3, scale: 'blues', instrument: 'guitar6', labels: 'degrees', chord: 2, sevenths: true, position: 5 });
+    expect(pref('fretboardSheet', fallback)).toEqual({ root: 3, scale: 'blues', instrument: 'guitar6', labels: 'degrees', chord: 2, sevenths: true, position: 5, progression: null, bar: null, move: null });
+    store({ root: 9, scale: 'blues', instrument: 'bass4', labels: 'names', chord: null, sevenths: false, position: 5, progression: '12-bar-blues', bar: 8, move: 'approach-scale' });
+    expect(pref('fretboardSheet', fallback)).toMatchObject({ progression: '12-bar-blues', bar: 8, move: 'approach-scale' });
+    store({ root: 9, scale: 'blues', instrument: 'bass4', labels: 'names', chord: null, sevenths: false, position: 5, progression: 'bossa', bar: 8, move: null }); expect(pref('fretboardSheet', fallback)).toBe(fallback);
+    store({ root: 9, scale: 'blues', instrument: 'bass4', labels: 'names', chord: null, sevenths: false, position: 5, progression: null, bar: null, move: 'slap' }); expect(pref('fretboardSheet', fallback)).toBe(fallback);
     store({ root: 3, scale: 'blues', instrument: 'guitar6', labels: 'degrees' });
-    expect(pref('fretboardSheet', fallback)).toEqual({ root: 3, scale: 'blues', instrument: 'guitar6', labels: 'degrees', chord: null, sevenths: false, position: null });
+    expect(pref('fretboardSheet', fallback)).toEqual({ root: 3, scale: 'blues', instrument: 'guitar6', labels: 'degrees', chord: null, sevenths: false, position: null, progression: null, bar: null, move: null });
     store({ root: 3, scale: 'blues', instrument: 'guitar6', labels: 'degrees', chord: 9 }); expect(pref('fretboardSheet', fallback)).toBe(fallback);
     store({ root: 3, scale: 'blues', instrument: 'guitar6', labels: 'tab' }); expect(pref('fretboardSheet', fallback)).toBe(fallback);
   });
