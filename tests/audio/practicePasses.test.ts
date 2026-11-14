@@ -74,4 +74,48 @@ describe('practice passes', () => {
     passes.extend(20, passage, config);
     expect(passes.isEmpty).toBe(true);
   });
+  it('stops finishing passes when they are cleared mid loop', () => {
+    const passes = started();
+    passes.extend(24, passage, config);
+    const ids: number[] = [];
+    for (const { finished } of passes.finish(24)) { ids.push(finished.id); if (ids.length === 2) passes.clear(); }
+    expect(ids).toEqual([1, 2]);
+  });
+  it('lets a nested finish drain the remaining passes', () => {
+    const passes = started();
+    passes.extend(24, passage, config);
+    const outer: number[] = [], inner: number[] = [];
+    for (const { finished } of passes.finish(24)) {
+      outer.push(finished.id);
+      if (outer.length === 1) inner.push(...finishAll(passes, 24).map(({ finished }) => finished.id));
+    }
+    expect(outer).toEqual([1]);
+    expect(inner).toEqual([2, 3]);
+    expect(passes.current?.id).toBe(4);
+  });
+  it('keeps numbering passes after a clear', () => {
+    const passes = started();
+    passes.clear();
+    passes.begin({ start: 0, end: 8, from: 0, speed: 1, eligible: true, progress: { speed: 100, completed: 0 } });
+    expect(passes.current?.id).toBe(2);
+  });
+  it('forgets the finished pass when a new one begins', () => {
+    const passes = started();
+    passes.extend(8, passage, config);
+    finishAll(passes, 8);
+    passes.begin({ start: 5, end: 13, from: 0, speed: 1, eligible: true, progress: { speed: 100, completed: 0 } });
+    expect(passes.at(6)?.id).toBe(passes.current?.id);
+  });
+  it('makes passes after a partial one eligible', () => {
+    const passes = started(false, 4);
+    passes.extend(4, passage, config);
+    finishAll(passes, 4);
+    expect(passes.current?.eligible).toBe(true);
+  });
+  it('treats a pass end as the start of the next pass', () => {
+    const passes = started();
+    passes.extend(8, passage, config);
+    expect(passes.at(8)?.id).toBe(2);
+    expect(passes.overlapping(0, 8).map(p => p.id)).toEqual([1]);
+  });
 });
