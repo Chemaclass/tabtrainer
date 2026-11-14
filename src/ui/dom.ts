@@ -17,3 +17,5 @@ export function one<T extends HTMLElement>(selector: string, type: ElementType<T
 export function one(selector: string, type: ElementType<HTMLElement> = HTMLElement) {
   return checked(document.querySelector(selector), selector, type);
 }
+
+export const fillRange = (range: HTMLInputElement) => range.style.setProperty('--fill', `${((+range.value - +range.min) / (+range.max - +range.min)) * 100}%`);

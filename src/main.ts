@@ -43,7 +43,9 @@ import { libraryView } from './ui/library/libraryView';
 import { hasPracticeLevels } from './app/practiceLevels';
 import { categoryCounts, isLibraryKind, nextExercise, type CatalogueEntry, type LibraryKind } from './app/catalogue';
 import { dismissHelpOnBackdrop } from './ui/shell/helpDialogs';
-import { byId, one } from './ui/dom';
+import { byId, fillRange, one } from './ui/dom';
+import { speedControls } from './ui/player/speedControls';
+import { timingPanel } from './ui/player/timingPanel';
 
 const songbook = new Songbook(import.meta.glob('./songs/*/*/*.txt', { query: '?raw', import: 'default', eager: true }) as Record<string, string>, library);
 const $ = byId;
@@ -175,7 +177,7 @@ function update(resetLoop: boolean) {
   showTitle();
   const wasPlaying = player.playing;
   player.load(buildTimeline(s), s.meta.tempo); onsets = onsetsOf(player.notes);
-  renderPracticeNavigation(); applyLoop(); draw(); showSpeed(); if (wasPlaying) setPlayLabel();
+  renderPracticeNavigation(); applyLoop(); draw(); speed.show(); if (wasPlaying) setPlayLabel();
 }
 function renderVersions() {
   const versions = openSong.versions, versionIdx = openSong.versionIndex;
@@ -297,17 +299,7 @@ function stopPlayback() {
   showPassage();
 }
 $('stopBtn').onclick = stopPlayback;
-const speed = $('speed', HTMLInputElement);
-const fillRange = (r: HTMLInputElement) => r.style.setProperty('--fill', `${((+r.value - +r.min) / (+r.max - +r.min)) * 100}%`);
-const showSpeed = () => {
-  speed.value = String(Math.round(player.speed * 100));
-  const bpm = Math.round(player.tempo * player.speed), q = document.createElement('span'); q.textContent = `  ♩${bpm}`;
-  $('speedOut').replaceChildren(speed.value + '%', q); fillRange(speed);
-  document.querySelectorAll<HTMLButtonElement>('[data-speed]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.speed === speed.value)));
-};
-speed.value = String(pref('speed', 100)); player.speed = +speed.value / 100;
-speed.oninput = () => { const value = +speed.value; player.setSpeed(value / 100); setPref('speed', value); showSpeed(); };
-document.querySelectorAll<HTMLButtonElement>('[data-speed]').forEach(b => { b.onclick = () => { speed.value = b.dataset.speed!; speed.dispatchEvent(new Event('input')); }; });
+const speed = speedControls(player);
 document.querySelectorAll<HTMLDetailsElement>('.timing, .speed-practice').forEach(closeOnOutside);
 const practiceEnabled = $('speedPracticeChk', HTMLInputElement);
 const practiceRepetitions = $('speedPracticeRepetitions', HTMLInputElement);
@@ -334,7 +326,7 @@ function showPractice() {
   progress.textContent = state.reached ? `Target reached: ${state.speed}%` : `${state.speed}%, repetition ${state.completed + 1} of ${state.repetitions}, target ${state.target}%`;
 }
 player.onSpeedPractice((state, reason) => {
-  showSpeed(); showPractice();
+  speed.show(); showPractice();
   if (reason === 'increase' || reason === 'target' || reason === 'reset') setPref('speed', Math.round(player.speed * 100));
   if (reason === 'enabled' || reason === 'ended') $('speedPracticeStatus').textContent = '';
   if (reason === 'increase') $('speedPracticeStatus').textContent = `Speed increased to ${state.speed}%.`;
@@ -357,17 +349,7 @@ practiceEnabled.onchange = () => {
   showPractice();
 }));
 showPractice();
-const metronome = $('metronomeChk', HTMLInputElement);
-const countIn = $('countInSelect', HTMLSelectElement);
-const clickVolume = $('clickVolume', HTMLInputElement);
-metronome.checked = pref('metronome', false); player.setMetronome(metronome.checked);
-setSelectValue(countIn, pref('countIn', false) ? 'bar' : 'off'); player.setCountIn(countIn.value === 'bar');
-clickVolume.value = String(pref('clickVolume', 50)); player.setClickVolume(+clickVolume.value / 100);
-const showClickVolume = () => { $('clickVolumeOut').textContent = `${clickVolume.value}%`; fillRange(clickVolume); };
-showClickVolume();
-metronome.onchange = () => { player.setMetronome(metronome.checked); setPref('metronome', metronome.checked); };
-countIn.onchange = () => { const enabled = countIn.value === 'bar'; player.setCountIn(enabled); setPref('countIn', enabled); };
-clickVolume.oninput = () => { player.setClickVolume(+clickVolume.value / 100); setPref('clickVolume', +clickVolume.value); showClickVolume(); };
+timingPanel(player);
 
 function showPassage() {
   const state = passage.snapshot();
