@@ -23,7 +23,7 @@ describe('parseGroove', () => {
     expect(groove.progression).toHaveLength(12);
     expect(groove.progression.map(n => n.text).join(' ')).toBe('I7 IV7 I7 I7 IV7 IV7 I7 I7 V7 IV7 I7 V7');
     expect(groove).toMatchObject({ title: 'Blues shuffle in A', genre: 'blues', tempo: 80, key: 'A', time: [4, 4], swing: 66 });
-    expect(groove.grids.map(g => g.part).sort()).toEqual(['crash', 'hat', 'keys', 'kick', 'snare']);
+    expect(groove.grids.map(g => g.part).sort()).toEqual(['bass', 'crash', 'hat', 'keys', 'kick', 'snare']);
   });
   it('splits grid lines into bars of steps', () => {
     const { groove, issues } = parseGroove(`${head}kick: x... x... | X.o. x...\nbass: 1 . 3 - 5 . 8 . | 5 b7 8 . 1 - - .\nkeys: X-.x..X.\n`);

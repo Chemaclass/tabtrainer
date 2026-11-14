@@ -73,7 +73,7 @@ hat:   xoXoxoXo        # one bar of 8 steps, repeated every bar
 snare: ..X...X. | ..X..oX.
 kick:  X...x... | X...x..o
 keys:  ..X-..X-
-bass:  1 - 3 - 5 - b7 -
+bass:  1 - 3 - 5 - 6 - | b7 - 6 - 5 - 3 -
 ```
 
 | Syntax | Meaning |
@@ -82,7 +82,7 @@ bass:  1 - 3 - 5 - b7 -
 | `7 maj7 m7 m7b5 dim sus4 5` | chord qualities after the numeral |
 | `kick snare hat openhat ride crash` | drum lines: `X` accent, `x` hit, `o` soft hit, `.` silence |
 | `keys` | chord stabs: `X` accent, `x` stab, `-` hold the stab, `.` silence |
-| `bass` | chord degrees separated by spaces: `1 3 5 b7 8`, `-` hold, `.` silence |
+| `bass` | chord degrees separated by spaces: `1 3 5 6 b7 8`, `-` hold, `.` silence. `3` and `5` follow the chord, so `3` is the minor third of a minor chord and the root of a power chord. Each bar moves by whole octaves to stay between E1 and G3, the range of a 4 string bass |
 | `\|` | starts the next bar of a part; a part shorter than the progression repeats |
 | `# ...` | comment, on its own line or after a space (`#IV` is a numeral) |
 

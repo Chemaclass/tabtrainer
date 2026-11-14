@@ -1,6 +1,7 @@
 import { parseGroove, type Groove } from '../core/groove';
 import { buildGrooveTimeline, type GrooveTimeline } from '../core/grooveTimeline';
 import { keyTonic } from '../core/harmony';
+import { isFamily, type Family } from '../core/instruments';
 import { pref, setPref, type JamChoice } from './storage';
 
 export interface BundledGroove { slug: string; groove: Groove }
@@ -76,4 +77,73 @@ export class Jam {
   }
 
   private save() { setPref('jam', { ...pref('jam', {}), [this.slug]: { key: this.chosenKey, tempo: this.chosenTempo } }); }
+}
+
+export const MIXER_PARTS = ['drums', 'bass', 'keys'] as const;
+export type MixerPart = typeof MIXER_PARTS[number];
+export interface PartLevel { volume: number; muted: boolean }
+
+const FULL_VOLUME = 100;
+const isVolume = (value: unknown): value is number => typeof value === 'number' && Number.isFinite(value) && value >= 0 && value <= FULL_VOLUME;
+
+export class Mixer {
+  private player: Family;
+  private chosen: boolean;
+  private parts: Record<MixerPart, PartLevel>;
+
+  constructor(library: Family = pref('family', 'bass')) {
+    const saved = pref('jamMixer', {});
+    const plays = typeof saved.plays === 'string' && isFamily(saved.plays) ? saved.plays : null;
+    this.chosen = plays !== null;
+    this.player = plays ?? library;
+    const parts: Partial<Record<string, unknown>> = saved.parts && typeof saved.parts === 'object' ? saved.parts : {};
+    const level = (part: MixerPart): PartLevel => {
+      const raw: unknown = Object.hasOwn(parts, part) ? parts[part] : null;
+      const { volume, muted } = raw && typeof raw === 'object' ? raw as Partial<Record<keyof PartLevel, unknown>> : {};
+      return {
+        volume: isVolume(volume) ? Math.round(volume) : FULL_VOLUME,
+        muted: typeof muted === 'boolean' ? muted : part === 'bass' && this.player === 'bass',
+      };
+    };
+    this.parts = { drums: level('drums'), bass: level('bass'), keys: level('keys') };
+  }
+
+  get plays() { return this.player; }
+
+  level(part: MixerPart): PartLevel { return { ...this.parts[part] }; }
+
+  gain(part: MixerPart): number { return this.parts[part].muted ? 0 : this.parts[part].volume / FULL_VOLUME; }
+
+  setPlays(family: Family): boolean {
+    if (family === this.player) return false;
+    this.player = family;
+    this.parts.bass.muted = family === 'bass';
+    this.save();
+    return true;
+  }
+
+  followLibrary(family: Family): boolean {
+    if (this.chosen || family === this.player) return false;
+    this.player = family;
+    this.parts.bass.muted = family === 'bass';
+    return true;
+  }
+
+  setMuted(part: MixerPart, muted: boolean): boolean {
+    if (this.parts[part].muted === muted) return false;
+    this.parts[part].muted = muted;
+    this.save();
+    return true;
+  }
+
+  setVolume(part: MixerPart, volume: number): boolean {
+    if (!Number.isFinite(volume)) return false;
+    const next = Math.round(Math.min(FULL_VOLUME, Math.max(0, volume)));
+    if (next === this.parts[part].volume) return false;
+    this.parts[part].volume = next;
+    this.save();
+    return true;
+  }
+
+  private save() { this.chosen = true; setPref('jamMixer', { plays: this.player, parts: this.parts }); }
 }

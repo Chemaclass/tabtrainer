@@ -1,9 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { parseGroove } from '../../src/core/groove';
-import { buildGrooveTimeline } from '../../src/core/grooveTimeline';
+import { BASS_RANGE, KEYS_RANGE, buildGrooveTimeline } from '../../src/core/grooveTimeline';
+import { pitchClass } from '../../src/core/theory';
 
 const blues = parseGroove(readFileSync('src/grooves/01-blues-shuffle.txt', 'utf8')).groove;
+const MAJOR_KEYS = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B'];
+const MINOR_KEYS = ['Cm', 'C#m', 'Dm', 'Ebm', 'Em', 'Fm', 'F#m', 'Gm', 'G#m', 'Am', 'Bbm', 'Bm'];
 const groove = (body: string, swing = 50) => parseGroove(`time: 4/4\nswing: ${swing}\nprogression: I7 IV7 V7 I7\n${body}`).groove;
 
 describe('buildGrooveTimeline', () => {
@@ -59,23 +62,44 @@ describe('buildGrooveTimeline', () => {
     const t = buildGrooveTimeline(groove('keys: X--.x...\n'), 'A');
     expect(t.keys[0]).toEqual({ beat: 0, bar: 0, length: 1.5, midi: [57, 61, 64, 67], velocity: 1 });
     expect(t.keys[1]).toMatchObject({ beat: 2, length: 0.5, velocity: 0.8 });
-    expect(t.keys[2].midi).toEqual([62, 66, 69, 72]);
+    expect(t.keys[2].midi).toEqual([57, 60, 62, 66]);
   });
   it('ends a held swung note on the swung position of the next step', () => {
     const t = buildGrooveTimeline(groove('keys: X.......\nbass: 1 - . . . . . .\n', 66));
     expect(t.keys[0].length).toBeCloseTo(2 / 3, 9);
     expect(t.bass[0].length).toBe(1);
   });
-  it('moves bass and keys up 3 semitones from A to C and leaves drums alone', () => {
-    const full = parseGroove(readFileSync('src/grooves/01-blues-shuffle.txt', 'utf8') + 'bass: 1 3 5 b7 8 b7 5 3\n').groove;
-    const a = buildGrooveTimeline(full, 'A'); const c = buildGrooveTimeline(full, 'C');
+  it('moves bass and keys with the chords when the key changes and leaves drums alone', () => {
+    const a = buildGrooveTimeline(blues, 'A'); const c = buildGrooveTimeline(blues, 'C');
     expect(a.bass.length).toBeGreaterThan(0);
     expect(a.keys.length).toBeGreaterThan(0);
     for (const part of ['bass', 'keys'] as const) {
-      expect(c[part].map(h => ({ ...h, midi: h.midi.map(m => m - 3) }))).toEqual(a[part]);
+      expect(c[part].map(h => ({ ...h, midi: h.midi.map(m => pitchClass(m - 3)).sort() }))).toEqual(a[part].map(h => ({ ...h, midi: h.midi.map(pitchClass).sort() })));
     }
     expect(c.drums).toEqual(a.drums);
     expect(c.bars.map(b => b.chord.name).slice(0, 3)).toEqual(['C7', 'F7', 'C7']);
+  });
+  it('plays a blues bass of chord tones and passing sixths, from the root on each chord change, in every key', () => {
+    for (const key of MAJOR_KEYS) {
+      const t = buildGrooveTimeline(blues, key);
+      t.bars.forEach(({ bar, chord }) => {
+        const notes = t.bass.filter(h => h.bar === bar).map(h => pitchClass(h.midi[0] - chord.root));
+        expect(notes.length).toBeGreaterThan(0);
+        expect(notes.every(n => chord.intervals.includes(n) || n === 9)).toBe(true);
+        if (bar === 0 || t.bars[bar - 1].chord.root !== chord.root) expect(notes[0]).toBe(0);
+      });
+    }
+  });
+  it('folds bass into E1 to G3 and keys into A3 to G#4 in every key, keeping the shape of each bar', () => {
+    const wide = groove('bass: 1 3 5 6 b7 8 . .\nkeys: x.......\n');
+    for (const key of [...MAJOR_KEYS, ...MINOR_KEYS]) {
+      for (const t of [buildGrooveTimeline(blues, key), buildGrooveTimeline(wide, key)]) {
+        expect(t.bass.every(h => h.midi[0] >= BASS_RANGE.low && h.midi[0] <= BASS_RANGE.high)).toBe(true);
+        expect(t.keys.every(h => h.midi.every(m => m >= KEYS_RANGE.low && m <= KEYS_RANGE.high))).toBe(true);
+      }
+      const bar = buildGrooveTimeline(wide, key).bass.slice(0, 6).map(h => h.midi[0]);
+      expect(bar.map(m => m - bar[0])).toEqual([0, 4, 7, 9, 10, 12]);
+    }
   });
   it('uses the groove key by default and falls back to C for an unknown key', () => {
     expect(buildGrooveTimeline(blues).bars[0].chord.name).toBe('A7');

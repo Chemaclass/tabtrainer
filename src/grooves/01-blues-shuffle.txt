@@ -13,3 +13,5 @@ hat:   xoXoxoXo
 snare: ..X...X. | ..X..oX.
 kick:  X...x... | X...x..o
 keys:  ..X-..X- | ..X-.xX-
+# a boogie walk: up through the sixth, down from the flat seventh, and an octave turnaround in the last bar
+bass:  1 - 3 - 5 - 6 - | 1 - 3 - 5 - 6 - | 1 - 3 - 5 - 6 - | b7 - 6 - 5 - 3 - | 1 - 3 - 5 - 6 - | b7 - 6 - 5 - 3 - | 1 - 3 - 5 - 6 - | b7 - 6 - 5 - 3 - | 1 - 3 - 5 - 6 - | 1 - 3 - 5 - 6 - | 1 - 3 - 5 - 6 - | 1 - 8 - b7 - 5 -

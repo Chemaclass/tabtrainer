@@ -24,15 +24,15 @@ export class Synth {
     this.silenced = false;
     return true;
   }
-  voice(when: number, midi: number, dur: number, vel: number) {
+  voice(when: number, midi: number, dur: number, vel: number, out: AudioNode = this.master!, kind: SourceKind = 'instrument') {
     const ctx = this.ctx!, f = 440 * Math.pow(2, (midi - 69) / 12);
     const o = ctx.createOscillator(), o2 = ctx.createOscillator(), g = ctx.createGain(), lp = ctx.createBiquadFilter(), g2 = ctx.createGain();
     o.type = 'sawtooth'; o2.type = 'sine'; o.frequency.value = f; o2.frequency.value = f;
     lp.type = 'lowpass'; lp.frequency.setValueAtTime(Math.min(5000, f * 10), when); lp.frequency.exponentialRampToValueAtTime(Math.max(180, f * 2), when + 0.4);
     g.gain.setValueAtTime(0.0001, when); g.gain.exponentialRampToValueAtTime(vel, when + 0.008); g.gain.exponentialRampToValueAtTime(0.0008, when + dur);
-    g2.gain.value = 0.6; o.connect(lp); o2.connect(g2); g2.connect(g); lp.connect(g); g.connect(this.master!);
+    g2.gain.value = 0.6; o.connect(lp); o2.connect(g2); g2.connect(g); lp.connect(g); g.connect(out);
     o.start(when); o2.start(when); o.stop(when + dur + 0.05); o2.stop(when + dur + 0.05);
-    this.track(o, 'instrument', when, when + dur + 0.05); this.track(o2, 'instrument', when, when + dur + 0.05);
+    this.track(o, kind, when, when + dur + 0.05); this.track(o2, kind, when, when + dur + 0.05);
   }
   keys(when: number, midi: number[], dur: number, vel: number, out: AudioNode = this.master!) {
     const ctx = this.ctx!, level = vel / Math.sqrt(Math.max(1, midi.length)), end = when + dur + 0.6;
