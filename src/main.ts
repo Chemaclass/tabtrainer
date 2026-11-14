@@ -21,13 +21,14 @@ import { FAMILIES, familyOf, isFamily, type Family } from './core/instruments';
 import { renderSong } from './render/notation';
 import { Player } from './audio/player';
 import { library, removeSong, pref, setPref, recentPractice, recordPractice } from './app/storage';
-import { findBySlug, normalizeSongReference, shareUrl, songSlug } from './app/songLink';
+import { normalizeSongReference, shareUrl, songSlug } from './app/songLink';
 import { AutoScroller } from './app/scrolling';
-import { bundledPath, bundledRef, isSavedRef, savedRef } from './app/songRef';
+import { bundledPath, savedRef } from './app/songRef';
 import { shownCredits } from './app/credits';
 import { Songbook } from './app/songbook';
 import { OpenSong } from './app/openSong';
 import { Workspace, type Screen } from './app/workspace';
+import { startupPlan } from './app/startup';
 import { Passage } from './app/passage';
 import { PassagePlayback } from './app/passagePlayback';
 import { playbackShortcut } from './app/playbackShortcut';
@@ -46,9 +47,7 @@ const $ = byId;
 
 const resolvePick = (value: string) => normalizeSongReference(value, songbook.paths);
 const storedNavigation = navigationState(history.state);
-const initialNavigation = storedNavigation ? { ...storedNavigation, picked: resolvePick(storedNavigation.picked) } : null;
 const navigation = new Navigation(history, location, songbook.paths);
-const initialQuery = new URLSearchParams(location.search);
 const workspace = Workspace.fromQuery(location.search);
 let catalogueEntries: CatalogueEntry[] = [];
 
@@ -614,28 +613,28 @@ $('notaBtn').classList.toggle('on', showNota); $('tabBtn').classList.toggle('on'
 showNotationState();
 setPlayLabel();
 showEditor(pref('editor', false));
-const lastText = pref('last', null), lastPick = resolvePick(pref('picked', ''));
-const link = new URLSearchParams(location.search);
-const linked = findBySlug(songbook.paths, link.get('song') ?? '');
-const storedDraft = pref('draft', null);
-const draft = storedDraft ? { ...storedDraft, picked: resolvePick(storedDraft.picked) } : null;
-const requested = linked ? bundledRef(linked) : initialQuery.get('view') === 'practice' && initialNavigation && isSavedRef(initialNavigation.picked) && library().some(s => savedRef(s.title) === initialNavigation.picked) ? initialNavigation.picked : null;
-const recover = draft && (draft.text !== draft.base || !requested || draft.picked === requested);
-if (recover) {
-  workspace.restore(draft.picked); src.value = draft.text; draftSession.recover(draft);
-  update(true); showDirtyState();
-  if (requested && draft.picked !== requested) replaceCurrent(() => { loadPickedSong(requested); chooseVersionNamed(link.get('version')); });
-  else if (linked) chooseVersionNamed(link.get('version'));
-} else if (requested) {
-  loadPickedSong(requested);
-  chooseVersionNamed(link.get('version'));
-} else if (lastText) {
-  const pickedText = songbook.text(lastPick);
-  workspace.restore(pickedText === undefined ? '' : lastPick);
-  loadText(lastText); draftSession.accept(pickedText ?? lastText); persistDraft();
-} else {
-  workspace.restore(songbook.firstBundled(workspace.family));
-  loadText(songbook.text(workspace.picked) ?? '');
+const plan = startupPlan({ search: location.search, historyPick: storedNavigation?.picked ?? null, draft: pref('draft', null), last: pref('last', null), lastPick: pref('picked', '') }, songbook);
+const linkedVersion = new URLSearchParams(location.search).get('version');
+switch (plan.kind) {
+  case 'recover': {
+    const { draft, offer } = plan;
+    workspace.restore(draft.picked); src.value = draft.text; draftSession.recover(draft);
+    update(true); showDirtyState();
+    if (offer) replaceCurrent(() => { loadPickedSong(offer); chooseVersionNamed(linkedVersion); });
+    else if (plan.followLink) chooseVersionNamed(linkedVersion);
+    break;
+  }
+  case 'open':
+    loadPickedSong(plan.ref);
+    chooseVersionNamed(linkedVersion);
+    break;
+  case 'last':
+    workspace.restore(plan.ref);
+    loadText(plan.text); draftSession.accept(plan.base); persistDraft();
+    break;
+  case 'first':
+    workspace.restore(songbook.firstBundled(workspace.family));
+    loadText(songbook.text(workspace.picked) ?? '');
 }
 showFamily();
 setScreen(workspace.screen);
