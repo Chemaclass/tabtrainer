@@ -67,9 +67,10 @@ export function nearestString(frequency: number, strings: readonly number[], a4 
   return { index, cents: (exact - strings[index]) * 100 };
 }
 
-/** Steadies a stream of readings: the median of recent ones, restarted when the note changes, dropped after a run of silence. */
+/** Steadies a stream of readings: the median of recent ones, restarted after two readings on a new note, dropped after a run of silence. */
 export class PitchTracker {
   private recent: number[] = [];
+  private pending: number | null = null;
   private misses = 0;
   constructor(private size = 5, private patience = 8) {}
 
@@ -80,7 +81,12 @@ export class PitchTracker {
     }
     this.misses = 0;
     const now = this.current;
-    if (now !== null && Math.abs(midiOf(frequency) - midiOf(now)) > 0.6) this.recent = [];
+    if (now !== null && !near(frequency, now)) {
+      const confirmed = this.pending !== null && near(frequency, this.pending);
+      if (!confirmed) { this.pending = frequency; return now; }
+      this.recent = [this.pending!];
+    }
+    this.pending = null;
     this.recent.push(frequency);
     if (this.recent.length > this.size) this.recent.shift();
     return this.current;
@@ -90,5 +96,7 @@ export class PitchTracker {
     const sorted = [...this.recent].sort((x, y) => x - y), mid = sorted.length >> 1;
     return sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
   }
-  reset() { this.recent = []; this.misses = 0; }
+  reset() { this.recent = []; this.pending = null; this.misses = 0; }
 }
+
+const near = (a: number, b: number) => Math.abs(midiOf(a) - midiOf(b)) <= 0.6;

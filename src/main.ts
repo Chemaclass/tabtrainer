@@ -86,7 +86,7 @@ const editor = editorPane(draw);
 editor.onEdit(() => { if (passagePlayback.selectedNote) player.stop(); drafts.persist(); }, () => update(false));
 playerPanel(draw);
 theme();
-tuner(() => ({ family: workspace.family, instrument: workspace.screen === 'practice' ? openSong.song?.meta.instrument ?? null : null }));
+tuner(() => ({ family: workspace.family, instrument: workspace.screen === 'practice' ? openSong.song?.meta.instrument ?? null : null }), () => player.pause());
 Object.assign(window, { tabtrainer: { player, removeSong, onsetKey } });
 publishLayoutHeights();
 

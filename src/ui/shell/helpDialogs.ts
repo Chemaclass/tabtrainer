@@ -1,6 +1,6 @@
 import { byId } from '../dom';
 
-function dismissHelpOnBackdrop(dialog: HTMLDialogElement) {
+export function dismissHelpOnBackdrop(dialog: HTMLDialogElement) {
   let outsidePointer: number | null = null;
   const outside = (event: PointerEvent) => {
     const bounds = dialog.getBoundingClientRect();

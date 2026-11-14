@@ -47,6 +47,23 @@ describe('choosing the tuning', () => {
     expect(tuning.isStandard).toBe(false);
   });
 
+  it('ignores the saved tuning for a song with no standard tuning', () => {
+    const sevenString = customInstrument('B1 E2 A2 D3 G3 B3 E4', 'treble');
+    const tuning = new TunerTuning('guitar', sevenString, { guitar7: [40, 45, 50, 55, 59, 64, 69] });
+    expect(names(tuning)).toEqual(['E3', 'B2', 'G2', 'D2', 'A1', 'E1', 'B0']);
+    expect(tuning.saves).toBe(false);
+  });
+
+  it('leaves the saved tuning alone when changing a non-standard song tuning', () => {
+    const saved = { bass4: [42, 37, 32, 27] };
+    const tuning = new TunerTuning('bass', customInstrument('D2 A2 D3 G3', 'bass'), saved);
+    tuning.shift(3, -1);
+    expect(tuning.saveInto(saved)).toEqual(saved);
+    tuning.reset();
+    expect(tuning.isStandard).toBe(true);
+    expect(tuning.saveInto(saved)).toEqual(saved);
+  });
+
   it('ignores a saved tuning with the wrong number of strings', () => {
     expect(new TunerTuning('bass', null, { bass4: [40, 35] }).isStandard).toBe(true);
   });
@@ -67,6 +84,13 @@ describe('changing a string by a half step', () => {
     expect(tuning.isStandard).toBe(false);
     tuning.shift(3, 1); tuning.shift(3, 1);
     expect(tuning.isStandard).toBe(true);
+  });
+
+  it('never goes below A0, the lowest note the tuner hears', () => {
+    const tuning = new TunerTuning('bass', INSTRUMENTS.bass5, {});
+    expect(tuning.shift(4, -1)).toBe(true); expect(tuning.shift(4, -1)).toBe(true);
+    expect(tuning.name(4)).toBe('A0');
+    expect(tuning.shift(4, -1)).toBe(false);
   });
 
   it('stops an octave away from standard', () => {
@@ -127,6 +151,7 @@ describe('saved tunings preference', () => {
     expect(isTunings({ bass4: [42.5] })).toBe(false);
     expect(isTunings({ bass4: [] })).toBe(false);
     expect(isTunings({ bass4: [200] })).toBe(false);
+    expect(isTunings({ bass4: [20] })).toBe(false);
     expect(isTunings([])).toBe(false);
     expect(isTunings(null)).toBe(false);
   });

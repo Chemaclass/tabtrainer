@@ -5,7 +5,7 @@ export type Tunings = Record<string, number[]>;
 export type TuneDirection = 'up' | 'down' | 'in-tune';
 
 export const IN_TUNE_CENTS = 5;
-const MAX_SHIFT = 12, LOWEST = 12, HIGHEST = 108;
+const MAX_SHIFT = 12, LOWEST = 21, HIGHEST = 108;
 
 const sounding = (instrument: Instrument) => instrument.tuning.map(written => written + instrument.transpose);
 export const tuningKey = (family: Family, strings: number) => `${family}${strings}`;
@@ -24,6 +24,8 @@ export const isTunings = (value: unknown): value is Tunings =>
 export class TunerTuning {
   readonly key: string;
   readonly standard: number[];
+  /** False when the notes came from the song, so changes stay out of the player's saved tuning. */
+  readonly saves: boolean;
   private notes: number[];
 
   constructor(chosen: Family, song: Instrument | null, saved: Tunings) {
@@ -31,10 +33,11 @@ export class TunerTuning {
     const family = song ? familyOf(song) : chosen;
     const count = songNotes?.length ?? (family === 'guitar' ? 6 : 4);
     this.key = tuningKey(family, count);
-    this.standard = standardTuning(family, count) ?? songNotes ?? [];
+    const standard = standardTuning(family, count);
+    this.standard = standard ?? songNotes ?? [];
     const stored = saved[this.key]?.length === count ? saved[this.key] : null;
-    const songDiffers = songNotes !== null && !same(songNotes, this.standard);
-    this.notes = [...(songDiffers ? songNotes : stored ?? this.standard)];
+    this.saves = standard !== null && (songNotes === null || same(songNotes, standard));
+    this.notes = [...(this.saves ? stored ?? this.standard : songNotes ?? this.standard)];
   }
 
   get strings(): readonly number[] { return this.notes; }
@@ -51,9 +54,10 @@ export class TunerTuning {
   }
   reset() { this.notes = [...this.standard]; }
 
-  /** The saved tunings with this one recorded, or removed when it is standard. */
+  /** The saved tunings with this one recorded, or removed when it is standard. Song tunings leave them unchanged. */
   saveInto(saved: Tunings): Tunings {
     const next = { ...saved };
+    if (!this.saves) return next;
     if (this.isStandard) delete next[this.key]; else next[this.key] = [...this.notes];
     return next;
   }

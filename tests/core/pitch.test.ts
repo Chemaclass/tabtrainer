@@ -66,6 +66,13 @@ describe('detecting a pitch', () => {
     }
   });
 
+  it('hears A0, the lowest note a string can be tuned to', () => {
+    for (const rate of [44100, 48000]) {
+      const reading = detectPitch(tone(27.5, [1, 0.6], { rate, size: analysisSize(rate) }), rate);
+      expect(Math.abs(centsBetween(reading!.frequency, 27.5))).toBeLessThan(1);
+    }
+  });
+
   it('works at 44.1 kHz with the matching window', () => {
     const rate = 44100, size = analysisSize(rate);
     const reading = detectPitch(tone(30.87, [1, 0.6], { rate, size }), rate);
@@ -140,10 +147,18 @@ describe('steadying readings', () => {
     expect(tracker.push(41.25)).toBeCloseTo(41.2, 6);
   });
 
-  it('restarts when the note changes', () => {
+  it('restarts after two readings on a new note', () => {
     const tracker = new PitchTracker(5);
     [41, 41.2, 41.1].forEach(f => tracker.push(f));
-    expect(tracker.push(55)).toBe(55);
+    expect(tracker.push(55)).toBeCloseTo(41.1, 6);
+    expect(tracker.push(55.2)).toBeCloseTo(55.1, 6);
+  });
+
+  it('keeps the window through one stray octave reading', () => {
+    const tracker = new PitchTracker(5);
+    [41, 41.2, 41.1].forEach(f => tracker.push(f));
+    expect(tracker.push(82.4)).toBeCloseTo(41.1, 6);
+    expect(tracker.push(41.3)).toBeCloseTo(41.15, 6);
   });
 
   it('holds through a short gap and clears after a run of silence', () => {

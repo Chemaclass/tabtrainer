@@ -5,6 +5,7 @@ import { pref, setPref } from '../../app/storage';
 import { PitchListener, type MicProblem } from '../../audio/pitchListener';
 import { Synth } from '../../audio/synth';
 import { byId } from '../dom';
+import { dismissHelpOnBackdrop } from '../shell/helpDialogs';
 
 export interface TunerContext { family: Family; instrument: Instrument | null }
 
@@ -16,12 +17,12 @@ const PROBLEM_TEXT: Record<MicProblem, string> = {
   failed: 'The microphone did not start. Try again.',
 };
 const TONE_SECONDS = 4;
-const ANNOUNCE_EVERY = 2000;
+const ANNOUNCE_EVERY = 1000;
 
 const hz = (frequency: number) => `${frequency.toFixed(1)} Hz`;
 const signed = (cents: number) => { const whole = Math.round(cents); return `${whole > 0 ? '+' : whole < 0 ? '−' : ''}${Math.abs(whole)}`; };
 
-export function tuner(current: () => TunerContext) {
+export function tuner(current: () => TunerContext, beforeOpen: () => void) {
   const dialog = byId('tuner', HTMLDialogElement), list = byId('tunerStrings', HTMLOListElement);
   const auto = byId('tunerAuto', HTMLButtonElement), reset = byId('tunerReset', HTMLButtonElement), stopTone = byId('tunerStopTone', HTMLButtonElement);
   const listen = byId('tunerListen', HTMLButtonElement), status = byId('tunerStatus'), live = byId('tunerLive');
@@ -32,12 +33,9 @@ export function tuner(current: () => TunerContext) {
   let toneTimer: ReturnType<typeof setTimeout> | null = null;
   let announced = '', announcedAt = 0;
 
-  byId('tunerBtn').onclick = () => { open(); dialog.showModal(); };
+  byId('tunerBtn').onclick = () => { beforeOpen(); open(); dialog.showModal(); };
   dialog.addEventListener('close', () => { stopListening(); silence(); status.textContent = ''; });
-  dialog.addEventListener('click', event => {
-    const r = dialog.getBoundingClientRect();
-    if (event.target === dialog && (event.clientX < r.left || event.clientX > r.right || event.clientY < r.top || event.clientY > r.bottom)) dialog.close();
-  });
+  dismissHelpOnBackdrop(dialog);
   auto.onclick = () => { locked = null; showStrings(); showReading(); };
   reset.onclick = () => { tuning.reset(); save(); showStrings(); showReading(); };
   stopTone.onclick = silence;
@@ -46,7 +44,8 @@ export function tuner(current: () => TunerContext) {
   function open() {
     const { family, instrument } = current();
     tuning = new TunerTuning(family, instrument, pref('tunings', {}));
-    locked = null; shown = null; tracker.reset();
+    locked = null; shown = null; tracker.reset(); announced = '';
+    listen.disabled = false; listen.textContent = 'Start listening'; status.textContent = '';
     showStrings(); showReading();
   }
   function showSetup() {
@@ -54,7 +53,7 @@ export function tuner(current: () => TunerContext) {
     byId('tunerSetup').textContent = `${family}, ${tuning.strings.length} strings, ${tuning.isStandard ? 'standard tuning' : 'custom tuning'}.`;
   }
 
-  function save() { setPref('tunings', tuning.saveInto(pref('tunings', {}))); }
+  function save() { if (tuning.saves) setPref('tunings', tuning.saveInto(pref('tunings', {}))); }
 
   function showStrings() {
     const target = locked ?? shown?.target ?? null;
@@ -95,7 +94,7 @@ export function tuner(current: () => TunerContext) {
     if (!synth.started && !synth.ensure()) return;
     synth.voice(synth.now + 0.03, tuning.strings[index], TONE_SECONDS, 0.3);
     stopTone.hidden = false;
-    toneTimer = setTimeout(() => { stopTone.hidden = true; }, TONE_SECONDS * 1000);
+    toneTimer = setTimeout(silence, TONE_SECONDS * 1000);
   }
   function silence() {
     if (synth.started) synth.cancel('instrument');
@@ -110,16 +109,19 @@ export function tuner(current: () => TunerContext) {
     listen.disabled = true;
     status.textContent = 'Waiting for the microphone. Your browser may ask for permission.';
     const problem = await listener.start(reading => {
+      if (toneTimer !== null) return;
       const frequency = tracker.push(reading?.frequency ?? null);
       const next = frequency === null ? null : readTuning(frequency, tuning.strings, locked);
       const before = shown?.target ?? null;
       shown = next;
       if ((next?.target ?? null) !== before && locked === null) showStrings();
       showReading();
-    });
+    }, lost => { stopListening(); status.textContent = PROBLEM_TEXT[lost]; });
+    if (problem === 'superseded') return;
     listen.disabled = false;
     if (!dialog.open) { stopListening(); return; }
     if (problem) { status.textContent = PROBLEM_TEXT[problem]; return; }
+    if (!listener.listening) return;
     listen.textContent = 'Stop listening';
     status.textContent = 'Listening. Play one open string at a time.';
   }
@@ -145,10 +147,10 @@ export function tuner(current: () => TunerContext) {
 
   function announce(reading: TunerReading | null) {
     if (!reading) return;
+    const key = `${reading.target} ${reading.direction}`, now = performance.now();
+    if (key === announced || now - announcedAt < ANNOUNCE_EVERY) return;
     const cents = Math.abs(Math.round(reading.cents));
-    const text = reading.direction === 'in-tune' ? `${reading.targetName} in tune` : `${reading.targetName}, ${cents} cents ${reading.direction === 'up' ? 'flat, tune up' : 'sharp, tune down'}`;
-    const now = performance.now();
-    if (text === announced || now - announcedAt < ANNOUNCE_EVERY) return;
-    announced = text; announcedAt = now; live.textContent = text;
+    announced = key; announcedAt = now;
+    live.textContent = reading.direction === 'in-tune' ? `${reading.targetName} in tune` : `${reading.targetName}, ${cents} cents ${reading.direction === 'up' ? 'flat, tune up' : 'sharp, tune down'}`;
   }
 }

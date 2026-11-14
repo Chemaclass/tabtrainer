@@ -17,7 +17,8 @@ export class PitchListener {
 
   get listening() { return this.stream !== null; }
 
-  async start(onReading: (reading: PitchReading | null) => void): Promise<MicProblem | null> {
+  /** Resolves null once listening, 'superseded' when stopped or restarted before the microphone answered, or the problem. */
+  async start(onReading: (reading: PitchReading | null) => void, onLost: (problem: MicProblem) => void): Promise<MicProblem | 'superseded' | null> {
     if (this.stream) return null;
     if (!navigator.mediaDevices?.getUserMedia) return 'unsupported';
     const attempt = ++this.attempt;
@@ -25,9 +26,10 @@ export class PitchListener {
     try {
       stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } });
     } catch (error) {
+      if (attempt !== this.attempt) return 'superseded';
       return error instanceof DOMException ? PROBLEMS[error.name] ?? 'failed' : 'failed';
     }
-    if (attempt !== this.attempt) { stream.getTracks().forEach(track => track.stop()); return null; }
+    if (attempt !== this.attempt) { stream.getTracks().forEach(track => track.stop()); return 'superseded'; }
     try {
       const ctx = new AudioContext();
       const analyser = ctx.createAnalyser();
@@ -35,6 +37,7 @@ export class PitchListener {
       ctx.createMediaStreamSource(stream).connect(analyser);
       const samples = new Float32Array(analyser.fftSize);
       this.stream = stream; this.ctx = ctx;
+      stream.getTracks().forEach(track => track.addEventListener('ended', () => { if (this.stream === stream) { this.stop(); onLost('missing'); } }));
       void ctx.resume();
       this.timer = setInterval(() => { analyser.getFloatTimeDomainData(samples); onReading(detectPitch(samples, ctx.sampleRate)); }, 50);
       return null;
