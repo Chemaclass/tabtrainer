@@ -15,13 +15,11 @@ import './ui/player/player.css';
 import './ui/shell/dropdown.css';
 import { enhanceDropdowns, setSelectValue } from './ui/shell/dropdown';
 import { buildTimeline, onsetAt, onsetKey, onsetsOf } from './core/timeline';
-import type { Song } from './core/model';
 import { FAMILIES, familyOf, isFamily, type Family } from './core/instruments';
 import { Player } from './audio/player';
 import { library, removeSong, pref, recentPractice, recordPractice } from './app/storage';
 import { normalizeSongReference, shareUrl, songSlug } from './app/songLink';
 import { bundledPath, savedRef } from './app/songRef';
-import { shownCredits } from './app/credits';
 import { Songbook } from './app/songbook';
 import { OpenSong } from './app/openSong';
 import { Workspace, type Screen } from './app/workspace';
@@ -38,7 +36,6 @@ import { theme } from './ui/shell/theme';
 import { closeOnChoice, closeOnOutside } from './ui/shell/disclosure';
 import { publishHeight } from './ui/shell/layoutMetrics';
 import { libraryView } from './ui/library/libraryView';
-import { hasPracticeLevels } from './app/practiceLevels';
 import { categoryCounts, isLibraryKind, nextExercise, type CatalogueEntry, type LibraryKind } from './app/catalogue';
 import { dismissHelpOnBackdrop } from './ui/shell/helpDialogs';
 import { byId, one } from './ui/dom';
@@ -48,6 +45,7 @@ import { speedPracticePanel } from './ui/player/speedPracticePanel';
 import { timingPanel } from './ui/player/timingPanel';
 import { transport } from './ui/player/transport';
 import { scoreView } from './ui/practice/scoreView';
+import { songHeader } from './ui/practice/songHeader';
 
 const songbook = new Songbook(import.meta.glob('./songs/*/*/*.txt', { query: '?raw', import: 'default', eager: true }) as Record<string, string>, library);
 const $ = byId;
@@ -71,6 +69,8 @@ const score = scoreView({
   onNote: selectNote,
   onPlayNote: (key, bar) => { const chosen = selectNote(key, bar) ? passagePlayback.selectedNote : null; if (chosen) player.play(chosen.beat); },
 });
+
+const header = songHeader(chooseVersion);
 
 // ---------- song list ----------
 
@@ -166,18 +166,8 @@ src.addEventListener('input', () => { if (passagePlayback.selectedNote) player.s
 function update(resetLoop: boolean) {
   const { song: s, issues } = openSong.read(src.value, resetLoop);
   passage.setSong(s.bars.length, resetLoop);
-  renderVersions();
-  const ul = $('issues'); ul.innerHTML = '';
-  issues.forEach(i => {
-    const li = document.createElement('li'); li.className = i.severity; li.textContent = `Line ${i.line}: ${i.message}`;
-    li.onclick = () => jumpToLine(i.line); ul.appendChild(li);
-  });
-  const errs = issues.filter(i => i.severity === 'error').length;
-  $('status').textContent = errs ? `${errs} error${errs > 1 ? 's' : ''}` : `${s.bars.length} bar${s.bars.length === 1 ? '' : 's'} · ${s.meta.instrument.name}`;
-  $('status').classList.toggle('bad', errs > 0); $('status').title = $('status').textContent ?? '';
-  $('title').textContent = s.meta.title;
-  renderMeta(s);
-  $('about').textContent = s.meta.about ?? ''; $('about').hidden = !s.meta.about;
+  header.show(openSong);
+  editor.showIssues(issues, s);
   const f = familyOf(s.meta.instrument);
   if (workspace.followSong(f)) showFamily();
   $('barTotal').textContent = String(s.bars.length || '–');
@@ -186,30 +176,6 @@ function update(resetLoop: boolean) {
   player.load(buildTimeline(s), s.meta.tempo); onsets = onsetsOf(player.notes);
   renderPracticeNavigation(); applyLoop(); draw(); speed.show(); if (wasPlaying) transportView.showPlayButton();
 }
-function renderVersions() {
-  const versions = openSong.versions, versionIdx = openSong.versionIndex;
-  const box = $('versions'); box.replaceChildren();
-  const details = $('versionDetails'); details.hidden = versions.length < 2;
-  if (details.hidden) return;
-  const levels = hasPracticeLevels(versions.map(v => v.name));
-  $('versionLabel').textContent = levels ? 'Practice level' : 'Arrangement';
-  box.setAttribute('aria-label', levels ? 'Practice level' : 'Arrangement');
-  const help = $('versionHelp');
-  help.hidden = !levels;
-  help.textContent = levels ? [
-    'Start slowly and get comfortable with the pattern.',
-    'Build a steady rhythm as you practise.',
-    'Try the pattern, then raise the speed when you are ready.',
-  ][versionIdx] : '';
-  versions.forEach((v, i) => {
-    const b = document.createElement('button');
-    b.type = 'button'; b.textContent = v.name; b.className = 'seg' + (i === versionIdx ? ' on' : '');
-    b.setAttribute('aria-pressed', String(i === versionIdx));
-    b.title = `${v.bars.length} bar${v.bars.length === 1 ? '' : 's'}`;
-    b.onclick = () => chooseVersion(i);
-    box.appendChild(b);
-  });
-}
 function chooseVersion(i: number) { if (openSong.choose(i)) showVersion(); }
 function chooseVersionNamed(slug: string | null) { if (openSong.chooseNamed(slug)) showVersion(); }
 function showVersion() {
@@ -217,30 +183,6 @@ function showVersion() {
   update(false); showLink();
   const song = openSong.song;
   if (song) { passage.setSong(song.bars.length, true); player.stop(); applyLoop(); }
-}
-function renderMeta(s: Song) {
-  renderCredit(s);
-  const parts: [string, boolean][] = [[`♩ = ${s.meta.tempo}`, true], [`key ${s.meta.key}`, true], [s.meta.instrument.name, false]];
-  const facts = parts.filter(([t]) => t).map(([t, num]) => { const e = document.createElement('span'); if (num) e.className = 'num'; e.textContent = t; return e; });
-  if (s.meta.level) { const l = document.createElement('span'); l.className = `lvl lvl-${s.meta.level}`; l.textContent = s.meta.level; facts.unshift(l); }
-  $('subtitle').replaceChildren(...facts);
-}
-function renderCredit(s: Song) {
-  const names = shownCredits(s.meta.artist);
-  const byline = $('byline'); byline.hidden = !names.length;
-  const traditional = names.length === 1 && /^traditional$/i.test(names[0]);
-  byline.replaceChildren(...(traditional ? [] : [document.createTextNode('by ')]), ...names.flatMap((n, i) => {
-    const b = document.createElement('b'); b.textContent = n;
-    const sep = i === names.length - 1 ? [] : [document.createTextNode(i === names.length - 2 ? ' and ' : ', ')];
-    return [b, ...sep];
-  }));
-  const link = $('listen', HTMLAnchorElement); link.hidden = !s.meta.listen;
-  if (s.meta.listen) { link.href = s.meta.listen; $('listenHost').textContent = new URL(s.meta.listen).hostname.replace(/^www\./, ''); }
-  $('credit').hidden = byline.hidden && link.hidden;
-}
-function jumpToLine(line: number) {
-  const lines = src.value.split('\n'); let pos = 0; for (let i = 0; i < line - 1 && i < lines.length; i++) pos += lines[i].length + 1;
-  src.focus(); src.setSelectionRange(pos, pos + (lines[line - 1]?.length ?? 0));
 }
 function draw() {
   const song = openSong.song;
