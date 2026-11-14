@@ -18,6 +18,7 @@ const START_DELAY = 0.08;
 const STOP_FADE = 0.015;
 const EPSILON = 1e-6;
 const PART_LEVEL: Record<BackingPart, number> = { drums: 0.9, bass: 0.8, keys: 0.45 };
+const LIMITER = { threshold: -6, knee: 0, ratio: 20, attack: 0.002, release: 0.12 } as const;
 
 export const DEFAULT_HUMANIZE: HumanizeLimits = { seed: 1, time: 0.006, velocity: 0.08 };
 
@@ -126,9 +127,22 @@ export class LoopEngine {
   private connect() {
     if (this.buses) return;
     const ctx = this.synth.context;
-    this.out = ctx.createGain(); this.out.connect(this.synth.output);
+    const limiter = this.limiter();
+    this.out = ctx.createGain();
+    this.out.connect(limiter);
     const bus = (part: BackingPart) => { const g = ctx.createGain(); g.gain.value = this.level(part); g.connect(this.out!); return g; };
     this.buses = { drums: bus('drums'), bass: bus('bass'), keys: bus('keys') };
+  }
+
+  private limiter(): AudioNode {
+    const limiter = this.synth.context.createDynamicsCompressor();
+    limiter.threshold.value = LIMITER.threshold;
+    limiter.knee.value = LIMITER.knee;
+    limiter.ratio.value = LIMITER.ratio;
+    limiter.attack.value = LIMITER.attack;
+    limiter.release.value = LIMITER.release;
+    limiter.connect(this.synth.output);
+    return limiter;
   }
 
   private reschedule() {
@@ -198,7 +212,7 @@ export class LoopEngine {
 
   private schedule(seg: Segment, from: number, to: number) {
     if (to <= from) return;
-    const { total, drums, bass, keys } = seg.timeline;
+    const { total, drums, bass, keys, voice } = seg.timeline;
     const first = Math.floor(this.beatAt(seg, from) / total), last = Math.floor(this.beatAt(seg, to) / total);
     for (let loop = Math.max(0, first); loop <= last; loop++) {
       drums.forEach((hit, i) => {
@@ -215,7 +229,7 @@ export class LoopEngine {
       }
       for (const hit of keys) {
         const when = this.timeAt(seg, loop * total + hit.beat);
-        if (when >= from && when < to) this.synth.keys(when, hit.midi, hit.length * seg.spb, hit.velocity * 0.5, this.buses!.keys);
+        if (when >= from && when < to) this.synth[voice](when, hit.midi, hit.length * seg.spb, hit.velocity * 0.5, this.buses!.keys);
       }
     }
   }

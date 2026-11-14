@@ -1,0 +1,19 @@
+title: Metal gallop in E minor
+genre: metal
+about: A fast gallop in E minor to practise tight, muted lines locked to a double kick.
+tempo: 170
+key: Em
+time: 4/4
+swing: 50
+progression: i5 i5 bVI5 bVII5
+voice: drive
+
+# sixteen steps per bar: 1 e & a 2 e & a 3 e & a 4 e & a
+crash: X............... | ................ | ................ | ................
+hat:   x...x...x...x...
+snare: ....X.......X... | ....X.......X... | ....X.......X... | ....X.......XoXX
+# the gallop: an eighth and two sixteenths on every beat
+kick:  X.xxX.xxX.xxX.xx
+# power chords chug with the kick, then ring out at the end of every second bar
+keys:  X.xxX.xxX.xxX.xx | X.xxX.xxX---X---
+bass:  1 . 1 1 1 . 1 1 1 . 1 1 1 . 1 1 | 1 . 1 1 1 . 1 1 1 - - - 1 - - -

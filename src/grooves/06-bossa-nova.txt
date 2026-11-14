@@ -1,0 +1,17 @@
+title: Bossa nova in D
+genre: bossa
+about: A gentle bossa nova in D to practise lines over a root and low fifth bass and a cross stick pattern that spans two bars.
+tempo: 140
+key: D
+time: 4/4
+swing: 50
+progression: Imaj7 vi7 ii7 V7
+
+# eight straight eighths per bar: 1 & 2 & 3 & 4 &
+hat:   xoxoxoxo
+# a cross stick on the rim instead of the snare, in a two bar phrase
+rim:   x..x..x. | ..x..x..
+kick:  x..ox..o
+keys:  x-.x-.x- | ..x-.x-.
+# the root, then the fifth below it on the "and" of 2 and again on beat 3
+bass:  8 - - 5 5 - - - | 8 - - 5 5 - - - | 8 - - 5 5 - - - | 8 - - 5 5 - - >b1

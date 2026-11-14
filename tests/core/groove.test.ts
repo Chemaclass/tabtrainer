@@ -46,7 +46,7 @@ describe('parseGroove', () => {
     expect([...issues].sort((a, b) => a.line - b.line).map(i => [i.line, i.message])).toEqual([
       [6, expect.stringContaining('"y"')],
       [7, expect.stringContaining('"-" with no note before it')],
-      [8, expect.stringContaining('"2"')],
+      [8, expect.stringContaining('"4"')],
       [9, expect.stringContaining('"cowbell:"')],
     ]);
   });
@@ -74,6 +74,19 @@ describe('parseGroove', () => {
     const { groove, issues } = parseGroove('# a comment\n#kick: x...\n  #---\nprogression: I #IVm7b5 # tritone sub\n');
     expect(issues).toEqual([]);
     expect(groove.progression.map(n => n.text)).toEqual(['I', '#IVm7b5']);
+  });
+  it('reads approach steps into the next chord in the bass', () => {
+    const { groove, issues } = parseGroove(`${head}bass: 1 - 3 - 5 - >b1 - | 1 - 2 - >5 - >2 -\n`);
+    expect(issues).toEqual([]);
+    expect(groove.grids[0].bars[1]).toEqual(['1', '-', '2', '-', '>5', '-', '>2', '-']);
+    expect(parseGroove(`${head}bass: 1 - >4 - >b2 - > -\n`).issues.map(i => i.message)).toEqual([expect.stringContaining('">4"')]);
+  });
+  it('reads the keys voice and warns about an unknown one', () => {
+    expect(parseGroove(head).groove.voice).toBe('keys');
+    expect(parseGroove(`${head}voice: drive\n`).groove.voice).toBe('drive');
+    const { groove, issues } = parseGroove(`${head}voice: banjo\n`);
+    expect(groove.voice).toBe('keys');
+    expect(issues).toEqual([expect.objectContaining({ line: 6, message: expect.stringMatching(/"banjo".*keys, organ, drive/) })]);
   });
   it('warns when there is no progression', () => {
     expect(parseGroove('title: Empty\n').issues).toEqual([expect.objectContaining({ message: expect.stringContaining('No progression') })]);

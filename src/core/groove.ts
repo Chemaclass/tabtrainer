@@ -2,9 +2,13 @@ import { BASS_DEGREES, parseNumeral, type Numeral } from './harmony';
 import type { ParseIssue } from './parser';
 import { isKey } from './theory';
 
-export const DRUMS = ['kick', 'snare', 'hat', 'openhat', 'ride', 'crash'] as const;
+export const DRUMS = ['kick', 'snare', 'rim', 'hat', 'openhat', 'ride', 'crash'] as const;
 export type Drum = typeof DRUMS[number];
 export type GroovePart = Drum | 'bass' | 'keys';
+export const KEYS_VOICES = ['keys', 'organ', 'drive'] as const;
+export type KeysVoice = typeof KEYS_VOICES[number];
+export const APPROACH = '>';
+export const HALF_STEP_BELOW = 'b1';
 
 export interface GrooveGrid { part: GroovePart; bars: string[][]; line: number }
 
@@ -17,6 +21,7 @@ export interface Groove {
   time: [number, number];
   swing: number;
   progression: Numeral[];
+  voice: KeysVoice;
   grids: GrooveGrid[];
 }
 
@@ -26,16 +31,18 @@ const LINE = /^\s*([a-z]+)\s*:\s*(.*?)\s*$/i;
 const PARTS: readonly string[] = [...DRUMS, 'bass', 'keys'];
 const DRUM_STEPS = ['x', 'X', 'o', '.'];
 const KEYS_STEPS = ['x', 'X', '.', '-'];
-const BASS_STEPS: readonly string[] = [...BASS_DEGREES, '.', '-'];
+const APPROACH_STEPS = [...BASS_DEGREES, HALF_STEP_BELOW].map(degree => APPROACH + degree);
+const BASS_STEPS: readonly string[] = [...BASS_DEGREES, ...APPROACH_STEPS, '.', '-'];
 
 const isPart = (name: string): name is GroovePart => PARTS.includes(name);
+const isVoice = (name: string): name is KeysVoice => (KEYS_VOICES as readonly string[]).includes(name);
 const stepsOf = (part: GroovePart): readonly string[] => (part === 'bass' ? BASS_STEPS : part === 'keys' ? KEYS_STEPS : DRUM_STEPS);
 const splitSteps = (part: GroovePart, bar: string) => (part === 'bass' ? bar.trim().split(/\s+/).filter(Boolean) : bar.replace(/\s+/g, '').split(''));
 
 export function parseGroove(src: string): GrooveResult {
   const issues: ParseIssue[] = [];
   const warn = (line: number, message: string, col = 1) => issues.push({ line, col, message, severity: 'warning' });
-  const groove: Groove = { title: 'Untitled', genre: '', tempo: 90, key: 'C', time: [4, 4], swing: 50, progression: [], grids: [] };
+  const groove: Groove = { title: 'Untitled', genre: '', tempo: 90, key: 'C', time: [4, 4], swing: 50, progression: [], voice: 'keys', grids: [] };
   const rawGrids: { part: GroovePart; text: string; line: number }[] = [];
   let progressionLine = 0;
 
@@ -69,11 +76,12 @@ export function parseGroove(src: string): GrooveResult {
         else groove.progression.push(r.numeral);
       }
     }
+    else if (name === 'voice') { if (isVoice(v)) groove.voice = v; else warn(line, `Unknown voice "${v}": use ${KEYS_VOICES.join(', ')}`); }
     else if (isPart(name)) {
       if (rawGrids.some(g => g.part === name)) warn(line, `There is already a "${name}:" line`);
       else rawGrids.push({ part: name, text: v, line });
     }
-    else warn(line, `Unknown line "${m[1]}:": use a header (title, genre, about, tempo, key, time, swing, progression) or a part (${PARTS.join(', ')})`);
+    else warn(line, `Unknown line "${m[1]}:": use a header (title, genre, about, tempo, key, time, swing, progression, voice) or a part (${PARTS.join(', ')})`);
   });
 
   if (!groove.progression.length) warn(1, 'No progression yet. Add a line like:  progression: I7 IV7 I7 V7');

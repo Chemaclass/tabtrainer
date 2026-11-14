@@ -105,7 +105,7 @@ describe('jam progression and swing', () => {
 
   it('lists the grooves grouped by genre and opens one by its slug', () => {
     const jam = new Jam(bundledGrooves(files));
-    expect(jam.list.map(g => g.slug)).toEqual(['blues-shuffle', 'rock-straight-eighths', 'reggae-one-drop', 'funk-sixteenths']);
+    expect(jam.list.map(g => g.slug)).toEqual(['blues-shuffle', 'rock-straight-eighths', 'reggae-one-drop', 'funk-sixteenths', 'jazz-swing', 'bossa-nova', 'metal-gallop']);
     expect(jam.choose('reggae-one-drop')).toBe(true);
     expect([jam.groove.genre, jam.key, jam.tempo, jam.swing]).toEqual(['reggae', 'Am', 74, 58]);
   });
