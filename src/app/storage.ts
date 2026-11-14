@@ -1,6 +1,7 @@
 import { isSpeedPracticeConfig, type SpeedPracticeConfig } from '../core/speedPractice';
 import { isFamily, type Family } from '../core/instruments';
 import { isLibraryKind, type LibraryKind } from './catalogue';
+import { isTunings, type Tunings } from './tuning';
 
 const LIB = 'tabtrainer:library';
 export interface Saved { title: string; text: string; updated: number }
@@ -40,6 +41,7 @@ interface Preferences {
   last: string | null;
   draft: DraftSnapshot | null;
   recent: string[];
+  tunings: Tunings;
 }
 const finiteBetween = (value: unknown, min: number, max: number): value is number => typeof value === 'number' && Number.isFinite(value) && value >= min && value <= max;
 const isBoolean = (value: unknown): value is boolean => typeof value === 'boolean';
@@ -64,6 +66,7 @@ const validators: { [K in keyof Preferences]: (value: unknown) => value is Prefe
   last: (value): value is string | null => value === null || isString(value),
   draft: (value): value is DraftSnapshot | null => value === null || !!value && typeof value === 'object' && 'text' in value && isString(value.text) && 'base' in value && isString(value.base) && 'picked' in value && isString(value.picked),
   recent: (value): value is string[] => Array.isArray(value) && value.every(isString),
+  tunings: isTunings,
 };
 function readPreference(key: keyof Preferences): unknown {
   try { return JSON.parse(localStorage.getItem('tabtrainer:' + key) ?? 'null'); } catch { return null; }
