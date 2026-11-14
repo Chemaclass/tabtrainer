@@ -31,6 +31,7 @@ export function fretboardSvg({ openNames, firstFret, lastFret, marks, label }: F
 
   const svg = el('svg', { class: 'fretboard-svg', viewBox: `0 0 ${width} ${height}`, width, height, role: 'img', 'aria-label': label });
   if (marks.some(mark => mark.role === 'tone')) svg.dataset.chord = '';
+  if (marks.some(mark => mark.order)) svg.dataset.move = '';
   const board = el('g', { 'aria-hidden': 'true' });
   for (let fret = start; fret <= lastFret; fret++) {
     const cx = x(fret);
@@ -49,6 +50,7 @@ export function fretboardSvg({ openNames, firstFret, lastFret, marks, label }: F
     const cx = x(mark.fret), cy = y(mark.stringIndex);
     const group = el('g', { class: 'fb-mark', 'data-role': mark.role });
     if (mark.dimmed) group.dataset.dimmed = '';
+    if (mark.order) group.dataset.order = String(mark.order);
     group.append(mark.role === 'root'
       ? el('rect', { x: cx - MARK, y: cy - MARK, width: MARK * 2, height: MARK * 2, rx: 3 })
       : el('circle', { cx, cy, r: MARK }));

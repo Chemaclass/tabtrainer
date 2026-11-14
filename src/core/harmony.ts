@@ -63,7 +63,7 @@ export function chordAt(progression: readonly Numeral[], key: string, bar: numbe
   return { root, name: scaleStepName(root, key, numeral.step) + suffix, intervals: [...intervals], tones: intervals.map(i => pitchClass(root + i)) };
 }
 
-export function degreeInterval(chord: Chord, degree: BassDegree): number {
+export function degreeInterval(chord: { readonly intervals: readonly number[] }, degree: BassDegree): number {
   switch (degree) {
     case '1': return 0;
     case '2': return 2;
@@ -93,7 +93,7 @@ const VAMP_BARS = 4;
 
 export const PROGRESSION_PRESETS: readonly ProgressionPreset[] = PRESETS.map(({ slug, name }) => ({ slug, name }));
 
-function numerals(text: string): Numeral[] {
+export function numerals(text: string): Numeral[] {
   return text.split(' ').map(t => {
     const r = parseNumeral(t);
     if ('error' in r) throw new Error(r.error);

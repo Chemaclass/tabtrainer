@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { DEFAULT_FRETBOARD_CHOICE, ROOT_OPTIONS, fretboardSheet, isFretboardChoice, stepPosition, type FretboardChoice } from '../../src/app/fretboardSheet';
+import { DEFAULT_FRETBOARD_CHOICE, ROOT_OPTIONS, fretboardSheet, isFretboardChoice, stepPosition, withOfferedMove, type FretboardChoice } from '../../src/app/fretboardSheet';
 import { pref, setPref } from '../../src/app/storage';
 
 const choice = (change: Partial<FretboardChoice>): FretboardChoice => ({ ...DEFAULT_FRETBOARD_CHOICE, ...change });
@@ -10,7 +10,7 @@ afterEach(() => vi.unstubAllGlobals());
 
 describe('fretboard choices', () => {
   it('starts on a 4 string bass, C major, note names', () => {
-    expect(DEFAULT_FRETBOARD_CHOICE).toEqual({ root: 0, scale: 'major', instrument: 'bass4', labels: 'names', chord: null, sevenths: false, position: null });
+    expect(DEFAULT_FRETBOARD_CHOICE).toEqual({ root: 0, scale: 'major', instrument: 'bass4', labels: 'names', chord: null, sevenths: false, position: null, progression: null, bar: null, move: null });
   });
   it('labels black keys with both names', () => {
     expect(ROOT_OPTIONS.map(o => o.label)).toEqual(['C', 'C# / Db', 'D', 'D# / Eb', 'E', 'F', 'F# / Gb', 'G', 'G# / Ab', 'A', 'A# / Bb', 'B']);
@@ -156,5 +156,78 @@ describe('saving the choice', () => {
     expect(pref('fretboardSheet', DEFAULT_FRETBOARD_CHOICE)).toEqual({ ...aMinorPentatonic, labels: 'degrees' });
     values.set('tabtrainer:fretboardSheet', '{bad');
     expect(pref('fretboardSheet', DEFAULT_FRETBOARD_CHOICE)).toEqual(DEFAULT_FRETBOARD_CHOICE);
+  });
+});
+
+describe('progressions on the cheat sheet', () => {
+  const aMinor = choice({ root: 9, scale: 'minor' });
+  const am = { ...aMinor, progression: 'minor-i-iv-v', bar: 0 };
+  const ordered = (c: FretboardChoice) => fretboardSheet(c).marks.filter(m => m.order).sort((a, b) => (a.order ?? 0) - (b.order ?? 0)).map(m => [m.stringIndex, m.fret, m.label]);
+
+  it('lists the progressions of the key with real chord names', () => {
+    const sheet = fretboardSheet(DEFAULT_FRETBOARD_CHOICE);
+    expect(sheet.progressions.find(p => p.slug === 'i-v-vi-iv')?.chords.map(c => c.name)).toEqual(['C', 'G', 'Am', 'F']);
+    expect(fretboardSheet(choice({ scale: 'dorian' })).progressions).toEqual([]);
+  });
+  it('selects a progression chord and marks its tones', () => {
+    const c: FretboardChoice = { ...DEFAULT_FRETBOARD_CHOICE, progression: 'i-v-vi-iv', bar: 2 };
+    const sheet = fretboardSheet(c);
+    expect(sheet.chord?.name).toBe('Am');
+    expect(sheet.summary).toBe('Am in C major: A C E');
+    expect(rolesOn(c, 3, 'root')).toEqual([5]);
+    expect(sheet.next?.name).toBe('F');
+  });
+  it('marks chord tones outside the scale, as C# in A7 of the A blues', () => {
+    const c: FretboardChoice = { ...choice({ root: 9, scale: 'blues' }), progression: '12-bar-blues', bar: 0 };
+    expect(fretboardSheet(c).summary).toBe('A7 in A blues: A C# E G');
+    expect(marksOn(c, 2).find(m => m.fret === 4)).toMatchObject({ label: 'C#', role: 'tone' });
+  });
+  it('ignores a progression the scale does not list', () => {
+    expect(fretboardSheet({ ...DEFAULT_FRETBOARD_CHOICE, progression: '12-bar-blues', bar: 0 }).chord).toBeNull();
+  });
+  it('offers the walks only for a progression chord', () => {
+    expect(fretboardSheet(choice({ chord: 0 })).moves.map(m => m.id)).toEqual(['root-fifth', 'root-fifth-octave', 'arpeggio', 'root-fifth-below']);
+    expect(fretboardSheet(am).moves.map(m => m.id)).toContain('approach-scale');
+    expect(fretboardSheet(choice({})).moves).toEqual([]);
+    expect(fretboardSheet(am).moves[0]).toEqual({ id: 'root-fifth', name: 'Root and fifth', when: 'Safe under any major or minor chord.' });
+  });
+  it('numbers Am root, fifth, octave in position 5 on a 4 string bass', () => {
+    expect(ordered({ ...am, position: 5, move: 'root-fifth-octave' })).toEqual([[3, 5, '1'], [2, 7, '2'], [1, 7, '3']]);
+    expect(fretboardSheet({ ...am, position: 5, move: 'root-fifth-octave' }).move?.text).toBe('Root, fifth, octave: 1 E string fret 5 A, 2 A string fret 7 E, 3 D string fret 7 A');
+  });
+  it('numbers the Am triad arpeggio in position 5 as A C E A', () => {
+    expect(ordered({ ...am, position: 5, move: 'arpeggio' })).toEqual([[3, 5, '1'], [3, 8, '2'], [2, 7, '3'], [1, 7, '4']]);
+  });
+  it('dims every mark outside the move', () => {
+    expect(fretboardSheet({ ...am, position: 5, move: 'arpeggio' }).marks.filter(m => !m.dimmed)).toHaveLength(4);
+  });
+  it('walks from Am to Dm through C# on A string fret 4', () => {
+    const c: FretboardChoice = { ...am, move: 'approach-below' };
+    expect(ordered(c)).toEqual([[3, 5, '1'], [2, 4, '2'], [2, 5, '3']]);
+    expect(fretboardSheet(c).move?.text).toBe('Half step below: 1 E string fret 5 A, 2 A string fret 4 C#, 3 A string fret 5 D');
+    expect(fretboardSheet({ ...am, move: 'approach-above' }).move?.text).toBe('Half step above: 1 A string open A, 2 D string fret 1 Eb, 3 D string open D');
+  });
+  it('says when a move does not fit the position and offers the nearest one that fits', () => {
+    const e7: FretboardChoice = { ...aMinor, progression: 'minor-ii-v-i', bar: 1, move: 'arpeggio' };
+    const sheet = fretboardSheet({ ...e7, position: 5 });
+    expect(sheet.move?.notes).toBeNull();
+    expect(sheet.move?.fits).toEqual({ first: 8, last: 12 });
+    expect(sheet.move?.text).toBe('Seventh arpeggio does not fit frets 5 to 8. It fits frets 8 to 12.');
+    expect(ordered({ ...e7, position: 8 })).toEqual([[3, 12, '1'], [2, 11, '2'], [1, 9, '3'], [1, 12, '4'], [0, 9, '5']]);
+  });
+  it('names the flat fifth of a half diminished chord', () => {
+    expect(fretboardSheet({ ...aMinor, progression: 'minor-ii-v-i', bar: 0 }).moves[0].name).toBe('Root and flat fifth');
+  });
+  it('drops a saved walk once the chord has no next chord', () => {
+    const walking: FretboardChoice = { ...am, move: 'approach-below' };
+    expect(withOfferedMove(walking)).toBe(walking);
+    expect(withOfferedMove({ ...walking, progression: null, bar: null, chord: 0 }).move).toBeNull();
+    expect(withOfferedMove({ ...am, move: 'arpeggio', progression: null, bar: null, chord: 0 }).move).toBe('arpeggio');
+  });
+  it('rejects unknown progressions, bars and moves', () => {
+    expect(isFretboardChoice({ ...am, move: 'slap' })).toBe(false);
+    expect(isFretboardChoice({ ...am, progression: 'bossa' })).toBe(false);
+    expect(isFretboardChoice({ ...am, bar: 12 })).toBe(false);
+    expect(isFretboardChoice({ ...am, move: 'approach-scale' })).toBe(true);
   });
 });

@@ -303,9 +303,27 @@
       <div class="fretboard-field"><label for="fretboardPosition">Position</label><select id="fretboardPosition"></select></div>
       <button id="fretboardNext" class="toggle" aria-label="Next position">›</button>
     </div>
-    <p id="fretboardSummary" class="fretboard-summary" aria-live="polite"></p>
-    <div id="fretboardBoard" class="fretboard-board" tabindex="0" role="region" aria-label="Fretboard, scrolls sideways"></div>
-    <ul id="fretboardStrings" class="sr-only" aria-label="Marked frets on each string"></ul>
+    <div id="fretboardView" class="fretboard-view">
+      <p id="fretboardSummary" class="fretboard-summary" aria-live="polite"></p>
+      <div id="fretboardMove" class="fretboard-move-text"><span id="fretboardMoveText" aria-live="polite"></span> <button id="fretboardFits" class="toggle" hidden></button></div>
+      <div id="fretboardBoard" class="fretboard-board" tabindex="0" role="region" aria-label="Fretboard, scrolls sideways"></div>
+      <ul id="fretboardStrings" class="sr-only" aria-label="Marked frets on each string"></ul>
+    </div>
+    <section class="fretboard-section" aria-labelledby="fretboardProgressionsLabel">
+      <h3 id="fretboardProgressionsLabel" class="fretboard-label">Progressions</h3>
+      <div id="fretboardProgressions" class="fretboard-progressions"></div>
+    </section>
+    <section class="fretboard-section" aria-labelledby="fretboardMovesLabel">
+      <h3 id="fretboardMovesLabel" class="fretboard-label">Moves</h3>
+      <div id="fretboardMoves" class="fretboard-moves" role="group" aria-labelledby="fretboardMovesLabel"></div>
+      <p id="fretboardMovesHint" class="fretboard-hint"></p>
+      <details class="fretboard-intervals">
+        <summary>Intervals</summary>
+        <p>Stable: 1, 5 and 8 (root, fifth, octave). Land on them on the strong beats.</p>
+        <p>Colour: 3 and 7. They tell major from minor and give the chord its sound.</p>
+        <p>Passing: 2, 4 and 6. Use them to move between chord tones, not to rest on.</p>
+      </details>
+    </section>
   </dialog>
   <dialog id="tabHelp" aria-labelledby="tabHelpTitle">
     <form method="dialog"><button class="close round" aria-label="Close">✕</button></form><h2 id="tabHelpTitle">Reading your first tab</h2>

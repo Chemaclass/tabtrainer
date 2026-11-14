@@ -19,11 +19,30 @@ export function scaleStepName(pc: number, key: string, step: number): string {
   return accidental === undefined ? pitchClassName(pc, key) : LETTERS[letter] + accidental;
 }
 
+const LETTER_COUNT = LETTERS.length;
+const ACCIDENTALS: Record<number, string> = { 0: '', 1: '#', 2: '##', 10: 'bb', 11: 'b' };
+
+/** The note letterSteps letters above fromName, with up to two sharps or flats: the third of D# is F##. */
+export function letterName(pc: number, fromName: string, letterSteps: number): string {
+  const letter = (LETTERS.indexOf(fromName[0]) + letterSteps) % LETTER_COUNT;
+  return LETTERS[letter] + (ACCIDENTALS[pitchClass(pc - NATURALS[letter])] ?? '');
+}
+
+/** The degree of a spelled note above a spelled root, measured on the major scale: G# above A is "7", G is "b7". */
+export function degreeName(rootName: string, noteName: string): string {
+  const letterSteps = (LETTERS.indexOf(noteName[0]) - LETTERS.indexOf(rootName[0]) + LETTER_COUNT) % LETTER_COUNT;
+  const semitones = pitchClass((pitchClassOf(noteName) ?? 0) - (pitchClassOf(rootName) ?? 0));
+  const majorScaleSemitones = NATURALS[letterSteps];
+  const accidental = ACCIDENTALS[pitchClass(semitones - majorScaleSemitones)] ?? '';
+  return `${accidental}${letterSteps + 1}`;
+}
+
 export function pitchClassOf(name: string): number | null {
-  const r = /^([A-G])(#|b)?$/.exec(name);
+  const r = /^([A-G])(##|#|bb|b)?$/.exec(name);
   if (!r) return null;
   const pc = SHARP.indexOf(r[1]);
-  return pitchClass(pc + (r[2] === '#' ? 1 : r[2] === 'b' ? -1 : 0));
+  const shift = { '##': 2, '#': 1, bb: -2, b: -1 }[r[2] ?? ''] ?? 0;
+  return pitchClass(pc + shift);
 }
 
 /** VexFlow key string ("eb/3") for a written MIDI pitch, spelled to suit the key signature. */

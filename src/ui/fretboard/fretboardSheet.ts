@@ -1,11 +1,42 @@
 import { INSTRUMENTS } from '../../core/instruments';
 import { SCALES } from '../../core/scales';
-import { DEFAULT_FRETBOARD_CHOICE, FIRST_FRET, LAST_FRET, ROOT_OPTIONS, fretboardSheet as sheetFor, isFretboardChoice, stepPosition, windowLabel, type FretboardChoice } from '../../app/fretboardSheet';
+import { DEFAULT_FRETBOARD_CHOICE, FIRST_FRET, LAST_FRET, ROOT_OPTIONS, fretboardSheet as sheetFor, isFretboardChoice, stepPosition, windowLabel, withOfferedMove, type FretboardChoice, type FretboardSheet, type SheetMove } from '../../app/fretboardSheet';
+import type { Progression, ProgressionChord } from '../../core/progressions';
 import { pref, setPref } from '../../app/storage';
 import { byId } from '../dom';
 import { setSelectValue } from '../shell/dropdown';
 import { dismissHelpOnBackdrop } from '../shell/helpDialogs';
 import { fretboardSvg } from './fretboardSvg';
+
+const NO_PROGRESSIONS = 'Progressions are listed for major, minor, pentatonic and blues scales.';
+
+function element<K extends keyof HTMLElementTagNameMap>(tag: K, className: string, text?: string): HTMLElementTagNameMap[K] {
+  const node = document.createElement(tag);
+  if (className) node.className = className;
+  if (text !== undefined) node.textContent = text;
+  return node;
+}
+
+function movesHintFor(sheet: FretboardSheet): string {
+  if (!sheet.chord) return 'Pick a chord to see the bass moves over it.';
+  if (!sheet.next) return 'Pick a chord in a progression to walk into the next chord.';
+  return `Walks lead into ${sheet.next.name}, the next chord.`;
+}
+
+/** Sticky boards hide whatever focus scrolls under them, so the dialog keeps that much room clear at the top. */
+function keepFocusClearOf(view: HTMLElement, dialog: HTMLDialogElement) {
+  const update = () => {
+    const sticky = getComputedStyle(view).position === 'sticky';
+    dialog.style.scrollPaddingTop = sticky ? `${view.offsetHeight}px` : '';
+  };
+  new ResizeObserver(update).observe(view);
+}
+
+function replaceKeepingFocus(container: HTMLElement, nodes: HTMLElement[]) {
+  const focused = container.contains(document.activeElement) ? (document.activeElement as HTMLElement).dataset.key : undefined;
+  container.replaceChildren(...nodes);
+  if (focused) container.querySelector<HTMLElement>(`[data-key="${CSS.escape(focused)}"]`)?.focus();
+}
 
 const options = (select: HTMLSelectElement, entries: { value: string | number; label: string }[]) =>
   select.replaceChildren(...entries.map(({ value, label }) => new Option(label, String(value))));
@@ -16,9 +47,11 @@ export function fretboardSheet() {
   const degrees = byId('fretboardDegrees', HTMLButtonElement), board = byId('fretboardBoard'), strings = byId('fretboardStrings', HTMLUListElement);
   const sevenths = byId('fretboardSevenths', HTMLButtonElement), position = byId('fretboardPosition', HTMLSelectElement);
   const previous = byId('fretboardPrevious', HTMLButtonElement), next = byId('fretboardNext', HTMLButtonElement);
+  const progressionList = byId('fretboardProgressions'), moveList = byId('fretboardMoves'), movesHint = byId('fretboardMovesHint');
+  const moveText = byId('fretboardMoveText'), fits = byId('fretboardFits', HTMLButtonElement);
   const chordButton = (step: number | null) => {
     const button = Object.assign(document.createElement('button'), { type: 'button', className: 'toggle fretboard-chord' });
-    button.onclick = () => choose({ chord: step });
+    button.onclick = () => choose({ chord: step, progression: null, bar: null });
     return button;
   };
   const chordButtons = [chordButton(null), ...Array.from({ length: 7 }, (_, step) => chordButton(step))];
@@ -31,12 +64,17 @@ export function fretboardSheet() {
 
   byId('fretboardBtn').onclick = () => { choice = pref('fretboardSheet', DEFAULT_FRETBOARD_CHOICE); scrolledTo = null; dialog.showModal(); show(); };
   dismissHelpOnBackdrop(dialog);
+  keepFocusClearOf(byId('fretboardView'), dialog);
   root.onchange = () => choose({ root: Number(root.value) });
-  scale.onchange = () => choose({ scale: scale.value as FretboardChoice['scale'] });
+  scale.onchange = () => choose({ scale: scale.value as FretboardChoice['scale'], progression: null, bar: null });
   instrument.onchange = () => choose({ instrument: instrument.value });
   degrees.onclick = () => choose({ labels: choice.labels === 'degrees' ? 'names' : 'degrees' });
   sevenths.onclick = () => choose({ sevenths: !choice.sevenths });
   position.onchange = () => choose({ position: position.value === '' ? null : Number(position.value) });
+  fits.onclick = () => {
+    choose({ position: Number(fits.dataset.fret) });
+    position.focus();
+  };
   previous.onclick = () => step(-1);
   next.onclick = () => step(1);
 
@@ -48,7 +86,7 @@ export function fretboardSheet() {
   function choose(change: Partial<FretboardChoice>) {
     const next = { ...choice, ...change };
     if (!isFretboardChoice(next)) return;
-    choice = next;
+    choice = withOfferedMove(next);
     setPref('fretboardSheet', choice);
     show();
   }
@@ -69,6 +107,8 @@ export function fretboardSheet() {
       button.setAttribute('aria-label', `${chord.name}, ${chord.numeral}`);
       button.setAttribute('aria-pressed', String(sheet.chord === chord));
     });
+    showProgressions(sheet);
+    showMoves(sheet);
     options(position, [{ value: '', label: 'All frets' }, ...sheet.windows.map(w => ({ value: w.first, label: windowLabel(w) }))]);
     setSelectValue(position, sheet.window ? String(sheet.window.first) : '');
     previous.setAttribute('aria-disabled', String(stepPosition(windows, choice.position, -1) === undefined));
@@ -79,6 +119,60 @@ export function fretboardSheet() {
     if (sheet.window && sheet.window.first !== scrolledTo) scrollToFret(sheet.window.first);
     scrolledTo = sheet.window?.first ?? null;
     strings.replaceChildren(...sheet.strings.map(({ text }) => Object.assign(document.createElement('li'), { textContent: text })));
+  }
+
+  function showProgressions(sheet: FretboardSheet) {
+    if (!sheet.progressions.length) {
+      replaceKeepingFocus(progressionList, [element('p', 'fretboard-hint', NO_PROGRESSIONS)]);
+      return;
+    }
+    replaceKeepingFocus(progressionList, sheet.progressions.map(progression => progressionRow(sheet, progression)));
+  }
+
+  function progressionRow(sheet: FretboardSheet, progression: Progression): HTMLElement {
+    const label = element('span', 'fretboard-progression-name', progression.name);
+    label.id = `fretboardProgression-${progression.slug}`;
+    const chords = element('div', 'fretboard-chord-row');
+    chords.setAttribute('role', 'group');
+    chords.setAttribute('aria-labelledby', label.id);
+    chords.append(...progression.chords.map(chord => progressionChordButton(sheet, progression, chord)));
+    const row = element('div', 'fretboard-progression');
+    row.append(label, chords);
+    return row;
+  }
+
+  function progressionChordButton(sheet: FretboardSheet, progression: Progression, chord: ProgressionChord): HTMLButtonElement {
+    const button = element('button', 'toggle fretboard-chord');
+    button.type = 'button';
+    button.dataset.key = `${progression.slug}:${chord.bar}`;
+    button.append(chord.name, element('small', '', chord.numeral));
+    button.setAttribute('aria-label', `${chord.name}, ${chord.numeral}, bar ${chord.bar + 1}`);
+    button.setAttribute('aria-pressed', String(sheet.chord === chord));
+    button.onclick = () => choose({ progression: progression.slug, bar: chord.bar, chord: null });
+    return button;
+  }
+
+  function moveButton(sheet: FretboardSheet, move: SheetMove): HTMLButtonElement {
+    const button = element('button', 'toggle fretboard-move');
+    button.type = 'button';
+    button.dataset.key = move.id;
+    button.append(element('strong', '', move.name), element('small', '', move.when));
+    button.setAttribute('aria-pressed', String(sheet.move?.id === move.id));
+    button.onclick = () => choose({ move: choice.move === move.id ? null : move.id });
+    return button;
+  }
+
+  function showMoves(sheet: FretboardSheet) {
+    replaceKeepingFocus(moveList, sheet.moves.map(move => moveButton(sheet, move)));
+    movesHint.textContent = movesHintFor(sheet);
+    const text = sheet.move?.text ?? '';
+    if (moveText.textContent !== text) moveText.textContent = text;
+    const fitting = sheet.move?.fits;
+    fits.hidden = !fitting;
+    if (fitting) {
+      fits.textContent = `Go to ${windowLabel(fitting).toLowerCase()}`;
+      fits.dataset.fret = String(fitting.first);
+    }
   }
 
   function scrollToFret(fret: number) {
