@@ -132,6 +132,8 @@ body:not(.library-view) .library-nav,body:not(.library-view) .dropdown:has([data
   .explore{flex-wrap:wrap}
 }
 .my-song-actions{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:24px}
+.empty-category :is(.library-filters,.catalogue-heading){display:none}
+.empty-category .catalogue-empty{padding-top:8px}
 .mobile-tab-help{display:none}
 @media(max-width:899px){
   .mobile-tab-help{display:block;min-height:44px;margin-top:20px;padding:0;text-align:left;text-decoration:underline}

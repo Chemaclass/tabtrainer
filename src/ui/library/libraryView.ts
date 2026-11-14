@@ -42,7 +42,11 @@ export function libraryView(onPick: (value: string) => void, onNew: () => void, 
     button.onclick = () => onPick(entry.value); li.append(button); return li;
   }
   function render() {
-    byId('mySongActions').hidden = kind !== 'mine';
+    const counts = categoryCounts(entries, family);
+    const emptyMine = kind === 'mine' && counts.mine === 0;
+    const emptySongs = kind === 'songs' && counts.songs === 0;
+    byId('mySongActions').hidden = kind !== 'mine' || emptyMine;
+    byId('libraryScreen').classList.toggle('empty-category', emptyMine || emptySongs);
     const [heading, description, placeholder] = intro[kind];
     byId('libraryContext').textContent = `${family} / ${labels[kind]}`;
     byId('libraryTitle').textContent = heading; byId('libraryDescription').textContent = description;
@@ -57,9 +61,6 @@ export function libraryView(onPick: (value: string) => void, onNew: () => void, 
     clear.hidden = !search.value && !level.value;
     list.replaceChildren(...shown.map(row));
     byId('catalogueEmpty').hidden = matches.length > 0;
-    const counts = categoryCounts(entries, family);
-    const emptyMine = kind === 'mine' && counts.mine === 0;
-    const emptySongs = kind === 'songs' && counts.songs === 0;
     byId('emptyTitle').textContent = emptyMine ? 'Make room for your own songs.' : emptySongs ? `No bundled ${family} songs yet.` : `No ${kind === 'exercises' ? 'exercises' : 'songs'} match`;
     byId('emptyDescription').textContent = emptyMine ? 'Start a new song or open a song file. Save it here when you are ready.' : emptySongs ? 'Browse exercises or open a song file to practise.' : `Try another search, clear the filters, or choose another instrument.`;
     byId('emptyClearBtn').hidden = emptyMine || emptySongs || (!search.value && !level.value);
