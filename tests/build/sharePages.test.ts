@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { sharePage, sitemap, songMeta } from '../../src/build/sharePages';
+import { robotsTxt, sharePage, sitemap, songMeta } from '../../src/build/sharePages';
 import { shareUrl } from '../../src/app/songLink';
 
 const site = 'https://example.com/tabtrainer/';
@@ -17,8 +17,23 @@ describe('share pages', () => {
     expect(html).toContain('<meta property="og:image" content="https://example.com/tabtrainer/og.png" />');
     expect(html).toContain('location.replace("../../?song=bass%2Fode-to-joy"');
   });
-  it('lists the home page and every song in the sitemap', () => {
-    expect(sitemap(site, [path])).toContain('<loc>https://example.com/tabtrainer/?song=bass%2Fode-to-joy</loc>');
+  it('gives the share page its own canonical address, card and structured data', () => {
+    const html = sharePage(site, path, { title: 'Ode <to> Joy', about: 'A melody', family: 'bass' });
+    expect(html).toContain('<link rel="canonical" href="https://example.com/tabtrainer/bass/ode-to-joy/" />');
+    expect(html).toContain('<meta property="og:type" content="music.song" />');
+    expect(html).toContain('<meta name="twitter:image" content="https://example.com/tabtrainer/og.png" />');
+    expect(html).toContain('<meta property="og:image:alt"');
+    const json = html.match(/<script type="application\/ld\+json">(.*)<\/script>/)![1];
+    expect(json).not.toContain('<');
+    expect(JSON.parse(json)).toMatchObject({ '@type': 'MusicComposition', name: 'Ode <to> Joy', url: 'https://example.com/tabtrainer/bass/ode-to-joy/' });
+  });
+  it('lists the home page and every song page in the sitemap, with a date', () => {
+    const xml = sitemap(site, [path], '2026-11-14');
+    expect(xml).toContain('<url><loc>https://example.com/tabtrainer/</loc><lastmod>2026-11-14</lastmod></url>');
+    expect(xml).toContain('<loc>https://example.com/tabtrainer/bass/ode-to-joy/</loc>');
+  });
+  it('points robots.txt at the sitemap', () => {
+    expect(robotsTxt(site)).toBe('User-agent: *\nAllow: /\n\nSitemap: https://example.com/tabtrainer/sitemap.xml\n');
   });
   it('shares the song page, with the version when there is one', () => {
     expect(shareUrl(site, path, null)).toBe('https://example.com/tabtrainer/bass/ode-to-joy/');

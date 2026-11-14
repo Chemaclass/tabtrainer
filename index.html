@@ -3,24 +3,30 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>TabTrainer: learn bass and guitar from tab and notation</title>
-  <meta name="description" content="Free, open-source tab and notation player for electric bass and guitar. Slow a song down, loop the hard bars, and follow each note as it plays." />
+  <title>TabTrainer: bass and guitar tab player to slow down and loop</title>
+  <meta name="description" content="Free bass tab and guitar tab player with notation. Slow a song down, loop the hard bars, and follow each note as it plays. No account needed." />
   <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
   <meta name="theme-color" content="#0f0f0f" media="(prefers-color-scheme: dark)" />
+  <link rel="canonical" href="__SITE_URL__" />
   <meta property="og:type" content="website" />
   <meta property="og:site_name" content="TabTrainer" />
-  <meta property="og:title" content="TabTrainer: learn bass and guitar from tab and notation" />
-  <meta property="og:description" content="Free, open-source tab and notation player for electric bass and guitar. Slow a song down, loop the hard bars, and follow each note as it plays." />
+  <meta property="og:title" content="TabTrainer: bass and guitar tab player to slow down and loop" />
+  <meta property="og:description" content="Free bass tab and guitar tab player with notation. Slow a song down, loop the hard bars, and follow each note as it plays. No account needed." />
   <meta property="og:url" content="__SITE_URL__" />
   <meta property="og:image" content="__SITE_URL__og.png" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
   <meta property="og:image:alt" content="TabTrainer: notation and tab for bass and guitar" />
   <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="TabTrainer: bass and guitar tab player to slow down and loop" />
+  <meta name="twitter:description" content="Free bass tab and guitar tab player with notation. Slow a song down, loop the hard bars, and follow each note as it plays. No account needed." />
+  <meta name="twitter:image" content="__SITE_URL__og.png" />
+  <meta name="twitter:image:alt" content="TabTrainer: notation and tab for bass and guitar" />
   <script type="application/ld+json">
-    {"@context":"https://schema.org","@type":"WebApplication","name":"TabTrainer","url":"__SITE_URL__","description":"Free, open-source tab and notation player for electric bass and guitar. Slow a song down, loop the hard bars, and follow each note as it plays.","applicationCategory":"MusicApplication","operatingSystem":"Any web browser","isAccessibleForFree":true,"offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"author":{"@type":"Person","name":"Jose Maria Valera Reales","alternateName":"Chemaclass","url":"https://chemaclass.com"},"codeRepository":"https://github.com/Chemaclass/tabtrainer"}
+    {"@context":"https://schema.org","@type":"WebApplication","name":"TabTrainer","url":"__SITE_URL__","description":"Free bass tab and guitar tab player with notation. Slow a song down, loop the hard bars, and follow each note as it plays. No account needed.","applicationCategory":"MusicApplication","operatingSystem":"Any web browser","isAccessibleForFree":true,"offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"author":{"@type":"Person","name":"Chemaclass","url":"https://chemaclass.com"},"codeRepository":"https://github.com/Chemaclass/tabtrainer"}
   </script>
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='14' fill='%23111111'/><g stroke='%23fff' stroke-width='3'><line x1='12' y1='20' x2='52' y2='20'/><line x1='12' y1='30' x2='52' y2='30'/><line x1='12' y1='40' x2='52' y2='40'/></g><circle cx='38' cy='30' r='8' fill='%23e0312b'/></svg>" />
+  <link rel="icon" href="%BASE_URL%favicon.svg" type="image/svg+xml" />
+  <link rel="manifest" href="%BASE_URL%manifest.webmanifest" />
   <script>
     let theme = null;
     try { theme = JSON.parse(localStorage.getItem('tabtrainer:theme')); } catch { /* storage unavailable */ }

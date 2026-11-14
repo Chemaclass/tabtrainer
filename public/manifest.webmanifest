@@ -1,0 +1,11 @@
+{
+  "name": "TabTrainer",
+  "short_name": "TabTrainer",
+  "description": "Free bass tab and guitar tab player with notation. Slow a song down, loop the hard bars, and follow each note as it plays.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#0f0f0f",
+  "icons": [{ "src": "favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }]
+}

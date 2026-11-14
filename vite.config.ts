@@ -2,7 +2,7 @@ import { defineConfig, type Plugin } from 'vite';
 import { configDefaults } from 'vitest/config';
 import { mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
-import { sharePage, sitemap, songMeta } from './src/build/sharePages';
+import { robotsTxt, sharePage, sitemap, songMeta } from './src/build/sharePages';
 import { songSlug } from './src/app/songLink';
 
 // GitHub Pages serves the app from /<repo>/. For a custom domain, set BASE=/ and SITE_URL to its address.
@@ -28,7 +28,8 @@ function sharePages(): Plugin {
         mkdirSync(dirname(file), { recursive: true });
         writeFileSync(file, sharePage(site, path, songMeta(path, readFileSync(join('src', path), 'utf8'))));
       }
-      writeFileSync(join(outDir, 'sitemap.xml'), sitemap(site, paths));
+      writeFileSync(join(outDir, 'sitemap.xml'), sitemap(site, paths, new Date().toISOString().slice(0, 10)));
+      writeFileSync(join(outDir, 'robots.txt'), robotsTxt(site));
     },
   };
 }
