@@ -117,7 +117,7 @@ export function fretboardSheet(choice: FretboardChoice): FretboardSheet {
     .map(w => ({ first: w.first, last: Math.min(w.last, LAST_FRET) }));
   const window = nearestWindow(windows, choice.position);
   const inWindow = (fret: number) => !window || (fret >= window.first && fret <= window.last);
-  const roleOf = (pc: number) => markRole(byPitch.get(pc)!, markedChord);
+  const outsideWindow = (fret: number) => !inWindow(fret);
   const positions = markedPositions(instrument, byPitch);
   const moves = chord ? movesOver(chord, next) : [];
   const picked = moves.find(m => m.id === choice.move);
@@ -135,7 +135,12 @@ export function fretboardSheet(choice: FretboardChoice): FretboardSheet {
     };
     move = showMove(picked, window, windows, place, describe);
   }
-  const scaleMarks = fretMarks(positions, { notes: byPitch, chord: markedChord, labels: choice.labels, isDimmed: fret => !inWindow(fret) });
+  const scaleMarks = fretMarks(positions, {
+    notes: byPitch,
+    chord: markedChord,
+    labels: choice.labels,
+    isDimmed: outsideWindow,
+  });
   const marks = move?.notes ? numberMoveNotes(scaleMarks, move.notes) : scaleMarks;
   const roleText: Record<MarkRole, string> = { root: chord ? ' chord root' : ' root', tone: ' chord tone', scale: '' };
   const strings = instrument.tuning.map((_, stringIndex) => {
@@ -144,11 +149,11 @@ export function fretboardSheet(choice: FretboardChoice): FretboardSheet {
       const note = byPitch.get(p.pitchClass)!;
       const where = p.fret === 0 ? 'open' : `fret ${p.fret}`;
       const degree = choice.labels === 'degrees' ? ` (${note.degree})` : '';
-      return `${where} ${note.name}${degree}${roleText[roleOf(p.pitchClass)]}`;
+      return `${where} ${note.name}${degree}${roleText[markRole(note, markedChord)]}`;
     });
     return { name, text: `${name}: ${frets.length ? frets.join(', ') : window ? 'no notes in this position' : 'no scale notes'}` };
   });
-  const windowText = window ? `, ${windowLabel(window).toLowerCase()} at full strength and the rest dimmed` : '';
+  const windowText = window ? `${windowLabel(window).toLowerCase()} at full strength and the rest dimmed` : null;
   return {
     instrument,
     title,

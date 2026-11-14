@@ -55,7 +55,7 @@ describe('jam fretboard', () => {
     expect(drawing.chordText).toBe('D7: D F# A C');
     expect(drawing.scaleText).toBe('Scale: A minor pentatonic, A C D E G');
     expect(drawing.nextChordText).toBe('Next: E7');
-    expect(drawing.description).toContain('Bass (4-string');
+    expect(drawing.description).toBe('Fretboard of the Bass (4-string, E A D G), frets 0 to 12, with the notes of A minor pentatonic marked, the tones of D7 stronger');
   });
   it('draws six guitar strings with their notes', () => {
     const drawing = inA({ instrument: INSTRUMENTS.guitar6 });

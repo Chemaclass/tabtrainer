@@ -33,6 +33,6 @@ describe('fretboard marks', () => {
   });
   it('describes the drawing with the chord and the position when given', () => {
     expect(fretboardDescription(INSTRUMENTS.bass4, 'A minor', null)).toBe('Fretboard of the Bass (4-string, E A D G), frets 0 to 12, with the notes of A minor marked');
-    expect(fretboardDescription(INSTRUMENTS.bass4, 'A minor', 'Am', ', frets 5 to 8 at full strength')).toBe('Fretboard of the Bass (4-string, E A D G), frets 0 to 12, with the notes of A minor marked, the tones of Am stronger, frets 5 to 8 at full strength');
+    expect(fretboardDescription(INSTRUMENTS.bass4, 'A minor', 'Am', 'frets 5 to 8 at full strength')).toBe('Fretboard of the Bass (4-string, E A D G), frets 0 to 12, with the notes of A minor marked, the tones of Am stronger, frets 5 to 8 at full strength');
   });
 });
