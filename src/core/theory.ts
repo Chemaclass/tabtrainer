@@ -4,8 +4,10 @@ const FLAT_KEYS = new Set(['F', 'Bb', 'Eb', 'Ab', 'Db', 'Gb', 'Cb', 'Dm', 'Gm', 
 
 export const pitchClass = (n: number) => ((n % 12) + 12) % 12;
 
+export const spellPitchClass = (pc: number, flats: boolean) => (flats ? FLAT : SHARP)[pitchClass(pc)];
+
 export function pitchClassName(pc: number, key: string): string {
-  return (FLAT_KEYS.has(key) ? FLAT : SHARP)[pitchClass(pc)];
+  return spellPitchClass(pc, FLAT_KEYS.has(key));
 }
 
 const LETTERS = 'CDEFGAB';

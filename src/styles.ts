@@ -14,3 +14,4 @@ import './ui/practice/practice.css';
 import './ui/player/player.css';
 import './ui/shell/dropdown.css';
 import './ui/tuner/tuner.css';
+import './ui/fretboard/fretboard.css';

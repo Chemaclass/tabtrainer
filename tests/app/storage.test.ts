@@ -56,6 +56,13 @@ describe('preferences', () => {
     expect(pref('draft', null)).toEqual({ text: 'changed', base: 'original', picked: 'lib:Song' });
     store({ text: 'changed', base: 12, picked: 'lib:Song' }); expect(pref('draft', null)).toBeNull();
   });
+  it('keeps a valid fretboard choice and drops a damaged one', async () => {
+    const { pref } = await import('../../src/app/storage');
+    const fallback = { root: 0, scale: 'major' as const, instrument: 'bass4', labels: 'names' as const };
+    store({ root: 3, scale: 'blues', instrument: 'guitar6', labels: 'degrees' });
+    expect(pref('fretboardSheet', fallback)).toEqual({ root: 3, scale: 'blues', instrument: 'guitar6', labels: 'degrees' });
+    store({ root: 3, scale: 'blues', instrument: 'guitar6', labels: 'tab' }); expect(pref('fretboardSheet', fallback)).toBe(fallback);
+  });
 });
 
 describe('gradual speed settings', () => {
