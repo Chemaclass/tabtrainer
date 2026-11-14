@@ -27,6 +27,7 @@ import { bundledPath, bundledRef, isSavedRef, savedRef } from './app/songRef';
 import { shownCredits } from './app/credits';
 import { Songbook } from './app/songbook';
 import { OpenSong } from './app/openSong';
+import { Workspace, type Screen } from './app/workspace';
 import { Passage } from './app/passage';
 import { playbackShortcut } from './app/playbackShortcut';
 import { Navigation, navigationState, type Route } from './app/navigation';
@@ -47,9 +48,7 @@ const storedNavigation = navigationState(history.state);
 const initialNavigation = storedNavigation ? { ...storedNavigation, picked: resolvePick(storedNavigation.picked) } : null;
 const navigation = new Navigation(history, location, songbook.paths);
 const initialQuery = new URLSearchParams(location.search);
-let screen: 'library' | 'practice' = initialQuery.has('song') || initialQuery.get('view') === 'practice' ? 'practice' : 'library';
-const initialKind = initialQuery.get('kind') ?? pref('libraryKind', 'exercises');
-let libraryKind: LibraryKind = isLibraryKind(initialKind) ? initialKind : 'exercises';
+const workspace = Workspace.fromQuery(location.search);
 let catalogueEntries: CatalogueEntry[] = [];
 
 const src = $('src', HTMLTextAreaElement), sheet = $('sheet'), player = new Player();
@@ -60,70 +59,65 @@ let continuationDismissed = false;
 let zoom = pref('zoom', 1), showNota = pref('notation', matchMedia('(min-width:600px)').matches);
 
 // ---------- song list ----------
-const savedFamily = initialQuery.get('instrument') ?? pref('family', 'bass');
-let family: Family = isFamily(savedFamily) ? savedFamily : 'bass';
-let picked = '';
 
-const newSong = () => `title: New song\ninstrument: ${FAMILIES[family]}\ntempo: 90\nkey: C\ntime: 4/4\n\n@Intro\n"C" :q 3.3 3.3 5.2 3.3 |\n`;
+const newSong = () => `title: New song\ninstrument: ${FAMILIES[workspace.family]}\ntempo: 90\nkey: C\ntime: 4/4\n\n@Intro\n"C" :q 3.3 3.3 5.2 3.3 |\n`;
 const catalogue = libraryView(v => pickSong(v), () => $('newBtn').click(), () => $('openBtn').click(), () => { showLibrary('exercises'); $('libraryTitle').focus({ preventScroll: true }); });
 function fillSongList() {
   catalogueEntries = songbook.entries();
-  catalogue.show(catalogueEntries, family, libraryKind, recentPractice().map(resolvePick));
+  catalogue.show(catalogueEntries, workspace.family, workspace.kind, recentPractice().map(resolvePick));
   renderPracticeNavigation();
 }
-function showFamily() { setSelectValue($('familySelect', HTMLSelectElement), family); fillSongList(); }
+function showFamily() { setSelectValue($('familySelect', HTMLSelectElement), workspace.family); fillSongList(); }
 function chooseFamily(f: Family) {
-  if (f === family) return;
-  family = f; setPref('family', f); showFamily(); showLink();
+  if (workspace.chooseFamily(f)) { showFamily(); showLink(); }
 }
 function loadText(text: string) { if (scrollMode === 'continuous') setScrollMode('off'); clearTimeout(timer); src.value = text; draftSession.accept(text); announceSave(''); update(true); persistDraft(); }
 function pickSong(v: string) {
-  if (v === picked) { setScreen('practice', true); showLink(true); }
+  if (v === workspace.picked) { setScreen('practice', true); showLink(true); }
   else replaceCurrent(() => loadPickedSong(v, true));
 }
 function loadPickedSong(v: string, push = false) {
   const text = songbook.text(v);
   if (text === undefined) return;
-  picked = v; setPref('picked', v); screen = 'practice';
-  libraryKind = songbook.kind(v);
+  workspace.openSong(v, songbook.kind(v));
   setScreen('practice'); loadText(text); fillSongList(); showLink(push);
   if (push) { window.scrollTo(0, 0); $('title').focus({ preventScroll: true }); }
 }
 function showLink(push = false) {
-  const route: Route = screen === 'library' ? { screen, kind: libraryKind, family }
-    : { screen, picked, version: openSong.versionSlug() };
-  navigation.show(route, picked, push);
+  navigation.show(workspace.route(openSong.versionSlug()), workspace.picked, push);
 }
 const siteTitle = document.title;
-function showTitle() { const song = openSong.song; document.title = screen === 'practice' && song ? `${song.meta.title} · TabTrainer` : siteTitle; }
-function setScreen(next: 'library' | 'practice', focus = false) {
+function showTitle() { const song = openSong.song; document.title = workspace.screen === 'practice' && song ? `${song.meta.title} · TabTrainer` : siteTitle; }
+function setScreen(next: Screen, focus = false) {
   if (next === 'library') { player.stop(); if (scrollMode === 'continuous') setScrollMode('off'); }
   const song = openSong.song;
-  if (next === 'practice' && song) { family = familyOf(song.meta.instrument); setPref('family', family); setSelectValue($('familySelect', HTMLSelectElement), family); }
-  screen = next; document.body.classList.toggle('library-view', next === 'library');
+  workspace.enter(next, song ? familyOf(song.meta.instrument) : null);
+  if (next === 'practice' && song) setSelectValue($('familySelect', HTMLSelectElement), workspace.family);
+  document.body.classList.toggle('library-view', next === 'library');
   $('libraryScreen').hidden = next !== 'library'; $('practiceScreen').hidden = next !== 'practice';
   one('.player').hidden = next !== 'practice';
   showTitle(); fillSongList(); showDirtyState();
   if (next === 'practice') requestAnimationFrame(draw);
   if (focus) { window.scrollTo(0, 0); $(next === 'library' ? 'libraryTitle' : 'title').focus({ preventScroll: true }); }
 }
-function showLibrary(kind: LibraryKind = libraryKind, push = true) {
-  libraryKind = kind; setPref('libraryKind', kind); setScreen('library', screen !== 'library'); showLink(push);
+function showLibrary(kind: LibraryKind = workspace.kind, push = true) {
+  const arriving = workspace.screen !== 'library';
+  workspace.chooseKind(kind); setScreen('library', arriving); showLink(push);
 }
 function renderPracticeNavigation() {
-  const counts = categoryCounts(catalogueEntries, family);
+  const counts = categoryCounts(catalogueEntries, workspace.family);
   document.querySelectorAll<HTMLButtonElement>('[data-kind]').forEach(button => {
     if (isLibraryKind(button.dataset.kind)) button.querySelector<HTMLElement>('.nav-count')!.textContent = String(counts[button.dataset.kind]);
-    if (button.dataset.kind === libraryKind) button.setAttribute('aria-current', 'page'); else button.removeAttribute('aria-current');
+    if (button.dataset.kind === workspace.kind) button.setAttribute('aria-current', 'page'); else button.removeAttribute('aria-current');
   });
-  const current = catalogueEntries.find(e => e.value === picked);
+  const current = catalogueEntries.find(e => e.value === workspace.picked);
   const kind = current?.kind ?? 'mine';
   $('backLibraryBtn').textContent = kind === 'exercises' ? '← All exercises' : kind === 'songs' ? '← All songs' : '← My songs';
   const song = openSong.song;
   $('practiceName').textContent = song?.meta.title ?? 'Your song';
-  $('practiceContext').textContent = `${song ? familyOf(song.meta.instrument) : family} / ${kind === 'exercises' ? 'exercise' : kind === 'songs' ? 'song' : 'your song'}`;
-  const next = nextExercise(catalogueEntries, picked);
-  $('exerciseContinuation').hidden = screen !== 'practice' || kind !== 'exercises' || continuationDismissed;
+  $('practiceContext').textContent = `${song ? familyOf(song.meta.instrument) : workspace.family} / ${kind === 'exercises' ? 'exercise' : kind === 'songs' ? 'song' : 'your song'}`;
+  const next = nextExercise(catalogueEntries, workspace.picked);
+  $('exerciseContinuation').hidden = workspace.screen !== 'practice' || kind !== 'exercises' || continuationDismissed;
   $('nextExerciseBtn').hidden = !next; $('allExercisesBtn').hidden = !!next;
   if (next) { $('nextExerciseTitle').textContent = next.title; $('nextExerciseBtn').onclick = () => pickSong(next.value); }
   $('backLibraryBtn').onclick = () => showLibrary(kind);
@@ -138,17 +132,17 @@ document.querySelectorAll<HTMLButtonElement>('[data-kind]').forEach(button => { 
 $('familySelect', HTMLSelectElement).onchange = e => { const value = (e.target as HTMLSelectElement).value; if (isFamily(value)) chooseFamily(value); };
 function openRoute(route: Route) {
   if (route.screen === 'practice') {
-    if (route.picked && route.picked !== picked) loadPickedSong(route.picked); else setScreen('practice');
+    if (route.picked && route.picked !== workspace.picked) loadPickedSong(route.picked); else setScreen('practice');
     if (route.picked && bundledPath(route.picked) !== null) chooseVersionNamed(route.version);
     showLink();
     return;
   }
-  if (route.family) { family = route.family; setSelectValue($('familySelect', HTMLSelectElement), family); }
+  if (route.family) { workspace.visitFamily(route.family); setSelectValue($('familySelect', HTMLSelectElement), workspace.family); }
   showLibrary(route.kind, false);
 }
 window.addEventListener('popstate', event => navigation.visit(event.state, (route, accept, cancel) => {
   const open = () => { accept(); openRoute(route); };
-  if (route.screen === 'practice' && route.picked && route.picked !== picked && hasChanges()) replaceCurrent(open, cancel);
+  if (route.screen === 'practice' && route.picked && route.picked !== workspace.picked && hasChanges()) replaceCurrent(open, cancel);
   else open();
 }));
 
@@ -171,7 +165,7 @@ function update(resetLoop: boolean) {
   renderMeta(s);
   $('about').textContent = s.meta.about ?? ''; $('about').hidden = !s.meta.about;
   const f = familyOf(s.meta.instrument);
-  if (screen === 'practice' && f !== family) { family = f; setPref('family', f); showFamily(); }
+  if (workspace.followSong(f)) showFamily();
   $('barTotal').textContent = String(s.bars.length || '–');
   showTitle();
   const wasPlaying = player.playing;
@@ -236,7 +230,7 @@ function jumpToLine(line: number) {
 }
 function draw() {
   const song = openSong.song;
-  if (!song || screen !== 'practice') return;
+  if (!song || workspace.screen !== 'practice') return;
   // measure the unzoomed parent: browsers disagree on whether a zoomed element reports its own width zoomed
   const box = getComputedStyle(sheet.parentElement!);
   const w = sheet.parentElement!.clientWidth - parseFloat(box.paddingLeft) - parseFloat(box.paddingRight) - 12;
@@ -275,7 +269,7 @@ player.on(({ beat, playing, phase, countInRemaining }) => {
   setPlayLabel();
   if (phase === 'counting-in') { playbackWasActive = false; return; }
   const started = player.playing && !playbackWasActive; playbackWasActive = player.playing;
-  if (started && picked) { recordPractice(picked); fillSongList(); }
+  if (started && workspace.picked) { recordPractice(workspace.picked); fillSongList(); }
   if (beat === null) { selectedNote = null; passage.deselect(); showPassage(); lit.forEach(e => e.classList.remove('on')); lit = []; litKey = null; curSys?.classList.remove('cur'); curSys = null; $('barNo').textContent = '–'; return; }
   const key = playing ? onsetAt(onsets, beat) : null;
   if (key !== litKey) {
@@ -495,20 +489,20 @@ $('scrollMode', HTMLSelectElement).onchange = e => {
 };
 
 // ---------- keyboard ----------
-const shortcut = playbackShortcut(() => screen === 'practice', () => player.playing, () => player.play(), () => player.pause());
+const shortcut = playbackShortcut(() => workspace.screen === 'practice', () => player.playing, () => player.play(), () => player.pause());
 document.addEventListener('keydown', shortcut.keydown, true);
 document.addEventListener('keyup', shortcut.keyup, true);
 window.addEventListener('blur', shortcut.blur);
 document.addEventListener('keydown', e => {
   const t = e.target as HTMLElement;
-  if (screen !== 'practice' || t.closest('button, summary, input, select, textarea, dialog, [role=separator]') || t.isContentEditable) return;
+  if (workspace.screen !== 'practice' || t.closest('button, summary, input, select, textarea, dialog, [role=separator]') || t.isContentEditable) return;
   if (e.key === 's' || e.key === 'S') { e.preventDefault(); setScrollMode(scrollMode === 'continuous' ? 'off' : 'continuous'); }
   else if (scrollMode === 'continuous' && e.key === 'ArrowUp') { e.preventDefault(); sspeed.value = String(Math.min(80, +sspeed.value + 2)); sspeed.dispatchEvent(new Event('input')); }
   else if (scrollMode === 'continuous' && e.key === 'ArrowDown') { e.preventDefault(); sspeed.value = String(Math.max(3, +sspeed.value - 2)); sspeed.dispatchEvent(new Event('input')); }
 });
 
 // ---------- toolbar ----------
-const unpick = () => { picked = ''; libraryKind = 'mine'; setPref('picked', ''); fillSongList(); };
+const unpick = () => { workspace.unpick(); fillSongList(); };
 const fileMenu = one('.file-menu', HTMLDetailsElement);
 $('openBtn').onclick = () => $('openFile', HTMLInputElement).click();
 fileMenu.addEventListener('click', e => {
@@ -528,9 +522,9 @@ fileMenu.addEventListener('keydown', e => {
 });
 const hasChanges = () => draftSession.hasChanges();
 // The link opens the bundled song, so it would drop unsaved edits.
-function showShare() { $('shareBtn').hidden = bundledPath(picked) === null || draftSession.hasChanges(); }
+function showShare() { $('shareBtn').hidden = bundledPath(workspace.picked) === null || draftSession.hasChanges(); }
 function showDirtyState() {
-  $('returnDraftBtn').hidden = screen !== 'library' || !hasChanges();
+  $('returnDraftBtn').hidden = workspace.screen !== 'library' || !hasChanges();
   one('.save-state').hidden = !hasChanges() && !$('saveFeedback').textContent;
   showShare();
   $('dirtyState').textContent = hasChanges() ? `Unsaved changes${draftSession.stored ? '' : ' (draft recovery unavailable)'}` : 'No unsaved changes';
@@ -541,7 +535,7 @@ function announceSave(message: string, failed = false, offerDownload = failed) {
   $('recoverDownload').hidden = !offerDownload; showDirtyState();
 }
 function persistDraft() {
-  draftSession.persist(picked);
+  draftSession.persist(workspace.picked);
   showDirtyState();
   if (!draftSession.stored && hasChanges()) announceSave('Could not keep this draft in the browser. Download a copy.', true);
 }
@@ -558,7 +552,7 @@ function saveCurrent(): boolean {
   if (result.status === 'cancelled') return false;
   if (result.status === 'failed') { announceSave('Could not save in this browser. Your text is still here. Download a copy.', true); return false; }
   const { title } = result;
-  picked = savedRef(title); libraryKind = 'mine'; setPref('picked', picked); persistDraft(); fillSongList(); showLink();
+  workspace.pick(savedRef(title), 'mine'); persistDraft(); fillSongList(); showLink();
   announceSave(`Saved "${title}" in this browser`); return true;
 }
 $('newBtn').onclick = () => replaceCurrent(() => { const text = newSong(); unpick(); setScreen('practice'); loadText(text); showLink(true); showEditor(true); src.focus(); });
@@ -584,7 +578,7 @@ $('shareBtn').onclick = async () => {
   const version = openSong.versionSlug();
   const root = new URL(import.meta.env.BASE_URL, location.origin).href;
   // Only the build writes the per-song pages.
-  const path = bundledPath(picked);
+  const path = bundledPath(workspace.picked);
   if (path === null) return;
   const url = import.meta.env.DEV ? `${root}?${new URLSearchParams({ song: songSlug(path), ...version && { version } })}` : shareUrl(root, path, version);
   try {
@@ -648,7 +642,7 @@ const draft = storedDraft ? { ...storedDraft, picked: resolvePick(storedDraft.pi
 const requested = linked ? bundledRef(linked) : initialQuery.get('view') === 'practice' && initialNavigation && isSavedRef(initialNavigation.picked) && library().some(s => savedRef(s.title) === initialNavigation.picked) ? initialNavigation.picked : null;
 const recover = draft && (draft.text !== draft.base || !requested || draft.picked === requested);
 if (recover) {
-  picked = draft.picked; src.value = draft.text; draftSession.recover(draft);
+  workspace.restore(draft.picked); src.value = draft.text; draftSession.recover(draft);
   update(true); showDirtyState();
   if (requested && draft.picked !== requested) replaceCurrent(() => { loadPickedSong(requested); chooseVersionNamed(link.get('version')); });
   else if (linked) chooseVersionNamed(link.get('version'));
@@ -657,14 +651,14 @@ if (recover) {
   chooseVersionNamed(link.get('version'));
 } else if (lastText) {
   const pickedText = songbook.text(lastPick);
-  picked = pickedText === undefined ? '' : lastPick;
+  workspace.restore(pickedText === undefined ? '' : lastPick);
   loadText(lastText); draftSession.accept(pickedText ?? lastText); persistDraft();
 } else {
-  picked = songbook.firstBundled(family);
-  loadText(songbook.text(picked) ?? '');
+  workspace.restore(songbook.firstBundled(workspace.family));
+  loadText(songbook.text(workspace.picked) ?? '');
 }
 showFamily();
-setScreen(screen);
+setScreen(workspace.screen);
 showLink();
 
 enhanceDropdowns();
