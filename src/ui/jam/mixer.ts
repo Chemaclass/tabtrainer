@@ -2,18 +2,11 @@ import { MIXER_PARTS, type Mixer, type MixerPart } from '../../app/jam';
 import { mixSummary } from '../../app/jamSummary';
 import { isFamily } from '../../core/instruments';
 import type { LoopEngine } from '../../audio/loopEngine';
-import { byId, fillRange } from '../dom';
+import { byId, fillRange, textSpan } from '../dom';
 
 const PART_NAMES: Record<MixerPart, string> = { drums: 'Drums', bass: 'Bass', keys: 'Keys' };
 
 interface MixerRow { part: MixerPart; element: HTMLDivElement; mute: HTMLButtonElement; volume: HTMLInputElement }
-
-function partName(part: MixerPart): HTMLSpanElement {
-  const name = document.createElement('span');
-  name.className = 'jam-mixer-part';
-  name.textContent = PART_NAMES[part];
-  return name;
-}
 
 function volumeSlider(part: MixerPart): HTMLInputElement {
   const volume = document.createElement('input');
@@ -27,12 +20,9 @@ function volumeSlider(part: MixerPart): HTMLInputElement {
 
 function muteButton(part: MixerPart): HTMLButtonElement {
   const mute = document.createElement('button');
-  const hidden = document.createElement('span');
   mute.type = 'button';
   mute.className = 'toggle jam-mute';
-  hidden.className = 'sr-only';
-  hidden.textContent = ` ${PART_NAMES[part].toLowerCase()}`;
-  mute.append('Mute', hidden);
+  mute.append('Mute', textSpan('sr-only', ` ${PART_NAMES[part].toLowerCase()}`));
   return mute;
 }
 
@@ -70,7 +60,7 @@ export function mixerView(mixer: Mixer, engine: Pick<LoopEngine, 'setPartGain' |
       mixer.setVolume(part, +volume.value);
       show();
     };
-    element.append(partName(part), volume, mute);
+    element.append(textSpan('jam-mixer-part', PART_NAMES[part]), volume, mute);
     return { part, element, mute, volume };
   }
 

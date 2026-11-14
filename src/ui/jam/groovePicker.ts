@@ -1,5 +1,5 @@
 import type { BundledGroove, Jam } from '../../app/jam';
-import { byId } from '../dom';
+import { byId, textSpan } from '../dom';
 
 interface GrooveOption { slug: string; link: HTMLAnchorElement }
 
@@ -13,13 +13,6 @@ function isPlainClick(event: MouseEvent): boolean {
 function grooveHref(slug: string): string {
   const query = new URLSearchParams({ view: 'jam', groove: slug });
   return `?${query}`;
-}
-
-function textSpan(className: string, text: string): HTMLSpanElement {
-  const span = document.createElement('span');
-  span.className = className;
-  span.textContent = text;
-  return span;
 }
 
 function grooveLink({ slug, groove }: BundledGroove): HTMLAnchorElement {
@@ -53,7 +46,7 @@ export function groovePicker(jam: Jam, choose: (slug: string) => void) {
   menu.addEventListener('keydown', moveFocus);
   picker.addEventListener('keydown', closeWithEscape);
   picker.addEventListener('focusout', closeWhenFocusLeaves);
-  document.addEventListener('click', closeWhenClickedOutside);
+  document.addEventListener('pointerdown', closeWhenPressedOutside);
 
   function isOpen(): boolean {
     return !menu.hidden;
@@ -131,7 +124,7 @@ export function groovePicker(jam: Jam, choose: (slug: string) => void) {
     close();
   }
 
-  function closeWhenClickedOutside(event: MouseEvent) {
+  function closeWhenPressedOutside(event: PointerEvent) {
     const target = event.target;
     if (target instanceof Node && picker.contains(target)) return;
     close();

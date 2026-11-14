@@ -1,10 +1,10 @@
 import { JAM_SWING, type Jam } from '../../app/jam';
-import { PROGRESSION_CHOICES, grooveContext, grooveSummary, progressionName } from '../../app/jamSummary';
+import { PROGRESSION_CHOICES, SUMMARY_SEPARATOR, grooveContext, grooveSummary, progressionName } from '../../app/jamSummary';
 import { playbackShortcut } from '../../app/playbackShortcut';
 import { pref, setPref } from '../../app/storage';
 import type { LoopEngine } from '../../audio/loopEngine';
 import type { GrooveBar } from '../../core/grooveTimeline';
-import { byId, fillRange } from '../dom';
+import { byId, fillRange, textSpan } from '../dom';
 import { setSelectValue } from '../shell/dropdown';
 import { groovePicker } from './groovePicker';
 
@@ -18,26 +18,13 @@ interface JamViewHandlers {
 
 const COUNT_IN_BAR = 'bar';
 const COUNT_IN_OFF = 'off';
-const STRAIGHT = 'Straight';
-const TRIPLET = 'Triplet';
 
-function swingText(swing: number): string {
-  if (swing === JAM_SWING.min) return STRAIGHT;
-  if (swing === JAM_SWING.max) return TRIPLET;
-  return `${swing}%`;
-}
+interface SwingTexts { shown: string; spoken: string }
 
-function swingValueText(swing: number): string {
-  const text = swingText(swing);
-  if (text === STRAIGHT || text === TRIPLET) return text;
-  return `${swing}% swing`;
-}
-
-function hiddenText(text: string): HTMLSpanElement {
-  const span = document.createElement('span');
-  span.className = 'sr-only';
-  span.textContent = text;
-  return span;
+function swingTexts(swing: number): SwingTexts {
+  if (swing === JAM_SWING.min) return { shown: 'Straight', spoken: 'Straight' };
+  if (swing === JAM_SWING.max) return { shown: 'Triplet', spoken: 'Triplet' };
+  return { shown: `${swing}%`, spoken: `${swing}% swing` };
 }
 
 function barItem({ bar, chord }: GrooveBar): HTMLLIElement {
@@ -45,7 +32,7 @@ function barItem({ bar, chord }: GrooveBar): HTMLLIElement {
   const number = document.createElement('span');
   const name = document.createElement('span');
   number.className = 'jam-bar-no';
-  number.append(hiddenText('Bar '), String(bar + 1), hiddenText(': '));
+  number.append(textSpan('sr-only', 'Bar '), String(bar + 1), textSpan('sr-only', ': '));
   name.className = 'jam-chord';
   name.textContent = chord.name;
   item.append(number, name);
@@ -124,6 +111,7 @@ export function jamView(jam: Jam, engine: LoopEngine, { active, choose, changed,
   function changeTempo() {
     if (jam.setTempo(+tempo.value)) engine.setTempo(jam.tempo);
     showTempo();
+    showSummary();
   }
 
   function changeKey() {
@@ -170,14 +158,14 @@ export function jamView(jam: Jam, engine: LoopEngine, { active, choose, changed,
     tempoOut.textContent = `${jam.tempo} bpm`;
     tempo.setAttribute('aria-valuetext', `${jam.tempo} beats per minute`);
     bpm.textContent = String(jam.tempo);
-    showSummary();
   }
 
   function showSwing() {
     swing.value = String(jam.swing);
     fillRange(swing);
-    swingOut.textContent = swingText(jam.swing);
-    swing.setAttribute('aria-valuetext', swingValueText(jam.swing));
+    const texts = swingTexts(jam.swing);
+    swingOut.textContent = texts.shown;
+    swing.setAttribute('aria-valuetext', texts.spoken);
   }
 
   function showKeys() {
@@ -205,11 +193,16 @@ export function jamView(jam: Jam, engine: LoopEngine, { active, choose, changed,
     bars.children[current ?? -1]?.setAttribute('aria-current', 'true');
   }
 
+  function showContext(barCount: number) {
+    const key = textSpan('jam-context-key', jam.key);
+    context.replaceChildren(grooveContext(jam.groove.genre, barCount), SUMMARY_SEPARATOR, key);
+  }
+
   function showChords() {
     const timeline = jam.timeline();
     engine.setTimeline(timeline);
     showBars(timeline.bars);
-    context.textContent = grooveContext(jam.groove.genre, timeline.bars.length, jam.key);
+    showContext(timeline.bars.length);
     showSummary();
   }
 

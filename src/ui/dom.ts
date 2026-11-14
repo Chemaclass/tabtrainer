@@ -18,4 +18,11 @@ export function one(selector: string, type: ElementType<HTMLElement> = HTMLEleme
   return checked(document.querySelector(selector), selector, type);
 }
 
+export function textSpan(className: string, text: string): HTMLSpanElement {
+  const span = document.createElement('span');
+  span.className = className;
+  span.textContent = text;
+  return span;
+}
+
 export const fillRange = (range: HTMLInputElement) => range.style.setProperty('--fill', `${((+range.value - +range.min) / (+range.max - +range.min)) * 100}%`);

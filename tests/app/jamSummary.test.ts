@@ -22,12 +22,12 @@ describe('progression names', () => {
 });
 
 describe('groove context', () => {
-  it('joins genre, bar count and key', () => {
-    expect(grooveContext('blues', 12, 'A')).toBe('blues · 12 bars · A');
+  it('joins genre and bar count', () => {
+    expect(grooveContext('blues', 12)).toBe('blues · 12 bars');
   });
 
   it('counts a single bar and skips a missing genre', () => {
-    expect(grooveContext('', 1, 'Em')).toBe('1 bar · Em');
+    expect(grooveContext('', 1)).toBe('1 bar');
   });
 });
 

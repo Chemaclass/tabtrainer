@@ -1,4 +1,3 @@
-.jam-view{--jam-play-height:56px}
 .jam{--jam-panel-width:360px;--jam-bar-columns:6}
 .jam-stage{display:flex;flex-direction:column;gap:32px;width:100%;max-width:1200px;min-width:0;margin-inline:auto;padding:40px 48px}
 .jam-stage .tip{margin:0}
@@ -6,6 +5,7 @@
 .jam-head{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:end;gap:0 32px}
 .jam-heading{min-width:0}
 .jam-context{margin:0 0 8px;font-size:12px;font-weight:600;line-height:16px;letter-spacing:.08em;text-transform:uppercase;color:var(--mut)}
+.jam-context-key{text-transform:none}
 .jam-heading h1{margin:0;font:800 48px/52px var(--display);letter-spacing:-.025em}
 .jam-about{grid-column:1/-1;max-width:64ch;margin:12px 0 0;font-size:15px;line-height:22px;color:var(--mut)}
 
@@ -27,7 +27,7 @@
 .jam-bpm{display:flex;flex-direction:column;align-items:flex-end;gap:2px;margin:0}
 .jam-bpm-value{font:600 28px/32px var(--mono)}
 .jam-bpm-unit{font-size:12px;line-height:16px;color:var(--mut)}
-.jam-play{display:flex;align-items:center;justify-content:center;gap:10px;min-width:132px;height:var(--jam-play-height);padding:0 28px;border:2px solid var(--ink);border-radius:calc(var(--jam-play-height) / 2);background:var(--ink);color:var(--page);font:600 17px/22px var(--ui)}
+.jam-play{display:flex;align-items:center;justify-content:center;gap:10px;min-width:132px;height:var(--jam-play-height,56px);padding:0 28px;border:2px solid var(--ink);border-radius:calc(var(--jam-play-height,56px) / 2);background:var(--ink);color:var(--page);font:600 17px/22px var(--ui)}
 .jam-play:hover{opacity:.88}
 .jam-play.on{background:var(--page);color:var(--ink)}
 .jam-play-icon{width:14px;height:16px;background:currentColor;clip-path:polygon(0 0,100% 50%,0 100%)}
@@ -104,7 +104,8 @@ fieldset.jam-plays{display:flex;align-items:center;gap:8px;min-width:0;margin:0;
 
 @media(max-width:1023px){
   .jam{--jam-bar-columns:4}
-  body.jam-view{--jam-play-height:52px;--jam-transport-padding:12px;--jam-transport-height:calc(var(--jam-play-height) + 2 * var(--jam-transport-padding) + 1px);padding-bottom:calc(var(--jam-transport-height) + env(safe-area-inset-bottom))}
+  html:has(body.jam-view){--jam-play-height:52px;--jam-transport-padding:12px;--jam-transport-height:calc(var(--jam-play-height) + 2 * var(--jam-transport-padding) + 1px);scroll-padding-bottom:calc(var(--jam-transport-height) + env(safe-area-inset-bottom))}
+  body.jam-view{padding-bottom:calc(var(--jam-transport-height) + env(safe-area-inset-bottom))}
   .jam-stage{padding:28px 24px}
   .jam-transport{position:fixed;z-index:7;right:0;bottom:0;left:0;gap:12px;padding:var(--jam-transport-padding) max(16px,env(safe-area-inset-right)) calc(var(--jam-transport-padding) + env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left));background:var(--page);border-top:1px solid var(--rule)}
   .jam-bpm{align-items:center}
