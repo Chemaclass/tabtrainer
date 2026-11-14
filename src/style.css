@@ -88,6 +88,7 @@ dialog code{font:13px var(--mono)}
 dialog table{border-collapse:collapse;width:100%}
 dialog td{padding:7px 8px;border-bottom:1px solid var(--rule);vertical-align:top}
 dialog td:first-child{white-space:nowrap}
+dialog .groove-syntax td:first-child{white-space:normal;min-width:9ch}
 dialog .close{float:right}
 dialog .muted{color:var(--mut)}
 @media (min-width:600px){

@@ -81,7 +81,7 @@ bass:  1 - 3 - 5 - 6 - | b7 - 6 - 5 - 3 -
 | --- | --- |
 | `genre:` | the style shown in the groove list, such as `blues`, `rock`, `reggae` or `funk` |
 | `about:` | one line on what the groove practises, shown under the title |
-| `swing:` | how late the off beat notes land: `50` is straight, `66` is a triplet, up to `75`. The Jam screen starts from this value |
+| `swing:` | how late the off beat notes land: `50` is straight, `66` is a triplet, up to `75`. The Jam screen starts from this value, and its swing slider stops at the triplet |
 | `progression:` | the chords the groove plays by default. The Jam screen can swap them for another progression |
 | `I7 iv bVII` | one chord per bar as a roman numeral: upper case is major, lower case is minor, `b` or `#` shifts it. Numerals count from the major scale of the key's root, so a minor key uses `i iv v bIII bVI bVII` |
 | `7 maj7 m7 m7b5 dim sus4 5` | chord qualities after the numeral |

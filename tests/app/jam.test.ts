@@ -3,7 +3,7 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { JAM_SWING, Jam, MIXER_PARTS, Mixer, bundledGrooves, grooveSlug, jamKeys } from '../../src/app/jam';
 import { parseGroove } from '../../src/core/groove';
 
-const files = Object.fromEntries(readdirSync('src/grooves').map(name => [`./grooves/${name}`, readFileSync(`src/grooves/${name}`, 'utf8')]));
+const files = Object.fromEntries(readdirSync('src/grooves').filter(name => name.endsWith('.txt')).map(name => [`./grooves/${name}`, readFileSync(`src/grooves/${name}`, 'utf8')]));
 const minor = { './grooves/02-minor-vamp.txt': 'title: Minor vamp\ntempo: 100\nkey: Bbm\nprogression: i iv\nkick: x...' };
 
 let stored: Map<string, string>;

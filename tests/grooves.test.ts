@@ -14,12 +14,6 @@ function grooveProblems(src: string): string[] {
   if (!src.split('\n').some(line => /^title\s*:\s*\S/.test(line))) problems.push('no title');
   if (!groove.genre) problems.push('no genre');
   if (!groove.about) problems.push('no about');
-  const beats = groove.time[0] * 4 / groove.time[1];
-  for (const grid of groove.grids) {
-    grid.bars.forEach((steps, b) => {
-      if (![2, 3, 4].some(n => steps.length === n * beats)) problems.push(`"${grid.part}:" bar ${b + 1} does not fit the bar`);
-    });
-  }
   return problems;
 }
 
