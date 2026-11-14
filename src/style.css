@@ -1,7 +1,7 @@
 :root{
   --page:#fff;--ink:#111;--mut:#5c5c5c;--faint:#8a8a8a;--rule:#e4e4e4;--wash:#f4f4f4;--hover:#ececec;
-  --deck:#141414;--deck-line:#2a2a2a;--deck-raise:#262626;--deck-text:#b8b8b8;--deck-dim:#8a8a8a;--deck-hi:#f2f2f2;
-  --led:#ffb020;--playing:#e0312b;--error:#c42820;--cur:#fff6e0;--ok:#2e9e5b;
+  --deck:#f7f7f7;--deck-line:#d9d9d9;--deck-raise:#fff;--deck-text:#3d3d3d;--deck-dim:#6b6b6b;--deck-hi:#111;
+  --led:#ffb020;--led-text:#8a5a00;--playing:#e0312b;--error:#c42820;--cur:#fff6e0;--ok:#2e9e5b;
   --ui:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;--display:"Inter Tight",var(--ui);
   --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
   --control-border:#8a8a8a;--control-hover:#5c5c5c;
@@ -12,7 +12,7 @@
   --page:#0f0f0f;--ink:#f2f2f2;--mut:#a3a3a3;--faint:#7a7a7a;--rule:#2a2a2a;--wash:#161616;--hover:#222;
   --control-border:#686868;--control-hover:#a3a3a3;
   --select-arrow:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 14 14'%3E%3Cpath d='m3 5 4 4 4-4' fill='none' stroke='%23b8b8b8' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
-  --deck:#000;--deck-line:#262626;--cur:#3a2e12;--error:#ff5a52;color-scheme:dark;
+  --deck:#000;--deck-line:#262626;--deck-raise:#262626;--deck-text:#b8b8b8;--deck-dim:#8a8a8a;--deck-hi:#f2f2f2;--led-text:var(--led);--cur:#3a2e12;--error:#ff5a52;color-scheme:dark;
 }
 *{box-sizing:border-box}
 body{margin:0;background:var(--page);color:var(--ink);font:400 14px/20px var(--ui);padding-bottom:calc(var(--deck-h) + var(--continuation-h,0px));-webkit-font-smoothing:antialiased;-webkit-text-size-adjust:100%;touch-action:manipulation}

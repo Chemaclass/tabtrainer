@@ -64,7 +64,7 @@ body:not(.library-view) .library-nav,body:not(.library-view) .dropdown:has([data
 .recent-panel h3{font:800 26px/30px var(--display);letter-spacing:-.02em;margin:0 0 14px;overflow-wrap:anywhere}
 .recent-panel p{font-size:14px;line-height:22px;color:var(--mut);margin:0 0 12px}
 #recentAbout{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
-.primary{display:flex;align-items:center;justify-content:center;min-height:46px;background:var(--led);color:var(--deck);font-weight:600;padding:10px 16px}
+.primary{display:flex;align-items:center;justify-content:center;min-height:46px;background:var(--led);color:#111;font-weight:600;padding:10px 16px}
 #resumeBtn{width:100%;margin-top:18px}
 .primary:hover{filter:brightness(.96)}
 #otherRecent{display:flex;flex-direction:column;gap:4px}

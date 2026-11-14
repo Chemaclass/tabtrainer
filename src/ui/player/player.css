@@ -1,5 +1,6 @@
-.player :focus-visible,.player .pill:has(input:focus-visible){outline-color:var(--led)}
-.player{--control-border:#707070;--control-hover:#b8b8b8;--select-arrow:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 14 14'%3E%3Cpath d='m3 5 4 4 4-4' fill='none' stroke='%23b8b8b8' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");color-scheme:dark;position:fixed;left:0;right:0;bottom:var(--continuation-h,0px);z-index:6;display:flex;gap:10px 12px;align-items:center;padding:8px max(12px,env(safe-area-inset-right)) calc(8px + env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left));background:var(--deck);color:var(--deck-text);flex-wrap:wrap}
+[data-theme=dark] .player{--control-border:#707070;--control-hover:#b8b8b8;--select-arrow:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 14 14'%3E%3Cpath d='m3 5 4 4 4-4' fill='none' stroke='%23b8b8b8' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");color-scheme:dark}
+.player :focus-visible,.player .pill:has(input:focus-visible){outline-color:var(--led-text)}
+.player{position:fixed;left:0;right:0;bottom:var(--continuation-h,0px);z-index:6;display:flex;gap:10px 12px;align-items:center;padding:8px max(12px,env(safe-area-inset-right)) calc(8px + env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left));background:var(--deck);color:var(--deck-text);flex-wrap:wrap}
 .player .lbl{color:var(--deck-dim);font-size:10px;letter-spacing:.1em}
 .transport{display:flex;align-items:center;gap:10px}
 .play{width:48px;height:48px;border-radius:24px;background:var(--led);padding:0;display:grid;place-items:center}
@@ -10,7 +11,7 @@
 .stop span{width:11px;height:11px;border-radius:2px;background:var(--deck-text)}
 .stop:hover{background:var(--deck-raise)}
 .readout{display:flex;flex-direction:column;gap:2px}
-.led{font:600 20px/24px var(--mono);color:var(--led);white-space:nowrap}
+.led{font:600 20px/24px var(--mono);color:var(--led-text);white-space:nowrap}
 .led b{font-weight:600;display:inline-block;min-width:2ch;text-align:right}
 .led small{font-size:13px;color:var(--deck-dim)}
 .speed{display:flex;flex-direction:column;gap:4px;flex:1;min-width:60px}
@@ -36,19 +37,19 @@ input[type=range]::-moz-range-thumb{width:var(--thumb);height:var(--thumb);borde
 .pill{display:flex;align-items:center;gap:8px;height:40px;padding:0 14px;border:1px solid var(--deck-line);border-radius:20px;font:500 13px var(--ui);color:var(--deck-text);cursor:pointer;user-select:none;white-space:nowrap}
 .pill input{position:absolute;opacity:0;pointer-events:none}
 .pill:hover{background:var(--deck-raise)}
-.pill:has(input:checked){border-color:var(--led);color:var(--led)}
-.pill.dot::before{content:"";width:7px;height:7px;border-radius:4px;background:#4a4a4a}
+.pill:has(input:checked){border-color:var(--led-text);color:var(--led-text)}
+.pill.dot::before{content:"";width:7px;height:7px;border-radius:4px;background:var(--control-border)}
 .pill.dot:has(input:checked),.pill.dot.on{border-color:var(--deck-raise);background:var(--deck-raise);color:var(--deck-hi)}
 .pill.dot:has(input:checked)::before,.pill.dot.on::before{background:var(--led)}
 .scroll{display:flex;align-items:center;gap:6px 10px;flex:1;min-width:200px;flex-wrap:wrap;max-width:340px}
 .scroll input[type=range]{flex:1;min-width:70px}
 .speed-presets{display:flex;gap:4px}
 .speed-presets button{color:var(--deck-text);padding:4px 8px;font-size:12px;min-height:32px}
-.speed-presets button[aria-pressed=true]{background:var(--deck-raise);color:var(--led)}
+.speed-presets button[aria-pressed=true]{background:var(--deck-raise);color:var(--led-text)}
 .scroll select{background-color:var(--deck-raise);color:var(--deck-hi);min-height:44px;max-width:100%}
 #scrollHelp{flex-basis:100%;font-size:12px;line-height:16px;color:var(--deck-text)}
 #scrollRate:not([hidden]){display:flex;align-items:center;gap:10px;width:100%;font-size:12px}
-[data-theme=dark] .player{border-top:1px solid var(--deck-line)}
+.player{border-top:1px solid var(--deck-line)}
 @media(min-width:600px){
   .player{gap:12px 20px;padding:10px 20px}
   .speed{min-width:160px;max-width:260px}
@@ -85,7 +86,7 @@ input[type=range]::-moz-range-thumb{width:var(--thumb);height:var(--thumb);borde
 
 .playback-status{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
 .player-badges{position:absolute;bottom:100%;left:12px;right:12px;display:flex;flex-direction:column;align-items:flex-start;pointer-events:none}
-.count-in-display{max-width:100%;padding:8px 12px;border-radius:8px 8px 0 0;background:var(--deck);font:600 14px var(--mono);color:var(--led)}
+.count-in-display{max-width:100%;padding:8px 12px;border-radius:8px 8px 0 0;background:var(--deck);font:600 14px var(--mono);color:var(--led-text)}
 .count-in-display[hidden]{display:none}
 .timing,.speed-practice{position:relative;font-size:13px}
 .timing summary,.speed-practice summary{display:flex;align-items:center;min-height:44px;padding:0 14px;border:1px solid var(--deck-line);border-radius:22px;cursor:pointer;list-style:none}
@@ -103,8 +104,8 @@ input[type=range]::-moz-range-thumb{width:var(--thumb);height:var(--thumb);borde
 .speed-practice-controls label:not(.pill){align-self:center;color:var(--deck-text)}
 .speed-practice-controls input[type=number]{width:72px;min-height:44px;padding:6px;border:1px solid var(--control-border);border-radius:5px;background:var(--deck-raise);color:var(--deck-hi);font:600 16px var(--mono)}
 .speed-practice-controls p{font-size:12px;line-height:1.4}
-#speedPracticeError{color:#ffb4a8}
-.speed-practice-progress{max-width:100%;padding:8px 12px;border-radius:8px 8px 0 0;background:var(--deck);font:600 13px var(--mono);color:var(--led);overflow-wrap:anywhere}
+#speedPracticeError{color:var(--error)}
+.speed-practice-progress{max-width:100%;padding:8px 12px;border-radius:8px 8px 0 0;background:var(--deck);font:600 13px var(--mono);color:var(--led-text);overflow-wrap:anywhere}
 .speed-practice-progress[hidden]{display:none}
 
 .speed-practice-controls .pill:has(input:disabled){opacity:.6;cursor:not-allowed}
