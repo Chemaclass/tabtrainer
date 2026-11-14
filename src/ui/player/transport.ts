@@ -21,5 +21,6 @@ export function transport(player: Player, onStop: () => void) {
     },
     showPlayButton,
     showBar(bar: number | null) { barNumber.textContent = bar ? String(bar) : '–'; },
+    showBarTotal(count: number) { byId('barTotal').textContent = String(count || '–'); },
   };
 }

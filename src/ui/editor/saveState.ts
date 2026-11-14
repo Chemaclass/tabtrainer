@@ -3,7 +3,7 @@ import type { Workspace } from '../../app/workspace';
 import { bundledPath } from '../../app/songRef';
 import { byId, one } from '../dom';
 
-export function saveState(draftSession: DraftSession, workspace: Workspace, onDownload: () => void) {
+export function saveState(draftSession: DraftSession, workspace: Workspace, onDownload: () => void, onReturn: () => void) {
   const feedback = byId('saveFeedback'), recover = byId('recoverDownload');
   const hasChanges = () => draftSession.hasChanges();
   // The link opens the bundled song, so it would drop unsaved edits.
@@ -20,5 +20,6 @@ export function saveState(draftSession: DraftSession, workspace: Workspace, onDo
     recover.hidden = !offerDownload; show();
   }
   recover.onclick = onDownload;
+  byId('returnDraftBtn').onclick = onReturn;
   return { show, showShare, announce };
 }

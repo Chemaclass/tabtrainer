@@ -1,9 +1,11 @@
 import { pref, setPref } from '../../app/storage';
 import type { Player } from '../../audio/player';
-import { byId, fillRange } from '../dom';
+import { closeOnOutside } from '../shell/disclosure';
+import { byId, fillRange, one } from '../dom';
 import { setSelectValue } from '../shell/dropdown';
 
 export function timingPanel(player: Player) {
+  closeOnOutside(one('.timing', HTMLDetailsElement));
   const metronome = byId('metronomeChk', HTMLInputElement);
   const countIn = byId('countInSelect', HTMLSelectElement);
   const clickVolume = byId('clickVolume', HTMLInputElement);

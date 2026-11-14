@@ -1,9 +1,11 @@
 import { isSpeedPracticeConfig } from '../../core/speedPractice';
 import { pref, setPref } from '../../app/storage';
 import type { Player } from '../../audio/player';
-import { byId } from '../dom';
+import { closeOnOutside } from '../shell/disclosure';
+import { byId, one } from '../dom';
 
 export function speedPracticePanel(player: Player, canLoop: () => boolean, onSpeedChange: () => void) {
+  closeOnOutside(one('.speed-practice', HTMLDetailsElement));
   const enabled = byId('speedPracticeChk', HTMLInputElement);
   const repetitions = byId('speedPracticeRepetitions', HTMLInputElement);
   const increase = byId('speedPracticeIncrease', HTMLInputElement);

@@ -1,0 +1,15 @@
+import '@fontsource/inter/latin-400.css';
+import '@fontsource/inter/latin-500.css';
+import '@fontsource/inter/latin-600.css';
+import '@fontsource/inter/latin-ext-400.css';
+import '@fontsource/inter/latin-ext-500.css';
+import '@fontsource/inter/latin-ext-600.css';
+import '@fontsource/inter-tight/latin-800.css';
+import '@fontsource/inter-tight/latin-ext-800.css';
+import '@fontsource/jetbrains-mono/latin-400.css';
+import '@fontsource/jetbrains-mono/latin-600.css';
+import './style.css';
+import './ui/library/library.css';
+import './ui/practice/practice.css';
+import './ui/player/player.css';
+import './ui/shell/dropdown.css';
