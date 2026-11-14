@@ -4,10 +4,10 @@ import { OWN_PROGRESSION, isMinorProgression, keyTonic, presetProgression, type 
 import { isFamily, type Family } from '../core/instruments';
 import { fittingScales, isScaleId, type ScaleId } from '../core/scales';
 import { isMinorKey } from '../core/theory';
-import { grooveSlug, type JamSetup } from './jamLink';
-import { pref, setPref, type JamChoice } from './storage';
+import { grooveSlug, mineGrooveSlug, type JamSetup } from './jamLink';
+import { pref, setPref, type JamChoice, type Saved } from './storage';
 
-export interface BundledGroove { slug: string; groove: Groove }
+export interface JamGroove { slug: string; groove: Groove; text: string; mine: boolean }
 
 export const JAM_TEMPO = { min: 40, max: 220 } as const;
 export const JAM_SWING = { min: 50, max: 66 } as const;
@@ -15,11 +15,46 @@ const MAJOR_KEYS: readonly string[] = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'F#', 'G'
 const MINOR_KEYS: readonly string[] = ['Cm', 'C#m', 'Dm', 'Ebm', 'Em', 'Fm', 'F#m', 'Gm', 'G#m', 'Am', 'Bbm', 'Bm'];
 const BLUESY_GENRES: ReadonlySet<string> = new Set(['blues', 'rock']);
 
-export function bundledGrooves(files: Record<string, string>): BundledGroove[] {
-  return Object.keys(files).sort().map(path => ({ slug: grooveSlug(path), groove: parseGroove(files[path]).groove }));
+export const NEW_GROOVE_TEXT = `title: My groove
+genre: rock
+tempo: 100
+key: E
+time: 4/4
+progression: I IV V IV
+kit: rock
+
+hat:   xxxxxxxx
+snare: ..X...X.
+kick:  X...X.x.
+keys:  X-..X-..
+bass:  1 - 1 - 5 - 8 -
+`;
+
+export function bundledGrooves(files: Record<string, string>): JamGroove[] {
+  return Object.keys(files).sort().map(path => {
+    const text = files[path];
+    return { slug: grooveSlug(path), groove: parseGroove(text).groove, text, mine: false };
+  });
 }
 
-function byGenre(grooves: readonly BundledGroove[]): BundledGroove[] {
+function mineGroove({ title, text }: Saved): JamGroove {
+  const { groove } = parseGroove(text);
+  return { slug: mineGrooveSlug(title), groove, text, mine: true };
+}
+
+/** A groove plays only when it parses without a single issue, so a half typed line never reaches the speakers. */
+export function playableGroove(text: string) {
+  const { groove, issues } = parseGroove(text);
+  const playable = issues.length ? null : groove;
+  return { playable, issues };
+}
+
+function progressionText(groove: Groove): string {
+  const names = groove.progression.map(numeral => numeral.text);
+  return names.join(' ');
+}
+
+function byGenre(grooves: readonly JamGroove[]): JamGroove[] {
   const genres = [...new Set(grooves.map(g => g.groove.genre))];
   return genres.flatMap(genre => grooves.filter(g => g.groove.genre === genre));
 }
@@ -41,23 +76,30 @@ const clamp = (value: number, { min, max }: NumberRange) => Math.round(Math.min(
 const isFiniteNumber = (value: unknown): value is number => typeof value === 'number' && Number.isFinite(value);
 
 export class Jam {
-  private grooves: readonly BundledGroove[];
-  private index = 0;
+  private bundled: readonly JamGroove[];
+  private grooves: readonly JamGroove[];
+  private current: JamGroove;
+  private draft: Groove | null = null;
   private chosenKey = '';
   private chosenTempo = 0;
   private chosenProgression = OWN_PROGRESSION;
   private chosenSwing: number = JAM_SWING.min;
   private chosenScale: ScaleId | null = null;
 
-  constructor(grooves: readonly BundledGroove[]) {
-    if (!grooves.length) throw new Error('No bundled grooves');
-    this.grooves = byGenre(grooves);
+  constructor(bundled: readonly JamGroove[], private saved: () => readonly Saved[] = () => []) {
+    if (!bundled.length) throw new Error('No bundled grooves');
+    this.bundled = byGenre(bundled);
+    this.grooves = this.withMine();
+    this.current = this.grooves[0];
     this.load();
   }
 
-  get list(): readonly BundledGroove[] { return this.grooves; }
-  get slug() { return this.grooves[this.index].slug; }
-  get groove() { return this.grooves[this.index].groove; }
+  get list(): readonly JamGroove[] { return this.grooves; }
+  get entry(): JamGroove { return this.current; }
+  get slug() { return this.current.slug; }
+  /** The groove being written while there is a playable draft, otherwise the chosen one. */
+  get groove() { return this.draft ?? this.current.groove; }
+  get previewing() { return this.draft !== null; }
   get key() { return this.chosenKey; }
   get tempo() { return this.chosenTempo; }
   get progression() { return this.chosenProgression; }
@@ -82,9 +124,44 @@ export class Jam {
   }
 
   choose(slug: string): boolean {
-    const index = this.grooves.findIndex(g => g.slug === slug);
-    if (index < 0 || index === this.index) return false;
-    this.index = index;
+    const found = this.find(slug);
+    if (!found || found === this.current) return false;
+    this.current = found;
+    this.load();
+    return true;
+  }
+
+  /** Reads the saved grooves again after one is saved or deleted. */
+  refreshMine() {
+    this.grooves = this.withMine();
+    const kept = this.find(this.current.slug);
+    if (kept) {
+      this.current = kept;
+      return;
+    }
+    this.current = this.grooves[0];
+    this.load();
+  }
+
+  /** Plays a draft in place of the chosen groove, following each header the player changes. */
+  preview(groove: Groove) {
+    const before = this.groove;
+    this.draft = groove;
+    this.followChangedHeaders(before, groove);
+  }
+
+  /** Makes a just saved draft the chosen groove, keeping and remembering the setup it plays with. */
+  keepDraftAs(slug: string): boolean {
+    const saved = this.find(slug);
+    if (!saved) return false;
+    this.current = saved;
+    this.draft = null;
+    this.save();
+    return true;
+  }
+
+  endPreview(): boolean {
+    if (!this.draft) return false;
     this.load();
     return true;
   }
@@ -146,6 +223,23 @@ export class Jam {
     return buildGrooveTimeline({ ...this.groove, progression: this.chords(), swing: this.chosenSwing }, this.chosenKey);
   }
 
+  private find(slug: string): JamGroove | undefined {
+    return this.grooves.find(entry => entry.slug === slug);
+  }
+
+  private withMine(): JamGroove[] {
+    const mine = this.saved().map(mineGroove);
+    return [...this.bundled, ...mine];
+  }
+
+  private followChangedHeaders(before: Groove, after: Groove) {
+    if (progressionText(after) !== progressionText(before)) this.chosenProgression = OWN_PROGRESSION;
+    const wantedKey = after.key === before.key ? this.chosenKey : after.key;
+    this.chosenKey = jamKey(this.keys, wantedKey, after.key);
+    if (after.tempo !== before.tempo) this.chosenTempo = clamp(after.tempo, JAM_TEMPO);
+    if (after.swing !== before.swing) this.chosenSwing = clamp(after.swing, JAM_SWING);
+  }
+
   /** The offered key on the same tonic, so a shared "C#" opens as "Db" where the list spells it so. */
   private keyWithTonicOf(key: string): string {
     return keyOnTonic(this.keys, keyTonic(key)) ?? key;
@@ -162,6 +256,7 @@ export class Jam {
   }
 
   private load() {
+    this.draft = null;
     const { key, tempo, progression, swing, scale } = this.savedChoice();
     const { groove } = this;
     const isOffered = typeof progression === 'string' && presetProgression(progression, groove.progression);
@@ -173,6 +268,8 @@ export class Jam {
   }
 
   private save() {
+    // A draft is not saved yet, so its choices would land on the groove it replaces
+    if (this.draft) return;
     const choice = { ...this.setup, scale: this.chosenScale ?? undefined };
     setPref('jam', { ...pref('jam', {}), [this.slug]: choice });
   }

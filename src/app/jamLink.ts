@@ -1,6 +1,10 @@
 export interface JamSetup { key?: string; tempo?: number; progression?: string; swing?: number }
 
 const SETUP_PARAMS = ['key', 'tempo', 'progression', 'swing'] as const;
+const MINE_PREFIX = 'mine:';
+
+export const mineGrooveSlug = (title: string) => MINE_PREFIX + title;
+export const mineGrooveTitle = (slug: string) => slug.slice(MINE_PREFIX.length);
 
 export function grooveSlug(path: string): string {
   const fileName = path.split('/').pop() ?? '';

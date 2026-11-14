@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { DraftSession } from '../../src/app/draftSession';
+import { savedGrooves } from '../../src/app/storage';
 
 afterEach(() => vi.unstubAllGlobals());
 function draft() {
@@ -43,6 +44,17 @@ describe('draft session', () => {
     expect(cancel).toHaveBeenCalledOnce(); expect(action).not.toHaveBeenCalled();
     session.replace(action, cancel, vi.fn()); session.resolve('save', () => true, vi.fn());
     expect(action).toHaveBeenCalledOnce();
+  });
+  it('saves into the store it was given, such as the saved grooves', () => {
+    const values = new Map<string, string>();
+    vi.stubGlobal('localStorage', { getItem: (key: string) => values.get(key) ?? null, setItem: (key: string, value: string) => values.set(key, value) });
+    const session = new DraftSession(() => 'title: Groove\nkick: x...', savedGrooves);
+    const confirm = vi.fn(() => true);
+    expect(session.save(confirm)).toEqual({ status: 'saved', title: 'Groove' });
+    expect(session.save(confirm)).toEqual({ status: 'saved', title: 'Groove' });
+    expect(confirm).toHaveBeenCalledOnce();
+    expect(savedGrooves.list().map(groove => groove.title)).toEqual(['Groove']);
+    expect(values.has('tabtrainer:library')).toBe(false);
   });
   it('invalidates pending file reads when another navigation starts', () => {
     const { session } = draft(); const generation = session.beginNavigation();

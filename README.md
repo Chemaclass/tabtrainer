@@ -16,9 +16,9 @@ TabTrainer is a free web app with no account and no server. Your songs stay in y
 - **Start anywhere:** select a note or bar, then press Play. `Space` pauses and resumes. Stop goes back to your selection.
 - **Follow along:** the playing note turns red, and the page scrolls with it. Press `S` for continuous scrolling at your own speed.
 - **Editor:** write songs in plain text and see the score update as you type. Errors name their line.
-- **Jam:** improvise over a looping groove of drums, bass and keys in blues, rock, reggae or funk. Pick the key, tempo, chord progression and swing, and mute the part you play. Count in one bar before the loop starts, and share a link that opens the groove with your setup.
+- **Jam:** improvise over a looping groove of drums, bass and keys in blues, rock, reggae or funk. Pick the key, tempo, chord progression and swing, and mute the part you play. Count in one bar before the loop starts, and share a link that opens the groove with your setup. Write your own grooves in the text format below, hear them as you type, and save them in your browser under Mine.
 - **Fretboard:** see where the notes of any key and scale sit on your bass or guitar, as note names or degrees. Pick a mood, such as sad or dreamy, to get a scale and progressions that carry it.
-- **Your files:** download a song as `.txt` to share it or move it to another device.
+- **Your files:** download a song or groove as `.txt` to share it or move it to another device, and open it again.
 
 ## Song format
 
@@ -59,6 +59,8 @@ time: 4/4
 ## Groove format
 
 A groove is a backing loop to improvise over. Bundled grooves live in `src/grooves/`. The headers work like the song format; then each part gets one line of steps.
+
+In Jam, My grooves has Edit text, New and Open file. The groove text opens above the chords. While every line reads cleanly, the loop plays what you type from the next bar; while a line has a problem, the list names its line and the last working version keeps playing. Save keeps the groove in this browser under Mine in the groove list. Download saves it as a `.txt` file, and Delete removes a saved groove after asking.
 
 ```text
 title: My shuffle

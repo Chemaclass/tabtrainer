@@ -1,4 +1,4 @@
-import type { BundledGroove, Jam } from '../../app/jam';
+import type { Jam, JamGroove } from '../../app/jam';
 import { byId, textSpan } from '../dom';
 
 interface GrooveOption { slug: string; link: HTMLAnchorElement }
@@ -15,7 +15,7 @@ function grooveHref(slug: string): string {
   return `?${query}`;
 }
 
-function grooveLink({ slug, groove }: BundledGroove): HTMLAnchorElement {
+function grooveLink({ slug, groove }: JamGroove): HTMLAnchorElement {
   const link = document.createElement('a');
   link.className = 'jam-groove';
   link.href = grooveHref(slug);
@@ -37,16 +37,34 @@ export function groovePicker(jam: Jam, choose: (slug: string) => void) {
   const picker = byId('jamPicker');
   const button = byId('jamPickerButton', HTMLButtonElement);
   const menu = byId('jamGrooves');
-  const options: GrooveOption[] = jam.list.map(entry => ({ slug: entry.slug, link: grooveLink(entry) }));
-  byId('jamGrooveList', HTMLUListElement).replaceChildren(...options.map(option => listItem(option.link)));
+  const bundledList = byId('jamGrooveList', HTMLUListElement);
+  const mineList = byId('jamMineList', HTMLUListElement);
+  const mineEmpty = byId('jamMineEmpty');
+  let options: GrooveOption[] = [];
 
-  for (const option of options) option.link.addEventListener('click', event => pick(event, option.slug));
   button.addEventListener('click', toggle);
   button.addEventListener('keydown', openWithArrow);
   menu.addEventListener('keydown', moveFocus);
   picker.addEventListener('keydown', closeWithEscape);
   picker.addEventListener('focusout', closeWhenFocusLeaves);
   document.addEventListener('pointerdown', closeWhenPressedOutside);
+
+  function optionFor(entry: JamGroove): GrooveOption {
+    const link = grooveLink(entry);
+    link.addEventListener('click', event => pick(event, entry.slug));
+    return { slug: entry.slug, link };
+  }
+
+  /** Lists every groove again, after one of mine is saved or deleted. */
+  function fill() {
+    const bundledOptions = jam.list.filter(entry => !entry.mine).map(optionFor);
+    const mineOptions = jam.list.filter(entry => entry.mine).map(optionFor);
+    options = [...bundledOptions, ...mineOptions];
+    bundledList.replaceChildren(...bundledOptions.map(option => listItem(option.link)));
+    mineList.replaceChildren(...mineOptions.map(option => listItem(option.link)));
+    mineEmpty.hidden = mineOptions.length > 0;
+    show();
+  }
 
   function isOpen(): boolean {
     return !menu.hidden;
@@ -137,6 +155,6 @@ export function groovePicker(jam: Jam, choose: (slug: string) => void) {
     }
   }
 
-  show();
-  return { show };
+  fill();
+  return { show, fill };
 }
