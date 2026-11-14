@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { SCALES, isScaleId, rootName, scaleById, scaleChords, scaleNotes, scaleTitle, type ScaleId } from '../../src/core/scales';
 import { parseNumeral } from '../../src/core/harmony';
+import { scaleStepName } from '../../src/core/theory';
 
 const names = (root: number, id: ScaleId) => scaleNotes(root, id).map(n => n.name);
 
@@ -40,6 +41,27 @@ describe('scale notes', () => {
     expect(names(7, 'mixolydian')).toEqual(['G', 'A', 'B', 'C', 'D', 'E', 'F']);
     expect(names(4, 'mixolydian')).toEqual(['E', 'F#', 'G#', 'A', 'B', 'C#', 'D']);
     expect(names(4, 'major-pentatonic')).toEqual(['E', 'F#', 'G#', 'B', 'C#']);
+  });
+  it('spells each step from its letter in sharp keys', () => {
+    expect(names(6, 'major')).toEqual(['F#', 'G#', 'A#', 'B', 'C#', 'D#', 'E#']);
+    expect(names(3, 'minor')).toEqual(['D#', 'E#', 'F#', 'G#', 'A#', 'B', 'C#']);
+    expect(names(1, 'mixolydian')).toEqual(['C#', 'D#', 'E#', 'F#', 'G#', 'A#', 'B']);
+    expect(names(8, 'dorian')).toEqual(['G#', 'A#', 'B', 'C#', 'D#', 'E#', 'F#']);
+    expect(names(6, 'major-pentatonic')).toEqual(['F#', 'G#', 'A#', 'C#', 'D#']);
+  });
+  it('spells C# major with B# through the shared step speller', () => {
+    expect([0, 2, 4, 5, 7, 9, 11].map((interval, step) => scaleStepName(1 + interval, 'C#', step)))
+      .toEqual(['C#', 'D#', 'E#', 'F#', 'G#', 'A#', 'B#']);
+  });
+  it('uses each letter once and never mixes sharps with flats, for every root and scale', () => {
+    for (const scale of SCALES) {
+      for (let root = 0; root < 12; root++) {
+        const spelled = names(root, scale.id);
+        const accidentals = new Set(spelled.map(n => n.slice(1)).filter(Boolean));
+        expect(accidentals.size, `${root} ${scale.id}: ${spelled}`).toBeLessThanOrEqual(1);
+        if (scale.intervals.length === 7) expect(new Set(spelled.map(n => n[0])).size, `${root} ${scale.id}: ${spelled}`).toBe(7);
+      }
+    }
   });
   it('always spells the added blues note as a flat', () => {
     expect(names(9, 'blues')).toEqual(['A', 'C', 'D', 'Eb', 'E', 'G']);
@@ -85,6 +107,8 @@ describe('scale chords', () => {
   });
   it('spells chords with the scale spelling', () => {
     expect(chordNames(3, 'major')).toEqual(['Eb', 'Fm', 'Gm', 'Ab', 'Bb', 'Cm', 'Ddim']);
+    expect(chordNames(6, 'major')).toEqual(['F#', 'G#m', 'A#m', 'B', 'C#', 'D#m', 'E#dim']);
+    expect(chordNames(6, 'major', true)[6]).toBe('E#m7b5');
   });
   it('uses the parent scale for pentatonic and blues', () => {
     expect(chordNames(9, 'minor-pentatonic')).toEqual(chordNames(9, 'minor'));

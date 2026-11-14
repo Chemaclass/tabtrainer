@@ -1,5 +1,5 @@
 import { QUALITIES, type Quality } from './harmony';
-import { pitchClass, spellPitchClass } from './theory';
+import { pitchClass, scaleStepName, spellPitchClass } from './theory';
 
 export type ScaleId = 'major' | 'minor' | 'major-pentatonic' | 'minor-pentatonic' | 'blues' | 'dorian' | 'mixolydian';
 
@@ -41,15 +41,18 @@ export function scaleById(id: ScaleId): Scale {
 
 export const usesFlats = (root: number, scale: Scale) => FLAT_PARENTS.has(pitchClass(root + scale.parent));
 
+export const rootName = (root: number, id: ScaleId) => spellPitchClass(root, usesFlats(root, scaleById(id)));
+
+const degreeStep = (degree: string) => Number(degree.replace(/^[b#]/, '')) - 1;
+
 export function scaleNotes(root: number, id: ScaleId): ScaleNote[] {
-  const scale = scaleById(id), flats = usesFlats(root, scale);
+  const scale = scaleById(id), key = rootName(root, id);
   return scale.intervals.map((interval, index) => {
-    const pc = pitchClass(root + interval);
-    return { pitchClass: pc, name: spellPitchClass(pc, flats || !!scale.flatIntervals?.includes(interval)), degree: scale.degrees[index], root: interval === 0 };
+    const pc = pitchClass(root + interval), degree = scale.degrees[index];
+    const name = scale.flatIntervals?.includes(interval) ? spellPitchClass(pc, true) : scaleStepName(pc, key, degreeStep(degree));
+    return { pitchClass: pc, name, degree, root: interval === 0 };
   });
 }
-
-export const rootName = (root: number, id: ScaleId) => spellPitchClass(root, usesFlats(root, scaleById(id)));
 
 export const scaleTitle = (root: number, id: ScaleId) => `${rootName(root, id)} ${scaleById(id).title}`;
 
