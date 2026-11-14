@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { readdirSync } from 'node:fs';
-import { FAMILIES, INSTRUMENTS, customInstrument, familyOf } from '../src/core/instruments';
+import { FAMILIES, INSTRUMENTS, customInstrument, familyOf } from '../../src/core/instruments';
 
 // folders only: agnostic-ai writes an ignored AGENTS.md into src/songs
 const dirs = (p: string) => readdirSync(p, { withFileTypes: true }).filter(d => d.isDirectory()).map(d => d.name);

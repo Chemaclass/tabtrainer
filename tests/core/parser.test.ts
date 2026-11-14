@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { parseSong, parseDuration } from '../src/core/parser';
-import { serializeSong } from '../src/core/serialize';
-import { buildTimeline } from '../src/core/timeline';
-import { PPQ } from '../src/core/model';
+import { parseSong, parseDuration } from '../../src/core/parser';
+import { serializeSong } from '../../src/core/serialize';
+import { buildTimeline } from '../../src/core/timeline';
+import { PPQ } from '../../src/core/model';
 
 const SRC = `title: Test
 about: Root notes in quarters

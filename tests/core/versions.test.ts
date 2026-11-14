@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { parseSong } from '../src/core/parser';
-import { serializeSong } from '../src/core/serialize';
-import { withVersion } from '../src/core/model';
-import { buildTimeline } from '../src/core/timeline';
+import { parseSong } from '../../src/core/parser';
+import { serializeSong } from '../../src/core/serialize';
+import { withVersion } from '../../src/core/model';
+import { buildTimeline } from '../../src/core/timeline';
 
 const SRC = `title: Two ways
 instrument: bass4

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { sharePage, sitemap, songMeta } from '../src/build/sharePages';
-import { shareUrl } from '../src/app/songLink';
+import { sharePage, sitemap, songMeta } from '../../src/build/sharePages';
+import { shareUrl } from '../../src/app/songLink';
 
 const site = 'https://example.com/tabtrainer/';
 const path = './songs/bass/songs/01-ode-to-joy.txt';

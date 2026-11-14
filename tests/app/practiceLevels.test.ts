@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { hasPracticeLevels } from '../src/app/practiceLevels';
+import { hasPracticeLevels } from '../../src/app/practiceLevels';
 
 describe('practice levels', () => {
   it('recognizes the ordered progressive levels', () => {

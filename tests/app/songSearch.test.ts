@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { searchSongs, type SongEntry } from '../src/app/songSearch';
+import { searchSongs, type SongEntry } from '../../src/app/songSearch';
 
 const song = (title: string, artist = ''): SongEntry => ({ value: title, title, artist, family: 'bass' });
 const songs = [song('A Dawning', 'Ólafur Arnalds, Talos'), song('Ode to Joy', 'Ludwig van Beethoven'), song('Rock Eighths')];

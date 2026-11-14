@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { Player } from '../src/audio/player';
+import { Player } from '../../src/audio/player';
 
 const loaded = () => {
   const p = new Player();

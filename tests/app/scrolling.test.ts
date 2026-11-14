@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { AutoScroller } from '../src/app/scrolling';
+import { AutoScroller } from '../../src/app/scrolling';
 
 const setup = () => {
   const frames = new Map<number, FrameRequestCallback>();

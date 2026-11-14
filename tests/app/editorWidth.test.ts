@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { editorWidth } from '../src/app/editorWidth';
+import { editorWidth } from '../../src/app/editorWidth';
 
 describe('editor width', () => {
   it('keeps enough room for both the editor and score', () => {

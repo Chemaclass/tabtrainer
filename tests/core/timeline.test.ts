@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
-import { parseSong } from '../src/core/parser';
-import { buildTimeline, onsetAt, onsetsOf } from '../src/core/timeline';
+import { parseSong } from '../../src/core/parser';
+import { buildTimeline, onsetAt, onsetsOf } from '../../src/core/timeline';
 
 const onsetsFor = (file: string) => onsetsOf(buildTimeline(parseSong(readFileSync(file, 'utf8')).song).notes);
 

@@ -5,7 +5,7 @@ A static web app for practising bass and guitar from tab and notation. TypeScrip
 ## Commands
 
 - `npm run dev` serves http://localhost:5173/tabtrainer/
-- `npm test` runs the Vitest suite in `tests/`
+- `npm test` runs the Vitest suite in `tests/`, one folder per `src/` folder
 - `npm run lint` runs ESLint
 - `npm run typecheck`, then `npm run build` for the production build in `dist/`
 

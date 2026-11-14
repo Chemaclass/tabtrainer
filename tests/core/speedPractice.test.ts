@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { advanceSpeedPractice, isSpeedPracticeConfig } from '../src/core/speedPractice';
+import { advanceSpeedPractice, isSpeedPracticeConfig } from '../../src/core/speedPractice';
 
 describe('speed practice rules', () => {
   it('advances only after the configured repetitions and clamps at the target', () => {

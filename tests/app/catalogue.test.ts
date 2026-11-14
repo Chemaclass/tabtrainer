@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { catalogueMatches, categoryCounts, difficultyLabel, nextExercise, recentEntries, type CatalogueEntry } from '../src/app/catalogue';
+import { catalogueMatches, categoryCounts, difficultyLabel, nextExercise, recentEntries, type CatalogueEntry } from '../../src/app/catalogue';
 
 const entry = (value: string, kind: CatalogueEntry['kind'] = 'exercises', family = 'bass'): CatalogueEntry => ({ value, title: value, artist: '', kind, family, tempo: 90, versions: 1, levels: ['easy'] });
 const entries = [entry('Open strings'), { ...entry('Scale'), about: 'One finger per fret', levels: ['medium', 'hard'] }, entry('Song', 'songs'), entry('Saved', 'mine'), entry('Guitar exercise', 'exercises', 'guitar')];

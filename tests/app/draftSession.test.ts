@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { DraftSession } from '../src/app/draftSession';
+import { DraftSession } from '../../src/app/draftSession';
 
 afterEach(() => vi.unstubAllGlobals());
 function draft() {
