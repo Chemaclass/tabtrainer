@@ -17,7 +17,7 @@ TabTrainer is a free web app with no account and no server. Your songs stay in y
 - **Follow along:** the playing note turns red, and the page scrolls with it. Press `S` for continuous scrolling at your own speed.
 - **Editor:** write songs in plain text and see the score update as you type. Errors name their line.
 - **Jam:** improvise over a looping groove of drums, bass and keys in blues, rock, reggae or funk. Pick the key, tempo, chord progression and swing, and mute the part you play. Count in one bar before the loop starts, and share a link that opens the groove with your setup.
-- **Fretboard:** see where the notes of any key and scale sit on your bass or guitar, as note names or degrees.
+- **Fretboard:** see where the notes of any key and scale sit on your bass or guitar, as note names or degrees. Pick a mood, such as sad or dreamy, to get a scale and progressions that carry it.
 - **Your files:** download a song as `.txt` to share it or move it to another device.
 
 ## Song format

@@ -34,7 +34,7 @@
 .fretboard-svg .fb-mark[data-dimmed][data-role] :is(circle,rect){fill:var(--page);stroke:var(--mut);stroke-width:1.5;stroke-dasharray:3 3}
 .fretboard-svg .fb-mark[data-dimmed][data-role] text{fill:var(--mut);font-weight:400}
 .fretboard-section{margin:0 0 16px}
-.fretboard-progressions .fretboard-hint{margin:0}
+.fretboard-mood-why{flex-basis:100%;margin:0}
 .fretboard-section h3{margin:0 0 8px}
 .fretboard-progressions{display:grid;gap:10px}
 .fretboard-progression{display:flex;flex-wrap:wrap;align-items:center;gap:4px 12px}

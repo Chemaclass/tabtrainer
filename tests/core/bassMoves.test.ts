@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { isMoveId, moveShapes, placeMove, type MoveId, type Walk } from '../../src/core/bassMoves';
+import { hasFlatFifth, hasSharpFifth, isMoveId, moveShapes, placeMove, type MoveId, type Walk } from '../../src/core/bassMoves';
 import { INSTRUMENTS } from '../../src/core/instruments';
 
 const A = 9, C = 0, D = 2, E = 4;
-const MINOR = { intervals: [0, 3, 7] }, MAJOR = { intervals: [0, 4, 7] }, DOM7 = { intervals: [0, 4, 7, 10] }, HALF_DIM = { intervals: [0, 3, 6, 10] };
+const MINOR = { intervals: [0, 3, 7] }, MAJOR = { intervals: [0, 4, 7] }, DOM7 = { intervals: [0, 4, 7, 10] }, HALF_DIM = { intervals: [0, 3, 6, 10] }, AUG = { intervals: [0, 4, 8] };
 const A_MINOR = [9, 11, 0, 2, 4, 5, 7];
 const amToDm: Walk = { from: A, to: D, scale: A_MINOR };
 
@@ -21,6 +21,12 @@ describe('move shapes', () => {
   });
   it('keeps the flat fifth of a half diminished chord', () => {
     expect(moveShapes('root-fifth', HALF_DIM, null)).toEqual([[0, 6]]);
+    expect(hasFlatFifth(HALF_DIM)).toBe(true);
+  });
+  it('keeps the sharp fifth of an augmented chord', () => {
+    expect(moveShapes('root-fifth', AUG, null)).toEqual([[0, 8]]);
+    expect(hasSharpFifth(AUG)).toBe(true);
+    expect(hasSharpFifth(MAJOR)).toBe(false);
   });
   it('walks to the nearer copy of the next root first', () => {
     expect(moveShapes('approach-below', MINOR, amToDm)).toEqual([[0, 4, 5], [0, -8, -7]]);

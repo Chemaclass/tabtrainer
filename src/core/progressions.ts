@@ -1,8 +1,9 @@
 import { PROGRESSION_PRESETS, chordAt, numerals, presetProgression, type Chord, type Numeral } from './harmony';
+import { MOODS, type Mood } from './moods';
 import { rootName, scaleById, scaleNotes, type ScaleChord, type ScaleId, type ScaleNote } from './scales';
 import { degreeName, isKey, letterName } from './theory';
 
-type Family = 'major' | 'minor' | 'blues';
+type Family = 'major' | 'minor' | 'blues' | 'mixolydian';
 
 interface ProgressionEntry { slug: string; name: string; bars: string }
 
@@ -28,6 +29,7 @@ const PROGRESSIONS: Record<Family, readonly ProgressionEntry[]> = {
     { slug: 'minor-ii-v-i', name: 'ii m7b5 V7 i', bars: 'iim7b5 V7 i' },
   ],
   blues: [jamPreset('12-bar-blues')],
+  mixolydian: [{ slug: 'mixolydian-i-bvii-iv', name: 'I bVII IV', bars: 'I bVII IV' }],
 };
 
 const SCALE_FAMILIES: Partial<Record<ScaleId, Family>> = {
@@ -36,17 +38,29 @@ const SCALE_FAMILIES: Partial<Record<ScaleId, Family>> = {
   minor: 'minor',
   'minor-pentatonic': 'minor',
   blues: 'blues',
+  mixolydian: 'mixolydian',
 };
 
-const ALL_ENTRIES = Object.values(PROGRESSIONS).flat();
+const FAMILY_ENTRIES = Object.values(PROGRESSIONS).flat();
+
+const moodSlug = (mood: Mood, bars: string) => `${mood.id}-${bars.toLowerCase().replaceAll(' ', '-')}`;
+
+/** A mood progression the scale families already list keeps that entry, so it shows once under one name. */
+function moodEntry(mood: Mood, bars: string): ProgressionEntry {
+  const known = FAMILY_ENTRIES.find(entry => entry.bars === bars);
+  if (known) return known;
+  return { slug: moodSlug(mood, bars), name: bars, bars };
+}
+
+const moodEntries = (mood: Mood) => mood.progressions.map(bars => moodEntry(mood, bars));
+
+const ALL_ENTRIES = [...FAMILY_ENTRIES, ...MOODS.flatMap(moodEntries)];
 
 export const MOST_BARS = Math.max(...ALL_ENTRIES.map(entry => entry.bars.split(' ').length));
 
 const SLUGS = new Set(ALL_ENTRIES.map(entry => entry.slug));
 
 export const isProgressionSlug = (value: unknown): value is string => typeof value === 'string' && SLUGS.has(value);
-
-export const hasProgressions = (id: ScaleId) => id in SCALE_FAMILIES;
 
 export interface ProgressionChord extends ScaleChord { bar: number }
 
@@ -85,13 +99,29 @@ function progressionChord(numeral: Numeral, chord: Chord, bar: number, scaleRoot
   };
 }
 
-export function progressions(root: number, id: ScaleId): Progression[] {
+function uniqueBySlug(entries: readonly ProgressionEntry[]): ProgressionEntry[] {
+  const seen = new Set<string>();
+  return entries.filter(entry => {
+    if (seen.has(entry.slug)) return false;
+    seen.add(entry.slug);
+    return true;
+  });
+}
+
+/** The picked mood's progressions first, then the scale family's, then those of every other mood on the scale. */
+function entriesFor(id: ScaleId, mood: Mood | null): ProgressionEntry[] {
+  const picked = mood ? moodEntries(mood) : [];
   const family = SCALE_FAMILIES[id];
-  if (!family) return [];
+  const familyEntries = family ? PROGRESSIONS[family] : [];
+  const moodsOnScale = MOODS.filter(m => m.scale === id).flatMap(moodEntries);
+  return uniqueBySlug([...picked, ...familyEntries, ...moodsOnScale]);
+}
+
+export function progressions(root: number, id: ScaleId, mood: Mood | null = null): Progression[] {
   const key = progressionKey(root, id);
   const scaleRootName = rootName(root, id);
   const scale = scaleNotes(root, scaleById(id).chordsFrom ?? id);
-  return PROGRESSIONS[family].map(({ slug, name, bars }) => {
+  return entriesFor(id, mood).map(({ slug, name, bars }) => {
     const progression = numerals(bars);
     const chords = progression.map((numeral, bar) => progressionChord(numeral, chordAt(progression, key, bar), bar, scaleRootName, scale));
     return { slug, name, chords };
