@@ -10,7 +10,7 @@ function event(overrides: Partial<KeyboardEvent> = {}) {
 }
 
 function target(selector: string) {
-  return { closest: (selectors: string) => selectors.includes(selector) ? {} : null } as unknown as EventTarget;
+  return { closest: (selectors: string) => selectors.split(', ').includes(selector) ? {} : null } as unknown as EventTarget;
 }
 
 describe('playback shortcut', () => {
@@ -39,12 +39,23 @@ describe('playback shortcut', () => {
   it('leaves native controls and nested editable targets alone', () => {
     const play = vi.fn();
     const shortcut = playbackShortcut(() => true, () => false, play, vi.fn());
-    for (const selector of ['input', 'select', 'textarea', '[contenteditable]', 'dialog', 'summary', '.file-menu', '[role="menu"]', '[role="menuitem"]', '[role="combobox"]', '[role="listbox"]', '[role="option"]', '[role="separator"]']) {
+    for (const selector of ['button', '[role="checkbox"]', '[role="radio"]', '[role="switch"]', '[role="slider"]', 'input', 'select', 'textarea', '[contenteditable]', 'dialog', 'summary', '.file-menu', '[role="menu"]', '[role="menuitem"]', '[role="combobox"]', '[role="listbox"]', '[role="option"]', '[role="separator"]']) {
       const down = event({ target: target(selector) });
       shortcut.keydown(down);
       expect(down.preventDefault).not.toHaveBeenCalled();
     }
     expect(play).not.toHaveBeenCalled();
+  });
+
+  it('plays from the page body or a non interactive element', () => {
+    const play = vi.fn();
+    const shortcut = playbackShortcut(() => true, () => false, play, vi.fn());
+    for (const focused of [target('body'), target('h1'), target('svg'), target('[role="button"]')]) {
+      const down = event({ target: focused });
+      shortcut.keydown(down); shortcut.keyup(event());
+      expect(down.preventDefault).toHaveBeenCalledOnce();
+    }
+    expect(play).toHaveBeenCalledTimes(4);
   });
 
   it('ignores modifiers, composition, unclaimed repeats and other screens', () => {

@@ -15,7 +15,7 @@ interface ShortcutEvent {
   stopPropagation(): void;
 }
 
-const nativeControls = 'input, select, textarea, [contenteditable], dialog, summary, .file-menu, [role="menu"], [role="menuitem"], [role="menuitemcheckbox"], [role="menuitemradio"], [role="combobox"], [role="listbox"], [role="option"], [role="separator"]';
+const nativeControls = 'button, input, select, textarea, [contenteditable], dialog, summary, .file-menu, [role="menu"], [role="menuitem"], [role="menuitemcheckbox"], [role="menuitemradio"], [role="checkbox"], [role="radio"], [role="switch"], [role="slider"], [role="combobox"], [role="listbox"], [role="option"], [role="separator"]';
 
 function hasNativeSpace(target: EventTarget | null): boolean {
   if (!target || !('closest' in target) || typeof target.closest !== 'function') return false;
