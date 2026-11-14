@@ -145,38 +145,65 @@
     </aside>
   </main>
   <main id="jamScreen" class="jam" aria-labelledby="jamTitle" hidden>
-    <div class="jam-intro"><div id="jamContext" class="library-context">Jam</div><h1 id="jamTitle" tabindex="-1"></h1><p id="jamAbout"></p><div class="jam-share"><button id="jamShare" class="ghost" title="Copy a link that opens this groove with its key, tempo and progression">Copy link</button><span id="jamShareStatus" class="jam-share-status" role="status" aria-live="polite"></span></div></div>
-    <nav class="jam-grooves" aria-labelledby="jamGroovesTitle"><h2 id="jamGroovesTitle" class="jam-bars-title">Grooves</h2><ul id="jamGrooves" class="jam-groove-list"></ul></nav>
-    <div class="jam-controls">
-      <button id="jamPlay" class="primary jam-play" title="Play or stop (Space)">Play</button>
-      <div class="jam-tempo"><div class="jam-tempo-head"><label for="jamTempo">Tempo</label><output id="jamTempoOut" for="jamTempo"></output></div><input id="jamTempo" type="range" min="40" max="220" step="1" /></div>
-      <div class="jam-key"><label for="jamKey">Key</label><select id="jamKey"></select></div>
-      <div class="jam-key"><label for="jamProgression">Progression</label><select id="jamProgression"></select></div>
-      <div class="jam-tempo"><div class="jam-tempo-head"><label for="jamSwing">Swing</label><output id="jamSwingOut" for="jamSwing"></output></div><input id="jamSwing" type="range" min="50" max="66" step="1" /></div>
-      <div class="jam-key"><label for="jamCountIn">Count-in</label><select id="jamCountIn"><option value="off">Off</option><option value="bar">One bar</option></select></div>
+    <div class="jam-stage">
+      <div class="jam-head">
+        <div class="jam-heading">
+          <p id="jamContext" class="jam-context">Jam</p>
+          <div id="jamPicker" class="jam-picker">
+            <h1 id="jamTitle" tabindex="-1"><button id="jamPickerButton" class="jam-picker-button" type="button" aria-expanded="false" aria-controls="jamGrooves" aria-describedby="jamPickerHint"><span id="jamTitleText"></span><svg class="jam-picker-chevron" viewBox="0 0 22 22" aria-hidden="true"><path d="M5 8l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button></h1>
+            <span id="jamPickerHint" hidden>Choose another groove</span>
+            <nav id="jamGrooves" class="jam-grooves" aria-label="Grooves" hidden><ul id="jamGrooveList" class="jam-groove-list"></ul></nav>
+          </div>
+        </div>
+        <div class="jam-transport">
+          <p class="jam-bpm"><span id="jamBpm" class="jam-bpm-value"></span> <span class="jam-bpm-unit">bpm</span></p>
+          <button id="jamPlay" class="jam-play" type="button" title="Play or stop (Space)"><span class="jam-play-icon" aria-hidden="true"></span><span id="jamPlayLabel">Play</span></button>
+        </div>
+        <p id="jamAbout" class="jam-about"></p>
+      </div>
+      <h2 id="jamBarsTitle" class="sr-only">Chords</h2>
+      <ol id="jamBars" class="jam-bars" aria-labelledby="jamBarsTitle"></ol>
+      <section class="jam-fretboard" aria-labelledby="jamFretboardTitle">
+        <h2 id="jamFretboardTitle" class="sr-only">Fretboard</h2>
+        <div class="jam-fretboard-head">
+          <p class="jam-now"><span id="jamFretboardChord" aria-live="polite"></span><span class="jam-now-details"> · <span id="jamFretboardNext"></span> · <span id="jamFretboardScale"></span></span></p>
+          <div class="jam-fretboard-controls">
+            <div class="jam-field jam-field-inline"><label for="jamScale">Scale</label><select id="jamScale"></select></div>
+            <div id="jamStringsField" class="jam-field jam-field-inline"><label for="jamStrings">Bass</label><select id="jamStrings"><option value="bass4">4 strings</option><option value="bass5">5 strings</option><option value="bass6">6 strings</option></select></div>
+            <button id="jamDegrees" class="toggle" type="button" aria-pressed="false">Show degrees</button>
+          </div>
+        </div>
+        <div id="jamFretboardBoard" class="fretboard-board" tabindex="0" role="region" aria-label="Fretboard, scrolls sideways"></div>
+      </section>
+      <p class="tip">Play along in any position you like. The outlined bar is the one you hear.<span class="keys"> <kbd>Space</kbd> plays or stops.</span></p>
     </div>
-    <h2 id="jamBarsTitle" class="jam-bars-title">Chords</h2>
-    <ol id="jamBars" class="jam-bars" aria-labelledby="jamBarsTitle"></ol>
-    <section class="jam-fretboard" aria-labelledby="jamFretboardTitle">
-      <h2 id="jamFretboardTitle" class="jam-bars-title">Fretboard</h2>
-      <div class="jam-fretboard-controls">
-        <div class="jam-key"><label for="jamScale">Scale</label><select id="jamScale"></select></div>
-        <div id="jamStringsField" class="jam-key"><label for="jamStrings">Bass</label><select id="jamStrings"><option value="bass4">4 strings</option><option value="bass5">5 strings</option><option value="bass6">6 strings</option></select></div>
-        <button id="jamDegrees" class="toggle" aria-pressed="false">Show degrees</button>
-      </div>
-      <p id="jamFretboardChord" class="jam-fretboard-chord" aria-live="polite"></p>
-      <p class="jam-fretboard-details"><span id="jamFretboardNext"></span>. <span id="jamFretboardScale"></span>.</p>
-      <div id="jamFretboardBoard" class="fretboard-board" tabindex="0" role="region" aria-label="Fretboard, scrolls sideways"></div>
-    </section>
-    <section class="jam-mixer" aria-labelledby="jamMixerTitle">
-      <div class="jam-mixer-head">
-        <h2 id="jamMixerTitle" class="jam-bars-title">Mixer</h2>
-        <fieldset class="jam-plays"><legend>I play</legend><label><input type="radio" name="jamPlays" value="bass" /><span>Bass</span></label><label><input type="radio" name="jamPlays" value="guitar" /><span>Guitar</span></label></fieldset>
-        <button id="jamRoom" type="button" class="toggle jam-room">Drum room</button>
-      </div>
-      <div id="jamMixer" class="jam-mixer-rows"></div>
-    </section>
-    <p class="tip">Play along in any position you like. The outlined bar is the one you hear.<span class="keys"> <kbd>Space</kbd> plays or stops.</span></p>
+    <aside class="jam-panel" aria-label="Jam settings">
+      <section class="jam-section" aria-labelledby="jamGrooveHeading">
+        <h2 id="jamGrooveHeading" class="jam-section-heading"><span class="jam-section-title">Groove</span><button class="jam-section-toggle" type="button" aria-expanded="false" aria-controls="jamGrooveBody"><span class="jam-section-name">Groove</span><span id="jamGrooveSummary" class="jam-section-summary"></span></button></h2>
+        <div id="jamGrooveBody" class="jam-section-body">
+          <div class="jam-field-pair">
+            <div class="jam-field"><label for="jamKey">Key</label><select id="jamKey"></select></div>
+            <div class="jam-field"><label for="jamCountIn">Count-in</label><select id="jamCountIn"><option value="off">Off</option><option value="bar">One bar</option></select></div>
+          </div>
+          <div class="jam-field"><label for="jamProgression">Progression</label><select id="jamProgression"></select></div>
+          <div class="jam-field"><div class="jam-field-head"><label for="jamTempo">Tempo</label><output id="jamTempoOut" for="jamTempo"></output></div><input id="jamTempo" type="range" min="40" max="220" step="1" /></div>
+          <div class="jam-field"><div class="jam-field-head"><label for="jamSwing">Swing</label><output id="jamSwingOut" for="jamSwing"></output></div><input id="jamSwing" type="range" min="50" max="66" step="1" /></div>
+        </div>
+      </section>
+      <section class="jam-section" aria-labelledby="jamMixHeading">
+        <h2 id="jamMixHeading" class="jam-section-heading"><span class="jam-section-title">Mix</span><button class="jam-section-toggle" type="button" aria-expanded="false" aria-controls="jamMixBody"><span class="jam-section-name">Mix</span><span id="jamMixSummary" class="jam-section-summary"></span></button></h2>
+        <div id="jamMixBody" class="jam-section-body">
+          <fieldset class="jam-plays"><legend>I play</legend><div class="jam-plays-options"><label><input type="radio" name="jamPlays" value="bass" /><span>Bass</span></label><label><input type="radio" name="jamPlays" value="guitar" /><span>Guitar</span></label></div></fieldset>
+          <div id="jamMixer" class="jam-mixer-rows"></div>
+          <button id="jamRoom" type="button" class="jam-room">Drum room</button>
+        </div>
+      </section>
+      <section class="jam-section jam-share" aria-labelledby="jamShareHeading">
+        <h2 id="jamShareHeading" class="jam-section-heading">Share</h2>
+        <div class="jam-share-row"><p id="jamShareHint" class="jam-share-hint">Key, tempo, chords and swing</p><button id="jamShare" class="jam-share-button" type="button" aria-describedby="jamShareHint" title="Copy a link that opens this groove with its key, tempo and progression">Copy link</button></div>
+        <p id="jamShareStatus" class="jam-share-status" role="status" aria-live="polite"></p>
+      </section>
+    </aside>
   </main>
   <footer class="site-footer"><a href="./">What is TabTrainer?</a> Free and open source. Made by <a href="https://chemaclass.com" target="_blank" rel="noopener">Chemaclass</a> · <a href="https://github.com/Chemaclass/tabtrainer" target="_blank" rel="noopener">Source code on GitHub</a></footer>
   <div id="practiceScreen" hidden>
