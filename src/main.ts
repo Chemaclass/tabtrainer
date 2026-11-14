@@ -38,7 +38,9 @@ import { theme } from './ui/shell/theme';
 import { closeOnOutside } from './ui/shell/disclosure';
 import { publishHeight } from './ui/shell/layoutMetrics';
 import { libraryView } from './ui/library/libraryView';
-import { categoryCounts, isLibraryKind, nextExercise, type CatalogueEntry, type LibraryKind } from './app/catalogue';
+import { libraryNav } from './ui/library/libraryNav';
+import { practiceNav } from './ui/practice/practiceNav';
+import { categoryCounts, nextExercise, type CatalogueEntry, type LibraryKind } from './app/catalogue';
 import { dismissHelpOnBackdrop } from './ui/shell/helpDialogs';
 import { byId, one } from './ui/dom';
 import { scrollControls } from './ui/player/scrollControls';
@@ -65,7 +67,6 @@ const passage = new Passage();
 const passagePlayback = new PassagePlayback(player, passage);
 const draftSession = new DraftSession(() => src.value);
 const saveView = saveState(draftSession, workspace, () => files.download());
-let continuationDismissed = false;
 const score = scoreView({
   redraw: draw,
   onBar: selectBar,
@@ -74,6 +75,8 @@ const score = scoreView({
 });
 
 const header = songHeader(chooseVersion);
+const libraryTabs = libraryNav(kind => showLibrary(kind));
+const practiceView = practiceNav(kind => showLibrary(kind), pickSong);
 
 // ---------- song list ----------
 
@@ -122,22 +125,16 @@ function showLibrary(kind: LibraryKind = workspace.kind, push = true) {
   workspace.chooseKind(kind); setScreen('library', arriving); showLink(push);
 }
 function renderPracticeNavigation() {
-  const counts = categoryCounts(catalogueEntries, workspace.family);
-  document.querySelectorAll<HTMLButtonElement>('[data-kind]').forEach(button => {
-    if (isLibraryKind(button.dataset.kind)) button.querySelector<HTMLElement>('.nav-count')!.textContent = String(counts[button.dataset.kind]);
-    if (button.dataset.kind === workspace.kind) button.setAttribute('aria-current', 'page'); else button.removeAttribute('aria-current');
-  });
-  const current = catalogueEntries.find(e => e.value === workspace.picked);
-  const kind = current?.kind ?? 'mine';
-  $('backLibraryBtn').textContent = kind === 'exercises' ? '← All exercises' : kind === 'songs' ? '← All songs' : '← My songs';
+  libraryTabs.show(categoryCounts(catalogueEntries, workspace.family), workspace.kind);
+  const kind = catalogueEntries.find(e => e.value === workspace.picked)?.kind ?? 'mine';
   const song = openSong.song;
-  $('practiceName').textContent = song?.meta.title ?? 'Your song';
-  $('practiceContext').textContent = `${song ? familyOf(song.meta.instrument) : workspace.family} / ${kind === 'exercises' ? 'exercise' : kind === 'songs' ? 'song' : 'your song'}`;
-  const next = nextExercise(catalogueEntries, workspace.picked);
-  $('exerciseContinuation').hidden = workspace.screen !== 'practice' || kind !== 'exercises' || continuationDismissed;
-  $('nextExerciseBtn').hidden = !next; $('allExercisesBtn').hidden = !!next;
-  if (next) { $('nextExerciseTitle').textContent = next.title; $('nextExerciseBtn').onclick = () => pickSong(next.value); }
-  $('backLibraryBtn').onclick = () => showLibrary(kind);
+  practiceView.show({
+    title: song?.meta.title,
+    instrument: song ? familyOf(song.meta.instrument) : workspace.family,
+    kind,
+    next: nextExercise(catalogueEntries, workspace.picked),
+    practising: workspace.screen === 'practice',
+  });
   saveView.showShare();
 }
 $('homeBtn').onclick = () => showLibrary();
@@ -145,7 +142,6 @@ $('allExercisesBtn').onclick = () => showLibrary('exercises');
 $('returnDraftBtn').onclick = () => { setScreen('practice', true); showLink(true); };
 $('libraryOpenBtn').onclick = () => files.open();
 $('readTabBtn').onclick = $('readTabMobileBtn').onclick = () => $('tabHelp', HTMLDialogElement).showModal();
-document.querySelectorAll<HTMLButtonElement>('[data-kind]').forEach(button => { button.onclick = () => { if (isLibraryKind(button.dataset.kind)) showLibrary(button.dataset.kind); }; });
 $('familySelect', HTMLSelectElement).onchange = e => { const value = (e.target as HTMLSelectElement).value; if (isFamily(value)) chooseFamily(value); };
 function openRoute(route: Route) {
   if (route.screen === 'practice') {
@@ -301,7 +297,6 @@ function songShareLink() {
 const files = songFile(draftSession, { onNew: startNewSong, onOpen: openFileText, onSave: () => { saveCurrent(); }, shareLink: songShareLink, announce: saveView.announce });
 const editor = editorPane(draw);
 playerPanel(draw);
-$('closeContinuationBtn').onclick = () => { continuationDismissed = true; $('playBtn').focus(); $('exerciseContinuation').hidden = true; };
 theme();
 $('syntaxHelpBtn').onclick = () => $('help', HTMLDialogElement).showModal();
 (window as never as { tabtrainer: unknown }).tabtrainer = { player, removeSong, onsetKey };
