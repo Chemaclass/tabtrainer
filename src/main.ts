@@ -29,6 +29,7 @@ import { Songbook } from './app/songbook';
 import { OpenSong } from './app/openSong';
 import { Workspace, type Screen } from './app/workspace';
 import { Passage } from './app/passage';
+import { PassagePlayback } from './app/passagePlayback';
 import { playbackShortcut } from './app/playbackShortcut';
 import { Navigation, navigationState, type Route } from './app/navigation';
 import { DraftSession, titleOf } from './app/draftSession';
@@ -54,6 +55,7 @@ let catalogueEntries: CatalogueEntry[] = [];
 const src = $('src', HTMLTextAreaElement), sheet = $('sheet'), player = new Player();
 const openSong = new OpenSong();
 const passage = new Passage();
+const passagePlayback = new PassagePlayback(player, passage);
 const draftSession = new DraftSession(() => src.value);
 let continuationDismissed = false;
 let zoom = pref('zoom', 1), showNota = pref('notation', matchMedia('(min-width:600px)').matches);
@@ -148,7 +150,7 @@ window.addEventListener('popstate', event => navigation.visit(event.state, (rout
 
 // ---------- parse + render ----------
 let timer = 0;
-src.addEventListener('input', () => { if (selectedNote) player.stop(); persistDraft(); clearTimeout(timer); timer = window.setTimeout(() => update(false), 300); });
+src.addEventListener('input', () => { if (passagePlayback.selectedNote) player.stop(); persistDraft(); clearTimeout(timer); timer = window.setTimeout(() => update(false), 300); });
 function update(resetLoop: boolean) {
   const { song: s, issues } = openSong.read(src.value, resetLoop);
   passage.setSong(s.bars.length, resetLoop);
@@ -254,7 +256,6 @@ const setPlayLabel = () => {
   b.setAttribute('aria-label', player.playing ? 'Pause' : player.canResume ? 'Resume' : 'Play');
 };
 let lit: Element[] = [], litKey: string | null = null, curSys: Element | null = null;
-let selectedNote: { key: string; beat: number; bar: number } | null = null;
 let onsets: number[] = [];
 let playbackWasActive = false;
 let lastPhase = player.phase;
@@ -270,7 +271,7 @@ player.on(({ beat, playing, phase, countInRemaining }) => {
   if (phase === 'counting-in') { playbackWasActive = false; return; }
   const started = player.playing && !playbackWasActive; playbackWasActive = player.playing;
   if (started && workspace.picked) { recordPractice(workspace.picked); fillSongList(); }
-  if (beat === null) { selectedNote = null; passage.deselect(); showPassage(); lit.forEach(e => e.classList.remove('on')); lit = []; litKey = null; curSys?.classList.remove('cur'); curSys = null; $('barNo').textContent = '–'; return; }
+  if (beat === null) { passagePlayback.deselect(); showPassage(); lit.forEach(e => e.classList.remove('on')); lit = []; litKey = null; curSys?.classList.remove('cur'); curSys = null; $('barNo').textContent = '–'; return; }
   const key = playing ? onsetAt(onsets, beat) : null;
   if (key !== litKey) {
     lit.forEach(e => e.classList.remove('on'));
@@ -289,9 +290,7 @@ player.on(({ beat, playing, phase, countInRemaining }) => {
 $('playBtn').onclick = () => player.toggle();
 function stopPlayback() {
   if (scrollMode === 'continuous') setScrollMode('off');
-  const note = selectedNote, bar = passage.snapshot().selected;
-  player.stop(); passage.deselect();
-  if (note) selectNote(note.key, note.bar); else if (bar) selectBar(bar);
+  passagePlayback.stop();
   showPassage();
 }
 $('stopBtn').onclick = stopPlayback;
@@ -379,7 +378,7 @@ function showPassage() {
   $('loopChk', HTMLInputElement).checked = state.repeat;
   showPractice();
   sheet.querySelectorAll<SVGElement>('.note-target').forEach(el => {
-    const selected = el.dataset.key === selectedNote?.key;
+    const selected = el.dataset.key === passagePlayback.selectedNote?.key;
     el.classList.toggle('selected', selected);
     el.setAttribute('aria-pressed', String(selected));
   });
@@ -391,7 +390,7 @@ function showPassage() {
   });
   for (const id of ['rangeStart', 'rangeEnd']) $(id, HTMLButtonElement).disabled = !state.selected;
   $('rangeReset', HTMLButtonElement).disabled = !state.selected && !state.active;
-  const note = selectedNote;
+  const note = passagePlayback.selectedNote;
   if (note) {
     const start = player.bars.find(bar => bar.bar === note.bar)?.start ?? 0;
     const beatValue = openSong.song?.bars.find(bar => bar.index === note.bar)?.beatValue ?? 4;
@@ -400,28 +399,12 @@ function showPassage() {
     $('rangeSummary').textContent = `Selected note in bar ${note.bar}, beat ${beat}. ${range}`;
   } else $('rangeSummary').textContent = passage.summary();
 }
-function setPlayerRange() {
-  const range = passage.range();
-  player.setRange(range ? player.barRange(...range) : null, passage.snapshot().repeat);
-}
 function applyLoop() {
   if (!openSong.song?.bars.length) return;
-  setPlayerRange();
-  if (selectedNote && player.range && (selectedNote.beat < player.range[0] || selectedNote.beat >= player.range[1])) selectedNote = null;
-  const beat = player.pausedAt;
-  if (!player.playing && player.range && (beat === null || beat < player.range[0] || beat >= player.range[1])) {
-    passage.selectStart(); player.seek(player.range[0]);
-  }
+  passagePlayback.apply();
   showPassage();
 }
-function selectBar(bar: number) {
-  if (!passage.select(bar)) return;
-  selectedNote = null;
-  setPlayerRange();
-  const span = player.bars.find(span => span.bar === bar);
-  if (span) player.seek(span.start);
-  showPassage();
-}
+function selectBar(bar: number) { if (passagePlayback.selectBar(bar)) showPassage(); }
 $('rangeStart').onclick = () => { passage.startAtSelection(); applyLoop(); };
 $('rangeEnd').onclick = () => { passage.endAtSelection(); applyLoop(); };
 $('rangeReset').onclick = () => {
@@ -434,11 +417,7 @@ $('rangeReset').onclick = () => {
 }));
 
 function selectNote(key: string, bar: number) {
-  const note = player.noteAtKey(key);
-  if (!note || note.bar !== bar || !passage.select(bar)) return false;
-  selectedNote = { key: note.key, beat: note.beat, bar: note.bar };
-  setPlayerRange();
-  player.seekNote(key);
+  if (!passagePlayback.selectNote(key, bar)) return false;
   showPassage();
   return true;
 }
@@ -450,7 +429,8 @@ sheet.addEventListener('click', e => {
 });
 sheet.addEventListener('dblclick', e => {
   const note = (e.target as Element).closest<SVGElement>('.note-target');
-  if (note && selectNote(note.dataset.key!, +note.dataset.bar!)) player.play(selectedNote!.beat);
+  const chosen = note && selectNote(note.dataset.key!, +note.dataset.bar!) ? passagePlayback.selectedNote : null;
+  if (chosen) player.play(chosen.beat);
 });
 sheet.addEventListener('keydown', e => {
   if (e.key !== 'Enter') return;
