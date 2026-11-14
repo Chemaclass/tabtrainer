@@ -58,9 +58,12 @@ describe('preferences', () => {
   });
   it('keeps a valid fretboard choice and drops a damaged one', async () => {
     const { pref } = await import('../../src/app/storage');
-    const fallback = { root: 0, scale: 'major' as const, instrument: 'bass4', labels: 'names' as const };
+    const fallback = { root: 0, scale: 'major' as const, instrument: 'bass4', labels: 'names' as const, chord: null, sevenths: false, position: null };
+    store({ root: 3, scale: 'blues', instrument: 'guitar6', labels: 'degrees', chord: 2, sevenths: true, position: 5 });
+    expect(pref('fretboardSheet', fallback)).toEqual({ root: 3, scale: 'blues', instrument: 'guitar6', labels: 'degrees', chord: 2, sevenths: true, position: 5 });
     store({ root: 3, scale: 'blues', instrument: 'guitar6', labels: 'degrees' });
-    expect(pref('fretboardSheet', fallback)).toEqual({ root: 3, scale: 'blues', instrument: 'guitar6', labels: 'degrees' });
+    expect(pref('fretboardSheet', fallback)).toEqual({ root: 3, scale: 'blues', instrument: 'guitar6', labels: 'degrees', chord: null, sevenths: false, position: null });
+    store({ root: 3, scale: 'blues', instrument: 'guitar6', labels: 'degrees', chord: 9 }); expect(pref('fretboardSheet', fallback)).toBe(fallback);
     store({ root: 3, scale: 'blues', instrument: 'guitar6', labels: 'tab' }); expect(pref('fretboardSheet', fallback)).toBe(fallback);
   });
 });

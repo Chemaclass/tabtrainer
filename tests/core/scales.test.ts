@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { SCALES, isScaleId, rootName, scaleById, scaleNotes, scaleTitle, type ScaleId } from '../../src/core/scales';
+import { SCALES, isScaleId, rootName, scaleById, scaleChords, scaleNotes, scaleTitle, type ScaleId } from '../../src/core/scales';
+import { parseNumeral } from '../../src/core/harmony';
 
 const names = (root: number, id: ScaleId) => scaleNotes(root, id).map(n => n.name);
 
@@ -53,5 +54,41 @@ describe('scale titles', () => {
     expect(scaleTitle(1, 'major')).toBe('Db major');
     expect(scaleTitle(1, 'minor')).toBe('C# minor');
     expect(scaleTitle(9, 'minor-pentatonic')).toBe('A minor pentatonic');
+  });
+});
+
+const chordNames = (root: number, id: ScaleId, sevenths = false) => scaleChords(root, id, sevenths).map(c => c.name);
+const numerals = (root: number, id: ScaleId, sevenths = false) => scaleChords(root, id, sevenths).map(c => c.numeral);
+
+describe('scale chords', () => {
+  it('builds the seven chords of C major', () => {
+    expect(chordNames(0, 'major')).toEqual(['C', 'Dm', 'Em', 'F', 'G', 'Am', 'Bdim']);
+    expect(numerals(0, 'major')).toEqual(['I', 'ii', 'iii', 'IV', 'V', 'vi', 'vii']);
+  });
+  it('stacks a seventh on request', () => {
+    const g = scaleChords(0, 'major', true)[4];
+    expect(g.name).toBe('G7');
+    expect(g.tones.map(t => t.name)).toEqual(['G', 'B', 'D', 'F']);
+    expect(chordNames(0, 'major', true)).toEqual(['Cmaj7', 'Dm7', 'Em7', 'Fmaj7', 'G7', 'Am7', 'Bm7b5']);
+    expect(numerals(0, 'major', true)).toEqual(['Imaj7', 'ii7', 'iii7', 'IVmaj7', 'V7', 'vi7', 'viim7b5']);
+  });
+  it('writes minor and modal numerals against the major scale', () => {
+    expect(chordNames(9, 'minor')).toEqual(['Am', 'Bdim', 'C', 'Dm', 'Em', 'F', 'G']);
+    expect(numerals(9, 'minor')).toEqual(['i', 'ii', 'bIII', 'iv', 'v', 'bVI', 'bVII']);
+    expect(numerals(2, 'dorian')).toEqual(['i', 'ii', 'bIII', 'IV', 'v', 'vi', 'bVII']);
+    expect(numerals(7, 'mixolydian')).toEqual(['I', 'ii', 'iii', 'IV', 'v', 'vi', 'bVII']);
+  });
+  it('writes seventh numerals the groove format reads back', () => {
+    for (const chord of scaleChords(9, 'minor', true)) {
+      expect(parseNumeral(chord.numeral)).toMatchObject({ numeral: { quality: chord.quality, degree: (chord.root.pitchClass - 9 + 12) % 12 } });
+    }
+  });
+  it('spells chords with the scale spelling', () => {
+    expect(chordNames(3, 'major')).toEqual(['Eb', 'Fm', 'Gm', 'Ab', 'Bb', 'Cm', 'Ddim']);
+  });
+  it('uses the parent scale for pentatonic and blues', () => {
+    expect(chordNames(9, 'minor-pentatonic')).toEqual(chordNames(9, 'minor'));
+    expect(chordNames(9, 'blues')).toEqual(chordNames(9, 'minor'));
+    expect(chordNames(0, 'major-pentatonic')).toEqual(chordNames(0, 'major'));
   });
 });

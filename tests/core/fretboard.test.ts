@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { fretboardPositions } from '../../src/core/fretboard';
+import { fretboardPositions, positionWindows } from '../../src/core/fretboard';
 import { INSTRUMENTS } from '../../src/core/instruments';
 import { scaleNotes } from '../../src/core/scales';
 
@@ -28,5 +28,24 @@ describe('fretboard positions', () => {
   });
   it('accepts pitch classes outside 0 to 11', () => {
     expect(fretboardPositions([40], [16], 0, 12).map(p => p.fret)).toEqual([0, 12]);
+  });
+});
+
+describe('position windows', () => {
+  const bass = INSTRUMENTS.bass4.tuning;
+  it('starts a window on each scale note of the lowest string', () => {
+    expect(positionWindows(bass, aMinorPentatonic, 0, 11)).toEqual([
+      { first: 0, last: 3 }, { first: 3, last: 7 }, { first: 5, last: 8 }, { first: 8, last: 12 }, { first: 10, last: 13 },
+    ]);
+  });
+  it('stretches to 5 frets when 4 frets miss a scale note', () => {
+    const cMajor = scaleNotes(0, 'major').map(n => n.pitchClass);
+    expect(positionWindows(bass, cMajor, 8, 8)).toEqual([{ first: 8, last: 12 }]);
+    expect(positionWindows(bass, cMajor, 5, 5)).toEqual([{ first: 5, last: 8 }]);
+  });
+  it('finds the lowest string wherever the tuning puts it', () => {
+    expect(positionWindows(INSTRUMENTS.bass5.tuning, aMinorPentatonic, 0, 4).map(w => w.first)).toEqual([1, 3]);
+    expect(positionWindows(INSTRUMENTS.ukulele.tuning, aMinorPentatonic, 0, 4).map(w => w.first)).toEqual([0, 2, 4]);
+    expect(positionWindows([], aMinorPentatonic, 0, 12)).toEqual([]);
   });
 });
