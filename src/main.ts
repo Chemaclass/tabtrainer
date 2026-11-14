@@ -21,7 +21,6 @@ import { renderSong } from './render/notation';
 import { Player } from './audio/player';
 import { library, removeSong, pref, setPref, recentPractice, recordPractice } from './app/storage';
 import { normalizeSongReference, shareUrl, songSlug } from './app/songLink';
-import { AutoScroller } from './app/scrolling';
 import { bundledPath, savedRef } from './app/songRef';
 import { shownCredits } from './app/credits';
 import { Songbook } from './app/songbook';
@@ -42,7 +41,8 @@ import { libraryView } from './ui/library/libraryView';
 import { hasPracticeLevels } from './app/practiceLevels';
 import { categoryCounts, isLibraryKind, nextExercise, type CatalogueEntry, type LibraryKind } from './app/catalogue';
 import { dismissHelpOnBackdrop } from './ui/shell/helpDialogs';
-import { byId, fillRange, one } from './ui/dom';
+import { byId, one } from './ui/dom';
+import { scrollControls } from './ui/player/scrollControls';
 import { speedControls } from './ui/player/speedControls';
 import { speedPracticePanel } from './ui/player/speedPracticePanel';
 import { timingPanel } from './ui/player/timingPanel';
@@ -78,7 +78,7 @@ function showFamily() { setSelectValue($('familySelect', HTMLSelectElement), wor
 function chooseFamily(f: Family) {
   if (workspace.chooseFamily(f)) { showFamily(); showLink(); }
 }
-function loadText(text: string) { if (scrollMode === 'continuous') setScrollMode('off'); clearTimeout(timer); src.value = text; draftSession.accept(text); announceSave(''); update(true); persistDraft(); }
+function loadText(text: string) { scrolling.stopContinuous(); clearTimeout(timer); src.value = text; draftSession.accept(text); announceSave(''); update(true); persistDraft(); }
 function pickSong(v: string) {
   if (v === workspace.picked) { setScreen('practice', true); showLink(true); }
   else replaceCurrent(() => loadPickedSong(v, true));
@@ -96,7 +96,7 @@ function showLink(push = false) {
 const siteTitle = document.title;
 function showTitle() { const song = openSong.song; document.title = workspace.screen === 'practice' && song ? `${song.meta.title} · TabTrainer` : siteTitle; }
 function setScreen(next: Screen, focus = false) {
-  if (next === 'library') { player.stop(); if (scrollMode === 'continuous') setScrollMode('off'); }
+  if (next === 'library') { player.stop(); scrolling.stopContinuous(); }
   const song = openSong.song;
   workspace.enter(next, song ? familyOf(song.meta.instrument) : null);
   if (next === 'practice' && song) setSelectValue($('familySelect', HTMLSelectElement), workspace.family);
@@ -288,13 +288,13 @@ player.on(({ beat, playing, phase, countInRemaining }) => {
     if (sys) {
       const changed = sys !== curSys;
       if (changed) { curSys?.classList.remove('cur'); sys.classList.add('cur'); curSys = sys; }
-      if (scrollMode === 'follow' && player.playing && (changed || started)) { const r = sys.getBoundingClientRect(); window.scrollTo({ top: window.scrollY + r.top - window.innerHeight * 0.28, behavior: 'smooth' }); }
+      if (scrolling.follows() && player.playing && (changed || started)) { const r = sys.getBoundingClientRect(); window.scrollTo({ top: window.scrollY + r.top - window.innerHeight * 0.28, behavior: 'smooth' }); }
     }
   }
 });
 $('playBtn').onclick = () => player.toggle();
 function stopPlayback() {
-  if (scrollMode === 'continuous') setScrollMode('off');
+  scrolling.stopContinuous();
   passagePlayback.stop();
   showPassage();
 }
@@ -378,42 +378,13 @@ sheet.addEventListener('keydown', e => {
 });
 
 // ---------- auto-scroll ----------
-type ScrollMode = 'off' | 'follow' | 'continuous';
-let scrollMode: ScrollMode = 'follow';
-const sspeed = $('scrollSpeed', HTMLInputElement); sspeed.value = String(pref('scroll', 15));
-fillRange(sspeed);
-sspeed.oninput = () => { setPref('scroll', +sspeed.value); fillRange(sspeed); };
-const scroller = new AutoScroller({
-  request: callback => requestAnimationFrame(callback), cancel: id => cancelAnimationFrame(id),
-  scroll: pixels => window.scrollBy(0, pixels), speed: () => +sspeed.value,
-  atBottom: () => window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 2,
-  ended: () => setScrollMode('off'),
-});
-function setScrollMode(mode: ScrollMode) {
-  scroller.stop(); scrollMode = mode;
-  setSelectValue($('scrollMode', HTMLSelectElement), mode);
-  $('scrollRate').hidden = mode !== 'continuous';
-  $('scrollHelp').textContent = { off: 'Scroll the score yourself.', follow: 'Keep the playing line in view.', continuous: 'Scroll without audio. Play and Pause keep scrolling; Stop and song changes turn it off.' }[mode];
-  if (mode === 'continuous') scroller.start();
-  if (mode === 'follow') { curSys?.classList.remove('cur'); curSys = null; }
-}
-$('scrollMode', HTMLSelectElement).onchange = e => {
-  const value = (e.target as HTMLSelectElement).value;
-  if (value === 'off' || value === 'follow' || value === 'continuous') setScrollMode(value);
-};
+const scrolling = scrollControls(() => workspace.screen === 'practice', () => { curSys?.classList.remove('cur'); curSys = null; });
 
 // ---------- keyboard ----------
 const shortcut = playbackShortcut(() => workspace.screen === 'practice', () => player.playing, () => player.play(), () => player.pause());
 document.addEventListener('keydown', shortcut.keydown, true);
 document.addEventListener('keyup', shortcut.keyup, true);
 window.addEventListener('blur', shortcut.blur);
-document.addEventListener('keydown', e => {
-  const t = e.target as HTMLElement;
-  if (workspace.screen !== 'practice' || t.closest('button, summary, input, select, textarea, dialog, [role=separator]') || t.isContentEditable) return;
-  if (e.key === 's' || e.key === 'S') { e.preventDefault(); setScrollMode(scrollMode === 'continuous' ? 'off' : 'continuous'); }
-  else if (scrollMode === 'continuous' && e.key === 'ArrowUp') { e.preventDefault(); sspeed.value = String(Math.min(80, +sspeed.value + 2)); sspeed.dispatchEvent(new Event('input')); }
-  else if (scrollMode === 'continuous' && e.key === 'ArrowDown') { e.preventDefault(); sspeed.value = String(Math.max(3, +sspeed.value - 2)); sspeed.dispatchEvent(new Event('input')); }
-});
 
 // ---------- toolbar ----------
 const unpick = () => { workspace.unpick(); fillSongList(); };
