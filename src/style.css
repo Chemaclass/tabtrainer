@@ -37,7 +37,7 @@ kbd{font:600 12px var(--mono);padding:1px 5px;border:1px solid var(--rule);borde
 .ghost:hover,.seg:hover{background:var(--wash)}
 .toggle{display:flex;align-items:center;gap:6px;height:44px;padding:0 12px;border-color:var(--control-border)}
 .toggle:hover,.toggle.on{background:var(--wash)}
-.round{width:40px;height:40px;padding:0;border-color:var(--rule);border-radius:20px}
+.round{width:44px;height:44px;padding:0;border-color:var(--rule);border-radius:22px}
 .round:hover{background:var(--wash)}
 .song-head{display:flex;justify-content:space-between;align-items:flex-start;gap:24px;margin-bottom:24px;flex-wrap:wrap}
 .song-head h1{margin:0 0 10px;font:800 28px/32px var(--display);letter-spacing:-.025em;overflow-wrap:anywhere}
