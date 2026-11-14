@@ -3,6 +3,13 @@ import { Navigation, navigationState, readRoute, routeSearch, type Route } from 
 
 const path = './songs/bass/songs/07-a-dawning.txt';
 describe('routes', () => {
+  it('opens the practice screen without a song link when no bundled song is picked', () => {
+    for (const picked of ['', null]) {
+      const query = new URLSearchParams(routeSearch('?song=bass/a-dawning&version=solo', { screen: 'practice', picked, version: null }));
+      expect(query.get('view')).toBe('practice');
+      expect(query.has('song')).toBe(false);
+    }
+  });
   it('round trips bundled versions and preserves unrelated query parameters', () => {
     const route: Route = { screen: 'practice', picked: 'demo:' + path, version: 'solo-bass' };
     const search = routeSearch('?kind=songs&instrument=guitar&extra=keep', route);

@@ -601,7 +601,9 @@ $('shareBtn').onclick = async () => {
   const version = parsed && parsed.versions.length > 1 ? versionSlug(parsed.versions[versionIdx].name) : null;
   const root = new URL(import.meta.env.BASE_URL, location.origin).href;
   // Only the build writes the per-song pages.
-  const url = import.meta.env.DEV ? `${root}?${new URLSearchParams({ song: songSlug(picked.slice(5)), ...version && { version } })}` : shareUrl(root, picked.slice(5), version);
+  const path = bundledPath(picked);
+  if (path === null) return;
+  const url = import.meta.env.DEV ? `${root}?${new URLSearchParams({ song: songSlug(path), ...version && { version } })}` : shareUrl(root, path, version);
   try {
     if (navigator.share && matchMedia('(pointer:coarse)').matches) { await navigator.share({ title: document.title, url }); return; }
     await navigator.clipboard.writeText(url);

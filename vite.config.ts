@@ -1,4 +1,5 @@
 import { defineConfig, type Plugin } from 'vite';
+import { configDefaults } from 'vitest/config';
 import { mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { sharePage, sitemap, songMeta } from './src/build/sharePages';
@@ -36,5 +37,5 @@ export default defineConfig({
   base,
   plugins: [sharePages()],
   build: { target: 'es2022', sourcemap: true, chunkSizeWarningLimit: 1500 },
-  test: { environment: 'node', exclude: ['**/node_modules/**', '.claude/**'] },
+  test: { environment: 'node', exclude: [...configDefaults.exclude, '.claude/**'] },
 } as never);
