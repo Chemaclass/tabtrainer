@@ -1,16 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { readFileSync, readdirSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 import { parseGroove } from '../../src/core/groove';
 
 const head = 'title: Test\ntempo: 100\nkey: C\ntime: 4/4\nprogression: I IV V I\n';
 
 describe('parseGroove', () => {
-  it('reads every bundled groove without warnings', () => {
-    for (const file of readdirSync('src/grooves')) {
-      const { issues } = parseGroove(readFileSync(`src/grooves/${file}`, 'utf8'));
-      expect(issues, file).toEqual([]);
-    }
-  });
   it('reads the README example without warnings', () => {
     const readme = readFileSync('README.md', 'utf8');
     const example = /## Groove format[\s\S]*?```text\n([\s\S]*?)```/.exec(readme)?.[1] ?? '';

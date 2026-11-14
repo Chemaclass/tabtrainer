@@ -56,7 +56,7 @@ const loop = new LoopEngine();
 
 helpDialogs();
 const view = screens(chooseFamily, () => showJam(jam.slug));
-const jamming = jamView(jam, loop, () => workspace.screen === 'jam');
+const jamming = jamView(jam, loop, () => workspace.screen === 'jam', slug => showJam(slug));
 const mixer = new Mixer(workspace.family);
 const mixing = mixerView(mixer, loop);
 const saveView = saveState(draftSession, workspace, () => files.download(), () => { setScreen('practice', true); showLink(true); });

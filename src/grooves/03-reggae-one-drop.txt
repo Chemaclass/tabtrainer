@@ -1,0 +1,18 @@
+title: Reggae one drop in A minor
+genre: reggae
+about: A laid back one drop in A minor to practise lines that leave space around the drop on beat 3.
+tempo: 74
+key: Am
+time: 4/4
+swing: 58
+progression: i7 iv7 i7 bVII
+
+# sixteen steps per bar: 1 e & a 2 e & a 3 e & a 4 e & a
+# one drop: no kick on 1, the kick and snare land together on 3
+hat:   x.o.x.o.x.o.x.o. | x.o.x.o.x.o.x.ox
+snare: ........X....... | ........X....... | ........X....... | ........X.....o.
+kick:  ........X.......
+# the skank: short chops on 2 and 4
+keys:  ....x.......x... | ....x.......x... | ....x.......x... | ....x.......x.x.
+# the bass sits on 1, rests through the drop and answers on 4
+bass:  1 - - - . . 5 . . . . . b7 - 5 . | 1 - - - . . 3 5 . . . . 8 - . . | 1 - - - . . 5 . . . . . b7 - 5 . | 1 - - - . . 5 . . . . . 3 - 1 .

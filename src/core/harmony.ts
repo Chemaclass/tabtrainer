@@ -70,7 +70,42 @@ export function degreeInterval(chord: Chord, degree: BassDegree): number {
     case '3': return chord.intervals.find(i => i >= 3 && i <= 5) ?? 0;
     case '5': return chord.intervals.find(i => i >= 6 && i <= 8) ?? 7;
     case '6': return 9;
-    case 'b7': return 10;
+    // A major seventh chord keeps its own seventh, so the bass never clashes with it
+    case 'b7': return chord.intervals.find(i => i >= 10) ?? 10;
     case '8': return 12;
   }
 }
+
+export const OWN_PROGRESSION = 'groove';
+export interface ProgressionPreset { slug: string; name: string }
+
+const PRESETS: readonly (ProgressionPreset & { text: string })[] = [
+  { slug: '12-bar-blues', name: '12 bar blues', text: 'I7 IV7 I7 I7 IV7 IV7 I7 I7 V7 IV7 I7 V7' },
+  { slug: 'minor-blues', name: 'Minor blues', text: 'i7 iv7 i7 i7 iv7 iv7 i7 i7 bVI7 V7 i7 V7' },
+  { slug: 'i-iv-v', name: 'I IV V', text: 'I IV I V' },
+  { slug: 'i-v-vi-iv', name: 'I V vi IV', text: 'I V vi IV' },
+  { slug: 'i-bvii-bvi-bvii', name: 'i bVII bVI bVII', text: 'i bVII bVI bVII' },
+  { slug: 'ii-v-i', name: 'ii V I', text: 'ii7 V7 Imaj7 Imaj7' },
+  { slug: 'one-chord', name: 'One chord vamp', text: '' },
+];
+const VAMP_BARS = 4;
+
+export const PROGRESSION_PRESETS: readonly ProgressionPreset[] = PRESETS.map(({ slug, name }) => ({ slug, name }));
+
+function numerals(text: string): Numeral[] {
+  return text.split(' ').map(t => {
+    const r = parseNumeral(t);
+    if ('error' in r) throw new Error(r.error);
+    return r.numeral;
+  });
+}
+
+export function presetProgression(slug: string, own: readonly Numeral[]): Numeral[] | null {
+  if (slug === OWN_PROGRESSION) return [...own];
+  const preset = PRESETS.find(p => p.slug === slug);
+  if (!preset) return null;
+  return preset.text ? numerals(preset.text) : Array<Numeral>(VAMP_BARS).fill(own[0] ?? TONIC);
+}
+
+const MINOR_QUALITIES: readonly Quality[] = ['minor', 'm7', 'mMaj7', 'm7b5', 'dim'];
+export const isMinorProgression = (progression: readonly Numeral[]) => progression.length > 0 && progression[0].degree === 0 && MINOR_QUALITIES.includes(progression[0].quality);
