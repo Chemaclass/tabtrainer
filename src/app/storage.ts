@@ -4,23 +4,71 @@ import { isLibraryKind, type LibraryKind } from './catalogue';
 import { isTunings, type Tunings } from './tuning';
 import { isFretboardChoice, withFretboardDefaults, type FretboardChoice } from './fretboardSheet';
 
-const LIB = 'tabtrainer:library';
 export interface Saved { title: string; text: string; updated: number }
-function read(): Record<string, Saved> {
-  const parsed: unknown = JSON.parse(localStorage.getItem(LIB) ?? '{}');
-  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) throw Error('Invalid library');
-  const songs: Record<string, Saved> = Object.create(null);
-  for (const [key, value] of Object.entries(parsed)) {
-    if (!value || typeof value !== 'object' || typeof value.title !== 'string' || typeof value.text !== 'string' || typeof value.updated !== 'number') throw Error('Invalid song');
-    songs[key] = { title: value.title, text: value.text, updated: value.updated };
+
+function isSaved(value: unknown): value is Saved {
+  if (!value || typeof value !== 'object') return false;
+  const { title, text, updated } = value as Partial<Record<keyof Saved, unknown>>;
+  return typeof title === 'string' && typeof text === 'string' && typeof updated === 'number';
+}
+
+/** Texts saved in this browser under one storage key, by title. */
+export class SavedTexts {
+  constructor(private readonly key: string) {}
+
+  list(): Saved[] {
+    try {
+      const items = Object.values(this.read());
+      return items.sort((a, b) => a.title.localeCompare(b.title));
+    } catch {
+      return [];
+    }
   }
-  return songs;
+
+  has(title: string): boolean {
+    return this.list().some(item => item.title === title);
+  }
+
+  save(title: string, text: string): boolean {
+    try {
+      const items = this.read();
+      items[title] = { title, text, updated: Date.now() };
+      localStorage.setItem(this.key, JSON.stringify(items));
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  remove(title: string): boolean {
+    try {
+      const items = this.read();
+      delete items[title];
+      localStorage.setItem(this.key, JSON.stringify(items));
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  // Throws on unreadable or corrupt data, so a write never replaces texts it could not read.
+  private read(): Record<string, Saved> {
+    const parsed: unknown = JSON.parse(localStorage.getItem(this.key) ?? '{}');
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) throw Error(`Invalid ${this.key}`);
+    const items: Record<string, Saved> = Object.create(null);
+    for (const [title, value] of Object.entries(parsed)) {
+      if (!isSaved(value)) throw Error(`Invalid entry in ${this.key}`);
+      items[title] = { title: value.title, text: value.text, updated: value.updated };
+    }
+    return items;
+  }
 }
-export function library(): Saved[] { try { return Object.values(read()).sort((a, b) => a.title.localeCompare(b.title)); } catch { return []; } }
-export function saveSong(title: string, text: string): boolean {
-  try { const songs = read(); songs[title] = { title, text, updated: Date.now() }; localStorage.setItem(LIB, JSON.stringify(songs)); return true; } catch { return false; }
-}
-export function removeSong(title: string) { try { const songs = read(); delete songs[title]; localStorage.setItem(LIB, JSON.stringify(songs)); } catch { /* storage unavailable */ } }
+
+export const savedSongs = new SavedTexts('tabtrainer:library');
+export const savedGrooves = new SavedTexts('tabtrainer:grooves');
+export const library = () => savedSongs.list();
+export const saveSong = (title: string, text: string) => savedSongs.save(title, text);
+export const removeSong = (title: string) => savedSongs.remove(title);
 export interface DraftSnapshot { text: string; base: string; picked: string }
 export interface JamChoice { key?: unknown; tempo?: unknown; progression?: unknown; swing?: unknown; scale?: unknown }
 export interface MixerChoice { plays?: unknown; parts?: unknown; room?: unknown }

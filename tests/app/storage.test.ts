@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { library, saveSong, setPref } from '../../src/app/storage';
+import { library, saveSong, savedGrooves, setPref } from '../../src/app/storage';
 
 afterEach(() => vi.unstubAllGlobals());
 describe('saving songs', () => {
@@ -22,6 +22,41 @@ describe('saving songs', () => {
     const write = vi.fn();
     vi.stubGlobal('localStorage', { getItem: () => '{bad', setItem: write });
     expect(saveSong('Song', 'text')).toBe(false); expect(write).not.toHaveBeenCalled();
+  });
+});
+
+describe('saving grooves', () => {
+  function memoryStorage(initial: Record<string, string> = {}) {
+    const values = new Map(Object.entries(initial));
+    vi.stubGlobal('localStorage', { getItem: (k: string) => values.get(k) ?? null, setItem: (k: string, v: string) => values.set(k, v) });
+    return values;
+  }
+
+  it('keeps grooves under their own key, apart from songs', () => {
+    const values = memoryStorage();
+    expect(savedGrooves.save('My groove', 'title: My groove')).toBe(true);
+    expect(saveSong('My song', 'title: My song')).toBe(true);
+    expect(savedGrooves.list().map(g => g.title)).toEqual(['My groove']);
+    expect(library().map(s => s.title)).toEqual(['My song']);
+    expect([...values.keys()].sort()).toEqual(['tabtrainer:grooves', 'tabtrainer:library']);
+  });
+
+  it('removes a groove and reports whether it could', () => {
+    memoryStorage();
+    savedGrooves.save('One', 'a');
+    savedGrooves.save('Two', 'b');
+    expect(savedGrooves.has('One')).toBe(true);
+    expect(savedGrooves.remove('One')).toBe(true);
+    expect(savedGrooves.list().map(g => g.title)).toEqual(['Two']);
+    vi.stubGlobal('localStorage', { getItem: () => '{bad', setItem: vi.fn() });
+    expect(savedGrooves.remove('Two')).toBe(false);
+  });
+
+  it('still reads songs saved before grooves existed', () => {
+    const saved = { Old: { title: 'Old', text: 'title: Old', updated: 1 } };
+    memoryStorage({ 'tabtrainer:library': JSON.stringify(saved) });
+    expect(library()).toEqual([saved.Old]);
+    expect(savedGrooves.list()).toEqual([]);
   });
 });
 
