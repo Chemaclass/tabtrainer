@@ -26,22 +26,16 @@
     try { theme = JSON.parse(localStorage.getItem('tabtrainer:theme')); } catch { /* storage unavailable */ }
     document.documentElement.dataset.theme = theme === 'light' || theme === 'dark' ? theme : matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
     const query = new URLSearchParams(location.search);
-    let welcomed = true;
-    try {
-      if (!Object.keys(localStorage).some(key => key.startsWith('tabtrainer:'))) localStorage.setItem('tabtrainer:welcomed', 'false');
-      welcomed = localStorage.getItem('tabtrainer:welcomed') !== 'false';
-    } catch { /* storage unavailable */ }
-    const deepLink = query.has('song') || query.get('view') === 'practice';
-    if (query.has('welcome') || (!welcomed && !deepLink)) document.documentElement.classList.add('landing');
+    if (query.has('welcome') || !['song', 'view', 'kind', 'instrument', 'version'].some(key => query.has(key))) document.documentElement.classList.add('landing');
   </script>
 </head>
 <body class="library-view">
   <div id="landing" class="landing-page">
     <header class="landing-top">
-      <a class="landing-brand" href="./?view=library&amp;kind=exercises" data-enter><svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true"><path d="M1 5h20M1 11h20M1 17h20" stroke="currentColor" stroke-width="1.5"/><circle cx="14" cy="11" r="4" fill="var(--playing)"/></svg>TabTrainer</a>
+      <a class="landing-brand" href="./"><svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true"><path d="M1 5h20M1 11h20M1 17h20" stroke="currentColor" stroke-width="1.5"/><circle cx="14" cy="11" r="4" fill="var(--playing)"/></svg>TabTrainer</a>
       <nav class="landing-nav" aria-label="TabTrainer">
-        <a href="./?view=library&amp;kind=exercises" data-enter>Exercises</a><a href="./?view=library&amp;kind=songs" data-enter>Songs</a><a href="https://github.com/Chemaclass/tabtrainer" target="_blank" rel="noopener">Source on GitHub</a>
-        <a class="landing-outline" href="./?view=library&amp;kind=exercises" data-enter>Open the library</a>
+        <a href="./?view=library&amp;kind=exercises">Exercises</a><a href="./?view=library&amp;kind=songs">Songs</a><a href="https://github.com/Chemaclass/tabtrainer" target="_blank" rel="noopener">Source on GitHub</a>
+        <a class="landing-outline" href="./?view=library&amp;kind=exercises">Open the library</a>
       </nav>
     </header>
     <main class="landing-hero">
@@ -49,7 +43,7 @@
         <p class="landing-kicker">For electric bass and guitar</p>
         <h1>Slow it down.<br />Loop the hard bars.</h1>
         <p class="landing-lede">Read tab and notation side by side, follow each note as it plays, and raise the speed as the passage settles in your hands.</p>
-        <div class="landing-actions"><a class="landing-start" href="./?view=library&amp;kind=exercises" data-enter>Start practising <span aria-hidden="true">→</span></a><button class="landing-link" type="button" data-read-tab>How to read tab</button></div>
+        <div class="landing-actions"><a class="landing-start" href="./?view=library&amp;kind=exercises">Start practising <span aria-hidden="true">→</span></a><button class="landing-link" type="button" data-read-tab>How to read tab</button></div>
       </div>
       <figure class="landing-visual" aria-label="A bar of bass tab with the playing note highlighted">
         <svg viewBox="0 0 600 252" aria-hidden="true">
@@ -85,10 +79,10 @@
     <footer class="landing-footer"><span class="landing-brand"><svg width="18" height="18" viewBox="0 0 22 22" aria-hidden="true"><path d="M1 5h20M1 11h20M1 17h20" stroke="currentColor" stroke-width="1.5"/><circle cx="14" cy="11" r="4" fill="var(--playing)"/></svg>TabTrainer</span><span>Made by <a href="https://chemaclass.com" target="_blank" rel="noopener">Chemaclass</a> · <a href="https://github.com/Chemaclass/tabtrainer" target="_blank" rel="noopener">Source code on GitHub</a> · MIT licence</span></footer>
   </div>
   <header class="top">
-    <button id="homeBtn" class="brand" title="Browse the practice library">
+    <a id="homeBtn" class="brand" href="./" title="About TabTrainer">
       <svg class="logo" width="22" height="22" viewBox="0 0 22 22" aria-hidden="true"><path d="M1 5h20M1 11h20M1 17h20" stroke="currentColor" stroke-width="1.5"/><circle cx="14" cy="11" r="4" fill="var(--playing)"/></svg>
       TabTrainer
-    </button>
+    </a>
     <nav class="library-nav" aria-label="Practice library">
       <button data-kind="exercises" aria-current="page">Exercises <span class="nav-count">0</span></button><button data-kind="songs">Songs <span class="nav-count">0</span></button><button data-kind="mine">My songs <span class="nav-count">0</span></button>
     </nav>
@@ -141,7 +135,7 @@
       <section class="reading-guide"><div class="guide-card"><h2>Make a little progress.</h2><p>Start slowly. A few comfortable bars are a good practice session.</p><button id="readTabBtn">How to read tab →</button></div><ol><li>Choose a comfortable level.</li><li>Try 50% or 75% speed.</li><li>Loop a few bars until they feel comfortable.</li></ol></section>
     </aside>
   </main>
-  <footer class="site-footer"><a href="./?welcome">What is TabTrainer?</a> Free and open source. Made by <a href="https://chemaclass.com" target="_blank" rel="noopener">Chemaclass</a> · <a href="https://github.com/Chemaclass/tabtrainer" target="_blank" rel="noopener">Source code on GitHub</a></footer>
+  <footer class="site-footer"><a href="./">What is TabTrainer?</a> Free and open source. Made by <a href="https://chemaclass.com" target="_blank" rel="noopener">Chemaclass</a> · <a href="https://github.com/Chemaclass/tabtrainer" target="_blank" rel="noopener">Source code on GitHub</a></footer>
   <div id="practiceScreen" hidden>
   <main class="layout noedit">
     <section id="editorPane" class="editor">

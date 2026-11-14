@@ -34,7 +34,6 @@ interface Preferences {
   editor: boolean;
   playerExpanded: boolean;
   playerMinimized: boolean;
-  welcomed: boolean;
   theme: 'light' | 'dark' | null;
   editorWidth: number | null;
   picked: string;
@@ -59,7 +58,6 @@ const validators: { [K in keyof Preferences]: (value: unknown) => value is Prefe
   editor: isBoolean,
   playerExpanded: isBoolean,
   playerMinimized: isBoolean,
-  welcomed: isBoolean,
   theme: (value): value is 'light' | 'dark' | null => value === null || value === 'light' || value === 'dark',
   editorWidth: (value): value is number | null => value === null || finiteBetween(value, 0, Number.MAX_VALUE),
   picked: isString,
