@@ -1,8 +1,9 @@
-import { parseGroove, type Groove } from '../core/groove';
+import { BACKING_PARTS, parseGroove, type BackingPart, type Groove } from '../core/groove';
 import { buildGrooveTimeline, type GrooveTimeline } from '../core/grooveTimeline';
 import { OWN_PROGRESSION, isMinorProgression, keyTonic, presetProgression, type Numeral } from '../core/harmony';
 import { isFamily, type Family } from '../core/instruments';
 import { fittingScales, isScaleId, type ScaleId } from '../core/scales';
+import { isMinorKey } from '../core/theory';
 import { grooveSlug, type JamSetup } from './jamLink';
 import { pref, setPref, type JamChoice } from './storage';
 
@@ -13,8 +14,6 @@ export const JAM_SWING = { min: 50, max: 66 } as const;
 const MAJOR_KEYS: readonly string[] = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B'];
 const MINOR_KEYS: readonly string[] = ['Cm', 'C#m', 'Dm', 'Ebm', 'Em', 'Fm', 'F#m', 'Gm', 'G#m', 'Am', 'Bbm', 'Bm'];
 const BLUESY_GENRES: ReadonlySet<string> = new Set(['blues', 'rock']);
-
-const isMinorKey = (key: string) => key.endsWith('m');
 
 export function bundledGrooves(files: Record<string, string>): BundledGroove[] {
   return Object.keys(files).sort().map(path => ({ slug: grooveSlug(path), groove: parseGroove(files[path]).groove }));
@@ -27,15 +26,18 @@ function byGenre(grooves: readonly BundledGroove[]): BundledGroove[] {
 
 export const jamKeys = (groove: Groove): readonly string[] => (isMinorKey(groove.key) ? MINOR_KEYS : MAJOR_KEYS);
 
+const keyOnTonic = (keys: readonly string[], tonic: number | null) => keys.find(k => keyTonic(k) === tonic);
+
 function jamKey(keys: readonly string[], key: string, fallback: string): string {
   if (keys.includes(key)) return key;
   const tonic = keyTonic(key) ?? keyTonic(fallback);
-  return keys.find(k => keyTonic(k) === tonic) ?? keys[0];
+  return keyOnTonic(keys, tonic) ?? keys[0];
 }
 
-const within = (value: number | undefined, { min, max }: { min: number; max: number }): value is number => value !== undefined && value >= min && value <= max;
+interface NumberRange { min: number; max: number }
 
-const clamp = (value: number, { min, max }: { min: number; max: number }) => Math.round(Math.min(max, Math.max(min, value)));
+const within = (value: number | undefined, { min, max }: NumberRange): value is number => value !== undefined && value >= min && value <= max;
+const clamp = (value: number, { min, max }: NumberRange) => Math.round(Math.min(max, Math.max(min, value)));
 const isFiniteNumber = (value: unknown): value is number => typeof value === 'number' && Number.isFinite(value);
 
 export class Jam {
@@ -60,7 +62,9 @@ export class Jam {
   get tempo() { return this.chosenTempo; }
   get progression() { return this.chosenProgression; }
   get swing() { return this.chosenSwing; }
-  get setup(): Required<JamSetup> { return { key: this.chosenKey, tempo: this.chosenTempo, progression: this.chosenProgression, swing: this.chosenSwing }; }
+  get setup(): Required<JamSetup> {
+    return { key: this.chosenKey, tempo: this.chosenTempo, progression: this.chosenProgression, swing: this.chosenSwing };
+  }
   get keys(): readonly string[] {
     if (this.chosenProgression === OWN_PROGRESSION) return jamKeys(this.groove);
     return isMinorProgression(this.chords()) ? MINOR_KEYS : MAJOR_KEYS;
@@ -91,7 +95,7 @@ export class Jam {
     const { key, tempo, progression, swing } = setup;
     const changes = [
       progression !== undefined && this.setProgression(progression),
-      key !== undefined && this.setKey(this.keys.find(k => keyTonic(k) === keyTonic(key)) ?? key),
+      key !== undefined && this.setKey(this.keyWithTonicOf(key)),
       within(tempo, JAM_TEMPO) && this.setTempo(tempo),
       within(swing, JAM_SWING) && this.setSwing(swing),
     ];
@@ -142,32 +146,57 @@ export class Jam {
     return buildGrooveTimeline({ ...this.groove, progression: this.chords(), swing: this.chosenSwing }, this.chosenKey);
   }
 
+  /** The offered key on the same tonic, so a shared "C#" opens as "Db" where the list spells it so. */
+  private keyWithTonicOf(key: string): string {
+    return keyOnTonic(this.keys, keyTonic(key)) ?? key;
+  }
+
   private chords(): Numeral[] {
     return presetProgression(this.chosenProgression, this.groove.progression) ?? [...this.groove.progression];
   }
 
+  private savedChoice(): JamChoice {
+    const saved = pref('jam', {});
+    const choice: unknown = Object.hasOwn(saved, this.slug) ? saved[this.slug] : null;
+    return choice && typeof choice === 'object' ? choice as JamChoice : {};
+  }
+
   private load() {
-    const saved: unknown = Object.hasOwn(pref('jam', {}), this.slug) ? pref('jam', {})[this.slug] : null;
-    const { key, tempo, progression, swing, scale } = saved && typeof saved === 'object' ? saved as JamChoice : {};
-    this.chosenProgression = typeof progression === 'string' && presetProgression(progression, this.groove.progression) ? progression : OWN_PROGRESSION;
-    this.chosenKey = jamKey(this.keys, typeof key === 'string' ? key : this.groove.key, this.groove.key);
-    this.chosenTempo = clamp(isFiniteNumber(tempo) ? tempo : this.groove.tempo, JAM_TEMPO);
-    this.chosenSwing = clamp(isFiniteNumber(swing) ? swing : this.groove.swing, JAM_SWING);
+    const { key, tempo, progression, swing, scale } = this.savedChoice();
+    const { groove } = this;
+    const isOffered = typeof progression === 'string' && presetProgression(progression, groove.progression);
+    this.chosenProgression = isOffered ? progression : OWN_PROGRESSION;
+    this.chosenKey = jamKey(this.keys, typeof key === 'string' ? key : groove.key, groove.key);
+    this.chosenTempo = clamp(isFiniteNumber(tempo) ? tempo : groove.tempo, JAM_TEMPO);
+    this.chosenSwing = clamp(isFiniteNumber(swing) ? swing : groove.swing, JAM_SWING);
     this.chosenScale = isScaleId(scale) ? scale : null;
   }
 
   private save() {
-    const choice = { key: this.chosenKey, tempo: this.chosenTempo, progression: this.chosenProgression, swing: this.chosenSwing, scale: this.chosenScale ?? undefined };
+    const choice = { ...this.setup, scale: this.chosenScale ?? undefined };
     setPref('jam', { ...pref('jam', {}), [this.slug]: choice });
   }
 }
 
-export const MIXER_PARTS = ['drums', 'bass', 'keys'] as const;
-export type MixerPart = typeof MIXER_PARTS[number];
+export const MIXER_PARTS = BACKING_PARTS;
+export type MixerPart = BackingPart;
 export interface PartLevel { volume: number; muted: boolean }
 
 const FULL_VOLUME = 100;
-const isVolume = (value: unknown): value is number => typeof value === 'number' && Number.isFinite(value) && value >= 0 && value <= FULL_VOLUME;
+const VOLUME_RANGE: NumberRange = { min: 0, max: FULL_VOLUME };
+const isVolume = (value: unknown): value is number => isFiniteNumber(value) && within(value, VOLUME_RANGE);
+
+/** The bass part starts muted for a bass player, who plays it. */
+const mutedByDefault = (part: MixerPart, player: Family) => part === 'bass' && player === 'bass';
+
+function savedLevel(parts: Partial<Record<string, unknown>>, part: MixerPart, player: Family): PartLevel {
+  const raw: unknown = Object.hasOwn(parts, part) ? parts[part] : null;
+  const { volume, muted } = raw && typeof raw === 'object' ? raw as Partial<Record<keyof PartLevel, unknown>> : {};
+  return {
+    volume: isVolume(volume) ? Math.round(volume) : FULL_VOLUME,
+    muted: typeof muted === 'boolean' ? muted : mutedByDefault(part, player),
+  };
+}
 
 export class Mixer {
   private player: Family;
@@ -181,14 +210,7 @@ export class Mixer {
     this.chosen = plays !== null;
     this.player = plays ?? library;
     const parts: Partial<Record<string, unknown>> = saved.parts && typeof saved.parts === 'object' ? saved.parts : {};
-    const level = (part: MixerPart): PartLevel => {
-      const raw: unknown = Object.hasOwn(parts, part) ? parts[part] : null;
-      const { volume, muted } = raw && typeof raw === 'object' ? raw as Partial<Record<keyof PartLevel, unknown>> : {};
-      return {
-        volume: isVolume(volume) ? Math.round(volume) : FULL_VOLUME,
-        muted: typeof muted === 'boolean' ? muted : part === 'bass' && this.player === 'bass',
-      };
-    };
+    const level = (part: MixerPart) => savedLevel(parts, part, this.player);
     this.parts = { drums: level('drums'), bass: level('bass'), keys: level('keys') };
     this.roomOn = typeof saved.room === 'boolean' ? saved.room : true;
   }
@@ -199,20 +221,21 @@ export class Mixer {
 
   level(part: MixerPart): PartLevel { return { ...this.parts[part] }; }
 
-  gain(part: MixerPart): number { return this.parts[part].muted ? 0 : this.parts[part].volume / FULL_VOLUME; }
+  gain(part: MixerPart): number {
+    const { muted, volume } = this.parts[part];
+    return muted ? 0 : volume / FULL_VOLUME;
+  }
 
   setPlays(family: Family): boolean {
     if (family === this.player) return false;
-    this.player = family;
-    this.parts.bass.muted = family === 'bass';
+    this.playAs(family);
     this.save();
     return true;
   }
 
   followLibrary(family: Family): boolean {
     if (this.chosen || family === this.player) return false;
-    this.player = family;
-    this.parts.bass.muted = family === 'bass';
+    this.playAs(family);
     return true;
   }
 
@@ -225,7 +248,7 @@ export class Mixer {
 
   setVolume(part: MixerPart, volume: number): boolean {
     if (!Number.isFinite(volume)) return false;
-    const next = Math.round(Math.min(FULL_VOLUME, Math.max(0, volume)));
+    const next = clamp(volume, VOLUME_RANGE);
     if (next === this.parts[part].volume) return false;
     this.parts[part].volume = next;
     this.save();
@@ -239,5 +262,13 @@ export class Mixer {
     return true;
   }
 
-  private save() { this.chosen = true; setPref('jamMixer', { plays: this.player, parts: this.parts, room: this.roomOn }); }
+  private playAs(family: Family) {
+    this.player = family;
+    this.parts.bass.muted = family === 'bass';
+  }
+
+  private save() {
+    this.chosen = true;
+    setPref('jamMixer', { plays: this.player, parts: this.parts, room: this.roomOn });
+  }
 }

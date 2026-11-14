@@ -1,12 +1,12 @@
 import { MOVE_IDS, hasFlatFifth, hasSharpFifth, isMoveId, isWalk, moveShapes, placeMove, type MoveId, type MoveNote, type Walk } from '../core/bassMoves';
-import { positionWindows, type FretMark, type FretWindow, type MarkRole } from '../core/fretboard';
+import { positionWindows, type FretMark, type FretPosition, type FretWindow, type MarkRole } from '../core/fretboard';
 import { QUALITIES } from '../core/harmony';
 import { INSTRUMENTS, type Instrument } from '../core/instruments';
 import { isMoodId, moodById, type Mood, type MoodId } from '../core/moods';
-import { harmonyScaleId, isScaleId, scaleById, scaleChords, scaleNotes, scaleTitle, usesFlats, type ScaleChord, type ScaleId } from '../core/scales';
+import { harmonyScaleId, isScaleId, scaleById, scaleChords, scaleNotes, scaleTitle, usesFlats, type ScaleChord, type ScaleId, type ScaleNote } from '../core/scales';
 import { MOST_BARS, isProgressionSlug, nextChange, progressions, type Progression, type ProgressionChord } from '../core/progressions';
-import { spellPitchClass } from '../core/theory';
-import { FIRST_FRET, LAST_FRET, fretMarks, fretboardDescription, isFretLabels, markRole, markedPositions, notesByPitchClass, openStringNames, type FretLabels, type MarkedChord } from './fretboardMarks';
+import { MAJOR_SCALE, OCTAVE, spellPitchClass } from '../core/theory';
+import { FIRST_FRET, LAST_FRET, fretMarks, fretboardDescription, isFretLabels, markRole, markedPositions, noteNames, notesByPitchClass, openStringNames, type FretLabels, type MarkedChord } from './fretboardMarks';
 
 export interface FretboardChoice {
   root: number;
@@ -26,7 +26,13 @@ export interface FretboardChoice {
   mood: MoodId | null;
 }
 
-export const DEFAULT_FRETBOARD_CHOICE: FretboardChoice = { root: 0, scale: 'major', instrument: 'bass4', labels: 'names', chord: null, sevenths: false, position: null, progression: null, bar: null, move: null, mood: null };
+/** The fields an older saved choice may lack, filled in when it loads. */
+const LATER_CHOICE_DEFAULTS = { chord: null, sevenths: false, position: null, progression: null, bar: null, move: null, mood: null };
+
+export const DEFAULT_FRETBOARD_CHOICE: FretboardChoice = { root: 0, scale: 'major', instrument: 'bass4', labels: 'names', ...LATER_CHOICE_DEFAULTS };
+
+const LAST_PITCH_CLASS = OCTAVE - 1;
+const LAST_SCALE_STEP = MAJOR_SCALE.length - 1;
 
 const isMoodOnScale = (mood: unknown, scale: unknown) => isMoodId(mood) && moodById(mood).scale === scale;
 
@@ -34,11 +40,11 @@ const isIntegerBetween = (value: unknown, min: number, max: number) => Number.is
 
 export const isFretboardChoice = (value: unknown): value is FretboardChoice =>
   !!value && typeof value === 'object'
-  && 'root' in value && Number.isInteger(value.root) && (value.root as number) >= 0 && (value.root as number) <= 11
+  && 'root' in value && isIntegerBetween(value.root, 0, LAST_PITCH_CLASS)
   && 'scale' in value && isScaleId(value.scale)
   && 'instrument' in value && typeof value.instrument === 'string' && Object.hasOwn(INSTRUMENTS, value.instrument)
   && 'labels' in value && isFretLabels(value.labels)
-  && 'chord' in value && (value.chord === null || isIntegerBetween(value.chord, 0, 6))
+  && 'chord' in value && (value.chord === null || isIntegerBetween(value.chord, 0, LAST_SCALE_STEP))
   && 'sevenths' in value && typeof value.sevenths === 'boolean'
   && 'position' in value && (value.position === null || isIntegerBetween(value.position, FIRST_FRET, LAST_FRET))
   && 'progression' in value && (value.progression === null || isProgressionSlug(value.progression))
@@ -47,7 +53,7 @@ export const isFretboardChoice = (value: unknown): value is FretboardChoice =>
   && 'mood' in value && (value.mood === null || isMoodOnScale(value.mood, value.scale));
 
 export const withFretboardDefaults = (value: unknown): unknown =>
-  value && typeof value === 'object' && !Array.isArray(value) ? { chord: null, sevenths: false, position: null, progression: null, bar: null, move: null, mood: null, ...value } : value;
+  value && typeof value === 'object' && !Array.isArray(value) ? { ...LATER_CHOICE_DEFAULTS, ...value } : value;
 
 /** A mood keeps the root and instrument, sets its scale and starts the progression list afresh. */
 export function chooseMood(choice: FretboardChoice, id: MoodId): FretboardChoice {
@@ -65,8 +71,9 @@ export function chooseScale(choice: FretboardChoice, scale: ScaleId): FretboardC
   return { ...choice, mood: null, scale, progression: null, bar: null };
 }
 
-export const ROOT_OPTIONS = Array.from({ length: 12 }, (_, pc) => {
-  const sharp = spellPitchClass(pc, false), flat = spellPitchClass(pc, true);
+export const ROOT_OPTIONS = Array.from({ length: OCTAVE }, (_, pc) => {
+  const sharp = spellPitchClass(pc, false);
+  const flat = spellPitchClass(pc, true);
   return { value: pc, label: sharp === flat ? sharp : `${sharp} / ${flat}` };
 });
 
@@ -108,59 +115,34 @@ export function fretboardSheet(choice: FretboardChoice): FretboardSheet {
   const mood = choice.mood === null ? null : moodById(choice.mood);
   const progressionList = progressions(choice.root, choice.scale, mood);
   const { progression, chord, next } = pickedChord(choice, chords, progressionList);
-  const byPitch = notesByPitchClass(chord?.tones ?? [], notes);
   const markedChord = chord ? markedChordOf(chord) : null;
-  const flats = usesFlats(choice.root, scaleById(choice.scale));
   const title = scaleTitle(choice.root, choice.scale);
-  const openNames = openStringNames(instrument, flats);
-  const windows = positionWindows(instrument.tuning, notes.map(n => n.pitchClass), FIRST_FRET, LAST_FRET - 1)
-    .map(w => ({ first: w.first, last: Math.min(w.last, LAST_FRET) }));
+  const windows = scaleWindows(instrument, notes);
   const window = nearestWindow(windows, choice.position);
-  const inWindow = (fret: number) => !window || (fret >= window.first && fret <= window.last);
-  const outsideWindow = (fret: number) => !inWindow(fret);
-  const positions = markedPositions(instrument, byPitch);
+  const layout: NeckLayout = {
+    instrument,
+    openNames: openStringNames(instrument, usesFlats(choice.root, scaleById(choice.scale))),
+    byPitch: notesByPitchClass(chord?.tones ?? [], notes),
+    window,
+    windows,
+  };
+  const positions = markedPositions(instrument, layout.byPitch);
   const moves = chord ? movesOver(chord, next) : [];
   const picked = moves.find(m => m.id === choice.move);
-  let move: ShownMove | null = null;
-  if (chord && picked) {
-    const keyNotes = scaleNotes(choice.root, harmonyScaleId(choice.scale)).map(n => n.pitchClass);
-    const walk: Walk | null = next ? { from: chord.root.pitchClass, to: next.root.pitchClass, scale: keyNotes } : null;
-    const shapes = moveShapes(picked.id, QUALITIES[chord.quality], walk);
-    const place = (first: number, last: number) => placeMove(instrument.tuning, chord.root.pitchClass, shapes, first, last);
-    const spellsWithFlats = picked.id === 'approach-above';
-    const describe = (note: MoveNote) => {
-      const where = note.fret === 0 ? 'open' : `fret ${note.fret}`;
-      const name = byPitch.get(note.pitchClass)?.name ?? spellPitchClass(note.pitchClass, spellsWithFlats);
-      return `${note.order} ${stringName(instrument.tuning, note.stringIndex, openNames)} ${where} ${name}`;
-    };
-    move = showMove(picked, window, windows, place, describe);
-  }
+  const move = chord && picked ? placedMove(choice, picked, chord, next, layout) : null;
   const scaleMarks = fretMarks(positions, {
-    notes: byPitch,
+    notes: layout.byPitch,
     chord: markedChord,
     labels: choice.labels,
-    isDimmed: outsideWindow,
+    isDimmed: fret => !inWindow(window, fret),
   });
-  const marks = move?.notes ? numberMoveNotes(scaleMarks, move.notes) : scaleMarks;
-  const roleText: Record<MarkRole, string> = { root: chord ? ' chord root' : ' root', tone: ' chord tone', scale: '' };
-  const strings = instrument.tuning.map((_, stringIndex) => {
-    const name = stringName(instrument.tuning, stringIndex, openNames);
-    const frets = positions.filter(p => p.stringIndex === stringIndex && inWindow(p.fret)).map(p => {
-      const note = byPitch.get(p.pitchClass)!;
-      const where = p.fret === 0 ? 'open' : `fret ${p.fret}`;
-      const degree = choice.labels === 'degrees' ? ` (${note.degree})` : '';
-      return `${where} ${note.name}${degree}${roleText[markRole(note, markedChord)]}`;
-    });
-    return { name, text: `${name}: ${frets.length ? frets.join(', ') : window ? 'no notes in this position' : 'no scale notes'}` };
-  });
-  const windowText = window ? `${windowLabel(window).toLowerCase()} at full strength and the rest dimmed` : null;
+  const windowText = window ? `${lowerWindowLabel(window)} at full strength and the rest dimmed` : null;
   return {
     instrument,
     title,
     mood,
-    summary: (chord ? `${chord.name} in ${title}: ${chord.tones.map(t => t.name).join(' ')}` : `${title}: ${notes.map(n => n.name).join(' ')}`)
-      + (window ? `; ${windowLabel(window).toLowerCase()}` : ''),
-    openNames,
+    summary: sheetSummary(title, notes, chord, window),
+    openNames: layout.openNames,
     chords,
     progressions: progressionList,
     progression,
@@ -170,10 +152,69 @@ export function fretboardSheet(choice: FretboardChoice): FretboardSheet {
     move,
     windows,
     window,
-    marks,
-    strings,
+    marks: move?.notes ? numberMoveNotes(scaleMarks, move.notes) : scaleMarks,
+    strings: stringNotes(layout, positions, choice.labels, markedChord),
     description: fretboardDescription(instrument, title, chord?.name ?? null, windowText),
   };
+}
+
+/** What the neck shows: its strings, the notes marked on it and the position window. */
+interface NeckLayout {
+  instrument: Instrument;
+  openNames: string[];
+  byPitch: ReadonlyMap<number, ScaleNote>;
+  window: FretWindow | null;
+  windows: readonly FretWindow[];
+}
+
+const OPEN_STRING = 0;
+
+const fretText = (fret: number) => (fret === OPEN_STRING ? 'open' : `fret ${fret}`);
+
+const inWindow = (window: FretWindow | null, fret: number) => !window || (fret >= window.first && fret <= window.last);
+
+const lowerWindowLabel = (window: FretWindow) => windowLabel(window).toLowerCase();
+
+function scaleWindows(instrument: Instrument, notes: readonly ScaleNote[]): FretWindow[] {
+  const pitchClasses = notes.map(note => note.pitchClass);
+  const windows = positionWindows(instrument.tuning, pitchClasses, FIRST_FRET, LAST_FRET - 1);
+  return windows.map(window => ({ first: window.first, last: Math.min(window.last, LAST_FRET) }));
+}
+
+function sheetSummary(title: string, notes: readonly ScaleNote[], chord: ScaleChord | null, window: FretWindow | null): string {
+  const shown = chord ? `${chord.name} in ${title}: ${noteNames(chord.tones)}` : `${title}: ${noteNames(notes)}`;
+  const where = window ? `; ${lowerWindowLabel(window)}` : '';
+  return shown + where;
+}
+
+function stringNotes(layout: NeckLayout, positions: readonly FretPosition[], labels: FretLabels, markedChord: MarkedChord | null): StringNotes[] {
+  const { instrument, openNames, byPitch, window } = layout;
+  const roleText: Record<MarkRole, string> = { root: markedChord ? ' chord root' : ' root', tone: ' chord tone', scale: '' };
+  const noNotes = window ? 'no notes in this position' : 'no scale notes';
+  return instrument.tuning.map((_, stringIndex) => {
+    const name = stringName(instrument.tuning, stringIndex, openNames);
+    const shown = positions.filter(p => p.stringIndex === stringIndex && inWindow(window, p.fret));
+    const frets = shown.map(position => {
+      const note = byPitch.get(position.pitchClass)!;
+      const degree = labels === 'degrees' ? ` (${note.degree})` : '';
+      return `${fretText(position.fret)} ${note.name}${degree}${roleText[markRole(note, markedChord)]}`;
+    });
+    return { name, text: `${name}: ${frets.length ? frets.join(', ') : noNotes}` };
+  });
+}
+
+function placedMove(choice: FretboardChoice, move: SheetMove, chord: ScaleChord, next: ProgressionChord | null, layout: NeckLayout): ShownMove {
+  const { instrument, openNames, byPitch } = layout;
+  const keyNotes = scaleNotes(choice.root, harmonyScaleId(choice.scale)).map(note => note.pitchClass);
+  const walk: Walk | null = next ? { from: chord.root.pitchClass, to: next.root.pitchClass, scale: keyNotes } : null;
+  const shapes = moveShapes(move.id, QUALITIES[chord.quality], walk);
+  const place = (first: number, last: number) => placeMove(instrument.tuning, chord.root.pitchClass, shapes, first, last);
+  const spellsWithFlats = move.id === 'approach-above';
+  const describe = (note: MoveNote) => {
+    const name = byPitch.get(note.pitchClass)?.name ?? spellPitchClass(note.pitchClass, spellsWithFlats);
+    return `${note.order} ${stringName(instrument.tuning, note.stringIndex, openNames)} ${fretText(note.fret)} ${name}`;
+  };
+  return showMove(move, layout, place, describe);
 }
 
 function markedChordOf(chord: ScaleChord): MarkedChord {
@@ -229,26 +270,19 @@ function movesOver(chord: ScaleChord, next: ScaleChord | null): SheetMove[] {
   return offered.map(id => ({ id, ...MOVE_TEXTS[id](words) }));
 }
 
-function nearestFitting(windows: readonly FretWindow[], current: FretWindow, fits: (window: FretWindow) => boolean): FretWindow | null {
-  const fitting = windows.filter(fits);
-  const distance = (window: FretWindow) => Math.abs(window.first - current.first);
-  if (!fitting.length) return null;
-  return fitting.reduce((best, window) => (distance(window) < distance(best) ? window : best));
-}
-
 function showMove(
   move: SheetMove,
-  window: FretWindow | null,
-  windows: readonly FretWindow[],
+  { window, windows }: NeckLayout,
   place: (first: number, last: number) => MoveNote[] | null,
   describe: (note: MoveNote) => string,
 ): ShownMove {
   const notes = window ? place(window.first, window.last) : place(FIRST_FRET, LAST_FRET);
   if (notes) return { ...move, notes, fits: null, text: `${move.name}: ${notes.map(describe).join(', ')}` };
   if (!window) return { ...move, notes: null, fits: null, text: `${move.name} does not fit frets ${FIRST_FRET} to ${LAST_FRET}.` };
-  const fits = nearestFitting(windows, window, w => place(w.first, w.last) !== null);
-  const offer = fits ? ` It fits ${windowLabel(fits).toLowerCase()}.` : '';
-  return { ...move, notes: null, fits, text: `${move.name} does not fit ${windowLabel(window).toLowerCase()}.${offer}` };
+  const fittingWindows = windows.filter(w => place(w.first, w.last) !== null);
+  const fits = nearestWindow(fittingWindows, window.first);
+  const offer = fits ? ` It fits ${lowerWindowLabel(fits)}.` : '';
+  return { ...move, notes: null, fits, text: `${move.name} does not fit ${lowerWindowLabel(window)}.${offer}` };
 }
 
 const markKey = (mark: { stringIndex: number; fret: number }) => `${mark.stringIndex}:${mark.fret}`;
@@ -285,10 +319,16 @@ export function stepPosition(windows: readonly FretWindow[], position: number | 
   return windows[windows.indexOf(current) + direction]?.first;
 }
 
+/** The string's note name, told apart by register when another string has the same name: "low E string". */
 function stringName(tuning: readonly number[], index: number, names: readonly string[]): string {
   const name = names[index];
-  const same = tuning.filter((_, i) => names[i] === name);
-  if (same.length < 2) return `${name} string`;
-  const midi = tuning[index];
-  return `${midi === Math.max(...same) ? 'high' : midi === Math.min(...same) ? 'low' : 'middle'} ${name} string`;
+  const sameName = tuning.filter((_, i) => names[i] === name);
+  if (sameName.length < 2) return `${name} string`;
+  return `${register(tuning[index], sameName)} ${name} string`;
+}
+
+function register(midi: number, sameName: readonly number[]): string {
+  if (midi === Math.max(...sameName)) return 'high';
+  if (midi === Math.min(...sameName)) return 'low';
+  return 'middle';
 }
