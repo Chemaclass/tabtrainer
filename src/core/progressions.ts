@@ -1,6 +1,6 @@
 import { PROGRESSION_PRESETS, chordAt, numerals, presetProgression, type Chord, type Numeral } from './harmony';
 import { MOODS, type Mood } from './moods';
-import { rootName, scaleById, scaleNotes, type ScaleChord, type ScaleId, type ScaleNote } from './scales';
+import { harmonyScaleId, rootName, scaleById, scaleNotes, type ScaleChord, type ScaleId, type ScaleNote } from './scales';
 import { degreeName, isKey, letterName } from './theory';
 
 type Family = 'major' | 'minor' | 'blues' | 'mixolydian';
@@ -128,7 +128,7 @@ function entriesFor(id: ScaleId, mood: Mood | null): ProgressionEntry[] {
 export function progressions(root: number, id: ScaleId, mood: Mood | null = null): Progression[] {
   const key = progressionKey(root, id);
   const scaleRootName = rootName(root, id);
-  const scale = scaleNotes(root, scaleById(id).chordsFrom ?? id);
+  const scale = scaleNotes(root, harmonyScaleId(id));
   return entriesFor(id, mood).map(({ slug, name, bars }) => {
     const progression = numerals(bars);
     const chords = progression.map((numeral, bar) => progressionChord(numeral, chordAt(progression, key, bar), bar, scaleRootName, scale));

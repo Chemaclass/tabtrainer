@@ -1,6 +1,6 @@
 import type { Jam, Mixer } from '../../app/jam';
 import { barChords, isBassInstrument, jamFretboard, type JamFretboardSettings } from '../../app/jamFretboard';
-import { FIRST_FRET, LAST_FRET } from '../../app/fretboardSheet';
+import { FIRST_FRET, LAST_FRET } from '../../app/fretboardMarks';
 import type { LoopEngine } from '../../audio/loopEngine';
 import type { GrooveBar } from '../../core/grooveTimeline';
 import { isScaleId, scaleById } from '../../core/scales';

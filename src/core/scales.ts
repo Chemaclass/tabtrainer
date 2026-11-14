@@ -76,11 +76,14 @@ function numeralSuffix(quality: Quality, sevenths: boolean): string {
   return SEVENTH_NUMERAL_SUFFIXES[quality] ?? QUALITIES[quality].suffix;
 }
 
+/** The scale whose chords a scale plays over: its parent for pentatonic and blues, itself otherwise. */
+export const harmonyScaleId = (id: ScaleId): ScaleId => scaleById(id).chordsFrom ?? id;
+
 const sameIntervals = (a: readonly number[], b: readonly number[]) => a.length === b.length && a.every((n, i) => n === b[i]);
 
 /** The chord on each step of the scale, stacked in thirds; pentatonic and blues use their parent scale. */
 export function scaleChords(root: number, id: ScaleId, sevenths: boolean): ScaleChord[] {
-  const harmonyId = scaleById(id).chordsFrom ?? id;
+  const harmonyId = harmonyScaleId(id);
   const notes = scaleNotes(root, harmonyId);
   return notes.map((note, step) => {
     const tones = (sevenths ? [0, 2, 4, 6] : [0, 2, 4]).map(third => notes[(step + third) % notes.length]);
@@ -101,9 +104,6 @@ export function scaleChords(root: number, id: ScaleId, sevenths: boolean): Scale
     };
   });
 }
-
-/** The scale whose chords a scale plays over: its parent for pentatonic and blues, itself otherwise. */
-export const harmonyScaleId = (id: ScaleId): ScaleId => scaleById(id).chordsFrom ?? id;
 
 const MAJOR_KEY_SCALES: readonly ScaleId[] = ['major', 'major-pentatonic'];
 const MINOR_KEY_SCALES: readonly ScaleId[] = ['minor', 'minor-pentatonic', 'dorian'];
