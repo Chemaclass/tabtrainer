@@ -25,9 +25,65 @@
     let theme = null;
     try { theme = JSON.parse(localStorage.getItem('tabtrainer:theme')); } catch { /* storage unavailable */ }
     document.documentElement.dataset.theme = theme === 'light' || theme === 'dark' ? theme : matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    const query = new URLSearchParams(location.search);
+    let welcomed = true;
+    try {
+      if (!Object.keys(localStorage).some(key => key.startsWith('tabtrainer:'))) localStorage.setItem('tabtrainer:welcomed', 'false');
+      welcomed = localStorage.getItem('tabtrainer:welcomed') !== 'false';
+    } catch { /* storage unavailable */ }
+    const deepLink = query.has('song') || query.get('view') === 'practice';
+    if (query.has('welcome') || (!welcomed && !deepLink)) document.documentElement.classList.add('landing');
   </script>
 </head>
 <body class="library-view">
+  <div id="landing" class="landing-page">
+    <header class="landing-top">
+      <a class="landing-brand" href="./?view=library&amp;kind=exercises" data-enter><svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true"><path d="M1 5h20M1 11h20M1 17h20" stroke="currentColor" stroke-width="1.5"/><circle cx="14" cy="11" r="4" fill="var(--playing)"/></svg>TabTrainer</a>
+      <nav class="landing-nav" aria-label="TabTrainer">
+        <a href="./?view=library&amp;kind=exercises" data-enter>Exercises</a><a href="./?view=library&amp;kind=songs" data-enter>Songs</a><a href="https://github.com/Chemaclass/tabtrainer" target="_blank" rel="noopener">Source on GitHub</a>
+        <a class="landing-outline" href="./?view=library&amp;kind=exercises" data-enter>Open the library</a>
+      </nav>
+    </header>
+    <main class="landing-hero">
+      <div class="landing-copy">
+        <p class="landing-kicker">For electric bass and guitar</p>
+        <h1>Slow it down.<br />Loop the hard bars.</h1>
+        <p class="landing-lede">Read tab and notation side by side, follow each note as it plays, and raise the speed as the passage settles in your hands.</p>
+        <div class="landing-actions"><a class="landing-start" href="./?view=library&amp;kind=exercises" data-enter>Start practising <span aria-hidden="true">→</span></a><button class="landing-link" type="button" data-read-tab>How to read tab</button></div>
+      </div>
+      <figure class="landing-visual" aria-label="A bar of bass tab with the playing note highlighted">
+        <svg viewBox="0 0 600 252" aria-hidden="true">
+          <g class="tab-label"><text x="0" y="45">G</text><text x="0" y="105">D</text><text x="0" y="165">A</text><text x="0" y="225">E</text></g>
+          <g class="tab-line"><path d="M28 40H600M28 100H600M28 160H600M28 220H600M28 40V220M314 40V220M600 40V220"/></g>
+          <path class="tab-head" d="M352 12V248"/>
+          <g class="tab-fret">
+            <rect x="66" y="208" width="28" height="24"/><text x="80" y="227">0</text>
+            <rect x="136" y="148" width="28" height="24"/><text x="150" y="167">3</text>
+            <rect x="206" y="148" width="28" height="24"/><text x="220" y="167">5</text>
+            <rect x="266" y="88" width="28" height="24"/><text x="280" y="107">2</text>
+            <rect x="426" y="88" width="28" height="24"/><text x="440" y="107">5</text>
+            <rect x="496" y="148" width="28" height="24"/><text x="510" y="167">3</text>
+            <rect x="556" y="208" width="28" height="24"/><text x="570" y="227">3</text>
+          </g>
+          <circle class="tab-playing" cx="352" cy="100" r="19"/><text class="tab-playing-fret" x="352" y="107">4</text>
+        </svg>
+        <figcaption class="landing-readout"><span><b>BAR 4</b> / 16</span><span><b>75%</b> speed</span><span>Looping bar <b>4</b></span></figcaption>
+      </figure>
+    </main>
+    <section class="landing-steps" aria-labelledby="stepsTitle">
+      <div class="landing-steps-intro"><p class="landing-kicker">How practice works</p><h2 id="stepsTitle">One passage at a time.</h2></div>
+      <ol>
+        <li><span class="landing-step-no">01</span><h3>Slow it down</h3><p>Play anywhere from 30 to 130% speed. The pitch stays the same, so your ear keeps up.</p></li>
+        <li><span class="landing-step-no">02</span><h3>Repeat until it’s clean</h3><p>Pick a range of bars and repeat it. Turn on gradual speed to go faster after each clean pass.</p></li>
+        <li><span class="landing-step-no">03</span><h3>Follow every note</h3><p>The note you should play turns red, and the page scrolls with you. Tab and notation, side by side.</p></li>
+      </ol>
+    </section>
+    <section class="landing-promise">
+      <div><h2>Free, with no account. Your songs stay in your browser.</h2><p>Write your own songs in plain text, or start from the bundled exercises. Download a song to share it or move it to another device.</p></div>
+      <ul class="landing-facts"><li>Bass · 4, 5 or 6 strings</li><li>Guitar · 6 strings</li><li><span id="landingCount">32</span> exercises and songs</li></ul>
+    </section>
+    <footer class="landing-footer"><span class="landing-brand"><svg width="18" height="18" viewBox="0 0 22 22" aria-hidden="true"><path d="M1 5h20M1 11h20M1 17h20" stroke="currentColor" stroke-width="1.5"/><circle cx="14" cy="11" r="4" fill="var(--playing)"/></svg>TabTrainer</span><span>Made by <a href="https://chemaclass.com" target="_blank" rel="noopener">Chemaclass</a> · <a href="https://github.com/Chemaclass/tabtrainer" target="_blank" rel="noopener">Source code on GitHub</a> · MIT licence</span></footer>
+  </div>
   <header class="top">
     <button id="homeBtn" class="brand" title="Browse the practice library">
       <svg class="logo" width="22" height="22" viewBox="0 0 22 22" aria-hidden="true"><path d="M1 5h20M1 11h20M1 17h20" stroke="currentColor" stroke-width="1.5"/><circle cx="14" cy="11" r="4" fill="var(--playing)"/></svg>
@@ -85,7 +141,7 @@
       <section class="reading-guide"><div class="guide-card"><h2>Make a little progress.</h2><p>Start slowly. A few comfortable bars are a good practice session.</p><button id="readTabBtn">How to read tab →</button></div><ol><li>Choose a comfortable level.</li><li>Try 50% or 75% speed.</li><li>Loop a few bars until they feel comfortable.</li></ol></section>
     </aside>
   </main>
-  <footer class="site-footer">Free and open source. Made by <a href="https://chemaclass.com" target="_blank" rel="noopener">Chemaclass</a> · <a href="https://github.com/Chemaclass/tabtrainer" target="_blank" rel="noopener">Source code on GitHub</a></footer>
+  <footer class="site-footer"><a href="./?welcome">What is TabTrainer?</a> Free and open source. Made by <a href="https://chemaclass.com" target="_blank" rel="noopener">Chemaclass</a> · <a href="https://github.com/Chemaclass/tabtrainer" target="_blank" rel="noopener">Source code on GitHub</a></footer>
   <div id="practiceScreen" hidden>
   <main class="layout noedit">
     <section id="editorPane" class="editor">
@@ -229,5 +285,6 @@ time: 4/4
     <footer class="dialog-credit">Made by <a href="https://chemaclass.com" target="_blank" rel="noopener">Chemaclass</a> · <a href="https://github.com/Chemaclass/tabtrainer" target="_blank" rel="noopener">Source code on GitHub</a></footer>
   </dialog>
   <script type="module" src="/src/main.ts"></script>
+  <script type="module" src="/src/ui/landing/landing.ts"></script>
 </body>
 </html>
