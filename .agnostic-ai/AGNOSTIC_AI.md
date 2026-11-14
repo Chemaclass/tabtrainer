@@ -20,6 +20,7 @@ A static web app for practising bass and guitar from tab and notation. TypeScrip
 - `tests/` mirrors `src/`: `tests/app`, `tests/audio`, `tests/build`, `tests/core`.
 - ESLint enforces the layers: `core` imports no other layer, `app` imports no `ui`, `render` or `build`, `audio`, `render` and `build` import no `ui`, and nothing imports `main.ts`.
 - `src/songs/<instrument>/<exercises|songs>/NN-name.txt` are the bundled songs. Add one with the `new-song` skill.
+- `src/grooves/NN-name.txt` are the bundled Jam grooves. Add one with the `new-groove` skill.
 
 ## Before you finish
 
