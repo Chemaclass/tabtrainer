@@ -5,6 +5,7 @@ describe('bars per line', () => {
   it('fits wider bars when notation is shown', () => {
     expect(barsPerLine(1200, 1, true)).toBe(4);
     expect(barsPerLine(1200, 1, false)).toBe(5);
+    expect(barsPerLine(1000, 1, true)).toBe(3);
   });
   it('fits fewer bars as the score zooms in', () => {
     expect(barsPerLine(1200, 2, true)).toBe(2);
