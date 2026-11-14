@@ -12,7 +12,7 @@ export const BASS_DEGREES: readonly BassDegree[] = ['1', '3', '5', 'b7', '8'];
 const ROMANS = ['i', 'ii', 'iii', 'iv', 'v', 'vi', 'vii'];
 const MAJOR_SCALE = [0, 2, 4, 5, 7, 9, 11];
 
-const QUALITIES: Record<Quality, { intervals: number[]; suffix: string }> = {
+export const QUALITIES: Readonly<Record<Quality, { readonly intervals: readonly number[]; readonly suffix: string }>> = {
   major: { intervals: [0, 4, 7], suffix: '' },
   minor: { intervals: [0, 3, 7], suffix: 'm' },
   '7': { intervals: [0, 4, 7, 10], suffix: '7' },

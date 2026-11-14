@@ -2,7 +2,7 @@ import { isSpeedPracticeConfig, type SpeedPracticeConfig } from '../core/speedPr
 import { isFamily, type Family } from '../core/instruments';
 import { isLibraryKind, type LibraryKind } from './catalogue';
 import { isTunings, type Tunings } from './tuning';
-import { isFretboardChoice, type FretboardChoice } from './fretboardSheet';
+import { isFretboardChoice, withFretboardDefaults, type FretboardChoice } from './fretboardSheet';
 
 const LIB = 'tabtrainer:library';
 export interface Saved { title: string; text: string; updated: number }
@@ -74,11 +74,15 @@ const validators: { [K in keyof Preferences]: (value: unknown) => value is Prefe
   fretboardSheet: isFretboardChoice,
   jam: (value): value is Record<string, JamChoice> => !!value && typeof value === 'object' && !Array.isArray(value),
 };
+const upgrades: { [K in keyof Preferences]?: (value: unknown) => unknown } = {
+  fretboardSheet: withFretboardDefaults,
+};
 function readPreference(key: keyof Preferences): unknown {
   try { return JSON.parse(localStorage.getItem('tabtrainer:' + key) ?? 'null'); } catch { return null; }
 }
 export function pref<K extends keyof Preferences>(key: K, fallback: Preferences[K]): Preferences[K] {
-  const value = readPreference(key);
+  const stored = readPreference(key), upgrade = upgrades[key];
+  const value = upgrade ? upgrade(stored) : stored;
   return validators[key](value) ? value : fallback;
 }
 export function setPref<K extends keyof Preferences>(key: K, value: Preferences[K]): boolean {

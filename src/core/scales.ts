@@ -1,3 +1,4 @@
+import { QUALITIES, type Quality } from './harmony';
 import { pitchClass, spellPitchClass } from './theory';
 
 export type ScaleId = 'major' | 'minor' | 'major-pentatonic' | 'minor-pentatonic' | 'blues' | 'dorian' | 'mixolydian';
@@ -12,6 +13,8 @@ export interface Scale {
   parent: number;
   /** Intervals always spelled with a flat, whatever the parent key. */
   flatIntervals?: readonly number[];
+  /** The seven note scale whose chords a smaller scale plays over. */
+  chordsFrom?: ScaleId;
 }
 
 export interface ScaleNote { pitchClass: number; name: string; degree: string; root: boolean }
@@ -19,9 +22,9 @@ export interface ScaleNote { pitchClass: number; name: string; degree: string; r
 export const SCALES: readonly Scale[] = [
   { id: 'major', name: 'Major', title: 'major', intervals: [0, 2, 4, 5, 7, 9, 11], degrees: ['1', '2', '3', '4', '5', '6', '7'], parent: 0 },
   { id: 'minor', name: 'Natural minor', title: 'minor', intervals: [0, 2, 3, 5, 7, 8, 10], degrees: ['1', '2', 'b3', '4', '5', 'b6', 'b7'], parent: 3 },
-  { id: 'major-pentatonic', name: 'Major pentatonic', title: 'major pentatonic', intervals: [0, 2, 4, 7, 9], degrees: ['1', '2', '3', '5', '6'], parent: 0 },
-  { id: 'minor-pentatonic', name: 'Minor pentatonic', title: 'minor pentatonic', intervals: [0, 3, 5, 7, 10], degrees: ['1', 'b3', '4', '5', 'b7'], parent: 3 },
-  { id: 'blues', name: 'Blues', title: 'blues', intervals: [0, 3, 5, 6, 7, 10], degrees: ['1', 'b3', '4', 'b5', '5', 'b7'], parent: 3, flatIntervals: [6] },
+  { id: 'major-pentatonic', name: 'Major pentatonic', title: 'major pentatonic', intervals: [0, 2, 4, 7, 9], degrees: ['1', '2', '3', '5', '6'], parent: 0, chordsFrom: 'major' },
+  { id: 'minor-pentatonic', name: 'Minor pentatonic', title: 'minor pentatonic', intervals: [0, 3, 5, 7, 10], degrees: ['1', 'b3', '4', '5', 'b7'], parent: 3, chordsFrom: 'minor' },
+  { id: 'blues', name: 'Blues', title: 'blues', intervals: [0, 3, 5, 6, 7, 10], degrees: ['1', 'b3', '4', 'b5', '5', 'b7'], parent: 3, flatIntervals: [6], chordsFrom: 'minor' },
   { id: 'dorian', name: 'Dorian', title: 'Dorian', intervals: [0, 2, 3, 5, 7, 9, 10], degrees: ['1', '2', 'b3', '4', '5', '6', 'b7'], parent: 10 },
   { id: 'mixolydian', name: 'Mixolydian', title: 'Mixolydian', intervals: [0, 2, 4, 5, 7, 9, 10], degrees: ['1', '2', '3', '4', '5', '6', 'b7'], parent: 5 },
 ];
@@ -49,3 +52,36 @@ export function scaleNotes(root: number, id: ScaleId): ScaleNote[] {
 export const rootName = (root: number, id: ScaleId) => spellPitchClass(root, usesFlats(root, scaleById(id)));
 
 export const scaleTitle = (root: number, id: ScaleId) => `${rootName(root, id)} ${scaleById(id).title}`;
+
+export interface ScaleChord { step: number; numeral: string; name: string; quality: Quality; root: ScaleNote; tones: ScaleNote[] }
+
+const ROMANS = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII'];
+const MAJOR_STEPS = [0, 2, 4, 5, 7, 9, 11];
+const CHORD_QUALITIES: readonly Quality[] = ['major', 'minor', 'dim', 'maj7', '7', 'm7', 'm7b5'];
+const MINOR_THIRD = new Set<Quality>(['minor', 'dim', 'm7', 'm7b5']);
+
+const sameIntervals = (a: readonly number[], b: readonly number[]) => a.length === b.length && a.every((n, i) => n === b[i]);
+
+/** The chord on each step of the scale, stacked in thirds; pentatonic and blues use their parent scale. */
+export function scaleChords(root: number, id: ScaleId, sevenths: boolean): ScaleChord[] {
+  const harmonyId = scaleById(id).chordsFrom ?? id;
+  const notes = scaleNotes(root, harmonyId);
+  return notes.map((note, step) => {
+    const tones = (sevenths ? [0, 2, 4, 6] : [0, 2, 4]).map(third => notes[(step + third) % notes.length]);
+    const intervals = tones.map(tone => pitchClass(tone.pitchClass - note.pitchClass));
+    const quality = CHORD_QUALITIES.find(q => sameIntervals(QUALITIES[q].intervals, intervals));
+    if (!quality) throw new Error(`No chord quality for step ${step + 1} of ${harmonyId}`);
+    const shift = pitchClass(note.pitchClass - root - MAJOR_STEPS[step]);
+    const accidental = shift === 11 ? 'b' : shift === 1 ? '#' : '';
+    const roman = MINOR_THIRD.has(quality) ? ROMANS[step].toLowerCase() : ROMANS[step];
+    const suffix = QUALITIES[quality].suffix;
+    return {
+      step,
+      numeral: accidental + roman + (sevenths ? (quality === 'm7' ? '7' : suffix) : ''),
+      name: note.name + suffix,
+      quality,
+      root: note,
+      tones,
+    };
+  });
+}

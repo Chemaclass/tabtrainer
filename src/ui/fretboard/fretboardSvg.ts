@@ -30,13 +30,14 @@ export function fretboardSvg({ openNames, firstFret, lastFret, marks, label }: F
   const dotRow = (index: number) => TOP + (index + 0.5) * STRING_GAP;
 
   const svg = el('svg', { class: 'fretboard-svg', viewBox: `0 0 ${width} ${height}`, width, height, role: 'img', 'aria-label': label });
+  if (marks.some(mark => mark.role === 'tone')) svg.dataset.chord = '';
   const board = el('g', { 'aria-hidden': 'true' });
   for (let fret = start; fret <= lastFret; fret++) {
     const cx = x(fret);
     if (SINGLE_DOTS.has(fret)) board.append(el('circle', { class: 'fb-inlay', cx, cy: dotRow(Math.max(0, Math.ceil(strings / 2) - 1)), r: 5 }));
     if (DOUBLE_DOTS.has(fret)) board.append(el('circle', { class: 'fb-inlay', cx, cy: dotRow(0), r: 5 }), el('circle', { class: 'fb-inlay', cx, cy: dotRow(Math.max(0, strings - 2)), r: 5 }));
     board.append(el('line', { class: 'fb-fret', x1: left + (fret - start + 1) * FRET_WIDTH, x2: left + (fret - start + 1) * FRET_WIDTH, y1: TOP, y2: bottom }));
-    board.append(el('text', { class: 'fb-fret-number', x: cx, y: bottom + 24 }, String(fret)));
+    board.append(el('text', { class: 'fb-fret-number', x: cx, y: bottom + 24, 'data-fret': fret }, String(fret)));
   }
   board.append(el('line', { class: withOpen ? 'fb-nut' : 'fb-fret', x1: left, x2: left, y1: TOP - 1, y2: bottom + 1 }));
   openNames.forEach((name, stringIndex) => {
@@ -47,6 +48,7 @@ export function fretboardSvg({ openNames, firstFret, lastFret, marks, label }: F
     if (mark.fret < firstFret || mark.fret > lastFret || mark.stringIndex >= strings) continue;
     const cx = x(mark.fret), cy = y(mark.stringIndex);
     const group = el('g', { class: 'fb-mark', 'data-role': mark.role });
+    if (mark.dimmed) group.dataset.dimmed = '';
     group.append(mark.role === 'root'
       ? el('rect', { x: cx - MARK, y: cy - MARK, width: MARK * 2, height: MARK * 2, rx: 3 })
       : el('circle', { cx, cy, r: MARK }));

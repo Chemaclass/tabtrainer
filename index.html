@@ -282,6 +282,16 @@
       <div class="fretboard-field"><label for="fretboardInstrument">Instrument</label><select id="fretboardInstrument"></select></div>
       <button id="fretboardDegrees" class="toggle" aria-pressed="false">Show degrees</button>
     </div>
+    <div class="fretboard-chords">
+      <span id="fretboardChordLabel" class="fretboard-label">Chord</span>
+      <div id="fretboardChords" class="fretboard-chord-row" role="group" aria-labelledby="fretboardChordLabel"></div>
+      <button id="fretboardSevenths" class="toggle" aria-pressed="false">Sevenths</button>
+    </div>
+    <div class="fretboard-controls fretboard-position">
+      <button id="fretboardPrevious" class="toggle" aria-label="Previous position">‹</button>
+      <div class="fretboard-field"><label for="fretboardPosition">Position</label><select id="fretboardPosition"></select></div>
+      <button id="fretboardNext" class="toggle" aria-label="Next position">›</button>
+    </div>
     <p id="fretboardSummary" class="fretboard-summary" aria-live="polite"></p>
     <div id="fretboardBoard" class="fretboard-board" tabindex="0" role="region" aria-label="Fretboard, scrolls sideways"></div>
     <ul id="fretboardStrings" class="sr-only" aria-label="Marked frets on each string"></ul>
