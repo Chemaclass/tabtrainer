@@ -29,11 +29,13 @@ import { PassagePlayback, beatInBar } from './app/passagePlayback';
 import { passageControls } from './ui/player/passageControls';
 import { playbackShortcut } from './app/playbackShortcut';
 import { Navigation, navigationState, type Route } from './app/navigation';
-import { DraftSession, titleOf } from './app/draftSession';
+import { DraftSession } from './app/draftSession';
 import { editorPane } from './ui/editor/editorPane';
+import { saveState } from './ui/editor/saveState';
+import { songFile } from './ui/editor/songFile';
 import { playerPanel } from './ui/player/playerPanel';
 import { theme } from './ui/shell/theme';
-import { closeOnChoice, closeOnOutside } from './ui/shell/disclosure';
+import { closeOnOutside } from './ui/shell/disclosure';
 import { publishHeight } from './ui/shell/layoutMetrics';
 import { libraryView } from './ui/library/libraryView';
 import { categoryCounts, isLibraryKind, nextExercise, type CatalogueEntry, type LibraryKind } from './app/catalogue';
@@ -62,6 +64,7 @@ const openSong = new OpenSong();
 const passage = new Passage();
 const passagePlayback = new PassagePlayback(player, passage);
 const draftSession = new DraftSession(() => src.value);
+const saveView = saveState(draftSession, workspace, () => files.download());
 let continuationDismissed = false;
 const score = scoreView({
   redraw: draw,
@@ -75,7 +78,7 @@ const header = songHeader(chooseVersion);
 // ---------- song list ----------
 
 const newSong = () => `title: New song\ninstrument: ${FAMILIES[workspace.family]}\ntempo: 90\nkey: C\ntime: 4/4\n\n@Intro\n"C" :q 3.3 3.3 5.2 3.3 |\n`;
-const catalogue = libraryView(v => pickSong(v), () => $('newBtn').click(), () => $('openBtn').click(), () => { showLibrary('exercises'); $('libraryTitle').focus({ preventScroll: true }); });
+const catalogue = libraryView(v => pickSong(v), startNewSong, () => files.open(), () => { showLibrary('exercises'); $('libraryTitle').focus({ preventScroll: true }); });
 function fillSongList() {
   catalogueEntries = songbook.entries();
   catalogue.show(catalogueEntries, workspace.family, workspace.kind, recentPractice().map(resolvePick));
@@ -85,7 +88,7 @@ function showFamily() { setSelectValue($('familySelect', HTMLSelectElement), wor
 function chooseFamily(f: Family) {
   if (workspace.chooseFamily(f)) { showFamily(); showLink(); }
 }
-function loadText(text: string) { scrolling.stopContinuous(); clearTimeout(timer); src.value = text; draftSession.accept(text); announceSave(''); update(true); persistDraft(); }
+function loadText(text: string) { scrolling.stopContinuous(); clearTimeout(timer); src.value = text; draftSession.accept(text); saveView.announce(''); update(true); persistDraft(); }
 function pickSong(v: string) {
   if (v === workspace.picked) { setScreen('practice', true); showLink(true); }
   else replaceCurrent(() => loadPickedSong(v, true));
@@ -110,7 +113,7 @@ function setScreen(next: Screen, focus = false) {
   document.body.classList.toggle('library-view', next === 'library');
   $('libraryScreen').hidden = next !== 'library'; $('practiceScreen').hidden = next !== 'practice';
   one('.player').hidden = next !== 'practice';
-  showTitle(); fillSongList(); showDirtyState();
+  showTitle(); fillSongList(); saveView.show();
   if (next === 'practice') requestAnimationFrame(draw);
   if (focus) { window.scrollTo(0, 0); $(next === 'library' ? 'libraryTitle' : 'title').focus({ preventScroll: true }); }
 }
@@ -135,12 +138,12 @@ function renderPracticeNavigation() {
   $('nextExerciseBtn').hidden = !next; $('allExercisesBtn').hidden = !!next;
   if (next) { $('nextExerciseTitle').textContent = next.title; $('nextExerciseBtn').onclick = () => pickSong(next.value); }
   $('backLibraryBtn').onclick = () => showLibrary(kind);
-  showShare();
+  saveView.showShare();
 }
 $('homeBtn').onclick = () => showLibrary();
 $('allExercisesBtn').onclick = () => showLibrary('exercises');
 $('returnDraftBtn').onclick = () => { setScreen('practice', true); showLink(true); };
-$('libraryOpenBtn').onclick = () => $('openBtn').click();
+$('libraryOpenBtn').onclick = () => files.open();
 $('readTabBtn').onclick = $('readTabMobileBtn').onclick = () => $('tabHelp', HTMLDialogElement).showModal();
 document.querySelectorAll<HTMLButtonElement>('[data-kind]').forEach(button => { button.onclick = () => { if (isLibraryKind(button.dataset.kind)) showLibrary(button.dataset.kind); }; });
 $('familySelect', HTMLSelectElement).onchange = e => { const value = (e.target as HTMLSelectElement).value; if (isFamily(value)) chooseFamily(value); };
@@ -263,27 +266,11 @@ window.addEventListener('blur', shortcut.blur);
 
 // ---------- toolbar ----------
 const unpick = () => { workspace.unpick(); fillSongList(); };
-const fileMenu = one('.file-menu', HTMLDetailsElement);
-$('openBtn').onclick = () => $('openFile', HTMLInputElement).click();
-closeOnChoice(fileMenu); closeOnOutside(fileMenu);
 const hasChanges = () => draftSession.hasChanges();
-// The link opens the bundled song, so it would drop unsaved edits.
-function showShare() { $('shareBtn').hidden = bundledPath(workspace.picked) === null || draftSession.hasChanges(); }
-function showDirtyState() {
-  $('returnDraftBtn').hidden = workspace.screen !== 'library' || !hasChanges();
-  one('.save-state').hidden = !hasChanges() && !$('saveFeedback').textContent;
-  showShare();
-  $('dirtyState').textContent = hasChanges() ? `Unsaved changes${draftSession.stored ? '' : ' (draft recovery unavailable)'}` : 'No unsaved changes';
-}
-function announceSave(message: string, failed = false, offerDownload = failed) {
-  $('saveFeedback').textContent = message;
-  $('saveFeedback').classList.toggle('bad', failed);
-  $('recoverDownload').hidden = !offerDownload; showDirtyState();
-}
 function persistDraft() {
   draftSession.persist(workspace.picked);
-  showDirtyState();
-  if (!draftSession.stored && hasChanges()) announceSave('Could not keep this draft in the browser. Download a copy.', true);
+  saveView.show();
+  if (!draftSession.stored && hasChanges()) saveView.announce('Could not keep this draft in the browser. Download a copy.', true);
 }
 function replaceCurrent(action: () => void, cancel: (() => void) | null = null) {
   draftSession.replace(action, cancel, () => {
@@ -296,43 +283,23 @@ $('replaceDialog', HTMLDialogElement).addEventListener('close', () => {
 function saveCurrent(): boolean {
   const result = draftSession.save(title => window.confirm(`Replace "${title}" in your library?`));
   if (result.status === 'cancelled') return false;
-  if (result.status === 'failed') { announceSave('Could not save in this browser. Your text is still here. Download a copy.', true); return false; }
+  if (result.status === 'failed') { saveView.announce('Could not save in this browser. Your text is still here. Download a copy.', true); return false; }
   const { title } = result;
   workspace.pick(savedRef(title), 'mine'); persistDraft(); fillSongList(); showLink();
-  announceSave(`Saved "${title}" in this browser`); return true;
+  saveView.announce(`Saved "${title}" in this browser`); return true;
 }
-$('newBtn').onclick = () => replaceCurrent(() => { const text = newSong(); unpick(); setScreen('practice'); loadText(text); showLink(true); editor.show(true); src.focus(); });
-$('saveBtn').onclick = () => { saveCurrent(); };
-$('recoverDownload').onclick = () => $('dlBtn').click();
-$('dlBtn').onclick = () => {
-  const blob = new Blob([src.value], { type: 'text/plain' }); const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob); a.download = titleOf(src.value).replace(/[^\w\- ]+/g, '').trim().replace(/\s+/g, '-').toLowerCase() + '.txt';
-  a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
-};
-$('openFile', HTMLInputElement).onchange = async e => {
-  const input = e.target as HTMLInputElement, file = input.files?.[0]; if (!file) return;
-  const generation = draftSession.beginNavigation(); input.value = '';
-  try {
-    const text = await file.text();
-    if (draftSession.isCurrent(generation)) replaceCurrent(() => { unpick(); setScreen('practice'); loadText(text); showLink(true); });
-  } catch { announceSave('Could not open that file. Your current text is still here.', true); }
-};
-const editor = editorPane(draw);
-$('shareBtn').onclick = async () => {
+function startNewSong() { replaceCurrent(() => { const text = newSong(); unpick(); setScreen('practice'); loadText(text); showLink(true); editor.show(true); src.focus(); }); }
+function openFileText(text: string) { replaceCurrent(() => { unpick(); setScreen('practice'); loadText(text); showLink(true); }); }
+function songShareLink() {
   const version = openSong.versionSlug();
   const root = new URL(import.meta.env.BASE_URL, location.origin).href;
   // Only the build writes the per-song pages.
   const path = bundledPath(workspace.picked);
-  if (path === null) return;
-  const url = import.meta.env.DEV ? `${root}?${new URLSearchParams({ song: songSlug(path), ...version && { version } })}` : shareUrl(root, path, version);
-  try {
-    if (navigator.share && matchMedia('(pointer:coarse)').matches) { await navigator.share({ title: document.title, url }); return; }
-    await navigator.clipboard.writeText(url);
-    announceSave(`Link copied: ${url}`);
-  } catch (error) {
-    if (!(error instanceof DOMException && error.name === 'AbortError')) announceSave(`Could not copy the link: ${url}`, true, false);
-  }
-};
+  if (path === null) return null;
+  return import.meta.env.DEV ? `${root}?${new URLSearchParams({ song: songSlug(path), ...version && { version } })}` : shareUrl(root, path, version);
+}
+const files = songFile(draftSession, { onNew: startNewSong, onOpen: openFileText, onSave: () => { saveCurrent(); }, shareLink: songShareLink, announce: saveView.announce });
+const editor = editorPane(draw);
 playerPanel(draw);
 $('closeContinuationBtn').onclick = () => { continuationDismissed = true; $('playBtn').focus(); $('exerciseContinuation').hidden = true; };
 theme();
@@ -354,7 +321,7 @@ switch (plan.kind) {
   case 'recover': {
     const { draft, offer } = plan;
     workspace.restore(draft.picked); src.value = draft.text; draftSession.recover(draft);
-    update(true); showDirtyState();
+    update(true); saveView.show();
     if (offer) replaceCurrent(() => { loadPickedSong(offer); chooseVersionNamed(linkedVersion); });
     else if (plan.followLink) chooseVersionNamed(linkedVersion);
     break;
