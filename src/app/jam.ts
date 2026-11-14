@@ -66,7 +66,9 @@ export class Jam {
     return isMinorProgression(this.chords()) ? MINOR_KEYS : MAJOR_KEYS;
   }
   get scales(): ScaleId[] {
-    return fittingScales({ minorKey: isMinorKey(this.chosenKey), bluesy: BLUESY_GENRES.has(this.groove.genre) });
+    const minorKey = isMinorKey(this.chosenKey);
+    const bluesy = BLUESY_GENRES.has(this.groove.genre);
+    return fittingScales({ minorKey, bluesy });
   }
   /** The chosen scale while it fits the key, otherwise the usual scale of the groove. */
   get scale(): ScaleId {
@@ -155,7 +157,7 @@ export class Jam {
   }
 
   private save() {
-    const choice = { key: this.chosenKey, tempo: this.chosenTempo, progression: this.chosenProgression, swing: this.chosenSwing, scale: this.scale };
+    const choice = { key: this.chosenKey, tempo: this.chosenTempo, progression: this.chosenProgression, swing: this.chosenSwing, scale: this.chosenScale ?? undefined };
     setPref('jam', { ...pref('jam', {}), [this.slug]: choice });
   }
 }

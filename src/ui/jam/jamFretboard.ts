@@ -1,5 +1,5 @@
 import type { Jam, Mixer } from '../../app/jam';
-import { BASS_INSTRUMENTS, barChords, jamFretboard, type JamFretboardSettings } from '../../app/jamFretboard';
+import { barChords, isBassInstrument, jamFretboard, type JamFretboardSettings } from '../../app/jamFretboard';
 import { FIRST_FRET, LAST_FRET } from '../../app/fretboardSheet';
 import type { LoopEngine } from '../../audio/loopEngine';
 import type { GrooveBar } from '../../core/grooveTimeline';
@@ -10,25 +10,34 @@ import { setSelectValue } from '../shell/dropdown';
 
 const FIRST_BAR = 0;
 
+/** A live region reads every text change aloud, so the same chord twice in a row stays silent. */
+function announceOnce(liveElement: HTMLElement, text: string) {
+  if (liveElement.textContent !== text) liveElement.textContent = text;
+}
+
 export function jamFretboardView(jam: Jam, mixer: Pick<Mixer, 'plays'>, settings: JamFretboardSettings, engine: Pick<LoopEngine, 'on'>) {
-  const scale = byId('jamScale', HTMLSelectElement);
-  const strings = byId('jamStrings', HTMLSelectElement);
-  const stringsField = byId('jamStringsField');
-  const degrees = byId('jamDegrees', HTMLButtonElement);
-  const now = byId('jamFretboardNow');
-  const next = byId('jamFretboardNext');
+  const scaleSelect = byId('jamScale', HTMLSelectElement);
+  const bassSelect = byId('jamStrings', HTMLSelectElement);
+  const bassField = byId('jamStringsField');
+  const degreesToggle = byId('jamDegrees', HTMLButtonElement);
+  const chordLine = byId('jamFretboardChord');
+  const scaleLine = byId('jamFretboardScale');
+  const nextChordLine = byId('jamFretboardNext');
   const board = byId('jamFretboardBoard');
   let bars: readonly GrooveBar[] = [];
   let playingBar = FIRST_BAR;
 
-  scale.onchange = () => {
-    if (isScaleId(scale.value) && jam.setScale(scale.value)) show();
+  scaleSelect.onchange = () => {
+    const scale = scaleSelect.value;
+    if (!isScaleId(scale) || !jam.setScale(scale)) return;
+    show();
   };
-  strings.onchange = () => {
-    const bass = BASS_INSTRUMENTS.find(id => id === strings.value);
-    if (bass && settings.setBass(bass)) show();
+  bassSelect.onchange = () => {
+    const bass = bassSelect.value;
+    if (!isBassInstrument(bass) || !settings.setBass(bass)) return;
+    show();
   };
-  degrees.onclick = () => {
+  degreesToggle.onclick = () => {
     settings.toggleLabels();
     show();
   };
@@ -41,26 +50,27 @@ export function jamFretboardView(jam: Jam, mixer: Pick<Mixer, 'plays'>, settings
   }
 
   function showControls() {
-    scale.replaceChildren(...jam.scales.map(id => new Option(scaleById(id).name, id)));
-    setSelectValue(scale, jam.scale);
-    setSelectValue(strings, settings.bass);
-    stringsField.hidden = mixer.plays !== 'bass';
-    degrees.setAttribute('aria-pressed', String(settings.labels === 'degrees'));
+    scaleSelect.replaceChildren(...jam.scales.map(id => new Option(scaleById(id).name, id)));
+    setSelectValue(scaleSelect, jam.scale);
+    setSelectValue(bassSelect, settings.bass);
+    bassField.hidden = mixer.plays !== 'bass';
+    degreesToggle.setAttribute('aria-pressed', String(settings.labels === 'degrees'));
   }
 
   function draw() {
     if (!bars.length) return;
-    const { chord, next: nextChord } = barChords(bars, playingBar);
+    const { chord, nextChord } = barChords(bars, playingBar);
     const drawing = jamFretboard({
       instrument: settings.instrumentFor(mixer.plays),
       key: jam.key,
       scale: jam.scale,
       labels: settings.labels,
       chord,
-      next: nextChord,
+      nextChord,
     });
-    if (now.textContent !== drawing.summary) now.textContent = drawing.summary;
-    next.textContent = drawing.next;
+    announceOnce(chordLine, drawing.chordText);
+    scaleLine.textContent = drawing.scaleText;
+    nextChordLine.textContent = drawing.nextChordText;
     board.replaceChildren(fretboardSvg({
       openNames: drawing.openNames,
       firstFret: FIRST_FRET,

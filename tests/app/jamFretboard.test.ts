@@ -18,7 +18,7 @@ const inA = (change: Partial<JamFretboardInput> = {}) => jamFretboard({
   scale: 'minor-pentatonic',
   labels: 'names',
   chord: D7,
-  next: A7,
+  nextChord: A7,
   ...change,
 });
 
@@ -51,9 +51,10 @@ describe('jam fretboard', () => {
     expect(labelsWith(marks, 'tone')).toEqual(['1', '6', 'b3']);
   });
   it('states the chord, its tones, the scale and the next chord', () => {
-    const drawing = inA({ next: E7 });
-    expect(drawing.summary).toBe('D7: D F# A C. Scale: A minor pentatonic, A C D E G.');
-    expect(drawing.next).toBe('Next: E7');
+    const drawing = inA({ nextChord: E7 });
+    expect(drawing.chordText).toBe('D7: D F# A C');
+    expect(drawing.scaleText).toBe('Scale: A minor pentatonic, A C D E G');
+    expect(drawing.nextChordText).toBe('Next: E7');
     expect(drawing.description).toContain('Bass (4-string');
   });
   it('draws six guitar strings with their notes', () => {
@@ -64,9 +65,18 @@ describe('jam fretboard', () => {
   });
   it('redraws the scale for a new key, with flats in a flat key', () => {
     const fMajorSeventh = chordAt(numerals('Imaj7'), 'F', 0);
-    const drawing = inA({ key: 'F', scale: 'major', chord: fMajorSeventh, next: fMajorSeventh });
-    expect(drawing.summary).toBe('Fmaj7: F A C E. Scale: F major, F G A Bb C D E.');
+    const drawing = inA({ key: 'F', scale: 'major', chord: fMajorSeventh, nextChord: fMajorSeventh });
+    expect(drawing.chordText).toBe('Fmaj7: F A C E');
+    expect(drawing.scaleText).toBe('Scale: F major, F G A Bb C D E');
     expect(markAt(drawing.marks, BASS_STRING.A, 1)).toMatchObject({ label: 'Bb', role: 'scale' });
+  });
+  it('spells a Db blues with flats, from the name of the key', () => {
+    const dFlatSeventh = chordAt(BLUES, 'Db', 0);
+    const drawing = inA({ key: 'Db', chord: dFlatSeventh, nextChord: dFlatSeventh, labels: 'degrees' });
+    expect(drawing.chordText).toBe('Db7: Db F Ab Cb');
+    expect(drawing.scaleText).toBe('Scale: Db minor pentatonic, Db Fb Gb Ab Cb');
+    expect(drawing.openNames).toEqual(['G', 'D', 'A', 'E']);
+    expect(labelsWith(drawing.marks, 'tone')).toEqual(['3', '5', 'b7']);
   });
 });
 
@@ -75,11 +85,11 @@ describe('bar chords', () => {
   const { bars } = buildGrooveTimeline(groove, 'A');
 
   it('pairs the playing chord with the chord one bar ahead', () => {
-    expect(barChords(bars, 1)).toEqual({ chord: bars[1].chord, next: bars[2].chord });
-    expect(barChords(bars, 0).next.name).toBe('D7');
+    expect(barChords(bars, 1)).toEqual({ chord: bars[1].chord, nextChord: bars[2].chord });
+    expect(barChords(bars, 0).nextChord.name).toBe('D7');
   });
   it('wraps the next chord round to the first bar', () => {
-    expect(barChords(bars, 3).next.name).toBe('A7');
+    expect(barChords(bars, 3).nextChord.name).toBe('A7');
   });
 });
 
