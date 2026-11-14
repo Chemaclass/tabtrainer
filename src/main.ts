@@ -94,7 +94,10 @@ function chooseFamily(family: Family) {
 }
 function unpick() { workspace.unpick(); songs.fill(); }
 function showLink(push = false) { navigation.show(workspace.route(openSong.versionSlug()), workspace.picked, push); }
-function showTitle() { view.showTitle(workspace.screen === 'practice' ? openSong.song : null); }
+function showTitle() {
+  const practising = workspace.screen === 'practice';
+  view.showTitle(practising ? openSong.song : null, practising ? bundledPath(workspace.picked) : null);
+}
 function setScreen(next: Screen, focus = false) {
   if (next === 'library') { player.stop(); scrolling.stopContinuous(); }
   const song = openSong.song;

@@ -19,7 +19,7 @@ function sharePages(): Plugin {
       outDir = config.build.outDir; building = config.command === 'build' && !process.env.VITEST;
       if (building && !siteUrl) throw new Error(`Set SITE_URL to the public address when BASE is ${base}`);
     },
-    transformIndexHtml: html => html.replaceAll('__SITE_URL__', site),
+    transformIndexHtml: { order: 'pre', handler: html => html.replaceAll('__SITE_URL__', site) },
     closeBundle() {
       if (!building) return;
       const paths = readdirSync('src/songs', { recursive: true, encoding: 'utf8' }).filter(f => f.endsWith('.txt')).sort().map(f => `./songs/${f}`);
@@ -28,8 +28,9 @@ function sharePages(): Plugin {
         mkdirSync(dirname(file), { recursive: true });
         writeFileSync(file, sharePage(site, path, songMeta(path, readFileSync(join('src', path), 'utf8'))));
       }
-      writeFileSync(join(outDir, 'sitemap.xml'), sitemap(site, paths, new Date().toISOString().slice(0, 10)));
-      writeFileSync(join(outDir, 'robots.txt'), robotsTxt(site));
+      writeFileSync(join(outDir, 'sitemap.xml'), sitemap(site, paths));
+      // Crawlers read robots.txt only at the host root, so a project site under /<repo>/ gets none.
+      if (base === '/') writeFileSync(join(outDir, 'robots.txt'), robotsTxt(site));
     },
   };
 }

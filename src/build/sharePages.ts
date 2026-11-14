@@ -1,5 +1,5 @@
 import { parseSong } from '../core/parser';
-import { songSlug } from '../app/songLink';
+import { songAddress, songSlug } from '../app/songLink';
 
 export interface SongMeta { title: string; about: string; family: string }
 
@@ -10,13 +10,11 @@ export function songMeta(path: string, text: string): SongMeta {
   return { title: meta.title, about: meta.about ?? '', family: songSlug(path).split('/')[0] };
 }
 
-export const appUrl = (site: string, path: string) => `${site}?${new URLSearchParams({ song: songSlug(path) })}`;
-
 export function sharePage(site: string, path: string, meta: SongMeta): string {
   const title = escapeHtml(`${meta.title}, ${meta.family} tab and notation · TabTrainer`);
   const description = escapeHtml(meta.about || `Practise ${meta.title} on ${meta.family}: slow it down, loop the hard bars, and follow each note as it plays.`);
-  const local = `../../?${new URLSearchParams({ song: songSlug(path) })}`, url = `${site}${songSlug(path)}/`, image = `${site}og.png`;
-  const composition = JSON.stringify({ '@context': 'https://schema.org', '@type': 'MusicComposition', name: meta.title, url, ...meta.about && { description: meta.about }, isAccessibleForFree: true, isPartOf: { '@type': 'WebApplication', name: 'TabTrainer', url: site } }).replaceAll('<', '\\u003c');
+  const local = `../../?${new URLSearchParams({ song: songSlug(path) })}`, url = `${site}${songSlug(path)}/`, address = songAddress(site, path), image = `${site}og.png`;
+  const composition = JSON.stringify({ '@context': 'https://schema.org', '@type': 'MusicComposition', name: meta.title, url: address, ...meta.about && { description: meta.about }, isAccessibleForFree: true, isPartOf: { '@type': 'WebApplication', name: 'TabTrainer', url: site } }).replaceAll('<', '\\u003c');
   const imageAlt = 'TabTrainer: notation and tab for bass and guitar';
   return `<!DOCTYPE html>
 <html lang="en">
@@ -24,7 +22,7 @@ export function sharePage(site: string, path: string, meta: SongMeta): string {
   <meta charset="utf-8" />
   <title>${title}</title>
   <meta name="description" content="${description}" />
-  <link rel="canonical" href="${escapeHtml(url)}" />
+  <link rel="canonical" href="${escapeHtml(address)}" />
   <meta property="og:type" content="music.song" />
   <meta property="og:site_name" content="TabTrainer" />
   <meta property="og:title" content="${title}" />
@@ -48,11 +46,11 @@ export function sharePage(site: string, path: string, meta: SongMeta): string {
 `;
 }
 
-export function sitemap(site: string, paths: string[], lastmod: string): string {
-  const urls = [site, ...paths.map(path => `${site}${songSlug(path)}/`)];
+export function sitemap(site: string, paths: string[]): string {
+  const urls = [site, ...paths.map(path => songAddress(site, path))];
   return `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${urls.map(url => `  <url><loc>${escapeHtml(url)}</loc><lastmod>${lastmod}</lastmod></url>`).join('\n')}
+${urls.map(url => `  <url><loc>${escapeHtml(url)}</loc></url>`).join('\n')}
 </urlset>
 `;
 }

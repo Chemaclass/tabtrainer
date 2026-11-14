@@ -17,20 +17,21 @@ describe('share pages', () => {
     expect(html).toContain('<meta property="og:image" content="https://example.com/tabtrainer/og.png" />');
     expect(html).toContain('location.replace("../../?song=bass%2Fode-to-joy"');
   });
-  it('gives the share page its own canonical address, card and structured data', () => {
+  it('points the share page canonical at the song address, with a card and structured data', () => {
     const html = sharePage(site, path, { title: 'Ode <to> Joy', about: 'A melody', family: 'bass' });
-    expect(html).toContain('<link rel="canonical" href="https://example.com/tabtrainer/bass/ode-to-joy/" />');
+    expect(html).toContain('<link rel="canonical" href="https://example.com/tabtrainer/?song=bass%2Fode-to-joy" />');
+    expect(html).toContain('<meta property="og:url" content="https://example.com/tabtrainer/bass/ode-to-joy/" />');
     expect(html).toContain('<meta property="og:type" content="music.song" />');
     expect(html).toContain('<meta name="twitter:image" content="https://example.com/tabtrainer/og.png" />');
     expect(html).toContain('<meta property="og:image:alt"');
     const json = html.match(/<script type="application\/ld\+json">(.*)<\/script>/)![1];
     expect(json).not.toContain('<');
-    expect(JSON.parse(json)).toMatchObject({ '@type': 'MusicComposition', name: 'Ode <to> Joy', url: 'https://example.com/tabtrainer/bass/ode-to-joy/' });
+    expect(JSON.parse(json)).toMatchObject({ '@type': 'MusicComposition', name: 'Ode <to> Joy', url: 'https://example.com/tabtrainer/?song=bass%2Fode-to-joy' });
   });
-  it('lists the home page and every song page in the sitemap, with a date', () => {
-    const xml = sitemap(site, [path], '2026-11-14');
-    expect(xml).toContain('<url><loc>https://example.com/tabtrainer/</loc><lastmod>2026-11-14</lastmod></url>');
-    expect(xml).toContain('<loc>https://example.com/tabtrainer/bass/ode-to-joy/</loc>');
+  it('lists the home page and every song address in the sitemap', () => {
+    const xml = sitemap(site, [path]);
+    expect(xml).toContain('<url><loc>https://example.com/tabtrainer/</loc></url>');
+    expect(xml).toContain('<url><loc>https://example.com/tabtrainer/?song=bass%2Fode-to-joy</loc></url>');
   });
   it('points robots.txt at the sitemap', () => {
     expect(robotsTxt(site)).toBe('User-agent: *\nAllow: /\n\nSitemap: https://example.com/tabtrainer/sitemap.xml\n');
