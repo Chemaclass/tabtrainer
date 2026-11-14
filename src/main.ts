@@ -33,10 +33,11 @@ import { libraryView } from './ui/library/libraryView';
 import { hasPracticeLevels } from './app/practiceLevels';
 import { categoryCounts, isLibraryKind, nextExercise, type CatalogueEntry, type LibraryKind } from './app/catalogue';
 import { dismissHelpOnBackdrop } from './ui/shell/helpDialogs';
+import { byId, one } from './ui/dom';
 
 const demos = import.meta.glob('./songs/*/*/*.txt', { query: '?raw', import: 'default', eager: true }) as Record<string, string>;
-const $ = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T;
-['help', 'tabHelp'].forEach(id => dismissHelpOnBackdrop($<HTMLDialogElement>(id)));
+const $ = byId;
+['help', 'tabHelp'].forEach(id => dismissHelpOnBackdrop($(id, HTMLDialogElement)));
 
 const resolvePick = (value: string) => normalizeSongReference(value, Object.keys(demos));
 const storedNavigation = navigationState(history.state);
@@ -48,7 +49,7 @@ const initialKind = initialQuery.get('kind') ?? pref('libraryKind', 'exercises')
 let libraryKind: LibraryKind = isLibraryKind(initialKind) ? initialKind : 'exercises';
 let catalogueEntries: CatalogueEntry[] = [], bundledEntries: CatalogueEntry[] | null = null;
 
-const src = $<HTMLTextAreaElement>('src'), sheet = $('sheet'), player = new Player();
+const src = $('src', HTMLTextAreaElement), sheet = $('sheet'), player = new Player();
 let song: Song | null = null;
 let parsed: Song | null = null; // whole song with every version
 let versionIdx = 0;
@@ -82,7 +83,7 @@ function fillSongList() {
   catalogue.show(catalogueEntries, family, libraryKind, recentPractice().map(resolvePick));
   renderPracticeNavigation();
 }
-function showFamily() { setSelectValue($<HTMLSelectElement>('familySelect'), family); fillSongList(); }
+function showFamily() { setSelectValue($('familySelect', HTMLSelectElement), family); fillSongList(); }
 function chooseFamily(f: Family) {
   if (f === family) return;
   family = f; setPref('family', f); showFamily(); showLink();
@@ -112,10 +113,10 @@ const siteTitle = document.title;
 function showTitle() { document.title = screen === 'practice' && song ? `${song.meta.title} · TabTrainer` : siteTitle; }
 function setScreen(next: 'library' | 'practice', focus = false) {
   if (next === 'library') { player.stop(); if (scrollMode === 'continuous') setScrollMode('off'); }
-  if (next === 'practice' && song) { family = familyOf(song.meta.instrument); setPref('family', family); setSelectValue($<HTMLSelectElement>('familySelect'), family); }
+  if (next === 'practice' && song) { family = familyOf(song.meta.instrument); setPref('family', family); setSelectValue($('familySelect', HTMLSelectElement), family); }
   screen = next; document.body.classList.toggle('library-view', next === 'library');
   $('libraryScreen').hidden = next !== 'library'; $('practiceScreen').hidden = next !== 'practice';
-  document.querySelector<HTMLElement>('.player')!.hidden = next !== 'practice';
+  one('.player').hidden = next !== 'practice';
   showTitle(); fillSongList(); showDirtyState();
   if (next === 'practice') requestAnimationFrame(draw);
   if (focus) { window.scrollTo(0, 0); $(next === 'library' ? 'libraryTitle' : 'title').focus({ preventScroll: true }); }
@@ -145,9 +146,9 @@ $('homeBtn').onclick = () => showLibrary();
 $('allExercisesBtn').onclick = () => showLibrary('exercises');
 $('returnDraftBtn').onclick = () => { setScreen('practice', true); showLink(true); };
 $('libraryOpenBtn').onclick = () => $('openBtn').click();
-$('readTabBtn').onclick = $('readTabMobileBtn').onclick = () => $<HTMLDialogElement>('tabHelp').showModal();
+$('readTabBtn').onclick = $('readTabMobileBtn').onclick = () => $('tabHelp', HTMLDialogElement).showModal();
 document.querySelectorAll<HTMLButtonElement>('[data-kind]').forEach(button => { button.onclick = () => { if (isLibraryKind(button.dataset.kind)) showLibrary(button.dataset.kind); }; });
-$<HTMLSelectElement>('familySelect').onchange = e => { const value = (e.target as HTMLSelectElement).value; if (isFamily(value)) chooseFamily(value); };
+$('familySelect', HTMLSelectElement).onchange = e => { const value = (e.target as HTMLSelectElement).value; if (isFamily(value)) chooseFamily(value); };
 function openRoute(route: Route) {
   if (route.screen === 'practice') {
     if (route.picked && route.picked !== picked) loadPickedSong(route.picked); else setScreen('practice');
@@ -155,7 +156,7 @@ function openRoute(route: Route) {
     showLink();
     return;
   }
-  if (route.family) { family = route.family; setSelectValue($<HTMLSelectElement>('familySelect'), family); }
+  if (route.family) { family = route.family; setSelectValue($('familySelect', HTMLSelectElement), family); }
   showLibrary(route.kind, false);
 }
 window.addEventListener('popstate', event => navigation.visit(event.state, (route, accept, cancel) => {
@@ -243,7 +244,7 @@ function renderCredit(s: Song) {
     const sep = i === names.length - 1 ? [] : [document.createTextNode(i === names.length - 2 ? ' and ' : ', ')];
     return [b, ...sep];
   }));
-  const link = $<HTMLAnchorElement>('listen'); link.hidden = !s.meta.listen;
+  const link = $('listen', HTMLAnchorElement); link.hidden = !s.meta.listen;
   if (s.meta.listen) { link.href = s.meta.listen; $('listenHost').textContent = new URL(s.meta.listen).hostname.replace(/^www\./, ''); }
   $('credit').hidden = byline.hidden && link.hidden;
 }
@@ -317,7 +318,7 @@ function stopPlayback() {
   showPassage();
 }
 $('stopBtn').onclick = stopPlayback;
-const speed = $<HTMLInputElement>('speed');
+const speed = $('speed', HTMLInputElement);
 const fillRange = (r: HTMLInputElement) => r.style.setProperty('--fill', `${((+r.value - +r.min) / (+r.max - +r.min)) * 100}%`);
 const showSpeed = () => {
   speed.value = String(Math.round(player.speed * 100));
@@ -333,10 +334,10 @@ document.addEventListener('click', e => { panels.forEach(panel => { if (!panel.c
 panels.forEach(panel => panel.addEventListener('keydown', e => {
   if (e.key === 'Escape') { e.stopPropagation(); panel.open = false; panel.querySelector('summary')!.focus(); }
 }));
-const practiceEnabled = $<HTMLInputElement>('speedPracticeChk');
-const practiceRepetitions = $<HTMLInputElement>('speedPracticeRepetitions');
-const practiceIncrease = $<HTMLInputElement>('speedPracticeIncrease');
-const practiceTarget = $<HTMLInputElement>('speedPracticeTarget');
+const practiceEnabled = $('speedPracticeChk', HTMLInputElement);
+const practiceRepetitions = $('speedPracticeRepetitions', HTMLInputElement);
+const practiceIncrease = $('speedPracticeIncrease', HTMLInputElement);
+const practiceTarget = $('speedPracticeTarget', HTMLInputElement);
 const practiceError = $('speedPracticeError');
 const savedPractice = pref('speedPractice', { repetitions: 4, increase: 5, target: Math.max(100, Math.round(player.speed * 100)) });
 practiceRepetitions.value = String(savedPractice.repetitions); practiceIncrease.value = String(savedPractice.increase); practiceTarget.value = String(savedPractice.target);
@@ -381,9 +382,9 @@ practiceEnabled.onchange = () => {
   showPractice();
 }));
 showPractice();
-const metronome = $<HTMLInputElement>('metronomeChk');
-const countIn = $<HTMLSelectElement>('countInSelect');
-const clickVolume = $<HTMLInputElement>('clickVolume');
+const metronome = $('metronomeChk', HTMLInputElement);
+const countIn = $('countInSelect', HTMLSelectElement);
+const clickVolume = $('clickVolume', HTMLInputElement);
 metronome.checked = pref('metronome', false); player.setMetronome(metronome.checked);
 setSelectValue(countIn, pref('countIn', false) ? 'bar' : 'off'); player.setCountIn(countIn.value === 'bar');
 clickVolume.value = String(pref('clickVolume', 50)); player.setClickVolume(+clickVolume.value / 100);
@@ -395,10 +396,10 @@ clickVolume.oninput = () => { player.setClickVolume(+clickVolume.value / 100); s
 
 function showPassage() {
   const state = passage.snapshot();
-  $<HTMLInputElement>('loopA').value = String(state.first);
-  $<HTMLInputElement>('loopB').value = String(state.last);
-  $<HTMLInputElement>('loopA').max = $<HTMLInputElement>('loopB').max = String(state.count);
-  $<HTMLInputElement>('loopChk').checked = state.repeat;
+  $('loopA', HTMLInputElement).value = String(state.first);
+  $('loopB', HTMLInputElement).value = String(state.last);
+  $('loopA', HTMLInputElement).max = $('loopB', HTMLInputElement).max = String(state.count);
+  $('loopChk', HTMLInputElement).checked = state.repeat;
   showPractice();
   sheet.querySelectorAll<SVGElement>('.note-target').forEach(el => {
     const selected = el.dataset.key === selectedNote?.key;
@@ -411,8 +412,8 @@ function showPassage() {
     el.classList.toggle('selected', bar === state.selected);
     el.setAttribute('aria-pressed', String(bar === state.selected));
   });
-  for (const id of ['rangeStart', 'rangeEnd']) $<HTMLButtonElement>(id).disabled = !state.selected;
-  $<HTMLButtonElement>('rangeReset').disabled = !state.selected && !state.active;
+  for (const id of ['rangeStart', 'rangeEnd']) $(id, HTMLButtonElement).disabled = !state.selected;
+  $('rangeReset', HTMLButtonElement).disabled = !state.selected && !state.active;
   const note = selectedNote;
   if (note) {
     const start = player.bars.find(bar => bar.bar === note.bar)?.start ?? 0;
@@ -451,7 +452,7 @@ $('rangeReset').onclick = () => {
   const first = sheet.querySelector<SVGElement>('.bar-target'); if (first) first.focus(); else $('title').focus();
 };
 ['loopChk', 'loopA', 'loopB'].forEach(id => $(id).addEventListener('change', () => {
-  passage.setRange($<HTMLInputElement>('loopA').valueAsNumber, $<HTMLInputElement>('loopB').valueAsNumber, $<HTMLInputElement>('loopChk').checked);
+  passage.setRange($('loopA', HTMLInputElement).valueAsNumber, $('loopB', HTMLInputElement).valueAsNumber, $('loopChk', HTMLInputElement).checked);
   applyLoop();
 }));
 
@@ -488,7 +489,7 @@ sheet.addEventListener('keydown', e => {
 // ---------- auto-scroll ----------
 type ScrollMode = 'off' | 'follow' | 'continuous';
 let scrollMode: ScrollMode = 'follow';
-const sspeed = $<HTMLInputElement>('scrollSpeed'); sspeed.value = String(pref('scroll', 15));
+const sspeed = $('scrollSpeed', HTMLInputElement); sspeed.value = String(pref('scroll', 15));
 fillRange(sspeed);
 sspeed.oninput = () => { setPref('scroll', +sspeed.value); fillRange(sspeed); };
 const scroller = new AutoScroller({
@@ -499,13 +500,13 @@ const scroller = new AutoScroller({
 });
 function setScrollMode(mode: ScrollMode) {
   scroller.stop(); scrollMode = mode;
-  setSelectValue($<HTMLSelectElement>('scrollMode'), mode);
+  setSelectValue($('scrollMode', HTMLSelectElement), mode);
   $('scrollRate').hidden = mode !== 'continuous';
   $('scrollHelp').textContent = { off: 'Scroll the score yourself.', follow: 'Keep the playing line in view.', continuous: 'Scroll without audio. Play and Pause keep scrolling; Stop and song changes turn it off.' }[mode];
   if (mode === 'continuous') scroller.start();
   if (mode === 'follow') { curSys?.classList.remove('cur'); curSys = null; }
 }
-$<HTMLSelectElement>('scrollMode').onchange = e => {
+$('scrollMode', HTMLSelectElement).onchange = e => {
   const value = (e.target as HTMLSelectElement).value;
   if (value === 'off' || value === 'follow' || value === 'continuous') setScrollMode(value);
 };
@@ -525,8 +526,8 @@ document.addEventListener('keydown', e => {
 
 // ---------- toolbar ----------
 const unpick = () => { picked = ''; libraryKind = 'mine'; setPref('picked', ''); fillSongList(); };
-const fileMenu = document.querySelector<HTMLDetailsElement>('.file-menu')!;
-$('openBtn').onclick = () => $<HTMLInputElement>('openFile').click();
+const fileMenu = one('.file-menu', HTMLDetailsElement);
+$('openBtn').onclick = () => $('openFile', HTMLInputElement).click();
 fileMenu.addEventListener('click', e => {
   if ((e.target as Element).closest('button')) {
     const returnFocus = fileMenu.contains(document.activeElement);
@@ -547,7 +548,7 @@ const hasChanges = () => draftSession.hasChanges();
 function showShare() { $('shareBtn').hidden = !picked.startsWith('demo:') || draftSession.hasChanges(); }
 function showDirtyState() {
   $('returnDraftBtn').hidden = screen !== 'library' || !hasChanges();
-  document.querySelector<HTMLElement>('.save-state')!.hidden = !hasChanges() && !$('saveFeedback').textContent;
+  one('.save-state').hidden = !hasChanges() && !$('saveFeedback').textContent;
   showShare();
   $('dirtyState').textContent = hasChanges() ? `Unsaved changes${draftSession.stored ? '' : ' (draft recovery unavailable)'}` : 'No unsaved changes';
 }
@@ -563,11 +564,11 @@ function persistDraft() {
 }
 function replaceCurrent(action: () => void, cancel: (() => void) | null = null) {
   draftSession.replace(action, cancel, () => {
-    const dialog = $<HTMLDialogElement>('replaceDialog'); dialog.returnValue = 'cancel'; dialog.showModal();
+    const dialog = $('replaceDialog', HTMLDialogElement); dialog.returnValue = 'cancel'; dialog.showModal();
   });
 }
-$<HTMLDialogElement>('replaceDialog').addEventListener('close', () => {
-  draftSession.resolve($<HTMLDialogElement>('replaceDialog').returnValue, saveCurrent, showLink);
+$('replaceDialog', HTMLDialogElement).addEventListener('close', () => {
+  draftSession.resolve($('replaceDialog', HTMLDialogElement).returnValue, saveCurrent, showLink);
 });
 function saveCurrent(): boolean {
   const result = draftSession.save(title => window.confirm(`Replace "${title}" in your library?`));
@@ -585,7 +586,7 @@ $('dlBtn').onclick = () => {
   a.href = URL.createObjectURL(blob); a.download = titleOf(src.value).replace(/[^\w\- ]+/g, '').trim().replace(/\s+/g, '-').toLowerCase() + '.txt';
   a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
 };
-$<HTMLInputElement>('openFile').onchange = async e => {
+$('openFile', HTMLInputElement).onchange = async e => {
   const input = e.target as HTMLInputElement, file = input.files?.[0]; if (!file) return;
   const generation = draftSession.beginNavigation(); input.value = '';
   try {
@@ -593,7 +594,7 @@ $<HTMLInputElement>('openFile').onchange = async e => {
     if (draftSession.isCurrent(generation)) replaceCurrent(() => { unpick(); setScreen('practice'); loadText(text); showLink(true); });
   } catch { announceSave('Could not open that file. Your current text is still here.', true); }
 };
-const showEditor = (on: boolean) => { document.querySelector('.layout')!.classList.toggle('noedit', !on); $('editBtn').classList.toggle('on', on); $('editBtn').setAttribute('aria-pressed', String(on)); setPref('editor', on); setTimeout(draw, 50); };
+const showEditor = (on: boolean) => { one('.layout').classList.toggle('noedit', !on); $('editBtn').classList.toggle('on', on); $('editBtn').setAttribute('aria-pressed', String(on)); setPref('editor', on); setTimeout(draw, 50); };
 editorResize($('editorPane'), $('editorResize'), draw);
 $('hideEditorBtn').onclick = () => { showEditor(false); $('editBtn').focus(); };
 $('shareBtn').onclick = async () => {
@@ -609,14 +610,14 @@ $('shareBtn').onclick = async () => {
     if (!(error instanceof DOMException && error.name === 'AbortError')) announceSave(`Could not copy the link: ${url}`, true, false);
   }
 };
-$('editBtn').onclick = () => showEditor(document.querySelector('.layout')!.classList.contains('noedit'));
+$('editBtn').onclick = () => showEditor(one('.layout').classList.contains('noedit'));
 const showNotationState = () => { $('notaBtn').setAttribute('aria-pressed', String(showNota)); $('tabBtn').setAttribute('aria-pressed', String(!showNota)); };
 const setNotation = (on: boolean) => { showNota = on; setPref('notation', on); $('notaBtn').classList.toggle('on', on); $('tabBtn').classList.toggle('on', !on); showNotationState(); draw(); };
 $('notaBtn').onclick = () => setNotation(true);
 $('tabBtn').onclick = () => setNotation(false);
 $('zoomIn').onclick = () => { zoom = Math.min(1.8, +(zoom + 0.1).toFixed(2)); setPref('zoom', zoom); draw(); };
 $('zoomOut').onclick = () => { zoom = Math.max(0.6, +(zoom - 0.1).toFixed(2)); setPref('zoom', zoom); draw(); };
-const setPlayerExpanded = (open: boolean) => { document.querySelector('.player')!.classList.toggle('open', open); $('moreBtn').setAttribute('aria-expanded', String(open)); setPref('playerExpanded', open); };
+const setPlayerExpanded = (open: boolean) => { one('.player').classList.toggle('open', open); $('moreBtn').setAttribute('aria-expanded', String(open)); setPref('playerExpanded', open); };
 setPlayerExpanded(pref('playerExpanded', false));
 $('moreBtn').onclick = () => setPlayerExpanded($('moreBtn').getAttribute('aria-expanded') !== 'true');
 const setPlayerMinimized = (minimized: boolean) => {
@@ -640,14 +641,14 @@ $('themeBtn').onclick = () => {
   const next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
   setPref('theme', next === (systemDark.matches ? 'dark' : 'light') ? null : next); showTheme(next);
 };
-$('syntaxHelpBtn').onclick = () => $<HTMLDialogElement>('help').showModal();
+$('syntaxHelpBtn').onclick = () => $('help', HTMLDialogElement).showModal();
 (window as never as { tabtrainer: unknown }).tabtrainer = { player, removeSong, onsetKey };
 
 // the player wraps at narrow widths; reserve exactly its height below the page and the sticky editor
-new ResizeObserver(([e]) => document.documentElement.style.setProperty('--deck-h', `${Math.ceil(e.borderBoxSize[0].blockSize)}px`)).observe(document.querySelector('.player')!);
-new ResizeObserver(([e]) => document.documentElement.style.setProperty('--top-h', `${Math.ceil(e.borderBoxSize[0].blockSize)}px`)).observe(document.querySelector('.top')!);
+new ResizeObserver(([e]) => document.documentElement.style.setProperty('--deck-h', `${Math.ceil(e.borderBoxSize[0].blockSize)}px`)).observe(one('.player'));
+new ResizeObserver(([e]) => document.documentElement.style.setProperty('--top-h', `${Math.ceil(e.borderBoxSize[0].blockSize)}px`)).observe(one('.top'));
 new ResizeObserver(([e]) => document.documentElement.style.setProperty('--continuation-h', `${Math.ceil(e.borderBoxSize[0].blockSize)}px`)).observe($('exerciseContinuation'));
-new ResizeObserver(([e]) => document.documentElement.style.setProperty('--save-state-h', `${Math.ceil(e.borderBoxSize[0].blockSize)}px`)).observe(document.querySelector('.save-state')!);
+new ResizeObserver(([e]) => document.documentElement.style.setProperty('--save-state-h', `${Math.ceil(e.borderBoxSize[0].blockSize)}px`)).observe(one('.save-state'));
 
 // ---------- start ----------
 $('notaBtn').classList.toggle('on', showNota); $('tabBtn').classList.toggle('on', !showNota);
