@@ -4,13 +4,13 @@ import { keyTonic, type Chord } from '../core/harmony';
 import { INSTRUMENTS, type Family, type Instrument } from '../core/instruments';
 import { spellChordTones } from '../core/progressions';
 import { harmonyScaleId, scaleById, scaleNotes, usesFlats, type ScaleId, type ScaleNote } from '../core/scales';
-import { fretMarks, fretboardDescription, isFretLabels, markedPositions, notesByPitchClass, openStringNames, type FretLabels } from './fretboardMarks';
+import { keyRootName } from '../core/theory';
+import { fretMarks, fretboardDescription, isFretLabels, markedPositions, noteNames, notesByPitchClass, openStringNames, type FretLabels } from './fretboardMarks';
 import { pref, setPref } from './storage';
 
 export const BASS_INSTRUMENTS = ['bass4', 'bass5', 'bass6'] as const;
 export type BassInstrument = typeof BASS_INSTRUMENTS[number];
 const GUITAR_INSTRUMENT = 'guitar6';
-const MINOR_KEY_SUFFIX = /m$/;
 const FLAT = 'b';
 
 export const isBassInstrument = (value: unknown): value is BassInstrument => BASS_INSTRUMENTS.some(id => id === value);
@@ -82,7 +82,7 @@ interface SpelledNotes { scaleTitle: string; scale: ScaleNote[]; chord: ScaleNot
 /** Spells the scale up from the key's own name, so a Db blues keeps its flats, and the chord tones to match. */
 function spelledNotes(key: string, scale: ScaleId, chord: Chord): SpelledNotes {
   const root = keyTonic(key) ?? 0;
-  const rootSpelling = key.replace(MINOR_KEY_SUFFIX, '');
+  const rootSpelling = keyRootName(key);
   const scaleNotesOfKey = scaleNotes(root, scale, rootSpelling);
   const harmonyNotes = scaleNotes(root, harmonyScaleId(scale), rootSpelling);
   return {
@@ -92,8 +92,6 @@ function spelledNotes(key: string, scale: ScaleId, chord: Chord): SpelledNotes {
     flats: rootSpelling.includes(FLAT) || usesFlats(root, scaleById(scale)),
   };
 }
-
-const noteNames = (notes: readonly ScaleNote[]) => notes.map(note => note.name).join(' ');
 
 /** Scale notes of the key across the neck, with the tones of the chord that is playing marked stronger. */
 export function jamFretboard({ instrument, key, scale, labels, chord, nextChord }: JamFretboardInput): JamFretboard {

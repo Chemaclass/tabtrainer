@@ -1,18 +1,36 @@
 export interface JamSetup { key?: string; tempo?: number; progression?: string; swing?: number }
 
-export const grooveSlug = (path: string) => (path.split('/').pop() ?? '').replace(/\.txt$/, '').replace(/^\d+-/, '');
+const SETUP_PARAMS = ['key', 'tempo', 'progression', 'swing'] as const;
+
+export function grooveSlug(path: string): string {
+  const fileName = path.split('/').pop() ?? '';
+  return fileName.replace(/\.txt$/, '').replace(/^\d+-/, '');
+}
+
+const textParam = (query: URLSearchParams, name: string) => query.get(name) ?? undefined;
+
+function numberParam(query: URLSearchParams, name: string): number | undefined {
+  const value = query.get(name);
+  if (value === null || value.trim() === '') return undefined;
+  const number = Number(value);
+  return Number.isFinite(number) ? number : undefined;
+}
 
 export function jamSetup(query: URLSearchParams): JamSetup {
-  const text = (name: string) => query.get(name) ?? undefined;
-  const number = (name: string) => { const value = query.get(name); return value !== null && value.trim() !== '' && Number.isFinite(+value) ? +value : undefined; };
-  const setup: JamSetup = { key: text('key'), tempo: number('tempo'), progression: text('progression'), swing: number('swing') };
+  const setup: JamSetup = {
+    key: textParam(query, 'key'),
+    tempo: numberParam(query, 'tempo'),
+    progression: textParam(query, 'progression'),
+    swing: numberParam(query, 'swing'),
+  };
   return Object.fromEntries(Object.entries(setup).filter(([, value]) => value !== undefined));
 }
 
 export function writeJamSetup(query: URLSearchParams, setup: JamSetup) {
-  for (const name of ['key', 'tempo', 'progression', 'swing'] as const) {
+  for (const name of SETUP_PARAMS) {
     const value = setup[name];
-    if (value === undefined) query.delete(name); else query.set(name, String(value));
+    if (value === undefined) query.delete(name);
+    else query.set(name, String(value));
   }
 }
 
@@ -21,7 +39,9 @@ export function jamShareLink(root: string, slug: string, setup: JamSetup, dev: b
   const query = new URLSearchParams(dev ? { view: 'jam', groove: slug } : {});
   writeJamSetup(query, setup);
   const search = query.toString();
-  return `${root}${dev ? '' : `jam/${slug}/`}${search ? `?${search}` : ''}`;
+  const page = dev ? '' : `jam/${slug}/`;
+  const queryString = search ? `?${search}` : '';
+  return `${root}${page}${queryString}`;
 }
 
 export const jamAddress = (root: string, slug: string) => `${root}?${new URLSearchParams({ view: 'jam', groove: slug })}`;

@@ -1,5 +1,5 @@
-import { QUALITIES, type Quality } from './harmony';
-import { letterName, pitchClass, spellPitchClass } from './theory';
+import { QUALITIES, ROMAN_NUMERALS, type Quality } from './harmony';
+import { MAJOR_SCALE, MINOR_THIRD, SINGLE_ACCIDENTALS, letterName, pitchClass, pitchClassOf, spellPitchClass } from './theory';
 
 export type ScaleId = 'major' | 'minor' | 'major-pentatonic' | 'minor-pentatonic' | 'blues' | 'dorian' | 'mixolydian' | 'phrygian' | 'lydian' | 'harmonic-minor';
 
@@ -32,7 +32,7 @@ export const SCALES: readonly Scale[] = [
   { id: 'harmonic-minor', name: 'Harmonic minor', title: 'harmonic minor', intervals: [0, 2, 3, 5, 7, 8, 11], degrees: ['1', '2', 'b3', '4', '5', 'b6', '7'], parent: 3 },
 ];
 
-const FLAT_PARENTS = new Set([5, 10, 3, 8, 1]);
+const FLAT_PARENTS = new Set(['F', 'Bb', 'Eb', 'Ab', 'Db'].map(pitchClassOf));
 
 export const isScaleId = (value: unknown): value is ScaleId => SCALES.some(scale => scale.id === value);
 
@@ -50,10 +50,12 @@ const degreeStep = (degree: string) => Number(degree.replace(/^[b#]/, '')) - 1;
 
 /** The notes of a scale, spelled up from rootSpelling: pass the key's own name so Db keeps its flats. */
 export function scaleNotes(root: number, id: ScaleId, rootSpelling = rootName(root, id)): ScaleNote[] {
-  const scale = scaleById(id), key = rootSpelling;
+  const scale = scaleById(id);
   return scale.intervals.map((interval, index) => {
-    const pc = pitchClass(root + interval), degree = scale.degrees[index];
-    const name = scale.flatIntervals?.includes(interval) ? spellPitchClass(pc, true) : letterName(pc, key, degreeStep(degree));
+    const pc = pitchClass(root + interval);
+    const degree = scale.degrees[index];
+    const alwaysFlat = scale.flatIntervals?.includes(interval);
+    const name = alwaysFlat ? spellPitchClass(pc, true) : letterName(pc, rootSpelling, degreeStep(degree));
     return { pitchClass: pc, name, degree, root: interval === 0 };
   });
 }
@@ -62,10 +64,9 @@ export const scaleTitle = (root: number, id: ScaleId) => `${rootName(root, id)} 
 
 export interface ScaleChord { step: number; numeral: string; name: string; quality: Quality; root: ScaleNote; tones: ScaleNote[] }
 
-const ROMANS = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII'];
-const MAJOR_STEPS = [0, 2, 4, 5, 7, 9, 11];
+const TRIAD_STEPS = [0, 2, 4];
+const SEVENTH_CHORD_STEPS = [0, 2, 4, 6];
 const CHORD_QUALITIES: readonly Quality[] = ['major', 'minor', 'dim', 'aug', 'maj7', '7', 'm7', 'm7b5', 'dim7', 'mMaj7', 'maj7#5'];
-const MINOR_THIRD = 3;
 /** A lower case numeral already says minor, so the seventh numeral drops the chord's "m". */
 const SEVENTH_NUMERAL_SUFFIXES: Partial<Record<Quality, string>> = { m7: '7', mMaj7: 'maj7' };
 
@@ -86,13 +87,14 @@ export function scaleChords(root: number, id: ScaleId, sevenths: boolean): Scale
   const harmonyId = harmonyScaleId(id);
   const notes = scaleNotes(root, harmonyId);
   return notes.map((note, step) => {
-    const tones = (sevenths ? [0, 2, 4, 6] : [0, 2, 4]).map(third => notes[(step + third) % notes.length]);
+    const chordSteps = sevenths ? SEVENTH_CHORD_STEPS : TRIAD_STEPS;
+    const tones = chordSteps.map(third => notes[(step + third) % notes.length]);
     const intervals = tones.map(tone => pitchClass(tone.pitchClass - note.pitchClass));
     const quality = CHORD_QUALITIES.find(q => sameIntervals(QUALITIES[q].intervals, intervals));
     if (!quality) throw new Error(`No chord quality for step ${step + 1} of ${harmonyId}`);
-    const shift = pitchClass(note.pitchClass - root - MAJOR_STEPS[step]);
-    const accidental = shift === 11 ? 'b' : shift === 1 ? '#' : '';
-    const roman = hasMinorThird(quality) ? ROMANS[step].toLowerCase() : ROMANS[step];
+    const shiftFromMajor = pitchClass(note.pitchClass - root - MAJOR_SCALE[step]);
+    const accidental = SINGLE_ACCIDENTALS[shiftFromMajor] ?? '';
+    const roman = hasMinorThird(quality) ? ROMAN_NUMERALS[step].toLowerCase() : ROMAN_NUMERALS[step];
     const suffix = QUALITIES[quality].suffix;
     return {
       step,

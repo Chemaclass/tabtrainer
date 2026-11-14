@@ -60,6 +60,8 @@ export function fretMarks(positions: readonly FretPosition[], { notes, chord, la
   });
 }
 
+export const noteNames = (notes: readonly ScaleNote[]) => notes.map(note => note.name).join(' ');
+
 export const openStringNames = (instrument: Instrument, flats: boolean) => instrument.tuning.map(open => spellPitchClass(open, flats));
 
 /** The sentence a screen reader reads for the drawing; positionText describes a position window when one is shown. */

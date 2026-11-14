@@ -131,7 +131,10 @@ export function progressions(root: number, id: ScaleId, mood: Mood | null = null
   const scale = scaleNotes(root, harmonyScaleId(id));
   return entriesFor(id, mood).map(({ slug, name, bars }) => {
     const progression = numerals(bars);
-    const chords = progression.map((numeral, bar) => progressionChord(numeral, chordAt(progression, key, bar), bar, scaleRootName, scale));
+    const chords = progression.map((numeral, bar) => {
+      const chord = chordAt(progression, key, bar);
+      return progressionChord(numeral, chord, bar, scaleRootName, scale);
+    });
     return { slug, name, chords };
   });
 }

@@ -1,6 +1,6 @@
-import { APPROACH, FILL_BEATS, HALF_STEP_BELOW, type Drum, type DrumKitName, type Groove, type GrooveGrid, type KeysVoice } from './groove';
+import { APPROACH, FILL_BEATS, HALF_STEP_BELOW, HOLD, REST, barLength, hasShortBeats, type Drum, type DrumKitName, type Groove, type GrooveGrid, type GroovePart, type KeysVoice } from './groove';
 import { chordAt, degreeInterval, keyTonic, type BassDegree, type Chord } from './harmony';
-import { pitchClass, safeKey } from './theory';
+import { HALF_STEP, OCTAVE, PERFECT_FIFTH, PERFECT_FOURTH, pitchClass, safeKey } from './theory';
 
 export interface DrumHit { beat: number; bar: number; drum: Drum; velocity: number }
 export interface PitchedHit { beat: number; bar: number; length: number; midi: number[]; velocity: number }
@@ -13,6 +13,12 @@ export const BASS_RANGE = { low: 28, high: 55 } as const;
 export const KEYS_RANGE = { low: 57, high: 68 } as const;
 export const POWER_CHORD_RANGE = { low: 45, high: 68 } as const;
 const EPSILON = 1e-9;
+const QUARTER = 1;
+const EIGHTH = 0.5;
+const SIXTEENTH = 0.25;
+const THIRTY_SECOND = 0.125;
+const STRAIGHT = 0.5;
+const TRIPLET_SHUFFLE = 66;
 // A descending sixteenth note run over the last two beats of the progression
 const FILL: readonly { drum: Drum; steps: string }[] = [
   { drum: 'snare', steps: 'Xx......' },
@@ -23,44 +29,49 @@ const FILL: readonly { drum: Drum; steps: string }[] = [
 ];
 
 // 66 is how drum machines name a triplet shuffle, so it lands on exactly two thirds
-const swingRatio = (swing: number) => (swing === 66 ? 2 / 3 : swing / 100);
+const swingRatio = (swing: number) => (swing === TRIPLET_SHUFFLE ? 2 / 3 : swing / 100);
 
 const near = (a: number, b: number) => Math.abs(a - b) < EPSILON;
-const isBinary = (stepLength: number) => [1, 0.5, 0.25, 0.125].some(l => near(l, stepLength));
+const isBinary = (stepLength: number) => [QUARTER, EIGHTH, SIXTEENTH, THIRTY_SECOND].some(length => near(length, stepLength));
 
+/** Moves an offset within its pair of steps so the first step takes ratio of the pair instead of half. */
 function swung(offset: number, pair: number, ratio: number): number {
-  const start = Math.floor(offset / pair + EPSILON) * pair;
-  const f = (offset - start) / pair;
-  return start + pair * (f <= 0.5 ? f * 2 * ratio : ratio + (f - 0.5) * 2 * (1 - ratio));
+  const pairStart = Math.floor(offset / pair + EPSILON) * pair;
+  const progress = (offset - pairStart) / pair;
+  const inFirstHalf = progress <= 0.5;
+  const swungProgress = inFirstHalf ? progress * 2 * ratio : ratio + (progress - 0.5) * 2 * (1 - ratio);
+  return pairStart + pair * swungProgress;
 }
 
-function octaveShift(notes: number[], { low, high }: { low: number; high: number }): number {
+interface MidiRange { low: number; high: number }
+
+function octaveShift(notes: number[], { low, high }: MidiRange): number {
   let shift = 0;
-  while (Math.max(...notes) + shift > high) shift -= 12;
-  while (Math.min(...notes) + shift < low) shift += 12;
+  while (Math.max(...notes) + shift > high) shift -= OCTAVE;
+  while (Math.min(...notes) + shift < low) shift += OCTAVE;
   return shift;
 }
 
-const OCTAVE = 12;
-const PERFECT_FIFTH = 7;
-const HALF_STEP = 1;
+/** The lowest note at or above low with this pitch class. */
+const noteFrom = (low: number, pc: number) => low + pitchClass(pc - low);
+
 // A small cost for leaving the default octave, so it only breaks ties between equally smooth lines
 const MOVED_OCTAVE_COST = 0.5;
 
 const isPowerChord = (chord: Chord) => chord.intervals.length === 2 && chord.intervals[1] === PERFECT_FIFTH;
 
 function powerChordVoicing(chord: Chord): number[] {
-  const root = POWER_CHORD_RANGE.low + pitchClass(chord.root - POWER_CHORD_RANGE.low);
+  const root = noteFrom(POWER_CHORD_RANGE.low, chord.root);
   return [root, root + PERFECT_FIFTH, root + OCTAVE];
 }
 
 function chordVoicing(chord: Chord): number[] {
-  return chord.tones.map(pc => KEYS_RANGE.low + pitchClass(pc - KEYS_RANGE.low)).sort((a, b) => a - b);
+  return chord.tones.map(pc => noteFrom(KEYS_RANGE.low, pc)).sort((a, b) => a - b);
 }
 
 const keysVoicing = (chord: Chord) => (isPowerChord(chord) ? powerChordVoicing(chord) : chordVoicing(chord));
 
-const isRest = (step: string) => step === '.' || step === '-';
+const isRest = (step: string) => step === REST || step === HOLD;
 const isApproach = (step: string) => step.startsWith(APPROACH);
 const isNote = (note: number | null): note is number => note !== null;
 const inBassRange = (midi: number) => midi >= BASS_RANGE.low && midi <= BASS_RANGE.high;
@@ -71,9 +82,11 @@ function closest(candidates: number[], target: number): number {
 
 interface BassBar { chord: Chord; steps: string[]; root: number; notes: (number | null)[]; moved: number }
 
+/** The chord root placed from a fourth below the lowest tonic on the bass up to a tritone above it. */
 function defaultBassRoot(chord: Chord, tonic: number): number {
-  const tonicNote = BASS_RANGE.low + pitchClass(tonic - BASS_RANGE.low);
-  return tonicNote + pitchClass(chord.root - tonic + 5) - 5;
+  const tonicNote = noteFrom(BASS_RANGE.low, tonic);
+  const aboveFourthBelow = pitchClass(chord.root - tonic + PERFECT_FOURTH);
+  return tonicNote + aboveFourthBelow - PERFECT_FOURTH;
 }
 
 function chordNote(step: string, chord: Chord, root: number): number | null {
@@ -81,8 +94,11 @@ function chordNote(step: string, chord: Chord, root: number): number | null {
   return root + degreeInterval(chord, step as BassDegree);
 }
 
+// The bass range spans just over two octaves, so two octaves either way reach every root in it
+const OCTAVES_AROUND = [-2, -1, 0, 1, 2];
+
 function rootsInRange(root: number): number[] {
-  return [-2, -1, 0, 1, 2].map(octaves => root + octaves * OCTAVE).filter(inBassRange);
+  return OCTAVES_AROUND.map(octaves => root + octaves * OCTAVE).filter(inBassRange);
 }
 
 function bassBarOptions(steps: string[], chord: Chord, tonic: number, walking: boolean): BassBar[] {
@@ -95,7 +111,9 @@ function bassBarOptions(steps: string[], chord: Chord, tonic: number, walking: b
   return fitting.map(shift => {
     const placed = notes.map(note => (isNote(note) ? note + shift : null));
     const firstNote = placed.find(isNote) ?? root + shift;
-    return { chord, steps, root: closest(rootsInRange(root), firstNote), notes: placed, moved: Math.abs(shift - inRange) / OCTAVE };
+    const nearestRoot = closest(rootsInRange(root), firstNote);
+    const moved = Math.abs(shift - inRange) / OCTAVE;
+    return { chord, steps, root: nearestRoot, notes: placed, moved };
   });
 }
 
@@ -162,13 +180,20 @@ function bassLine(groove: Groove, key: string, tonic: number): (number | null)[]
   return bars.map((bar, index) => resolveApproaches(bar, bars[(index + 1) % bars.length]));
 }
 
+interface Placement { pair: number; ratio: number }
+
+/** Swing moves the second eighth of each beat, or the second sixteenth when no grid plays eighths. */
 function swingPair(groove: Groove): number {
-  const barLength = (groove.time[0] * 4) / groove.time[1];
-  const lengths = groove.grids.flatMap(g => g.bars.map(steps => barLength / steps.length));
-  return !lengths.some(l => near(l, 0.5)) && lengths.some(l => near(l, 0.25)) ? 0.5 : 1;
+  const bar = barLength(groove.time);
+  const stepLengths = groove.grids.flatMap(grid => grid.bars.map(steps => bar / steps.length));
+  const hasEighths = stepLengths.some(length => near(length, EIGHTH));
+  const hasSixteenths = stepLengths.some(length => near(length, SIXTEENTH));
+  return !hasEighths && hasSixteenths ? EIGHTH : QUARTER;
 }
 
-interface Placement { pair: number; ratio: number }
+function swingPlacement(groove: Groove): Placement {
+  return { pair: swingPair(groove), ratio: hasShortBeats(groove.time) ? STRAIGHT : swingRatio(groove.swing) };
+}
 
 function stepOffset(offset: number, stepLength: number, { pair, ratio }: Placement): number {
   return isBinary(stepLength) ? swung(offset, pair, ratio) : offset;
@@ -195,37 +220,52 @@ function withFill(drums: DrumHit[], bar: GrooveBar, placement: Placement): DrumH
   return [...kept, ...fillHits(bar, placement)];
 }
 
+const isDrumPart = (part: GroovePart): part is Drum => part !== 'bass' && part !== 'keys';
+
+function holdEnd(steps: readonly string[], index: number): number {
+  let end = index + 1;
+  while (steps[end] === HOLD) end++;
+  return end;
+}
+
+/** The beat a step starts on; the index after the last step is the end of the bar. */
+function stepBeat(bar: GrooveBar, steps: readonly string[], index: number, placement: Placement): number {
+  if (index >= steps.length) return bar.start + bar.length;
+  const stepLength = bar.length / steps.length;
+  return bar.start + stepOffset(index * stepLength, stepLength, placement);
+}
+
+interface BarNotes { bass: (number | null)[]; keys: number[] }
+
+function addGridBar(timeline: GrooveTimeline, grid: GrooveGrid, bar: GrooveBar, notes: BarNotes, placement: Placement) {
+  const steps = grid.bars[bar.bar % grid.bars.length];
+  steps.forEach((step, index) => {
+    if (isRest(step)) return;
+    const beat = stepBeat(bar, steps, index, placement);
+    if (isDrumPart(grid.part)) {
+      timeline.drums.push({ beat, bar: bar.bar, drum: grid.part, velocity: VELOCITY[step] });
+      return;
+    }
+    const length = stepBeat(bar, steps, holdEnd(steps, index), placement) - beat;
+    const hit = { beat, bar: bar.bar, length };
+    if (grid.part === 'bass') timeline.bass.push({ ...hit, midi: [notes.bass[index]!], velocity: BASS_VELOCITY });
+    else timeline.keys.push({ ...hit, midi: [...notes.keys], velocity: VELOCITY[step] });
+  });
+}
+
 export function buildGrooveTimeline(groove: Groove, key: string = groove.key): GrooveTimeline {
   key = safeKey(key);
   const tonic = keyTonic(key) ?? 0;
-  const barLength = (groove.time[0] * 4) / groove.time[1];
-  const placement: Placement = { pair: swingPair(groove), ratio: groove.time[1] >= 8 ? 0.5 : swingRatio(groove.swing) };
-  const timeline: GrooveTimeline = { bars: [], drums: [], bass: [], keys: [], total: groove.progression.length * barLength, voice: groove.voice, kit: groove.kit };
+  const length = barLength(groove.time);
+  const placement = swingPlacement(groove);
+  const timeline: GrooveTimeline = { bars: [], drums: [], bass: [], keys: [], total: groove.progression.length * length, voice: groove.voice, kit: groove.kit };
   const bass = bassLine(groove, key, tonic);
 
-  groove.progression.forEach((_, bar) => {
-    const start = bar * barLength;
-    const chord = chordAt(groove.progression, key, bar);
-    const keys = keysVoicing(chord);
-    timeline.bars.push({ bar, start, length: barLength, chord });
-
-    for (const grid of groove.grids) {
-      const steps = grid.bars[bar % grid.bars.length];
-      const stepLength = barLength / steps.length;
-      const at = (i: number) => start + (i >= steps.length ? barLength : stepOffset(i * stepLength, stepLength, placement));
-      steps.forEach((step, i) => {
-        if (isRest(step)) return;
-        if (grid.part !== 'bass' && grid.part !== 'keys') {
-          timeline.drums.push({ beat: at(i), bar, drum: grid.part, velocity: VELOCITY[step] });
-          return;
-        }
-        let end = i + 1;
-        while (steps[end] === '-') end++;
-        const hit = { beat: at(i), bar, length: at(end) - at(i) };
-        if (grid.part === 'bass') timeline.bass.push({ ...hit, midi: [bass[bar][i]!], velocity: BASS_VELOCITY });
-        else timeline.keys.push({ ...hit, midi: [...keys], velocity: VELOCITY[step] });
-      });
-    }
+  groove.progression.forEach((_, index) => {
+    const bar: GrooveBar = { bar: index, start: index * length, length, chord: chordAt(groove.progression, key, index) };
+    timeline.bars.push(bar);
+    const notes: BarNotes = { bass: bass[index], keys: keysVoicing(bar.chord) };
+    for (const grid of groove.grids) addGridBar(timeline, grid, bar, notes, placement);
   });
 
   const lastBar = timeline.bars.at(-1);
