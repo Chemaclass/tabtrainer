@@ -4,7 +4,34 @@ export type SourceKind = 'instrument' | 'count-in' | 'metronome' | 'backing';
 type Scheduled = { node: AudioScheduledSourceNode; kind: SourceKind; start: number; end: number };
 
 const MASTER_LEVEL = 0.8;
+const MASTER_RESTORE_TIME = 0.005;
+const MASTER_FADE_TIME = 0.03;
 const SILENT = 0.0001;
+const VOICE = {
+  attack: 0.008,
+  releaseLevel: 0.0008,
+  tail: 0.05,
+  sineLevel: 0.6,
+  // The low pass closes after the strike, so each note starts bright and mellows
+  openRatio: 10,
+  openMax: 5000,
+  closedRatio: 2,
+  closedMin: 180,
+  sweepTime: 0.4,
+};
+const KEYS = {
+  attack: 0.004,
+  sustainRatio: 0.35,
+  decayTime: 0.3,
+  releaseTime: 0.12,
+  tail: 0.6,
+  modulationDepth: 0.6,
+  settledDepth: 0.08,
+  settleTime: 0.12,
+  partialRatio: 2,
+  partialDetune: 7,
+  partialLevel: 0.12,
+};
 const ORGAN = {
   level: 0.5,
   attack: 0.006,
@@ -24,6 +51,15 @@ const DRIVE = {
   curveSize: 2048,
   curveHardness: 3,
 };
+// setTargetAtTime approaches its target without reaching it; five time constants leave under one percent
+const RELEASE_TIME_CONSTANTS = 5;
+const CLICK = {
+  frequency: 800,
+  accentFrequency: 1200,
+  level: 0.3,
+  accentLevel: 0.5,
+  length: 0.04,
+};
 
 function softClipCurve(size: number, hardness: number): Float32Array<ArrayBuffer> {
   const curve = new Float32Array(size);
@@ -33,6 +69,14 @@ function softClipCurve(size: number, hardness: number): Float32Array<ArrayBuffer
   }
   return curve;
 }
+
+function createAudioContext(): AudioContext {
+  const AudioContextClass = window.AudioContext || (window as never as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+  return new AudioContextClass();
+}
+
+/** Each note of a chord gets a share of the level, so a full chord is not louder than one note. */
+const chordNoteLevel = (level: number, noteCount: number) => level / Math.sqrt(Math.max(1, noteCount));
 
 export class Synth {
   private ctx: AudioContext | null = null;
@@ -48,44 +92,86 @@ export class Synth {
   get output(): AudioNode { return this.master!; }
 
   ensure(): boolean {
-    try { this.ctx = this.ctx ?? new (window.AudioContext || (window as never as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)(); }
-    catch { return false; }
+    try {
+      this.ctx ??= createAudioContext();
+    } catch {
+      return false;
+    }
     void this.ctx.resume();
-    if (!this.master) { this.master = this.ctx.createGain(); this.master.gain.value = MASTER_LEVEL; this.master.connect(this.ctx.destination); }
-    else if (this.silenced) this.master.gain.setTargetAtTime(MASTER_LEVEL, this.ctx.currentTime, 0.005);
+    if (!this.master) this.master = this.createMaster(this.ctx);
+    else if (this.silenced) this.master.gain.setTargetAtTime(MASTER_LEVEL, this.ctx.currentTime, MASTER_RESTORE_TIME);
     this.silenced = false;
     return true;
   }
-  voice(when: number, midi: number, dur: number, vel: number, out: AudioNode = this.master!, kind: SourceKind = 'instrument') {
-    const ctx = this.ctx!, f = 440 * Math.pow(2, (midi - 69) / 12);
-    const o = ctx.createOscillator(), o2 = ctx.createOscillator(), g = ctx.createGain(), lp = ctx.createBiquadFilter(), g2 = ctx.createGain();
-    o.type = 'sawtooth'; o2.type = 'sine'; o.frequency.value = f; o2.frequency.value = f;
-    lp.type = 'lowpass'; lp.frequency.setValueAtTime(Math.min(5000, f * 10), when); lp.frequency.exponentialRampToValueAtTime(Math.max(180, f * 2), when + 0.4);
-    g.gain.setValueAtTime(0.0001, when); g.gain.exponentialRampToValueAtTime(vel, when + 0.008); g.gain.exponentialRampToValueAtTime(0.0008, when + dur);
-    g2.gain.value = 0.6; o.connect(lp); o2.connect(g2); g2.connect(g); lp.connect(g); g.connect(out);
-    o.start(when); o2.start(when); o.stop(when + dur + 0.05); o2.stop(when + dur + 0.05);
-    this.track(o, kind, when, when + dur + 0.05); this.track(o2, kind, when, when + dur + 0.05);
+
+  private createMaster(ctx: AudioContext): GainNode {
+    const master = ctx.createGain();
+    master.gain.value = MASTER_LEVEL;
+    master.connect(ctx.destination);
+    return master;
   }
+
+  /** A sawtooth through a closing low pass with a sine under it, for single notes. */
+  voice(when: number, midi: number, dur: number, vel: number, out: AudioNode = this.master!, kind: SourceKind = 'instrument') {
+    const frequency = frequencyOf(midi);
+    const end = when + dur + VOICE.tail;
+    const saw = this.oscillator('sawtooth', frequency, when, end, kind);
+    const sine = this.oscillator('sine', frequency, when, end, kind);
+    const envelope = this.ctx!.createGain();
+    envelope.gain.setValueAtTime(SILENT, when);
+    envelope.gain.exponentialRampToValueAtTime(vel, when + VOICE.attack);
+    envelope.gain.exponentialRampToValueAtTime(VOICE.releaseLevel, when + dur);
+    const lowPass = this.ctx!.createBiquadFilter();
+    lowPass.type = 'lowpass';
+    lowPass.frequency.setValueAtTime(Math.min(VOICE.openMax, frequency * VOICE.openRatio), when);
+    lowPass.frequency.exponentialRampToValueAtTime(Math.max(VOICE.closedMin, frequency * VOICE.closedRatio), when + VOICE.sweepTime);
+    const sineLevel = this.ctx!.createGain();
+    sineLevel.gain.value = VOICE.sineLevel;
+    saw.connect(lowPass);
+    lowPass.connect(envelope);
+    sine.connect(sineLevel);
+    sineLevel.connect(envelope);
+    envelope.connect(out);
+  }
+
+  /** An electric piano: a sine carrier whose brightness comes from a modulator that settles after the strike. */
   keys(when: number, midi: number[], dur: number, vel: number, out: AudioNode = this.master!) {
-    const ctx = this.ctx!, level = vel / Math.sqrt(Math.max(1, midi.length)), end = when + dur + 0.6;
+    const level = chordNoteLevel(vel, midi.length);
+    const end = when + dur + KEYS.tail;
     for (const note of midi) {
-      const f = 440 * Math.pow(2, (note - 69) / 12);
-      const carrier = ctx.createOscillator(), modulator = ctx.createOscillator(), partial = ctx.createOscillator();
-      const depth = ctx.createGain(), partialLevel = ctx.createGain(), g = ctx.createGain();
-      carrier.type = 'sine'; modulator.type = 'sine'; partial.type = 'sine';
-      carrier.frequency.value = f; modulator.frequency.value = f; partial.frequency.value = f * 2; partial.detune.value = 7;
-      depth.gain.setValueAtTime(f * (0.6 + vel), when); depth.gain.setTargetAtTime(f * 0.08, when, 0.12);
-      partialLevel.gain.value = 0.12;
-      g.gain.setValueAtTime(0.0001, when); g.gain.exponentialRampToValueAtTime(level, when + 0.004);
-      g.gain.setTargetAtTime(level * 0.35, when + 0.004, 0.3); g.gain.setTargetAtTime(0, when + dur, 0.12);
-      modulator.connect(depth); depth.connect(carrier.frequency);
-      carrier.connect(g); partial.connect(partialLevel); partialLevel.connect(g); g.connect(out);
-      for (const o of [carrier, modulator, partial]) { o.start(when); o.stop(end); this.track(o, 'backing', when, end); }
+      const frequency = frequencyOf(note);
+      const carrier = this.oscillator('sine', frequency, when, end);
+      const modulator = this.oscillator('sine', frequency, when, end);
+      const partial = this.oscillator('sine', frequency * KEYS.partialRatio, when, end);
+      partial.detune.value = KEYS.partialDetune;
+      const depth = this.ctx!.createGain();
+      depth.gain.setValueAtTime(frequency * (KEYS.modulationDepth + vel), when);
+      depth.gain.setTargetAtTime(frequency * KEYS.settledDepth, when, KEYS.settleTime);
+      const partialLevel = this.ctx!.createGain();
+      partialLevel.gain.value = KEYS.partialLevel;
+      const envelope = this.keysEnvelope(when, dur, level);
+      modulator.connect(depth);
+      depth.connect(carrier.frequency);
+      carrier.connect(envelope);
+      partial.connect(partialLevel);
+      partialLevel.connect(envelope);
+      envelope.connect(out);
     }
   }
+
+  private keysEnvelope(when: number, dur: number, level: number) {
+    const envelope = this.ctx!.createGain();
+    const peak = when + KEYS.attack;
+    envelope.gain.setValueAtTime(SILENT, when);
+    envelope.gain.exponentialRampToValueAtTime(level, peak);
+    envelope.gain.setTargetAtTime(level * KEYS.sustainRatio, peak, KEYS.decayTime);
+    envelope.gain.setTargetAtTime(0, when + dur, KEYS.releaseTime);
+    return envelope;
+  }
+
   organ(when: number, midi: number[], dur: number, vel: number, out: AudioNode = this.master!) {
-    const level = (ORGAN.level * vel) / Math.sqrt(Math.max(1, midi.length));
-    const end = when + dur + ORGAN.release * 5;
+    const level = chordNoteLevel(ORGAN.level * vel, midi.length);
+    const end = when + dur + ORGAN.release * RELEASE_TIME_CONSTANTS;
     for (const note of midi) {
       const envelope = this.envelope(when, dur, level, ORGAN.attack, ORGAN.release);
       envelope.connect(out);
@@ -97,9 +183,10 @@ export class Synth {
       }
     }
   }
+
   drive(when: number, midi: number[], dur: number, vel: number, out: AudioNode = this.master!) {
     const ctx = this.ctx!;
-    const end = when + dur + DRIVE.release * 5;
+    const end = when + dur + DRIVE.release * RELEASE_TIME_CONSTANTS;
     const input = ctx.createGain();
     input.gain.value = DRIVE.amount / Math.max(1, midi.length);
     const shaper = ctx.createWaveShaper();
@@ -121,15 +208,17 @@ export class Synth {
       }
     }
   }
-  private oscillator(type: OscillatorType, frequency: number, when: number, end: number) {
+
+  private oscillator(type: OscillatorType, frequency: number, when: number, end: number, kind: SourceKind = 'backing') {
     const oscillator = this.ctx!.createOscillator();
     oscillator.type = type;
     oscillator.frequency.value = frequency;
     oscillator.start(when);
     oscillator.stop(end);
-    this.track(oscillator, 'backing', when, end);
+    this.track(oscillator, kind, when, end);
     return oscillator;
   }
+
   private envelope(when: number, dur: number, level: number, attack: number, release: number) {
     const envelope = this.ctx!.createGain();
     envelope.gain.setValueAtTime(SILENT, when);
@@ -137,6 +226,7 @@ export class Synth {
     envelope.gain.setTargetAtTime(0, when + dur, release);
     return envelope;
   }
+
   private biquad(type: BiquadFilterType, frequency: number, q?: number) {
     const filter = this.ctx!.createBiquadFilter();
     filter.type = type;
@@ -144,14 +234,19 @@ export class Synth {
     if (q !== undefined) filter.Q.value = q;
     return filter;
   }
+
   click(when: number, accent: boolean, kind: 'count-in' | 'metronome', volume: number) {
     if (volume === 0) return;
-    const o = this.ctx!.createOscillator(), g = this.ctx!.createGain();
-    o.type = 'sine'; o.frequency.value = accent ? 1200 : 800;
-    g.gain.setValueAtTime(Math.max(0.0001, volume * (accent ? 0.5 : 0.3)), when);
-    g.gain.exponentialRampToValueAtTime(0.0001, when + 0.04);
-    o.connect(g); g.connect(this.master!); o.start(when); o.stop(when + 0.04); this.track(o, kind, when, when + 0.04);
+    const end = when + CLICK.length;
+    const tone = this.oscillator('sine', accent ? CLICK.accentFrequency : CLICK.frequency, when, end, kind);
+    const level = volume * (accent ? CLICK.accentLevel : CLICK.level);
+    const envelope = this.ctx!.createGain();
+    envelope.gain.setValueAtTime(Math.max(SILENT, level), when);
+    envelope.gain.exponentialRampToValueAtTime(SILENT, end);
+    tone.connect(envelope);
+    envelope.connect(this.master!);
   }
+
   cancel(kind?: SourceKind, at = this.now) {
     const now = this.now;
     this.sources = this.sources.filter(s => {
@@ -160,6 +255,7 @@ export class Synth {
       return false;
     });
   }
+
   cancelFuture(kind?: SourceKind, from = this.now) {
     const now = this.now;
     this.sources = this.sources.filter(s => {
@@ -168,13 +264,19 @@ export class Synth {
       return false;
     });
   }
+
   forget(now: number) { this.sources = this.sources.filter(s => s.end > now); }
+
   silence() {
-    if (this.master && this.ctx) { this.master.gain.setTargetAtTime(0, this.ctx.currentTime, 0.03); this.silenced = true; }
+    if (!this.master || !this.ctx) return;
+    this.master.gain.setTargetAtTime(0, this.ctx.currentTime, MASTER_FADE_TIME);
+    this.silenced = true;
   }
+
   private driveCurve() {
     this.curve ??= softClipCurve(DRIVE.curveSize, DRIVE.curveHardness);
     return this.curve;
   }
+
   track(node: AudioScheduledSourceNode, kind: SourceKind, start: number, end: number) { this.sources.push({ node, kind, start, end }); }
 }
