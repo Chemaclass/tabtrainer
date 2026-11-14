@@ -7,7 +7,7 @@
 .status::before{content:"";width:6px;height:6px;border-radius:3px;background:var(--ok)}
 .status.bad{color:var(--error)}
 .status.bad::before{background:var(--playing)}
-#src{flex:1;min-height:220px;width:100%;resize:none;font:400 16px/24px var(--mono);padding:12px 16px;border:0;background:transparent;color:var(--ink);tab-size:2;outline:none}
+#src{flex:1;min-height:220px;width:100%;resize:none;font:400 16px/24px var(--mono);font-variant-ligatures:none;padding:12px 16px;border:0;background:transparent;color:var(--ink);tab-size:2;outline:none}
 .issues{list-style:none;margin:0;padding:0;max-height:160px;overflow:auto;font-size:13px;flex-shrink:0}
 .issues:not(:empty){border-top:1px solid var(--rule);padding:8px}
 .issues li{display:flex;gap:8px;padding:6px 10px;border-radius:6px;cursor:pointer}
@@ -48,7 +48,7 @@
 @media(min-width:900px){
   .editor{position:sticky;border-bottom:0;top:calc(var(--top-h,64px) + var(--save-state-h,0px));height:var(--editor-height);overflow-y:auto;overflow-x:hidden}
   .pane-head{padding:0 20px}
-  #src{min-height:0;font:400 13px/22px var(--mono);padding:16px 20px}
+  #src{min-height:0;font:400 13px/22px var(--mono);font-variant-ligatures:none;padding:16px 20px}
   .save-state{top:var(--top-h,64px)}
   .layout{--editor-height:calc(100dvh - var(--top-h,64px) - var(--save-state-h,0px) - var(--deck-h) - var(--continuation-h,0px));min-height:var(--editor-height)}
   .viewer{padding:28px 64px 32px}

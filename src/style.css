@@ -24,6 +24,7 @@ summary:focus-visible,button:focus-visible,.btn:focus-visible,select:focus-visib
 .grow{flex:1}
 .caps,.lbl{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase}
 .divider{width:1px;height:20px;background:var(--rule);flex-shrink:0}
+:root :is(pre,code,kbd){font-variant-ligatures:none}
 kbd{font:600 12px var(--mono);padding:1px 5px;border:1px solid var(--rule);border-radius:4px}
 .brand{display:flex;align-items:center;gap:10px;font:800 17px var(--display);letter-spacing:-.02em;white-space:nowrap}
 .file-menu{position:relative}
