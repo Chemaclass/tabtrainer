@@ -38,11 +38,19 @@ describe('DrumKit', () => {
   it('gives each drum its own voice', () => {
     const { kit, out, sources } = setup();
     const shape = (drum: Drum) => added(sources, () => kit.play(drum, 1, 1, out)).map(s => `${s.kind}:${s.type}`).sort().join(',');
-    const kick = shape('kick'), snare = shape('snare'), hat = shape('hat'), ride = shape('ride');
+    const kick = shape('kick'), snare = shape('snare'), rim = shape('rim'), hat = shape('hat'), ride = shape('ride');
     expect(snare).toContain('oscillator:triangle');
+    expect(rim).toContain('oscillator:triangle');
     expect(hat).toBe('noise:');
     expect(ride).toContain('oscillator:square');
-    expect(new Set([kick, snare, hat, ride]).size).toBe(4);
+    expect(new Set([kick, snare, rim, hat, ride]).size).toBe(5);
+  });
+  it('keeps the rim click short and without the snare wires', () => {
+    const { kit, out, sources, filters } = setup();
+    const before = filters.length;
+    const rim = added(sources, () => kit.play('rim', 1, 1, out));
+    expect(Math.max(...rim.map(s => (s.stop.mock.calls[0][0] as number) - 1))).toBeLessThan(0.2);
+    expect(filters.slice(before).map(f => f.type)).not.toContain('highpass');
   });
   it('lets an open hat ring longer than a closed hat and chokes it at the next closed hat', () => {
     const { kit, out, sources, gains } = setup();

@@ -4,6 +4,14 @@ import type { Synth } from './synth';
 const NOISE_SECONDS = 1;
 const RIDE_PARTIALS = [587, 845, 1103, 1517];
 const CRASH_PARTIALS = [431, 619, 893, 1277];
+const RIM = {
+  modes: [
+    { type: 'triangle', frequency: 520, level: 0.5, decay: 0.018 },
+    { type: 'sine', frequency: 1720, level: 0.32, decay: 0.007 },
+  ] as readonly { type: OscillatorType; frequency: number; level: number; decay: number }[],
+  click: { frequency: 2600, q: 1.4, level: 0.35, decay: 0.005, length: 0.04 },
+};
+const RING_DECAYS = 8;
 
 const loudness = (velocity: number) => Math.pow(Math.max(0, Math.min(1, velocity)), 1.6);
 
@@ -22,6 +30,7 @@ export class DrumKit {
     when = Math.max(this.synth.now, when + offset);
     if (drum === 'kick') this.kick(when, level, out);
     else if (drum === 'snare') this.snare(when, level, out);
+    else if (drum === 'rim') this.rim(when, level, out);
     else if (drum === 'hat') { this.choke(when); this.hat(when, level, 0.012, out); }
     else if (drum === 'openhat') { this.choke(when); this.hat(when, level, 0.12, out, true); }
     else if (drum === 'ride') this.cymbal(when, level * 0.32, 0.45, 5200, RIDE_PARTIALS, out);
@@ -69,6 +78,33 @@ export class DrumKit {
     noiseGain.gain.setTargetAtTime(0, when + 0.012, 0.055);
     noise.connect(high); high.connect(band); band.connect(noiseGain); noiseGain.connect(out);
     this.source(noise, when, when + 0.35);
+  }
+
+  private rim(when: number, level: number, out: AudioNode) {
+    for (const mode of RIM.modes) {
+      const tone = this.ctx.createOscillator();
+      tone.type = mode.type;
+      tone.frequency.value = mode.frequency;
+      const toneGain = this.decay(when, level * mode.level, mode.decay);
+      tone.connect(toneGain);
+      toneGain.connect(out);
+      this.source(tone, when, when + mode.decay * RING_DECAYS);
+    }
+    const click = RIM.click;
+    const noise = this.noiseSource();
+    const band = this.filter('bandpass', click.frequency, click.q);
+    const clickGain = this.decay(when, level * click.level, click.decay);
+    noise.connect(band);
+    band.connect(clickGain);
+    clickGain.connect(out);
+    this.source(noise, when, when + click.length);
+  }
+
+  private decay(when: number, peak: number, decay: number) {
+    const gain = this.ctx.createGain();
+    gain.gain.setValueAtTime(peak, when);
+    gain.gain.setTargetAtTime(0, when, decay);
+    return gain;
   }
 
   private hat(when: number, level: number, tau: number, out: AudioNode, open = false) {

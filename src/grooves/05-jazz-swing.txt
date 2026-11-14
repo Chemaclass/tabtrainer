@@ -1,0 +1,19 @@
+title: Medium swing in F
+genre: jazz
+about: A medium swing over ii V I in F to practise walking lines that lead into each next chord.
+tempo: 132
+key: F
+time: 4/4
+swing: 66
+progression: ii7 V7 Imaj7 Imaj7
+
+# eight swung eighths per bar: 1 & 2 & 3 & 4 &
+# the ride plays ding, ding-a-ding: the soft skip note is the swung eighth before 3 and before 1
+ride:  x.Xox.Xo
+hat:   ..x...x.
+# a feathered kick: soft quarter notes you feel more than hear
+kick:  o.o.o.o.
+snare: ........ | .....o.. | ........ | ...o...o
+keys:  x-.x.... | ...x-... | x-...... | ...x..x.
+# four quarter notes per bar; the last one steps into the next chord: ">b1" a half step below its root, ">2" a whole step above
+bass:  1 - 2 - 3 - >b1 - | 8 - b7 - 5 - >b1 - | 1 - 5 - 3 - >2 - | 1 - 6 - 5 - >b1 -

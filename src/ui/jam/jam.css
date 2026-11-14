@@ -63,8 +63,8 @@ fieldset.jam-plays{display:flex;align-items:center;gap:4px;margin:0;padding:0;bo
   .jam-groove{padding:10px 12px}
   .jam-groove[aria-current]{padding:8px 10px}
   .jam-bars{gap:6px}
-  .jam-bars li{min-height:64px;padding:8px 10px}
+  .jam-bars li{min-height:64px;padding:8px 10px;container-type:inline-size}
   .jam-bars li[aria-current]{padding:6px 8px}
   .jam-bars li[aria-current]::after{content:"▶";content:"▶" / "";top:6px;right:8px}
-  .jam-chord{font-size:20px;line-height:24px}
+  .jam-chord{font-size:clamp(14px,24cqi,20px);line-height:24px}
 }

@@ -30,6 +30,30 @@ describe('Synth', () => {
     clock.now = 0.5; synth.cancel('backing');
     expect(sources.every(s => s.stop.mock.calls.at(-1)![0] === 0.5)).toBe(true);
   });
+  it('plays organ chords as drawbar partials on the backing kind', () => {
+    const { sources } = fakeAudio();
+    const synth = new Synth(); synth.ensure();
+    synth.organ(1, [57, 61, 64], 0.5, 0.4);
+    expect(sources.length).toBeGreaterThan(3);
+    expect(sources.length % 3).toBe(0);
+    expect(sources.every(s => s.type === 'sine' && s.start.mock.calls[0][0] === 1)).toBe(true);
+    synth.cancel('backing');
+    expect(sources.every(s => s.stop.mock.calls.length === 2)).toBe(true);
+  });
+  it('drives a chord through one wave shaper whose curve never passes full scale', () => {
+    const { sources, shapers } = fakeAudio();
+    const synth = new Synth(); synth.ensure();
+    synth.drive(1, [52, 59, 64], 0.2, 0.5);
+    synth.drive(2, [52, 59, 64], 0.2, 0.5);
+    expect(shapers).toHaveLength(2);
+    expect(shapers[0].curve).toBe(shapers[1].curve);
+    const curve = shapers[0].curve!;
+    expect(Math.max(...curve.map(Math.abs))).toBeLessThanOrEqual(1);
+    expect(curve[0]).toBeCloseTo(-1);
+    expect(curve[curve.length - 1]).toBeCloseTo(1);
+    expect(sources.filter(s => s.start.mock.calls[0][0] === 1).every(s => s.type === 'sawtooth')).toBe(true);
+    expect(sources).toHaveLength(12);
+  });
   it('cancels only backing sources that start after a given time', () => {
     const { sources } = fakeAudio();
     const synth = new Synth(); synth.ensure();

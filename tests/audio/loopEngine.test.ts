@@ -229,6 +229,29 @@ describe('LoopEngine bass and mixer', () => {
   });
 });
 
+describe('LoopEngine voices and limiter', () => {
+  it('plays the keys part on the voice the groove names', () => {
+    const metal = buildGrooveTimeline(parseGroove(readFileSync('src/grooves/07-metal-gallop.txt', 'utf8')).groove);
+    const { engine, keys, synth, advance } = setup(metal, 170);
+    const drive = vi.spyOn(synth, 'drive');
+    engine.play(); advance(2);
+    expect(keys).not.toHaveBeenCalled();
+    expect(drive).toHaveBeenCalled();
+    expect(drive.mock.calls[0][1]).toEqual(metal.keys[0].midi);
+  });
+  it('sends every part through one limiter before the master', () => {
+    const { engine, synth, compressors, gains, kit, bass, keys, advance } = setup();
+    engine.play(); advance(4);
+    expect(compressors).toHaveLength(1);
+    const [limiter] = compressors;
+    expect(limiter.outputs).toEqual([synth.output]);
+    expect(limiter.ratio.value).toBeGreaterThanOrEqual(12);
+    expect(limiter.threshold.value).toBeLessThan(0);
+    const out = gains.find(g => g.outputs.includes(limiter))!;
+    for (const bus of [kit.play.mock.calls[0][3], bass.mock.calls[0][4], keys.mock.calls[0][4]]) expect((bus as unknown as { outputs: unknown[] }).outputs).toEqual([out]);
+  });
+});
+
 describe('humanize', () => {
   it('repeats the same offsets for the same seed and stays within the limits', () => {
     const a = Array.from({ length: 500 }, (_, i) => humanize(DEFAULT_HUMANIZE, i % 3, i));

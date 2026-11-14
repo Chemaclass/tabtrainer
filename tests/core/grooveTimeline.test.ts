@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { parseGroove } from '../../src/core/groove';
-import { BASS_RANGE, KEYS_RANGE, buildGrooveTimeline } from '../../src/core/grooveTimeline';
+import { BASS_RANGE, KEYS_RANGE, POWER_CHORD_RANGE, buildGrooveTimeline } from '../../src/core/grooveTimeline';
 import { pitchClass } from '../../src/core/theory';
 
 const blues = parseGroove(readFileSync('src/grooves/01-blues-shuffle.txt', 'utf8')).groove;
@@ -100,6 +100,30 @@ describe('buildGrooveTimeline', () => {
       const bar = buildGrooveTimeline(wide, key).bass.slice(0, 6).map(h => h.midi[0]);
       expect(bar.map(m => m - bar[0])).toEqual([0, 4, 7, 9, 10, 12]);
     }
+  });
+  it('plays an approach step from the next chord: ">b1" a half step below its root, a degree in the octave nearest that root', () => {
+    const t = buildGrooveTimeline(groove('bass: 1 - 3 - >5 - >b1 - | 1 - 3 - >3 - >2 -\n'), 'A');
+    const bar = (n: number) => t.bass.filter(h => h.bar === n).map(h => h.midi[0]);
+    expect(bar(0)).toEqual([33, 37, 33, 37]);
+    expect(bar(1)).toEqual([38, 42, 44, 42]);
+    expect(t.bass[3].length).toBe(1);
+  });
+  it('approaches the first chord from the last bar, and a low E from a half step above', () => {
+    const t = buildGrooveTimeline(groove('bass: 1 - 3 - 5 - >b1 -\n'), 'E');
+    expect(t.bass.at(-1)!.midi[0]).toBe(29);
+    expect(t.bass[3].midi[0]).toBe(32);
+  });
+  it('voices a power chord as root, fifth and octave between A2 and G#4, and passes the keys voice on', () => {
+    const power = parseGroove('progression: I5 bVI5\nvoice: drive\nkeys: x.......\n').groove;
+    for (const key of MAJOR_KEYS) {
+      const t = buildGrooveTimeline(power, key);
+      for (const hit of t.keys) {
+        expect(hit.midi.map(m => m - hit.midi[0])).toEqual([0, 7, 12]);
+        expect(hit.midi[0] >= POWER_CHORD_RANGE.low && hit.midi[2] <= POWER_CHORD_RANGE.high).toBe(true);
+      }
+      expect(t.voice).toBe('drive');
+    }
+    expect(buildGrooveTimeline(blues).voice).toBe('keys');
   });
   it('uses the groove key by default and falls back to C for an unknown key', () => {
     expect(buildGrooveTimeline(blues).bars[0].chord.name).toBe('A7');
