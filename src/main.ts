@@ -17,9 +17,8 @@ import { enhanceDropdowns, setSelectValue } from './ui/shell/dropdown';
 import { buildTimeline, onsetAt, onsetKey, onsetsOf } from './core/timeline';
 import type { Song } from './core/model';
 import { FAMILIES, familyOf, isFamily, type Family } from './core/instruments';
-import { renderSong } from './render/notation';
 import { Player } from './audio/player';
-import { library, removeSong, pref, setPref, recentPractice, recordPractice } from './app/storage';
+import { library, removeSong, pref, recentPractice, recordPractice } from './app/storage';
 import { normalizeSongReference, shareUrl, songSlug } from './app/songLink';
 import { bundledPath, savedRef } from './app/songRef';
 import { shownCredits } from './app/credits';
@@ -46,6 +45,7 @@ import { scrollControls } from './ui/player/scrollControls';
 import { speedControls } from './ui/player/speedControls';
 import { speedPracticePanel } from './ui/player/speedPracticePanel';
 import { timingPanel } from './ui/player/timingPanel';
+import { scoreView } from './ui/practice/scoreView';
 
 const songbook = new Songbook(import.meta.glob('./songs/*/*/*.txt', { query: '?raw', import: 'default', eager: true }) as Record<string, string>, library);
 const $ = byId;
@@ -57,13 +57,18 @@ const navigation = new Navigation(history, location, songbook.paths);
 const workspace = Workspace.fromQuery(location.search);
 let catalogueEntries: CatalogueEntry[] = [];
 
-const src = $('src', HTMLTextAreaElement), sheet = $('sheet'), player = new Player();
+const src = $('src', HTMLTextAreaElement), player = new Player();
 const openSong = new OpenSong();
 const passage = new Passage();
 const passagePlayback = new PassagePlayback(player, passage);
 const draftSession = new DraftSession(() => src.value);
 let continuationDismissed = false;
-let zoom = pref('zoom', 1), showNota = pref('notation', matchMedia('(min-width:600px)').matches);
+const score = scoreView({
+  redraw: draw,
+  onBar: selectBar,
+  onNote: selectNote,
+  onPlayNote: (key, bar) => { const chosen = selectNote(key, bar) ? passagePlayback.selectedNote : null; if (chosen) player.play(chosen.beat); },
+});
 
 // ---------- song list ----------
 
@@ -238,29 +243,15 @@ function jumpToLine(line: number) {
 function draw() {
   const song = openSong.song;
   if (!song || workspace.screen !== 'practice') return;
-  // measure the unzoomed parent: browsers disagree on whether a zoomed element reports its own width zoomed
-  const box = getComputedStyle(sheet.parentElement!);
-  const w = sheet.parentElement!.clientWidth - parseFloat(box.paddingLeft) - parseFloat(box.paddingRight) - 12;
-  const perLine = Math.max(1, Math.min(8, Math.round((w / zoom) / (showNota ? 300 : 240))));
-  sheet.style.setProperty('zoom', String(zoom));
-  renderSong(sheet, song, { barsPerLine: perLine, showNotation: showNota, width: w / zoom });
-  lit = litKey ? [...sheet.querySelectorAll(`[data-key="${litKey}"]`)] : [];
-  lit.forEach(element => element.classList.add('on'));
-  curSys = systemAt(Number($('barNo').textContent)); curSys?.classList.add('cur');
+  score.draw(song);
   showPassage();
 }
-function systemAt(bar: number) {
-  return [...sheet.querySelectorAll<HTMLElement>('.system')].find(system => bar >= +system.dataset.first! && bar <= +system.dataset.last!) ?? null;
-}
-let rz = 0; let lastW = window.innerWidth;
-window.addEventListener('resize', () => { if (Math.abs(window.innerWidth - lastW) < 60) return; lastW = window.innerWidth; clearTimeout(rz); rz = window.setTimeout(draw, 250); });
 
 // ---------- player wiring ----------
 const setPlayLabel = () => {
   const b = $('playBtn'); b.classList.toggle('pause', player.playing);
   b.setAttribute('aria-label', player.playing ? 'Pause' : player.canResume ? 'Resume' : 'Play');
 };
-let lit: Element[] = [], litKey: string | null = null, curSys: Element | null = null;
 let onsets: number[] = [];
 let playbackWasActive = false;
 let lastPhase = player.phase;
@@ -276,21 +267,11 @@ player.on(({ beat, playing, phase, countInRemaining }) => {
   if (phase === 'counting-in') { playbackWasActive = false; return; }
   const started = player.playing && !playbackWasActive; playbackWasActive = player.playing;
   if (started && workspace.picked) { recordPractice(workspace.picked); fillSongList(); }
-  if (beat === null) { passagePlayback.deselect(); showPassage(); lit.forEach(e => e.classList.remove('on')); lit = []; litKey = null; curSys?.classList.remove('cur'); curSys = null; $('barNo').textContent = '–'; return; }
-  const key = playing ? onsetAt(onsets, beat) : null;
-  if (key !== litKey) {
-    lit.forEach(e => e.classList.remove('on'));
-    lit = key ? [...sheet.querySelectorAll(`[data-key="${key}"]`)] : []; lit.forEach(e => e.classList.add('on')); litKey = key;
-  }
+  if (beat === null) { passagePlayback.deselect(); showPassage(); score.clear(); $('barNo').textContent = '–'; return; }
+  score.highlight(playing ? onsetAt(onsets, beat) : null);
   const bar = player.barAt(beat); $('barNo').textContent = bar ? String(bar) : '–';
-  if (bar) {
-    const sys = systemAt(bar);
-    if (sys) {
-      const changed = sys !== curSys;
-      if (changed) { curSys?.classList.remove('cur'); sys.classList.add('cur'); curSys = sys; }
-      if (scrolling.follows() && player.playing && (changed || started)) { const r = sys.getBoundingClientRect(); window.scrollTo({ top: window.scrollY + r.top - window.innerHeight * 0.28, behavior: 'smooth' }); }
-    }
-  }
+  const newLine = score.showBar(bar);
+  if (scrolling.follows() && player.playing && (newLine || started)) score.followLine();
 });
 $('playBtn').onclick = () => player.toggle();
 function stopPlayback() {
@@ -311,17 +292,7 @@ function showPassage() {
   $('loopA', HTMLInputElement).max = $('loopB', HTMLInputElement).max = String(state.count);
   $('loopChk', HTMLInputElement).checked = state.repeat;
   speedPractice.show();
-  sheet.querySelectorAll<SVGElement>('.note-target').forEach(el => {
-    const selected = el.dataset.key === passagePlayback.selectedNote?.key;
-    el.classList.toggle('selected', selected);
-    el.setAttribute('aria-pressed', String(selected));
-  });
-  sheet.querySelectorAll<SVGElement>('.bar-target').forEach(el => {
-    const bar = +el.dataset.bar!;
-    el.classList.toggle('in-range', state.active && passage.includes(bar));
-    el.classList.toggle('selected', bar === state.selected);
-    el.setAttribute('aria-pressed', String(bar === state.selected));
-  });
+  score.markPassage({ selectedNote: passagePlayback.selectedNote?.key, selectedBar: state.selected, inPassage: bar => state.active && passage.includes(bar) });
   for (const id of ['rangeStart', 'rangeEnd']) $(id, HTMLButtonElement).disabled = !state.selected;
   $('rangeReset', HTMLButtonElement).disabled = !state.selected && !state.active;
   const note = passagePlayback.selectedNote;
@@ -343,7 +314,7 @@ $('rangeStart').onclick = () => { passage.startAtSelection(); applyLoop(); };
 $('rangeEnd').onclick = () => { passage.endAtSelection(); applyLoop(); };
 $('rangeReset').onclick = () => {
   passage.clear(); applyLoop(); player.stop(); passage.deselect(); showPassage();
-  const first = sheet.querySelector<SVGElement>('.bar-target'); if (first) first.focus(); else $('title').focus();
+  if (!score.focusFirstBar()) $('title').focus();
 };
 ['loopChk', 'loopA', 'loopB'].forEach(id => $(id).addEventListener('change', () => {
   passage.setRange($('loopA', HTMLInputElement).valueAsNumber, $('loopB', HTMLInputElement).valueAsNumber, $('loopChk', HTMLInputElement).checked);
@@ -355,30 +326,9 @@ function selectNote(key: string, bar: number) {
   showPassage();
   return true;
 }
-sheet.addEventListener('click', e => {
-  const note = (e.target as Element).closest<SVGElement>('.note-target');
-  if (note) { selectNote(note.dataset.key!, +note.dataset.bar!); return; }
-  const bar = (e.target as Element).closest<SVGElement>('.bar-target');
-  if (bar) selectBar(+bar.dataset.bar!);
-});
-sheet.addEventListener('dblclick', e => {
-  const note = (e.target as Element).closest<SVGElement>('.note-target');
-  const chosen = note && selectNote(note.dataset.key!, +note.dataset.bar!) ? passagePlayback.selectedNote : null;
-  if (chosen) player.play(chosen.beat);
-});
-sheet.addEventListener('keydown', e => {
-  if (e.key !== 'Enter') return;
-  const note = (e.target as Element).closest<SVGElement>('.note-target');
-  const bar = (e.target as Element).closest<SVGElement>('.bar-target');
-  if (note || bar) {
-    e.preventDefault(); e.stopPropagation();
-    if (note) selectNote(note.dataset.key!, +note.dataset.bar!);
-    else if (bar) selectBar(+bar.dataset.bar!);
-  }
-});
 
 // ---------- auto-scroll ----------
-const scrolling = scrollControls(() => workspace.screen === 'practice', () => { curSys?.classList.remove('cur'); curSys = null; });
+const scrolling = scrollControls(() => workspace.screen === 'practice', score.forgetLine);
 
 // ---------- keyboard ----------
 const shortcut = playbackShortcut(() => workspace.screen === 'practice', () => player.playing, () => player.play(), () => player.pause());
@@ -458,12 +408,6 @@ $('shareBtn').onclick = async () => {
     if (!(error instanceof DOMException && error.name === 'AbortError')) announceSave(`Could not copy the link: ${url}`, true, false);
   }
 };
-const showNotationState = () => { $('notaBtn').setAttribute('aria-pressed', String(showNota)); $('tabBtn').setAttribute('aria-pressed', String(!showNota)); };
-const setNotation = (on: boolean) => { showNota = on; setPref('notation', on); $('notaBtn').classList.toggle('on', on); $('tabBtn').classList.toggle('on', !on); showNotationState(); draw(); };
-$('notaBtn').onclick = () => setNotation(true);
-$('tabBtn').onclick = () => setNotation(false);
-$('zoomIn').onclick = () => { zoom = Math.min(1.8, +(zoom + 0.1).toFixed(2)); setPref('zoom', zoom); draw(); };
-$('zoomOut').onclick = () => { zoom = Math.max(0.6, +(zoom - 0.1).toFixed(2)); setPref('zoom', zoom); draw(); };
 playerPanel(draw);
 $('closeContinuationBtn').onclick = () => { continuationDismissed = true; $('playBtn').focus(); $('exerciseContinuation').hidden = true; };
 theme();
@@ -477,8 +421,6 @@ publishHeight($('exerciseContinuation'), '--continuation-h');
 publishHeight(one('.save-state'), '--save-state-h');
 
 // ---------- start ----------
-$('notaBtn').classList.toggle('on', showNota); $('tabBtn').classList.toggle('on', !showNota);
-showNotationState();
 setPlayLabel();
 editor.show(pref('editor', false));
 const plan = startupPlan({ search: location.search, historyPick: storedNavigation?.picked ?? null, draft: pref('draft', null), last: pref('last', null), lastPick: pref('picked', '') }, songbook);
