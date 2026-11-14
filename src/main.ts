@@ -16,7 +16,6 @@ import './ui/shell/dropdown.css';
 import { enhanceDropdowns, setSelectValue } from './ui/shell/dropdown';
 import { buildTimeline, onsetAt, onsetKey, onsetsOf } from './core/timeline';
 import type { Song } from './core/model';
-import { isSpeedPracticeConfig } from './core/speedPractice';
 import { FAMILIES, familyOf, isFamily, type Family } from './core/instruments';
 import { renderSong } from './render/notation';
 import { Player } from './audio/player';
@@ -45,6 +44,7 @@ import { categoryCounts, isLibraryKind, nextExercise, type CatalogueEntry, type 
 import { dismissHelpOnBackdrop } from './ui/shell/helpDialogs';
 import { byId, fillRange, one } from './ui/dom';
 import { speedControls } from './ui/player/speedControls';
+import { speedPracticePanel } from './ui/player/speedPracticePanel';
 import { timingPanel } from './ui/player/timingPanel';
 
 const songbook = new Songbook(import.meta.glob('./songs/*/*/*.txt', { query: '?raw', import: 'default', eager: true }) as Record<string, string>, library);
@@ -301,54 +301,7 @@ function stopPlayback() {
 $('stopBtn').onclick = stopPlayback;
 const speed = speedControls(player);
 document.querySelectorAll<HTMLDetailsElement>('.timing, .speed-practice').forEach(closeOnOutside);
-const practiceEnabled = $('speedPracticeChk', HTMLInputElement);
-const practiceRepetitions = $('speedPracticeRepetitions', HTMLInputElement);
-const practiceIncrease = $('speedPracticeIncrease', HTMLInputElement);
-const practiceTarget = $('speedPracticeTarget', HTMLInputElement);
-const practiceError = $('speedPracticeError');
-const savedPractice = pref('speedPractice', { repetitions: 4, increase: 5, target: Math.max(100, Math.round(player.speed * 100)) });
-practiceRepetitions.value = String(savedPractice.repetitions); practiceIncrease.value = String(savedPractice.increase); practiceTarget.value = String(savedPractice.target);
-function practiceConfig() {
-  return { repetitions: practiceRepetitions.valueAsNumber, increase: practiceIncrease.valueAsNumber, target: practiceTarget.valueAsNumber };
-}
-function validatePractice() {
-  const config = practiceConfig();
-  const error = !isSpeedPracticeConfig(config) ? 'Enter whole numbers within the shown limits.' : config.target < Math.round(player.speed * 100) ? 'Target must be at least the current speed.' : '';
-  practiceError.textContent = error;
-  return isSpeedPracticeConfig(config) && !error ? config : null;
-}
-function showPractice() {
-  const state = player.speedPracticeState;
-  practiceEnabled.checked = state.enabled;
-  practiceEnabled.disabled = !passage.snapshot().repeat;
-  const progress = $('speedPracticeProgress');
-  progress.hidden = !state.enabled;
-  progress.textContent = state.reached ? `Target reached: ${state.speed}%` : `${state.speed}%, repetition ${state.completed + 1} of ${state.repetitions}, target ${state.target}%`;
-}
-player.onSpeedPractice((state, reason) => {
-  speed.show(); showPractice();
-  if (reason === 'increase' || reason === 'target' || reason === 'reset') setPref('speed', Math.round(player.speed * 100));
-  if (reason === 'enabled' || reason === 'ended') $('speedPracticeStatus').textContent = '';
-  if (reason === 'increase') $('speedPracticeStatus').textContent = `Speed increased to ${state.speed}%.`;
-  if (reason === 'target') $('speedPracticeStatus').textContent = `Target reached: ${state.speed}%.`;
-});
-practiceEnabled.onchange = () => {
-  if (!practiceEnabled.checked) { player.setSpeedPractice(null); showPractice(); return; }
-  const config = validatePractice();
-  if (!config || !player.setSpeedPractice(config)) {
-    if (config) practiceError.textContent = 'Turn on Loop bars to enable gradual speed increases.';
-    showPractice(); return;
-  }
-  setPref('speedPractice', config); showPractice();
-};
-[practiceRepetitions, practiceIncrease, practiceTarget].forEach(input => input.addEventListener('input', () => {
-  if (player.speedPracticeState.enabled) player.setSpeedPractice(null);
-  validatePractice();
-  const config = practiceConfig();
-  if (isSpeedPracticeConfig(config)) setPref('speedPractice', config);
-  showPractice();
-}));
-showPractice();
+const speedPractice = speedPracticePanel(player, () => passage.snapshot().repeat, speed.show);
 timingPanel(player);
 
 function showPassage() {
@@ -357,7 +310,7 @@ function showPassage() {
   $('loopB', HTMLInputElement).value = String(state.last);
   $('loopA', HTMLInputElement).max = $('loopB', HTMLInputElement).max = String(state.count);
   $('loopChk', HTMLInputElement).checked = state.repeat;
-  showPractice();
+  speedPractice.show();
   sheet.querySelectorAll<SVGElement>('.note-target').forEach(el => {
     const selected = el.dataset.key === passagePlayback.selectedNote?.key;
     el.classList.toggle('selected', selected);
