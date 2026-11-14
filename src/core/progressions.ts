@@ -88,9 +88,14 @@ function chordTone(pitchClass: number, toneIndex: number, chordRootName: string,
   return { pitchClass, name, degree: degreeName(scaleRootName, name), root: false };
 }
 
-function progressionChord(numeral: Numeral, chord: Chord, bar: number, scaleRootName: string, scale: readonly ScaleNote[]): ProgressionChord {
+/** The tones of a chord, spelled like the scale where they belong to it and up in thirds from the chord root where not. */
+export function spellChordTones(chord: Chord, scaleRootName: string, scale: readonly ScaleNote[]): ScaleNote[] {
   const chordRootName = CHORD_ROOT_NAME.exec(chord.name)?.[0] ?? chord.name;
-  const tones = chord.tones.map((pitchClass, toneIndex) => chordTone(pitchClass, toneIndex, chordRootName, scaleRootName, scale));
+  return chord.tones.map((pitchClass, toneIndex) => chordTone(pitchClass, toneIndex, chordRootName, scaleRootName, scale));
+}
+
+function progressionChord(numeral: Numeral, chord: Chord, bar: number, scaleRootName: string, scale: readonly ScaleNote[]): ProgressionChord {
+  const tones = spellChordTones(chord, scaleRootName, scale);
   return {
     bar,
     step: numeral.step,

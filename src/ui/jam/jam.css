@@ -40,6 +40,13 @@ fieldset.jam-plays{display:flex;align-items:center;gap:4px;margin:0;padding:0;bo
 .jam-plays label:hover span{background:var(--wash)}
 .jam-plays input:checked+span{background:var(--ink);color:var(--page);border-color:var(--ink)}
 .jam-plays input:focus-visible+span{outline:2px solid var(--ink);outline-offset:2px}
+.jam-fretboard{margin-top:32px}
+.jam-fretboard-controls{display:flex;flex-wrap:wrap;align-items:flex-end;gap:12px 24px;margin-bottom:16px}
+.jam-fretboard-controls [hidden]{display:none}
+:is(#jamScale,[data-select="jamScale"],#jamStrings,[data-select="jamStrings"]){min-width:110px;height:44px;background-color:var(--page)}
+.jam-fretboard .toggle[aria-pressed=true]{background:var(--ink);color:var(--page);border-color:var(--ink)}
+.jam-fretboard-now{margin:0 0 4px;font:600 15px/22px var(--mono)}
+.jam-fretboard-next{margin:0 0 8px;font:400 14px/20px var(--mono);color:var(--mut)}
 .jam-mixer{margin-top:32px}
 .jam-mixer-head{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px 24px;margin-bottom:12px}
 .jam-mixer-head .jam-bars-title{margin:0}

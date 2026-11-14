@@ -5,12 +5,18 @@ import { byId, fillRange } from '../dom';
 
 const PART_NAMES: Record<MixerPart, string> = { drums: 'Drums', bass: 'Bass', keys: 'Keys' };
 
-export function mixerView(mixer: Mixer, engine: Pick<LoopEngine, 'setPartGain'>) {
+export function mixerView(mixer: Mixer, engine: Pick<LoopEngine, 'setPartGain'>, playsChanged: () => void) {
   const plays = [...document.querySelectorAll<HTMLInputElement>('input[name="jamPlays"]')];
   const rows = MIXER_PARTS.map(part => row(part));
   byId('jamMixer').replaceChildren(...rows.map(r => r.element));
 
-  for (const input of plays) input.onchange = () => { if (input.checked && isFamily(input.value) && mixer.setPlays(input.value)) show(); };
+  for (const input of plays) {
+    input.onchange = () => {
+      if (!input.checked || !isFamily(input.value) || !mixer.setPlays(input.value)) return;
+      show();
+      playsChanged();
+    };
+  }
 
   function row(part: MixerPart) {
     const element = document.createElement('div'), name = document.createElement('span');

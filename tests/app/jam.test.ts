@@ -28,6 +28,25 @@ describe('bundled grooves', () => {
 });
 
 describe('jam', () => {
+  it('picks the scale from the genre and the key', () => {
+    const jam = new Jam(bundledGrooves(files));
+    expect([jam.scale, jam.scales]).toEqual(['minor-pentatonic', ['minor-pentatonic', 'blues', 'major', 'major-pentatonic']]);
+    jam.choose('jazz-swing');
+    expect(jam.scale).toBe('major');
+    jam.choose('funk-sixteenths');
+    expect(jam.scale).toBe('minor');
+  });
+  it('remembers the chosen scale per groove and drops one that no longer fits the key', () => {
+    const jam = new Jam(bundledGrooves(files));
+    expect(jam.setScale('blues')).toBe(true);
+    expect(jam.setScale('blues')).toBe(false);
+    expect(jam.setScale('mixolydian')).toBe(false);
+    expect(new Jam(bundledGrooves(files)).scale).toBe('blues');
+    jam.choose('jazz-swing');
+    expect(jam.setScale('major-pentatonic')).toBe(true);
+    expect(jam.setProgression('minor-blues')).toBe(true);
+    expect(jam.scale).toBe('minor');
+  });
   it('starts on the first groove with its own key and tempo', () => {
     const jam = new Jam(bundledGrooves(files));
     expect([jam.slug, jam.key, jam.tempo]).toEqual(['blues-shuffle', 'A', 80]);
@@ -77,8 +96,8 @@ describe('jam', () => {
     jam.setKey('C'); jam.setTempo(120);
     jam.choose('minor-vamp'); jam.setTempo(70);
     expect(JSON.parse(stored.get('tabtrainer:jam') ?? '{}')).toEqual({
-      'blues-shuffle': { key: 'C', tempo: 120, progression: 'groove', swing: 66 },
-      'minor-vamp': { key: 'Bbm', tempo: 70, progression: 'groove', swing: 50 },
+      'blues-shuffle': { key: 'C', tempo: 120, progression: 'groove', swing: 66, scale: 'minor-pentatonic' },
+      'minor-vamp': { key: 'Bbm', tempo: 70, progression: 'groove', swing: 50, scale: 'minor' },
     });
     const reloaded = new Jam(grooves);
     expect([reloaded.key, reloaded.tempo]).toEqual(['C', 120]);

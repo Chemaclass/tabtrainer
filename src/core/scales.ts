@@ -100,3 +100,16 @@ export function scaleChords(root: number, id: ScaleId, sevenths: boolean): Scale
     };
   });
 }
+
+const MAJOR_KEY_SCALES: readonly ScaleId[] = ['major', 'major-pentatonic'];
+const MINOR_KEY_SCALES: readonly ScaleId[] = ['minor', 'minor-pentatonic', 'dorian'];
+const BLUES_SCALES: readonly ScaleId[] = ['minor-pentatonic', 'blues'];
+
+export interface ScaleFit { minorKey: boolean; bluesy: boolean }
+
+/** The scales that fit a key, the usual one first: blues and rock lead with minor pentatonic and blues. */
+export function fittingScales({ minorKey, bluesy }: ScaleFit): ScaleId[] {
+  const keyScales = minorKey ? MINOR_KEY_SCALES : MAJOR_KEY_SCALES;
+  const scales = bluesy ? [...BLUES_SCALES, ...keyScales] : keyScales;
+  return [...new Set(scales)];
+}
