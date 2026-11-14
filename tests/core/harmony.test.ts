@@ -75,7 +75,14 @@ describe('degreeInterval', () => {
     expect(degreeInterval(halfDim, '3')).toBe(3);
     expect(degreeInterval(halfDim, '5')).toBe(6);
     expect(degreeInterval(sus, '3')).toBe(5);
-    expect(['1', 'b7', '8'].map(d => degreeInterval(dom, d as '1'))).toEqual([0, 10, 12]);
+    expect(['1', '6', 'b7', '8'].map(d => degreeInterval(dom, d as '1'))).toEqual([0, 9, 10, 12]);
+  });
+  it('doubles the root for a third over a power chord, in major and minor', () => {
+    const p = progression('I5 v5');
+    const [major, minor] = p.map((_, bar) => chordAt(p, 'Am', bar));
+    expect(degreeInterval(major, '3')).toBe(0);
+    expect(degreeInterval(minor, '3')).toBe(0);
+    expect(degreeInterval(minor, '5')).toBe(7);
   });
 });
 

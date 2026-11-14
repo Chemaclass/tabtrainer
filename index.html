@@ -153,6 +153,13 @@
     </div>
     <h2 id="jamBarsTitle" class="jam-bars-title">Progression</h2>
     <ol id="jamBars" class="jam-bars" aria-labelledby="jamBarsTitle"></ol>
+    <section class="jam-mixer" aria-labelledby="jamMixerTitle">
+      <div class="jam-mixer-head">
+        <h2 id="jamMixerTitle" class="jam-bars-title">Mixer</h2>
+        <fieldset class="jam-plays"><legend>I play</legend><label><input type="radio" name="jamPlays" value="bass" /><span>Bass</span></label><label><input type="radio" name="jamPlays" value="guitar" /><span>Guitar</span></label></fieldset>
+      </div>
+      <div id="jamMixer" class="jam-mixer-rows"></div>
+    </section>
     <p class="tip">Play along in any position you like. The outlined bar is the one you hear.<span class="keys"> <kbd>Space</kbd> plays or stops.</span></p>
   </main>
   <footer class="site-footer"><a href="./">What is TabTrainer?</a> Free and open source. Made by <a href="https://chemaclass.com" target="_blank" rel="noopener">Chemaclass</a> · <a href="https://github.com/Chemaclass/tabtrainer" target="_blank" rel="noopener">Source code on GitHub</a></footer>
@@ -344,7 +351,8 @@ time: 4/4
       <tr><td><code># ...</code></td><td>comment</td></tr>
     </table>
     <h2>Jam</h2>
-    <p>Open Jam from the top bar to improvise over a looping groove of drums and keys. Press Play or <kbd>Space</kbd>, then pick a tempo and a key. The chord names follow the key, and the outlined bar is the one you hear. Changes to tempo and key are heard from the next bar. The app remembers both for each groove.</p>
+    <p>Open Jam from the top bar to improvise over a looping groove of drums, bass and keys. Press Play or <kbd>Space</kbd>, then pick a tempo and a key. The chord names follow the key, and the outlined bar is the one you hear. Changes to tempo and key are heard from the next bar. The app remembers both for each groove.</p>
+    <p>In the mixer, choose what you play. Bass mutes the backing bass so you take its place. Each part has its own mute button and volume. The app remembers the mixer for all grooves.</p>
     <p class="muted">The app saves your songs in this browser. Use Download and Open to move a song to another device or share it.</p>
     <footer class="dialog-credit">Made by <a href="https://chemaclass.com" target="_blank" rel="noopener">Chemaclass</a> · <a href="https://github.com/Chemaclass/tabtrainer" target="_blank" rel="noopener">Source code on GitHub</a></footer>
   </dialog>

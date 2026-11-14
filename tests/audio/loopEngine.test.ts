@@ -18,13 +18,14 @@ function setup(timeline = inA, tempo = 80) {
   const synth = new Synth();
   const kit = { play: vi.fn() };
   const keys = vi.spyOn(synth, 'keys');
+  const bass = vi.spyOn(synth, 'voice');
   const cancelFuture = vi.spyOn(synth, 'cancelFuture');
   const engine = new LoopEngine({ synth, kit });
   const states: LoopState[] = [];
   engine.on(s => states.push(s));
   engine.setTimeline(timeline); engine.setTempo(tempo);
   const drumTimes = (from = 0) => kit.play.mock.calls.slice(from).map(c => c[1] as number);
-  return { ...audio, synth, kit, keys, cancelFuture, engine, states, drumTimes };
+  return { ...audio, synth, kit, keys, bass, cancelFuture, engine, states, drumTimes };
 }
 
 describe('LoopEngine timing', () => {
@@ -142,12 +143,45 @@ describe('LoopEngine stop and parts', () => {
     advance(3);
     expect(kit.play.mock.calls.length).toBeGreaterThan(3);
   });
-  it('schedules no drum hit with the drums at zero and leaves keys playing', () => {
+  it('starts a part set to zero on a silent bus and keeps its hits scheduled, so it comes back at once', () => {
     const { engine, kit, keys, advance } = setup();
     engine.setPartGain('drums', 0);
     engine.play(); advance(10);
-    expect(kit.play).not.toHaveBeenCalled();
+    const drumBus = kit.play.mock.calls[0][3] as { gain: { value: number } };
+    expect(drumBus.gain.value).toBe(0);
     expect(keys).toHaveBeenCalled();
+    expect((keys.mock.calls[0][4] as unknown as { gain: { value: number } }).gain.value).toBeGreaterThan(0);
+  });
+});
+
+describe('LoopEngine bass and mixer', () => {
+  it('plays each bass note of the timeline through the bass bus as backing sound', () => {
+    const { engine, bass, advance, gains } = setup();
+    engine.play(); advance(START + 36 - 0.3);
+    expect(bass.mock.calls).toHaveLength(inA.bass.length);
+    bass.mock.calls.forEach(([when, midi, dur, , out, kind], i) => {
+      expect(close(when, START + inA.bass[i].beat * 0.75)).toBe(true);
+      expect(midi).toBe(inA.bass[i].midi[0]);
+      expect(close(dur, inA.bass[i].length * 0.75)).toBe(true);
+      expect(kind).toBe('backing');
+      expect(gains).toContain(out);
+    });
+    const buses = new Set(bass.mock.calls.map(c => c[4]));
+    expect(buses.size).toBe(1);
+  });
+  it('mutes and unmutes only the bass bus at once, without dropping scheduled notes', () => {
+    const { engine, bass, keys, kit, advance, clock } = setup();
+    engine.play(); advance(4);
+    const bus = bass.mock.calls[0][4] as unknown as { gain: { setTargetAtTime: ReturnType<typeof vi.fn> } };
+    engine.setPartGain('bass', 0);
+    expect(bus.gain.setTargetAtTime).toHaveBeenLastCalledWith(0, clock.now, 0.01);
+    expect(kit.play.mock.calls[0][3]).not.toBe(bus);
+    expect(keys.mock.calls[0][4]).not.toBe(bus);
+    const before = bass.mock.calls.length;
+    advance(10);
+    expect(bass.mock.calls.length).toBeGreaterThan(before);
+    engine.setPartGain('bass', 0.5);
+    expect(bus.gain.setTargetAtTime).toHaveBeenLastCalledWith(0.4, clock.now, 0.01);
   });
 });
 

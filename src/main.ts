@@ -15,7 +15,7 @@ import { Passage } from './app/passage';
 import { PassagePlayback } from './app/passagePlayback';
 import { Navigation, navigationState, type Route } from './app/navigation';
 import { DraftSession } from './app/draftSession';
-import { Jam, bundledGrooves } from './app/jam';
+import { Jam, Mixer, bundledGrooves } from './app/jam';
 import { draftFlow } from './ui/editor/draftFlow';
 import { editorPane } from './ui/editor/editorPane';
 import { saveState } from './ui/editor/saveState';
@@ -35,6 +35,7 @@ import { scoreView } from './ui/practice/scoreView';
 import { songHeader } from './ui/practice/songHeader';
 import { helpDialogs } from './ui/shell/helpDialogs';
 import { jamView } from './ui/jam/jamView';
+import { mixerView } from './ui/jam/mixer';
 import { publishLayoutHeights } from './ui/shell/layoutMetrics';
 import { screens } from './ui/shell/screens';
 import { theme } from './ui/shell/theme';
@@ -56,6 +57,8 @@ const loop = new LoopEngine();
 helpDialogs();
 const view = screens(chooseFamily, () => showJam(jam.slug));
 const jamming = jamView(jam, loop, () => workspace.screen === 'jam');
+const mixer = new Mixer(workspace.family);
+const mixing = mixerView(mixer, loop);
 const saveView = saveState(draftSession, workspace, () => files.download(), () => { setScreen('practice', true); showLink(true); });
 const score = scoreView({
   redraw: draw,
@@ -128,6 +131,7 @@ function showLibrary(kind = workspace.kind, push = true) {
 function showJam(slug: string, push = true) {
   const arriving = workspace.screen !== 'jam';
   if (jam.choose(slug)) jamming.show();
+  if (mixer.followLibrary(workspace.family)) mixing.show();
   setScreen('jam', arriving); showLink(push);
 }
 function pickSong(ref: string) {

@@ -6,8 +6,8 @@ export interface Numeral { text: string; step: number; degree: number; quality: 
 
 export interface Chord { root: number; name: string; intervals: number[]; tones: number[] }
 
-export type BassDegree = '1' | '3' | '5' | 'b7' | '8';
-export const BASS_DEGREES: readonly BassDegree[] = ['1', '3', '5', 'b7', '8'];
+export type BassDegree = '1' | '3' | '5' | '6' | 'b7' | '8';
+export const BASS_DEGREES: readonly BassDegree[] = ['1', '3', '5', '6', 'b7', '8'];
 
 const ROMANS = ['i', 'ii', 'iii', 'iv', 'v', 'vi', 'vii'];
 const MAJOR_SCALE = [0, 2, 4, 5, 7, 9, 11];
@@ -66,8 +66,10 @@ export function chordAt(progression: readonly Numeral[], key: string, bar: numbe
 export function degreeInterval(chord: Chord, degree: BassDegree): number {
   switch (degree) {
     case '1': return 0;
-    case '3': return chord.intervals.find(i => i >= 3 && i <= 5) ?? 4;
+    // A power chord has no third, so the bass doubles the root rather than choose one for it
+    case '3': return chord.intervals.find(i => i >= 3 && i <= 5) ?? 0;
     case '5': return chord.intervals.find(i => i >= 6 && i <= 8) ?? 7;
+    case '6': return 9;
     case 'b7': return 10;
     case '8': return 12;
   }

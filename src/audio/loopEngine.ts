@@ -2,7 +2,8 @@ import type { GrooveTimeline } from '../core/grooveTimeline';
 import { DrumKit } from './drumKit';
 import { Synth } from './synth';
 
-export type BackingPart = 'drums' | 'keys';
+export const BACKING_PARTS = ['drums', 'bass', 'keys'] as const;
+export type BackingPart = typeof BACKING_PARTS[number];
 export interface LoopState { playing: boolean; beat: number | null; bar: number | null; loop: number }
 export interface HumanizeLimits { seed: number; time: number; velocity: number }
 export interface HitOffset { time: number; velocity: number }
@@ -16,7 +17,7 @@ const HIDDEN_LOOK_AHEAD = 1.5;
 const START_DELAY = 0.08;
 const STOP_FADE = 0.015;
 const EPSILON = 1e-6;
-const PART_LEVEL: Record<BackingPart, number> = { drums: 0.9, keys: 0.45 };
+const PART_LEVEL: Record<BackingPart, number> = { drums: 0.9, bass: 0.8, keys: 0.45 };
 
 export const DEFAULT_HUMANIZE: HumanizeLimits = { seed: 1, time: 0.006, velocity: 0.08 };
 
@@ -37,7 +38,7 @@ export class LoopEngine {
   private limits: HumanizeLimits;
   private timeline: GrooveTimeline | null = null;
   private tempo = 90;
-  private gains: Record<BackingPart, number> = { drums: 1, keys: 1 };
+  private gains: Record<BackingPart, number> = { drums: 1, bass: 1, keys: 1 };
   private buses: Record<BackingPart, GainNode> | null = null;
   private out: GainNode | null = null;
   private current: Segment | null = null;
@@ -111,7 +112,7 @@ export class LoopEngine {
     const ctx = this.synth.context;
     this.out = ctx.createGain(); this.out.connect(this.synth.output);
     const bus = (part: BackingPart) => { const g = ctx.createGain(); g.gain.value = this.level(part); g.connect(this.out!); return g; };
-    this.buses = { drums: bus('drums'), keys: bus('keys') };
+    this.buses = { drums: bus('drums'), bass: bus('bass'), keys: bus('keys') };
   }
 
   private reschedule() {
@@ -169,10 +170,10 @@ export class LoopEngine {
 
   private schedule(seg: Segment, from: number, to: number) {
     if (to <= from) return;
-    const { total, drums, keys } = seg.timeline;
+    const { total, drums, bass, keys } = seg.timeline;
     const first = Math.floor(this.beatAt(seg, from) / total), last = Math.floor(this.beatAt(seg, to) / total);
     for (let loop = Math.max(0, first); loop <= last; loop++) {
-      if (this.gains.drums > 0) drums.forEach((hit, i) => {
+      drums.forEach((hit, i) => {
         const when = this.timeAt(seg, loop * total + hit.beat);
         if (when < from || when >= to) return;
         const offset = humanize(this.limits, loop, i);
@@ -180,7 +181,11 @@ export class LoopEngine {
         const velocity = Math.max(0.05, Math.min(1, hit.velocity * (1 + offset.velocity)));
         this.kit.play(hit.drum, when, velocity, this.buses!.drums, pinned ? 0 : offset.time);
       });
-      if (this.gains.keys > 0) for (const hit of keys) {
+      for (const hit of bass) {
+        const when = this.timeAt(seg, loop * total + hit.beat);
+        if (when >= from && when < to) this.synth.voice(when, hit.midi[0], hit.length * seg.spb, hit.velocity * 0.4, this.buses!.bass, 'backing');
+      }
+      for (const hit of keys) {
         const when = this.timeAt(seg, loop * total + hit.beat);
         if (when >= from && when < to) this.synth.keys(when, hit.midi, hit.length * seg.spb, hit.velocity * 0.5, this.buses!.keys);
       }
