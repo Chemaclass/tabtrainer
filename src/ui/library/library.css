@@ -57,7 +57,8 @@ body:not(.library-view) .library-nav,body:not(.library-view) .dropdown:has([data
 .catalogue-empty{padding:40px 0}
 .catalogue-empty h2{font:800 26px/32px var(--display);margin:0 0 12px}
 .catalogue-empty p{color:var(--mut);margin:0 0 20px}
-.catalogue-empty>div{display:flex;flex-wrap:wrap;gap:12px}
+.catalogue-empty>div{display:flex;flex-wrap:wrap;align-items:center;gap:12px}
+.catalogue-empty .primary{min-height:44px}
 .library-aside{padding-top:10px;min-width:0}
 .recent-panel{padding:24px;background:var(--wash);border-radius:10px;margin-bottom:28px}
 .recent-panel h2{font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;line-height:18px;margin:0 0 18px}

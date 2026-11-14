@@ -84,9 +84,9 @@ input[type=range]::-moz-range-thumb{width:var(--thumb);height:var(--thumb);borde
   .transport{gap:6px}
   .stop{width:44px;height:44px}
   .readout{display:none}
-  .speed-presets button{min-height:44px;padding:4px}
+  .speed-presets button{min-height:44px;padding:4px;flex:1;min-width:0}
   .scroll{max-width:none;width:100%}
-  .more{min-width:56px;flex-shrink:0}
+  .more{width:56px;flex-shrink:0;white-space:normal}
 }
 
 .playback-status{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}

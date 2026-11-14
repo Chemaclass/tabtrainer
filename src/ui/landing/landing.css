@@ -58,10 +58,12 @@ html.landing body>:not(#landing):not(dialog):not(script){display:none !important
   .landing-steps-intro{flex-basis:auto}
   .landing-promise{flex-direction:column;align-items:flex-start;gap:32px;padding:56px 32px}
 }
+@media(max-width:759px){
+  .landing-nav a:not(.landing-outline){display:none}
+}
 @media(max-width:699px){
   .landing-top{min-height:64px;padding:10px 16px}
   .landing-nav{gap:8px}
-  .landing-nav a:not(.landing-outline){display:none}
   .landing-hero{gap:40px;padding:40px 16px 56px}
   .landing-copy{gap:20px}
   .landing-copy h1{font-size:min(48px,10.4vw);line-height:1.04}
@@ -70,4 +72,8 @@ html.landing body>:not(#landing):not(dialog):not(script){display:none !important
   .landing-steps,.landing-promise{padding-inline:16px}
   .landing-promise h2{font-size:34px;line-height:38px}
   .landing-footer{padding:24px 16px}
+}
+@media(max-width:359px){
+  .landing-top{gap:8px}
+  .landing-nav .landing-outline{padding:0 12px;white-space:nowrap}
 }
