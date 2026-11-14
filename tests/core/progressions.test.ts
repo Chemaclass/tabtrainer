@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { isProgressionSlug, nextChange, progressionKey, progressions } from '../../src/core/progressions';
+import { MOODS } from '../../src/core/moods';
 import { SCALES, type ScaleId } from '../../src/core/scales';
 
 const names = (root: number, id: ScaleId, slug: string) => progressions(root, id).find(p => p.slug === slug)!.chords.map(c => c.name);
@@ -63,6 +64,14 @@ describe('progressions of a key', () => {
     }
     expect(progressionKey(1, 'major')).toBe('Db');
     expect(progressionKey(1, 'minor')).toBe('C#m');
+  });
+  it('gives every progression of a mood its own slug, reusing the scale list where the numerals match', () => {
+    for (const mood of MOODS) {
+      const listed = progressions(0, mood.scale, mood).slice(0, mood.progressions.length);
+      expect(new Set(listed.map(p => p.slug)).size, mood.id).toBe(mood.progressions.length);
+      for (const progression of listed) expect(isProgressionSlug(progression.slug), progression.slug).toBe(true);
+    }
+    expect(progressions(9, 'blues', MOODS.find(m => m.id === 'bluesy')!).map(p => p.slug)).toEqual(['12-bar-blues']);
   });
   it('knows its slugs', () => {
     expect(isProgressionSlug('12-bar-blues')).toBe(true);

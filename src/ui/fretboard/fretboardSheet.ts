@@ -57,8 +57,9 @@ export function fretboardSheet() {
   const moveText = byId('fretboardMoveText'), fits = byId('fretboardFits', HTMLButtonElement);
   const moodWhy = byId('fretboardMoodWhy');
   const moodButton = (mood: Mood) => {
-    const button = element('button', 'toggle fretboard-mood', mood.name);
+    const button = element('button', 'toggle', mood.name);
     button.type = 'button';
+    button.dataset.mood = mood.id;
     button.onclick = () => commit(toggleMood(choice, mood.id));
     return button;
   };
@@ -119,8 +120,7 @@ export function fretboardSheet() {
     sevenths.setAttribute('aria-pressed', String(choice.sevenths));
     const sheet = sheetFor(choice);
     windows = sheet.windows;
-    MOODS.forEach((mood, index) => moodButtons[index].setAttribute('aria-pressed', String(choice.mood === mood.id)));
-    moodWhy.textContent = moodWhyFor(sheet.mood);
+    showMood(sheet);
     chordButtons[0].textContent = 'No chord';
     chordButtons[0].setAttribute('aria-pressed', String(!sheet.chord));
     sheet.chords.forEach((chord, index) => {
@@ -141,6 +141,15 @@ export function fretboardSheet() {
     if (sheet.window && sheet.window.first !== scrolledTo) scrollToFret(sheet.window.first);
     scrolledTo = sheet.window?.first ?? null;
     strings.replaceChildren(...sheet.strings.map(({ text }) => Object.assign(document.createElement('li'), { textContent: text })));
+  }
+
+  function showMood(sheet: FretboardSheet) {
+    for (const button of moodButtons) {
+      const picked = button.dataset.mood === sheet.mood?.id;
+      button.setAttribute('aria-pressed', String(picked));
+    }
+    const why = moodWhyFor(sheet.mood);
+    if (moodWhy.textContent !== why) moodWhy.textContent = why;
   }
 
   function showProgressions(sheet: FretboardSheet) {

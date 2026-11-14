@@ -64,9 +64,16 @@ export interface ScaleChord { step: number; numeral: string; name: string; quali
 const ROMANS = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII'];
 const MAJOR_STEPS = [0, 2, 4, 5, 7, 9, 11];
 const CHORD_QUALITIES: readonly Quality[] = ['major', 'minor', 'dim', 'aug', 'maj7', '7', 'm7', 'm7b5', 'dim7', 'mMaj7', 'maj7#5'];
-const MINOR_THIRD = new Set<Quality>(['minor', 'dim', 'm7', 'm7b5', 'dim7', 'mMaj7']);
+const MINOR_THIRD = 3;
 /** A lower case numeral already says minor, so the seventh numeral drops the chord's "m". */
 const SEVENTH_NUMERAL_SUFFIXES: Partial<Record<Quality, string>> = { m7: '7', mMaj7: 'maj7' };
+
+const hasMinorThird = (quality: Quality) => QUALITIES[quality].intervals.includes(MINOR_THIRD);
+
+function numeralSuffix(quality: Quality, sevenths: boolean): string {
+  if (!sevenths) return '';
+  return SEVENTH_NUMERAL_SUFFIXES[quality] ?? QUALITIES[quality].suffix;
+}
 
 const sameIntervals = (a: readonly number[], b: readonly number[]) => a.length === b.length && a.every((n, i) => n === b[i]);
 
@@ -81,11 +88,11 @@ export function scaleChords(root: number, id: ScaleId, sevenths: boolean): Scale
     if (!quality) throw new Error(`No chord quality for step ${step + 1} of ${harmonyId}`);
     const shift = pitchClass(note.pitchClass - root - MAJOR_STEPS[step]);
     const accidental = shift === 11 ? 'b' : shift === 1 ? '#' : '';
-    const roman = MINOR_THIRD.has(quality) ? ROMANS[step].toLowerCase() : ROMANS[step];
+    const roman = hasMinorThird(quality) ? ROMANS[step].toLowerCase() : ROMANS[step];
     const suffix = QUALITIES[quality].suffix;
     return {
       step,
-      numeral: accidental + roman + (sevenths ? (SEVENTH_NUMERAL_SUFFIXES[quality] ?? suffix) : ''),
+      numeral: accidental + roman + numeralSuffix(quality, sevenths),
       name: note.name + suffix,
       quality,
       root: note,

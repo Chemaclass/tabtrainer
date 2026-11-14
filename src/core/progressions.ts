@@ -43,7 +43,10 @@ const SCALE_FAMILIES: Partial<Record<ScaleId, Family>> = {
 
 const FAMILY_ENTRIES = Object.values(PROGRESSIONS).flat();
 
-const moodSlug = (mood: Mood, bars: string) => `${mood.id}-${bars.toLowerCase().replaceAll(' ', '-')}`;
+function moodSlug(mood: Mood, bars: string): string {
+  const barsSlug = bars.toLowerCase().replaceAll(' ', '-');
+  return `${mood.id}-${barsSlug}`;
+}
 
 /** A mood progression the scale families already list keeps that entry, so it shows once under one name. */
 function moodEntry(mood: Mood, bars: string): ProgressionEntry {

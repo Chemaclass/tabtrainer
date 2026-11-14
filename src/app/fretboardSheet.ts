@@ -31,6 +31,8 @@ export const DEFAULT_FRETBOARD_CHOICE: FretboardChoice = { root: 0, scale: 'majo
 
 export const FIRST_FRET = 0, LAST_FRET = 12;
 
+const isMoodOnScale = (mood: unknown, scale: unknown) => isMoodId(mood) && moodById(mood).scale === scale;
+
 const isIntegerBetween = (value: unknown, min: number, max: number) => Number.isInteger(value) && (value as number) >= min && (value as number) <= max;
 
 export const isFretboardChoice = (value: unknown): value is FretboardChoice =>
@@ -45,14 +47,15 @@ export const isFretboardChoice = (value: unknown): value is FretboardChoice =>
   && 'progression' in value && (value.progression === null || isProgressionSlug(value.progression))
   && 'bar' in value && (value.bar === null || isIntegerBetween(value.bar, 0, MOST_BARS - 1))
   && 'move' in value && (value.move === null || isMoveId(value.move))
-  && 'mood' in value && (value.mood === null || (isMoodId(value.mood) && moodById(value.mood).scale === value.scale));
+  && 'mood' in value && (value.mood === null || isMoodOnScale(value.mood, value.scale));
 
 export const withFretboardDefaults = (value: unknown): unknown =>
   value && typeof value === 'object' && !Array.isArray(value) ? { chord: null, sevenths: false, position: null, progression: null, bar: null, move: null, mood: null, ...value } : value;
 
 /** A mood keeps the root and instrument, sets its scale and starts the progression list afresh. */
 export function chooseMood(choice: FretboardChoice, id: MoodId): FretboardChoice {
-  return { ...choice, mood: id, scale: moodById(id).scale, progression: null, bar: null };
+  const withScale = chooseScale(choice, moodById(id).scale);
+  return { ...withScale, mood: id };
 }
 
 /** Picking the chosen mood again clears it and keeps its scale. */
@@ -191,11 +194,12 @@ function pickedChord(choice: FretboardChoice, chords: readonly ScaleChord[], pro
 interface MoveWords { fifth: string; arpeggio: string; target: string }
 
 const BEFORE_THE_CHANGE = 'on the last beat before the change';
+const PERFECT_FIFTH = 'fifth';
 
 const MOVE_TEXTS: Record<MoveId, (words: MoveWords) => Omit<SheetMove, 'id'>> = {
   'root-fifth': ({ fifth }) => ({
     name: `Root and ${fifth}`,
-    when: fifth === 'fifth' ? 'Safe under any major or minor chord.' : `Safe here: the ${fifth} is in the chord.`,
+    when: fifth === PERFECT_FIFTH ? 'Safe under any major or minor chord.' : `Safe here: the ${fifth} is in the chord.`,
   }),
   'root-fifth-octave': ({ fifth }) => ({ name: `Root, ${fifth}, octave`, when: 'Fills a bar and climbs; safe under any chord with that fifth.' }),
   arpeggio: ({ arpeggio }) => ({ name: arpeggio, when: 'Spells out the chord: play up, then back down the same notes. Good when the chord lasts a bar or more.' }),
@@ -211,7 +215,7 @@ function fifthName(chord: ScaleChord): string {
   const quality = QUALITIES[chord.quality];
   if (hasFlatFifth(quality)) return 'flat fifth';
   if (hasSharpFifth(quality)) return 'sharp fifth';
-  return 'fifth';
+  return PERFECT_FIFTH;
 }
 
 function movesOver(chord: ScaleChord, next: ScaleChord | null): SheetMove[] {
