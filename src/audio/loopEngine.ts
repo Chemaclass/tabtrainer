@@ -46,6 +46,9 @@ export class LoopEngine {
   private scheduledUntil = 0;
   private timer: number | null = null;
   private countIn = false;
+  private countStart = 0;
+  private countSpb = 0;
+  private countClicks = 0;
   private countEnd = 0;
   private clickVolume = 0.5;
   private listeners: ((state: LoopState) => void)[] = [];
@@ -70,6 +73,7 @@ export class LoopEngine {
     const clicks = this.countIn ? Math.round(this.timeline.bars[0].length) : 0;
     for (let i = 0; i < clicks; i++) this.synth.click(start + i * spb, i === 0, 'count-in', this.clickVolume);
     const t0 = start + clicks * spb;
+    this.countStart = start; this.countSpb = spb; this.countClicks = clicks;
     this.countEnd = clicks ? t0 : 0;
     this.out!.gain.cancelScheduledValues(t0 - STOP_FADE);
     this.out!.gain.setValueAtTime(1, t0 - STOP_FADE);
@@ -134,9 +138,11 @@ export class LoopEngine {
     const base = this.current;
     if (now < base.time) {
       this.synth.cancelFuture('backing', now);
-      this.current = { time: base.time, beat: this.mapBeat(base, base.beat, this.timeline), spb: 60 / this.tempo, timeline: this.timeline };
+      const counting = now < this.countEnd;
+      if (counting) this.recount(now);
+      this.current = { time: counting ? this.countEnd : base.time, beat: this.mapBeat(base, base.beat, this.timeline), spb: 60 / this.tempo, timeline: this.timeline };
       this.next = null;
-      this.scheduledUntil = base.time;
+      this.scheduledUntil = this.current.time;
       return;
     }
     const at = this.nextBarLine(base, this.beatAt(base, now + this.limits.time + EPSILON));
@@ -144,6 +150,16 @@ export class LoopEngine {
     this.next = { time, beat: this.mapBeat(base, at, this.timeline), spb: 60 / this.tempo, timeline: this.timeline };
     this.synth.cancelFuture('backing', time - EPSILON);
     this.scheduledUntil = Math.min(this.scheduledUntil, time);
+  }
+
+  private recount(now: number) {
+    const next = Math.ceil((now - this.countStart) / this.countSpb - EPSILON);
+    if (next >= this.countClicks) return;
+    const at = this.countStart + next * this.countSpb, spb = 60 / this.tempo;
+    this.synth.cancelFuture('count-in', now);
+    for (let i = next; i < this.countClicks; i++) this.synth.click(at + (i - next) * spb, i === 0, 'count-in', this.clickVolume);
+    this.countStart = at - next * spb; this.countSpb = spb;
+    this.countEnd = at + (this.countClicks - next) * spb;
   }
 
   private beatAt(seg: Segment, time: number) { return seg.beat + (time - seg.time) / seg.spb; }

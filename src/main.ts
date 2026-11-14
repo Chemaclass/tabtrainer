@@ -157,7 +157,7 @@ function startNewSong() {
   drafts.replace(() => { const text = newSongText(workspace.family); unpick(); setScreen('practice'); loadText(text); showLink(true); editor.show(true); editor.focus(); });
 }
 function openRoute(route: Route) {
-  if (route.screen === 'jam') { showJam(route.groove, false, route.setup); return; }
+  if (route.screen === 'jam') { showJam(route.groove, false); return; }
   if (route.screen === 'practice') {
     if (route.picked && route.picked !== workspace.picked) loadPickedSong(route.picked); else setScreen('practice');
     if (route.picked && bundledPath(route.picked) !== null) chooseVersionNamed(route.version);

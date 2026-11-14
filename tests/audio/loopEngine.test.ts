@@ -122,6 +122,18 @@ describe('LoopEngine count-in', () => {
     expect(close(Math.min(...drumTimes()), START + 4 * 0.75, 1e-9)).toBe(true);
     expect(states.at(-1)).toMatchObject({ playing: true, countingIn: false, bar: 0 });
   });
+  it('keeps the count-in in time with a tempo change and starts the loop after the last click', () => {
+    const { engine, synth, drumTimes, advance } = setup();
+    const click = vi.spyOn(synth, 'click');
+    engine.setCountIn(true);
+    engine.play(); advance(START + 0.75 + 0.1);
+    engine.setTempo(120);
+    advance(START + 1.5 + 2 * 0.5 + 0.1);
+    const kept = click.mock.calls.slice(-2).map(c => c[0]);
+    expect(click).toHaveBeenCalledTimes(6);
+    expect(close(kept[0], START + 1.5, 1e-9) && close(kept[1], START + 1.5 + 0.5, 1e-9)).toBe(true);
+    expect(close(Math.min(...drumTimes()), START + 1.5 + 2 * 0.5, 1e-9)).toBe(true);
+  });
   it('cancels the count-in on stop', () => {
     const { engine, synth, drumTimes, advance } = setup();
     const cancel = vi.spyOn(synth, 'cancel');
