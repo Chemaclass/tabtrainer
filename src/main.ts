@@ -25,6 +25,7 @@ import { library, removeSong, pref, setPref, recentPractice, recordPractice } fr
 import { findBySlug, normalizeSongReference, shareUrl, songSlug, versionSlug } from './app/songLink';
 import { AutoScroller } from './app/scrolling';
 import { bundledPath, bundledRef, isSavedRef, savedRef } from './app/songRef';
+import { artistOf, shownCredits } from './app/credits';
 import { Passage } from './app/passage';
 import { playbackShortcut } from './app/playbackShortcut';
 import { Navigation, navigationState, type Route } from './app/navigation';
@@ -89,9 +90,6 @@ function chooseFamily(f: Family) {
   if (f === family) return;
   family = f; setPref('family', f); showFamily(); showLink();
 }
-const creditNames = (artist = '') => artist.replace(/\s*\(public domain\)\s*$/i, '').split(',').map(n => n.trim()).filter(Boolean);
-// the list names who wrote a song, unless TabTrainer wrote it or nobody knows
-const artistOf = (t: string) => creditNames(/^\s*artist\s*:\s*(.+)$/im.exec(t)?.[1]).filter(n => !/^tabtrainer$/i.test(n)).join(', ');
 function loadText(text: string) { if (scrollMode === 'continuous') setScrollMode('off'); clearTimeout(timer); src.value = text; draftSession.accept(text); announceSave(''); update(true); persistDraft(); }
 function pickSong(v: string) {
   if (v === picked) { setScreen('practice', true); showLink(true); }
@@ -238,7 +236,7 @@ function renderMeta(s: Song) {
   $('subtitle').replaceChildren(...facts);
 }
 function renderCredit(s: Song) {
-  const names = creditNames(s.meta.artist).filter(n => !/^tabtrainer$/i.test(n));
+  const names = shownCredits(s.meta.artist);
   const byline = $('byline'); byline.hidden = !names.length;
   const traditional = names.length === 1 && /^traditional$/i.test(names[0]);
   byline.replaceChildren(...(traditional ? [] : [document.createTextNode('by ')]), ...names.flatMap((n, i) => {
