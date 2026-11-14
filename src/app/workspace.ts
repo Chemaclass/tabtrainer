@@ -1,5 +1,6 @@
 import { isFamily, type Family } from '../core/instruments';
 import { isLibraryKind, type LibraryKind } from './catalogue';
+import type { JamSetup } from './jamLink';
 import type { Route } from './navigation';
 import { pref, setPref } from './storage';
 
@@ -51,8 +52,8 @@ export class Workspace {
 
   restore(ref: string) { this.ref = ref; }
 
-  route(version: string | null, groove = ''): Route {
-    if (this.shown === 'jam') return { screen: 'jam', groove };
+  route(version: string | null, groove = '', setup: JamSetup = {}): Route {
+    if (this.shown === 'jam') return { screen: 'jam', groove, setup };
     return this.shown === 'library' ? { screen: 'library', kind: this.libraryKind, family: this.instrument } : { screen: 'practice', picked: this.ref, version };
   }
 

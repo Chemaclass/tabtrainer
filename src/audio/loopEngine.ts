@@ -4,7 +4,7 @@ import { Synth } from './synth';
 
 export const BACKING_PARTS = ['drums', 'bass', 'keys'] as const;
 export type BackingPart = typeof BACKING_PARTS[number];
-export interface LoopState { playing: boolean; beat: number | null; bar: number | null; loop: number }
+export interface LoopState { playing: boolean; countingIn: boolean; beat: number | null; bar: number | null; loop: number }
 export interface HumanizeLimits { seed: number; time: number; velocity: number }
 export interface HitOffset { time: number; velocity: number }
 export interface LoopEngineOptions { synth?: Synth; kit?: Pick<DrumKit, 'play'>; humanize?: HumanizeLimits }
@@ -45,6 +45,9 @@ export class LoopEngine {
   private next: Segment | null = null;
   private scheduledUntil = 0;
   private timer: number | null = null;
+  private countIn = false;
+  private countEnd = 0;
+  private clickVolume = 0.5;
   private listeners: ((state: LoopState) => void)[] = [];
 
   private onVisibility = () => { if (this.playing) this.tick(); };
@@ -63,10 +66,14 @@ export class LoopEngine {
     if (this.playing) this.stop();
     if (!this.timeline || !this.synth.ensure()) return;
     this.connect();
-    const t0 = this.synth.now + START_DELAY;
+    const start = this.synth.now + START_DELAY, spb = 60 / this.tempo;
+    const clicks = this.countIn ? Math.round(this.timeline.bars[0].length) : 0;
+    for (let i = 0; i < clicks; i++) this.synth.click(start + i * spb, i === 0, 'count-in', this.clickVolume);
+    const t0 = start + clicks * spb;
+    this.countEnd = clicks ? t0 : 0;
     this.out!.gain.cancelScheduledValues(t0 - STOP_FADE);
     this.out!.gain.setValueAtTime(1, t0 - STOP_FADE);
-    this.current = { time: t0, beat: 0, spb: 60 / this.tempo, timeline: this.timeline };
+    this.current = { time: t0, beat: 0, spb, timeline: this.timeline };
     this.next = null;
     this.scheduledUntil = t0;
     this.timer = window.setInterval(() => this.tick(), TICK_MS);
@@ -82,6 +89,7 @@ export class LoopEngine {
       const now = this.synth.now;
       this.out.gain.setTargetAtTime(0, now, STOP_FADE);
       this.synth.cancel('backing', now + STOP_FADE * 4);
+      this.synth.cancel('count-in');
     }
     this.current = null; this.next = null;
     this.emit();
@@ -98,6 +106,10 @@ export class LoopEngine {
     this.timeline = timeline;
     this.reschedule();
   }
+
+  setCountIn(enabled: boolean) { this.countIn = enabled; }
+
+  setClickVolume(volume: number) { if (Number.isFinite(volume)) this.clickVolume = Math.max(0, Math.min(1, volume)); }
 
   setPartGain(part: BackingPart, gain: number) {
     if (!Number.isFinite(gain)) return;
@@ -194,13 +206,14 @@ export class LoopEngine {
 
   private emit() {
     const seg = this.current && this.next && this.synth.now >= this.next.time ? this.next : this.current;
-    let state: LoopState = { playing: this.playing, beat: null, bar: null, loop: 0 };
-    if (seg && this.playing) {
+    let state: LoopState = { playing: this.playing, countingIn: false, beat: null, bar: null, loop: 0 };
+    if (this.playing && this.synth.now - this.synth.latency < this.countEnd) state.countingIn = true;
+    else if (seg && this.playing) {
       const heard = Math.max(seg.time, this.synth.now - this.synth.latency);
       const beat = Math.max(0, this.beatAt(seg, heard)), { total, bars } = seg.timeline;
       const loop = Math.floor(beat / total + EPSILON), inLoop = Math.max(0, beat - loop * total);
       const bar = bars.find(b => inLoop < b.start + b.length - EPSILON) ?? bars[bars.length - 1];
-      state = { playing: true, beat: inLoop, bar: bar.bar, loop };
+      state = { playing: true, countingIn: false, beat: inLoop, bar: bar.bar, loop };
     }
     this.listeners.forEach(fn => fn(state));
   }

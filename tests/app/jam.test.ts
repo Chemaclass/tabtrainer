@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { readFileSync, readdirSync } from 'node:fs';
-import { JAM_SWING, Jam, MIXER_PARTS, Mixer, bundledGrooves, grooveSlug, jamKeys } from '../../src/app/jam';
+import { JAM_SWING, Jam, MIXER_PARTS, Mixer, bundledGrooves, jamKeys } from '../../src/app/jam';
+import { grooveSlug } from '../../src/app/jamLink';
 import { parseGroove } from '../../src/core/groove';
 
 const files = Object.fromEntries(readdirSync('src/grooves').filter(name => name.endsWith('.txt')).map(name => [`./grooves/${name}`, readFileSync(`src/grooves/${name}`, 'utf8')]));
@@ -39,6 +40,30 @@ describe('jam', () => {
     expect(jam.setKey('C')).toBe(false);
     expect(jam.setKey('Cm')).toBe(false);
     expect(jam.key).toBe('C');
+  });
+  it('opens a linked groove with its key, tempo, progression and swing over the saved ones', () => {
+    const jam = new Jam(bundledGrooves(files));
+    jam.choose('funk-sixteenths'); jam.setTempo(120);
+    jam.choose('blues-shuffle');
+    expect(jam.open('funk-sixteenths', { key: 'E', tempo: 96, progression: 'one-chord', swing: 58 })).toBe(true);
+    expect(jam.setup).toEqual({ key: 'Em', tempo: 96, progression: 'one-chord', swing: 58 });
+    expect(jam.timeline().bars.every(b => b.chord.name.startsWith('E'))).toBe(true);
+    expect(new Jam(bundledGrooves(files)).open('funk-sixteenths')).toBe(true);
+    expect(jam.open('blues-shuffle', { key: 'Ebm' })).toBe(true);
+    expect(jam.key).toBe('Eb');
+  });
+  it('falls back to the saved setup for an unknown key, tempo, progression or swing', () => {
+    const jam = new Jam(bundledGrooves(files));
+    const saved = { ...jam.setup };
+    expect(jam.open('blues-shuffle', { key: 'H', tempo: 999, progression: 'nope', swing: 10 })).toBe(false);
+    expect(jam.open('blues-shuffle', { tempo: 0 })).toBe(false);
+    expect(jam.setup).toEqual(saved);
+  });
+  it('ignores the setup of an unknown groove', () => {
+    const jam = new Jam(bundledGrooves(files));
+    const saved = { slug: jam.slug, ...jam.setup };
+    expect(jam.open('no-such-groove', { key: 'E', tempo: 96 })).toBe(false);
+    expect({ slug: jam.slug, ...jam.setup }).toEqual(saved);
   });
   it('keeps the tempo between 40 and 220 bpm', () => {
     const jam = new Jam(bundledGrooves(files));

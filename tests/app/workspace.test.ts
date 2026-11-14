@@ -114,7 +114,8 @@ describe('workspace', () => {
   it('opens jam from its link and describes it as a route with the groove', () => {
     const workspace = Workspace.fromQuery('?view=jam&groove=blues-shuffle');
     expect(workspace.screen).toBe('jam');
-    expect(workspace.route(null, 'blues-shuffle')).toEqual({ screen: 'jam', groove: 'blues-shuffle' });
+    expect(workspace.route(null, 'blues-shuffle')).toEqual({ screen: 'jam', groove: 'blues-shuffle', setup: {} });
+    expect(workspace.route(null, 'blues-shuffle', { key: 'E', tempo: 96 })).toEqual({ screen: 'jam', groove: 'blues-shuffle', setup: { key: 'E', tempo: 96 } });
     workspace.enter('library', null);
     expect(workspace.route(null, 'blues-shuffle').screen).toBe('library');
   });

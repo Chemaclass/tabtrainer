@@ -24,14 +24,24 @@ describe('routes', () => {
     expect(readRoute(search, []).screen).toBe('practice');
   });
   it('round trips the jam screen and drops song and library parameters', () => {
-    const route: Route = { screen: 'jam', groove: 'blues-shuffle' };
+    const route: Route = { screen: 'jam', groove: 'blues-shuffle', setup: {} };
     const search = routeSearch('?song=bass/a-dawning&version=solo&kind=songs&instrument=guitar&extra=keep', route);
     expect(search).toBe('extra=keep&view=jam&groove=blues-shuffle');
     expect(readRoute(search, [path])).toEqual(route);
-    expect(readRoute('?view=jam', [path])).toEqual({ screen: 'jam', groove: '' });
+    expect(readRoute('?view=jam', [path])).toEqual({ screen: 'jam', groove: '', setup: {} });
+  });
+  it('carries the jam setup in the address', () => {
+    const route: Route = { screen: 'jam', groove: 'funk-sixteenths', setup: { key: 'F#', tempo: 96, progression: 'one-chord', swing: 58 } };
+    const search = routeSearch('?view=jam&groove=blues-shuffle&key=A&extra=keep', route);
+    expect(search).toBe('view=jam&groove=funk-sixteenths&key=F%23&extra=keep&tempo=96&progression=one-chord&swing=58');
+    expect(readRoute(search, [path])).toEqual(route);
+  });
+  it('reads only setup values of the right kind', () => {
+    expect(readRoute('?view=jam&groove=x&key=Q&tempo=fast&swing=&progression=nope', [])).toEqual({ screen: 'jam', groove: 'x', setup: { key: 'Q', progression: 'nope' } });
   });
   it('leaves the groove out of other screens', () => {
     expect(new URLSearchParams(routeSearch('?view=jam&groove=blues-shuffle', { screen: 'library', kind: 'songs', family: null })).has('groove')).toBe(false);
+    expect(routeSearch('?view=jam&groove=blues-shuffle&key=E&tempo=96&progression=one-chord&swing=58', { screen: 'library', kind: 'songs', family: null })).toBe('view=library&kind=songs');
     expect(routeSearch('?view=jam&groove=blues-shuffle', { screen: 'practice', picked: 'demo:' + path, version: null })).toBe('song=bass/a-dawning');
   });
   it('normalizes unknown library categories and instruments', () => {

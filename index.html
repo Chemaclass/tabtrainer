@@ -145,7 +145,7 @@
     </aside>
   </main>
   <main id="jamScreen" class="jam" aria-labelledby="jamTitle" hidden>
-    <div class="jam-intro"><div id="jamContext" class="library-context">Jam</div><h1 id="jamTitle" tabindex="-1"></h1><p id="jamAbout"></p></div>
+    <div class="jam-intro"><div id="jamContext" class="library-context">Jam</div><h1 id="jamTitle" tabindex="-1"></h1><p id="jamAbout"></p><div class="jam-share"><button id="jamShare" class="ghost" title="Copy a link that opens this groove with its key, tempo and progression">Copy link</button><span id="jamShareStatus" class="jam-share-status" role="status" aria-live="polite"></span></div></div>
     <nav class="jam-grooves" aria-labelledby="jamGroovesTitle"><h2 id="jamGroovesTitle" class="jam-bars-title">Grooves</h2><ul id="jamGrooves" class="jam-groove-list"></ul></nav>
     <div class="jam-controls">
       <button id="jamPlay" class="primary jam-play" title="Play or stop (Space)">Play</button>
@@ -153,6 +153,7 @@
       <div class="jam-key"><label for="jamKey">Key</label><select id="jamKey"></select></div>
       <div class="jam-key"><label for="jamProgression">Progression</label><select id="jamProgression"></select></div>
       <div class="jam-tempo"><div class="jam-tempo-head"><label for="jamSwing">Swing</label><output id="jamSwingOut" for="jamSwing"></output></div><input id="jamSwing" type="range" min="50" max="66" step="1" /></div>
+      <div class="jam-key"><label for="jamCountIn">Count-in</label><select id="jamCountIn"><option value="off">Off</option><option value="bar">One bar</option></select></div>
     </div>
     <h2 id="jamBarsTitle" class="jam-bars-title">Chords</h2>
     <ol id="jamBars" class="jam-bars" aria-labelledby="jamBarsTitle"></ol>
@@ -357,6 +358,7 @@ time: 4/4
     <p>Open Jam from the top bar to improvise over a looping groove of drums, bass and keys. Pick a groove from the list, press Play or <kbd>Space</kbd>, then choose a tempo and a key. The chord names follow the key, and the outlined bar is the one you hear. Changes are heard from the next bar.</p>
     <p>Progression swaps the groove's chords for another set, such as a 12 bar blues or ii V I. Swing moves the off beat notes from straight to a full triplet. The app remembers tempo, key, progression and swing for each groove.</p>
     <p>In the mixer, choose what you play. Bass mutes the backing bass so you take its place. Each part has its own mute button and volume. The app remembers the mixer for all grooves.</p>
+    <p>Count-in plays one bar of clicks before the loop starts, at the click volume from the practice Timing menu. Copy link copies an address that opens the groove with your key, tempo, progression and swing.</p>
     <h2>Writing a groove</h2>
     <p>A groove is plain text: the same header lines as a song, then one line of steps per part.</p>
 <pre>title: My shuffle
