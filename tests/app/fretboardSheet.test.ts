@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { DEFAULT_FRETBOARD_CHOICE, ROOT_OPTIONS, fretboardSheet, isFretboardChoice, stepPosition, withOfferedMove, type FretboardChoice } from '../../src/app/fretboardSheet';
+import { DEFAULT_FRETBOARD_CHOICE, ROOT_OPTIONS, chooseMood, chooseScale, fretboardSheet, isFretboardChoice, stepPosition, toggleMood, withOfferedMove, type FretboardChoice } from '../../src/app/fretboardSheet';
 import { pref, setPref } from '../../src/app/storage';
+import { MOODS, type MoodId } from '../../src/core/moods';
 
 const choice = (change: Partial<FretboardChoice>): FretboardChoice => ({ ...DEFAULT_FRETBOARD_CHOICE, ...change });
 const aMinorPentatonic = choice({ root: 9, scale: 'minor-pentatonic' });
@@ -10,7 +11,7 @@ afterEach(() => vi.unstubAllGlobals());
 
 describe('fretboard choices', () => {
   it('starts on a 4 string bass, C major, note names', () => {
-    expect(DEFAULT_FRETBOARD_CHOICE).toEqual({ root: 0, scale: 'major', instrument: 'bass4', labels: 'names', chord: null, sevenths: false, position: null, progression: null, bar: null, move: null });
+    expect(DEFAULT_FRETBOARD_CHOICE).toEqual({ root: 0, scale: 'major', instrument: 'bass4', labels: 'names', chord: null, sevenths: false, position: null, progression: null, bar: null, move: null, mood: null });
   });
   it('labels black keys with both names', () => {
     expect(ROOT_OPTIONS.map(o => o.label)).toEqual(['C', 'C# / Db', 'D', 'D# / Eb', 'E', 'F', 'F# / Gb', 'G', 'G# / Ab', 'A', 'A# / Bb', 'B']);
@@ -21,7 +22,7 @@ describe('fretboard choices', () => {
     expect(isFretboardChoice('C')).toBe(false);
     expect(isFretboardChoice(choice({ root: 12 }))).toBe(false);
     expect(isFretboardChoice(choice({ root: 1.5 }))).toBe(false);
-    expect(isFretboardChoice(choice({ scale: 'lydian' as FretboardChoice['scale'] }))).toBe(false);
+    expect(isFretboardChoice(choice({ scale: 'locrian' as FretboardChoice['scale'] }))).toBe(false);
     expect(isFretboardChoice(choice({ instrument: 'banjo' }))).toBe(false);
     expect(isFretboardChoice(choice({ instrument: 'toString' }))).toBe(false);
     expect(isFretboardChoice(choice({ labels: 'both' as FretboardChoice['labels'] }))).toBe(false);
@@ -167,7 +168,7 @@ describe('progressions on the cheat sheet', () => {
   it('lists the progressions of the key with real chord names', () => {
     const sheet = fretboardSheet(DEFAULT_FRETBOARD_CHOICE);
     expect(sheet.progressions.find(p => p.slug === 'i-v-vi-iv')?.chords.map(c => c.name)).toEqual(['C', 'G', 'Am', 'F']);
-    expect(fretboardSheet(choice({ scale: 'dorian' })).progressions).toEqual([]);
+    expect(fretboardSheet(choice({ root: 2, scale: 'dorian' })).progressions.map(p => p.chords.map(c => c.name))).toEqual([['Dm7', 'G7']]);
   });
   it('selects a progression chord and marks its tones', () => {
     const c: FretboardChoice = { ...DEFAULT_FRETBOARD_CHOICE, progression: 'i-v-vi-iv', bar: 2 };
@@ -218,6 +219,11 @@ describe('progressions on the cheat sheet', () => {
   it('names the flat fifth of a half diminished chord', () => {
     expect(fretboardSheet({ ...aMinor, progression: 'minor-ii-v-i', bar: 0 }).moves[0].name).toBe('Root and flat fifth');
   });
+  it('names the sharp fifth of the augmented chord in harmonic minor', () => {
+    const caug = fretboardSheet(choice({ root: 9, scale: 'harmonic-minor', chord: 2 }));
+    expect(caug.chord?.name).toBe('Caug');
+    expect(caug.moves[0]).toMatchObject({ name: 'Root and sharp fifth', when: 'Safe here: the sharp fifth is in the chord.' });
+  });
   it('drops a saved walk once the chord has no next chord', () => {
     const walking: FretboardChoice = { ...am, move: 'approach-below' };
     expect(withOfferedMove(walking)).toBe(walking);
@@ -229,5 +235,70 @@ describe('progressions on the cheat sheet', () => {
     expect(isFretboardChoice({ ...am, progression: 'bossa' })).toBe(false);
     expect(isFretboardChoice({ ...am, bar: 12 })).toBe(false);
     expect(isFretboardChoice({ ...am, move: 'approach-scale' })).toBe(true);
+  });
+});
+
+describe('moods on the cheat sheet', () => {
+  const E_STRING = 3, D_STRING = 1;
+  const moodOn = (root: number, mood: MoodId) => chooseMood(choice({ root }), mood);
+  const firstProgression = (c: FretboardChoice) => fretboardSheet(c).progressions[0].chords.map(chord => chord.name);
+  const markedFrets = (c: FretboardChoice, stringIndex: number) => marksOn(c, stringIndex).map(m => m.fret);
+
+  it('sets A natural minor for Sad in A and lists Am F C G first', () => {
+    const sad = moodOn(9, 'sad');
+    expect(fretboardSheet(sad).title).toBe('A minor');
+    expect(firstProgression(sad)).toEqual(['Am', 'F', 'C', 'G']);
+  });
+  it('sets E Phrygian for Dark in E, with F at fret 1 of the E string and Em F first', () => {
+    const dark = moodOn(4, 'dark');
+    expect(fretboardSheet(dark).summary).toBe('E Phrygian: E F G A B C D');
+    expect(marksOn(dark, E_STRING).find(m => m.fret === 1)?.label).toBe('F');
+    expect(firstProgression(dark)).toEqual(['Em', 'F']);
+  });
+  it('sets C Lydian for Dreamy in C, with F# at fret 4 of the D string and nothing at fret 3', () => {
+    const dreamy = moodOn(0, 'dreamy');
+    expect(fretboardSheet(dreamy).summary).toBe('C Lydian: C D E F# G A B');
+    expect(markedFrets(dreamy, D_STRING)).toContain(4);
+    expect(markedFrets(dreamy, D_STRING)).not.toContain(3);
+  });
+  it('sets A harmonic minor for Tense in A, with G# and Am Dm E7', () => {
+    const tense = moodOn(9, 'tense');
+    expect(fretboardSheet(tense).summary).toBe('A harmonic minor: A B C D E F G#');
+    expect(firstProgression(tense)).toEqual(['Am', 'Dm', 'E7']);
+  });
+  it('puts the mood progressions first and explains the mood', () => {
+    const epic = fretboardSheet(moodOn(9, 'epic'));
+    expect(epic.progressions.map(p => p.name).slice(0, 2)).toEqual(['i bVI bVII', 'i bVII bVI bVII']);
+    expect(epic.mood?.name).toBe('Epic');
+    expect(fretboardSheet(moodOn(9, 'bluesy')).progressions[0].name).toBe('12 bar blues');
+    expect(firstProgression(moodOn(9, 'funky'))).toEqual(['Am7', 'D7']);
+    expect(firstProgression(moodOn(9, 'happy'))).toEqual(['A', 'E', 'F#m', 'D']);
+  });
+  it('never changes the root or the instrument', () => {
+    const start = choice({ root: 7, instrument: 'guitar6' });
+    for (const mood of MOODS) {
+      expect(chooseMood(start, mood.id)).toMatchObject({ root: 7, instrument: 'guitar6', scale: mood.scale, mood: mood.id });
+    }
+  });
+  it('clears the mood when the scale is chosen by hand', () => {
+    const dark = moodOn(4, 'dark');
+    expect(chooseScale(dark, 'major')).toMatchObject({ root: 4, scale: 'major', mood: null });
+    expect(fretboardSheet(chooseScale(dark, 'phrygian')).mood).toBeNull();
+  });
+  it('clears the mood but keeps its scale when the same mood is picked again', () => {
+    const dark = moodOn(4, 'dark');
+    expect(toggleMood(dark, 'dark')).toMatchObject({ scale: 'phrygian', mood: null });
+    expect(toggleMood(dark, 'dreamy')).toMatchObject({ scale: 'lydian', mood: 'dreamy' });
+  });
+  it('saves the mood with the other choices', () => {
+    const values = new Map<string, string>();
+    vi.stubGlobal('localStorage', { getItem: (k: string) => values.get(k) ?? null, setItem: (k: string, v: string) => values.set(k, v) });
+    expect(setPref('fretboardSheet', moodOn(4, 'dark'))).toBe(true);
+    expect(pref('fretboardSheet', DEFAULT_FRETBOARD_CHOICE)).toMatchObject({ root: 4, scale: 'phrygian', mood: 'dark' });
+  });
+  it('rejects a saved mood that does not match the scale', () => {
+    expect(isFretboardChoice(moodOn(4, 'dark'))).toBe(true);
+    expect(isFretboardChoice({ ...moodOn(4, 'dark'), scale: 'major' })).toBe(false);
+    expect(isFretboardChoice(choice({ mood: 'angry' as MoodId }))).toBe(false);
   });
 });

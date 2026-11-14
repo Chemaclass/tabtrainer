@@ -1,7 +1,8 @@
-import { MOVE_IDS, hasFlatFifth, isMoveId, isWalk, moveShapes, placeMove, type MoveId, type MoveNote, type Walk } from '../core/bassMoves';
+import { MOVE_IDS, hasFlatFifth, hasSharpFifth, isMoveId, isWalk, moveShapes, placeMove, type MoveId, type MoveNote, type Walk } from '../core/bassMoves';
 import { fretboardPositions, positionWindows, type FretMark, type FretWindow, type MarkRole } from '../core/fretboard';
 import { QUALITIES } from '../core/harmony';
 import { INSTRUMENTS, type Instrument } from '../core/instruments';
+import { isMoodId, moodById, type Mood, type MoodId } from '../core/moods';
 import { isScaleId, scaleById, scaleChords, scaleNotes, scaleTitle, usesFlats, type ScaleChord, type ScaleId, type ScaleNote } from '../core/scales';
 import { MOST_BARS, isProgressionSlug, nextChange, progressions, type Progression, type ProgressionChord } from '../core/progressions';
 import { spellPitchClass } from '../core/theory';
@@ -22,11 +23,15 @@ export interface FretboardChoice {
   progression: string | null;
   bar: number | null;
   move: MoveId | null;
+  /** The mood that set the scale; choosing a scale by hand clears it. */
+  mood: MoodId | null;
 }
 
-export const DEFAULT_FRETBOARD_CHOICE: FretboardChoice = { root: 0, scale: 'major', instrument: 'bass4', labels: 'names', chord: null, sevenths: false, position: null, progression: null, bar: null, move: null };
+export const DEFAULT_FRETBOARD_CHOICE: FretboardChoice = { root: 0, scale: 'major', instrument: 'bass4', labels: 'names', chord: null, sevenths: false, position: null, progression: null, bar: null, move: null, mood: null };
 
 export const FIRST_FRET = 0, LAST_FRET = 12;
+
+const isMoodOnScale = (mood: unknown, scale: unknown) => isMoodId(mood) && moodById(mood).scale === scale;
 
 const isIntegerBetween = (value: unknown, min: number, max: number) => Number.isInteger(value) && (value as number) >= min && (value as number) <= max;
 
@@ -41,10 +46,27 @@ export const isFretboardChoice = (value: unknown): value is FretboardChoice =>
   && 'position' in value && (value.position === null || isIntegerBetween(value.position, FIRST_FRET, LAST_FRET))
   && 'progression' in value && (value.progression === null || isProgressionSlug(value.progression))
   && 'bar' in value && (value.bar === null || isIntegerBetween(value.bar, 0, MOST_BARS - 1))
-  && 'move' in value && (value.move === null || isMoveId(value.move));
+  && 'move' in value && (value.move === null || isMoveId(value.move))
+  && 'mood' in value && (value.mood === null || isMoodOnScale(value.mood, value.scale));
 
 export const withFretboardDefaults = (value: unknown): unknown =>
-  value && typeof value === 'object' && !Array.isArray(value) ? { chord: null, sevenths: false, position: null, progression: null, bar: null, move: null, ...value } : value;
+  value && typeof value === 'object' && !Array.isArray(value) ? { chord: null, sevenths: false, position: null, progression: null, bar: null, move: null, mood: null, ...value } : value;
+
+/** A mood keeps the root and instrument, sets its scale and starts the progression list afresh. */
+export function chooseMood(choice: FretboardChoice, id: MoodId): FretboardChoice {
+  const withScale = chooseScale(choice, moodById(id).scale);
+  return { ...withScale, mood: id };
+}
+
+/** Picking the chosen mood again clears it and keeps its scale. */
+export function toggleMood(choice: FretboardChoice, id: MoodId): FretboardChoice {
+  if (choice.mood === id) return { ...choice, mood: null };
+  return chooseMood(choice, id);
+}
+
+export function chooseScale(choice: FretboardChoice, scale: ScaleId): FretboardChoice {
+  return { ...choice, mood: null, scale, progression: null, bar: null };
+}
 
 export const ROOT_OPTIONS = Array.from({ length: 12 }, (_, pc) => {
   const sharp = spellPitchClass(pc, false), flat = spellPitchClass(pc, true);
@@ -65,6 +87,7 @@ export interface ShownMove extends SheetMove {
 export interface FretboardSheet {
   instrument: Instrument;
   title: string;
+  mood: Mood | null;
   summary: string;
   openNames: string[];
   chords: ScaleChord[];
@@ -85,7 +108,8 @@ export function fretboardSheet(choice: FretboardChoice): FretboardSheet {
   const instrument = INSTRUMENTS[choice.instrument];
   const notes = scaleNotes(choice.root, choice.scale);
   const chords = scaleChords(choice.root, choice.scale, choice.sevenths);
-  const progressionList = progressions(choice.root, choice.scale);
+  const mood = choice.mood === null ? null : moodById(choice.mood);
+  const progressionList = progressions(choice.root, choice.scale, mood);
   const { progression, chord, next } = pickedChord(choice, chords, progressionList);
   const byPitch = new Map<number, ScaleNote>([...chord?.tones.map(t => [t.pitchClass, t] as const) ?? [], ...notes.map(n => [n.pitchClass, n] as const)]);
   const tones = new Set(chord?.tones.map(t => t.pitchClass));
@@ -137,6 +161,7 @@ export function fretboardSheet(choice: FretboardChoice): FretboardSheet {
   return {
     instrument,
     title,
+    mood,
     summary: (chord ? `${chord.name} in ${title}: ${chord.tones.map(t => t.name).join(' ')}` : `${title}: ${notes.map(n => n.name).join(' ')}`)
       + (window ? `; ${windowLabel(window).toLowerCase()}` : ''),
     openNames,
@@ -169,11 +194,12 @@ function pickedChord(choice: FretboardChoice, chords: readonly ScaleChord[], pro
 interface MoveWords { fifth: string; arpeggio: string; target: string }
 
 const BEFORE_THE_CHANGE = 'on the last beat before the change';
+const PERFECT_FIFTH = 'fifth';
 
 const MOVE_TEXTS: Record<MoveId, (words: MoveWords) => Omit<SheetMove, 'id'>> = {
   'root-fifth': ({ fifth }) => ({
     name: `Root and ${fifth}`,
-    when: fifth === 'fifth' ? 'Safe under any major or minor chord.' : 'Safe here: the fifth is flat, as in the chord.',
+    when: fifth === PERFECT_FIFTH ? 'Safe under any major or minor chord.' : `Safe here: the ${fifth} is in the chord.`,
   }),
   'root-fifth-octave': ({ fifth }) => ({ name: `Root, ${fifth}, octave`, when: 'Fills a bar and climbs; safe under any chord with that fifth.' }),
   arpeggio: ({ arpeggio }) => ({ name: arpeggio, when: 'Spells out the chord: play up, then back down the same notes. Good when the chord lasts a bar or more.' }),
@@ -185,9 +211,16 @@ const MOVE_TEXTS: Record<MoveId, (words: MoveWords) => Omit<SheetMove, 'id'>> = 
 
 const TRIAD_SIZE = 3;
 
+function fifthName(chord: ScaleChord): string {
+  const quality = QUALITIES[chord.quality];
+  if (hasFlatFifth(quality)) return 'flat fifth';
+  if (hasSharpFifth(quality)) return 'sharp fifth';
+  return PERFECT_FIFTH;
+}
+
 function movesOver(chord: ScaleChord, next: ScaleChord | null): SheetMove[] {
   const words: MoveWords = {
-    fifth: hasFlatFifth(QUALITIES[chord.quality]) ? 'flat fifth' : 'fifth',
+    fifth: fifthName(chord),
     arpeggio: chord.tones.length > TRIAD_SIZE ? 'Seventh arpeggio' : 'Triad arpeggio',
     target: next?.name ?? '',
   };

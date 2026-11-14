@@ -1,6 +1,6 @@
 import { isKey, pitchClass, pitchClassOf, safeKey, scaleStepName } from './theory';
 
-export type Quality = 'major' | 'minor' | '7' | 'm7' | 'maj7' | 'mMaj7' | 'm7b5' | 'dim' | 'sus4' | '5';
+export type Quality = 'major' | 'minor' | '7' | 'm7' | 'maj7' | 'mMaj7' | 'm7b5' | 'dim' | 'dim7' | 'aug' | 'maj7#5' | 'sus4' | '5';
 
 export interface Numeral { text: string; step: number; degree: number; quality: Quality }
 
@@ -21,6 +21,9 @@ export const QUALITIES: Readonly<Record<Quality, { readonly intervals: readonly 
   mMaj7: { intervals: [0, 3, 7, 11], suffix: 'm(maj7)' },
   m7b5: { intervals: [0, 3, 6, 10], suffix: 'm7b5' },
   dim: { intervals: [0, 3, 6], suffix: 'dim' },
+  dim7: { intervals: [0, 3, 6, 9], suffix: 'dim7' },
+  aug: { intervals: [0, 4, 8], suffix: 'aug' },
+  'maj7#5': { intervals: [0, 4, 8, 11], suffix: 'maj7#5' },
   sus4: { intervals: [0, 5, 7], suffix: 'sus4' },
   '5': { intervals: [0, 7], suffix: '5' },
 };

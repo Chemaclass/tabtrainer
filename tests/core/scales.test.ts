@@ -11,7 +11,8 @@ describe('scale table', () => {
   });
   it('knows the scale ids', () => {
     expect(isScaleId('blues')).toBe(true);
-    expect(isScaleId('lydian')).toBe(false);
+    expect(isScaleId('lydian')).toBe(true);
+    expect(isScaleId('locrian')).toBe(false);
     expect(isScaleId(3)).toBe(false);
     expect(() => scaleById('nope' as ScaleId)).toThrow();
   });
@@ -53,15 +54,26 @@ describe('scale notes', () => {
     expect([0, 2, 4, 5, 7, 9, 11].map((interval, step) => scaleStepName(1 + interval, 'C#', step)))
       .toEqual(['C#', 'D#', 'E#', 'F#', 'G#', 'A#', 'B#']);
   });
-  it('uses each letter once and never mixes sharps with flats, for every root and scale', () => {
+  it('uses each letter once and never mixes sharps with flats, apart from the raised seventh of harmonic minor', () => {
+    const isRaisedSeventh = (id: ScaleId, degree: string) => id === 'harmonic-minor' && degree === '7';
     for (const scale of SCALES) {
       for (let root = 0; root < 12; root++) {
         const spelled = names(root, scale.id);
-        const accidentals = new Set(spelled.map(n => n.slice(1)).filter(Boolean));
+        const keySignatureNotes = scaleNotes(root, scale.id).filter(n => !isRaisedSeventh(scale.id, n.degree));
+        const accidentals = new Set(keySignatureNotes.map(n => n.name.slice(1)).filter(Boolean));
         expect(accidentals.size, `${root} ${scale.id}: ${spelled}`).toBeLessThanOrEqual(1);
         if (scale.intervals.length === 7) expect(new Set(spelled.map(n => n[0])).size, `${root} ${scale.id}: ${spelled}`).toBe(7);
       }
     }
+  });
+  it('spells Phrygian, Lydian and harmonic minor from their parent keys', () => {
+    expect(names(4, 'phrygian')).toEqual(['E', 'F', 'G', 'A', 'B', 'C', 'D']);
+    expect(names(0, 'lydian')).toEqual(['C', 'D', 'E', 'F#', 'G', 'A', 'B']);
+    expect(names(5, 'lydian')).toEqual(['F', 'G', 'A', 'B', 'C', 'D', 'E']);
+    expect(names(9, 'harmonic-minor')).toEqual(['A', 'B', 'C', 'D', 'E', 'F', 'G#']);
+    expect(names(0, 'harmonic-minor')).toEqual(['C', 'D', 'Eb', 'F', 'G', 'Ab', 'B']);
+    expect(names(2, 'harmonic-minor')).toEqual(['D', 'E', 'F', 'G', 'A', 'Bb', 'C#']);
+    expect(names(8, 'harmonic-minor')).toEqual(['G#', 'A#', 'B', 'C#', 'D#', 'E', 'F##']);
   });
   it('always spells the added blues note as a flat', () => {
     expect(names(9, 'blues')).toEqual(['A', 'C', 'D', 'Eb', 'E', 'G']);
@@ -109,6 +121,14 @@ describe('scale chords', () => {
     expect(chordNames(3, 'major')).toEqual(['Eb', 'Fm', 'Gm', 'Ab', 'Bb', 'Cm', 'Ddim']);
     expect(chordNames(6, 'major')).toEqual(['F#', 'G#m', 'A#m', 'B', 'C#', 'D#m', 'E#dim']);
     expect(chordNames(6, 'major', true)[6]).toBe('E#m7b5');
+  });
+  it('builds the chords of the new scales, augmented third included', () => {
+    expect(chordNames(4, 'phrygian')).toEqual(['Em', 'F', 'G', 'Am', 'Bdim', 'C', 'Dm']);
+    expect(numerals(4, 'phrygian')).toEqual(['i', 'bII', 'bIII', 'iv', 'v', 'bVI', 'bvii']);
+    expect(chordNames(0, 'lydian')).toEqual(['C', 'D', 'Em', 'F#dim', 'G', 'Am', 'Bm']);
+    expect(numerals(0, 'lydian')).toEqual(['I', 'II', 'iii', '#iv', 'V', 'vi', 'vii']);
+    expect(chordNames(9, 'harmonic-minor')).toEqual(['Am', 'Bdim', 'Caug', 'Dm', 'E', 'F', 'G#dim']);
+    expect(chordNames(9, 'harmonic-minor', true)).toEqual(['Am(maj7)', 'Bm7b5', 'Cmaj7#5', 'Dm7', 'E7', 'Fmaj7', 'G#dim7']);
   });
   it('uses the parent scale for pentatonic and blues', () => {
     expect(chordNames(9, 'minor-pentatonic')).toEqual(chordNames(9, 'minor'));

@@ -14,11 +14,13 @@ export interface Walk { from: number; to: number; scale: readonly number[] }
 
 export interface MoveNote extends FretPosition { order: number }
 
-const ROOT = 0, HALF_STEP = 1, FLAT_FIFTH = 6, OCTAVE = 12;
+const ROOT = 0, HALF_STEP = 1, FLAT_FIFTH = 6, SHARP_FIFTH = 8, OCTAVE = 12;
 
 const fifthOf = (chord: MoveChord) => degreeInterval(chord, '5');
 
 export const hasFlatFifth = (chord: MoveChord) => fifthOf(chord) === FLAT_FIFTH;
+
+export const hasSharpFifth = (chord: MoveChord) => fifthOf(chord) === SHARP_FIFTH;
 
 /** Semitones above the root of each note, in playing order. */
 const CHORD_MOVES: Record<ChordMoveId, (chord: MoveChord) => number[]> = {

@@ -1,7 +1,7 @@
 import { QUALITIES, type Quality } from './harmony';
-import { pitchClass, scaleStepName, spellPitchClass } from './theory';
+import { letterName, pitchClass, spellPitchClass } from './theory';
 
-export type ScaleId = 'major' | 'minor' | 'major-pentatonic' | 'minor-pentatonic' | 'blues' | 'dorian' | 'mixolydian';
+export type ScaleId = 'major' | 'minor' | 'major-pentatonic' | 'minor-pentatonic' | 'blues' | 'dorian' | 'mixolydian' | 'phrygian' | 'lydian' | 'harmonic-minor';
 
 export interface Scale {
   id: ScaleId;
@@ -9,7 +9,7 @@ export interface Scale {
   title: string;
   intervals: readonly number[];
   degrees: readonly string[];
-  /** Semitones from the root up to the tonic of the major key the scale borrows its accidentals from. */
+  /** Semitones from the root up to the tonic of the major key the scale borrows its accidentals from; harmonic minor borrows the natural minor's and raises its seventh. */
   parent: number;
   /** Intervals always spelled with a flat, whatever the parent key. */
   flatIntervals?: readonly number[];
@@ -27,6 +27,9 @@ export const SCALES: readonly Scale[] = [
   { id: 'blues', name: 'Blues', title: 'blues', intervals: [0, 3, 5, 6, 7, 10], degrees: ['1', 'b3', '4', 'b5', '5', 'b7'], parent: 3, flatIntervals: [6], chordsFrom: 'minor' },
   { id: 'dorian', name: 'Dorian', title: 'Dorian', intervals: [0, 2, 3, 5, 7, 9, 10], degrees: ['1', '2', 'b3', '4', '5', '6', 'b7'], parent: 10 },
   { id: 'mixolydian', name: 'Mixolydian', title: 'Mixolydian', intervals: [0, 2, 4, 5, 7, 9, 10], degrees: ['1', '2', '3', '4', '5', '6', 'b7'], parent: 5 },
+  { id: 'phrygian', name: 'Phrygian', title: 'Phrygian', intervals: [0, 1, 3, 5, 7, 8, 10], degrees: ['1', 'b2', 'b3', '4', '5', 'b6', 'b7'], parent: 8 },
+  { id: 'lydian', name: 'Lydian', title: 'Lydian', intervals: [0, 2, 4, 6, 7, 9, 11], degrees: ['1', '2', '3', '#4', '5', '6', '7'], parent: 7 },
+  { id: 'harmonic-minor', name: 'Harmonic minor', title: 'harmonic minor', intervals: [0, 2, 3, 5, 7, 8, 11], degrees: ['1', '2', 'b3', '4', '5', 'b6', '7'], parent: 3 },
 ];
 
 const FLAT_PARENTS = new Set([5, 10, 3, 8, 1]);
@@ -49,7 +52,7 @@ export function scaleNotes(root: number, id: ScaleId): ScaleNote[] {
   const scale = scaleById(id), key = rootName(root, id);
   return scale.intervals.map((interval, index) => {
     const pc = pitchClass(root + interval), degree = scale.degrees[index];
-    const name = scale.flatIntervals?.includes(interval) ? spellPitchClass(pc, true) : scaleStepName(pc, key, degreeStep(degree));
+    const name = scale.flatIntervals?.includes(interval) ? spellPitchClass(pc, true) : letterName(pc, key, degreeStep(degree));
     return { pitchClass: pc, name, degree, root: interval === 0 };
   });
 }
@@ -60,8 +63,17 @@ export interface ScaleChord { step: number; numeral: string; name: string; quali
 
 const ROMANS = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII'];
 const MAJOR_STEPS = [0, 2, 4, 5, 7, 9, 11];
-const CHORD_QUALITIES: readonly Quality[] = ['major', 'minor', 'dim', 'maj7', '7', 'm7', 'm7b5'];
-const MINOR_THIRD = new Set<Quality>(['minor', 'dim', 'm7', 'm7b5']);
+const CHORD_QUALITIES: readonly Quality[] = ['major', 'minor', 'dim', 'aug', 'maj7', '7', 'm7', 'm7b5', 'dim7', 'mMaj7', 'maj7#5'];
+const MINOR_THIRD = 3;
+/** A lower case numeral already says minor, so the seventh numeral drops the chord's "m". */
+const SEVENTH_NUMERAL_SUFFIXES: Partial<Record<Quality, string>> = { m7: '7', mMaj7: 'maj7' };
+
+const hasMinorThird = (quality: Quality) => QUALITIES[quality].intervals.includes(MINOR_THIRD);
+
+function numeralSuffix(quality: Quality, sevenths: boolean): string {
+  if (!sevenths) return '';
+  return SEVENTH_NUMERAL_SUFFIXES[quality] ?? QUALITIES[quality].suffix;
+}
 
 const sameIntervals = (a: readonly number[], b: readonly number[]) => a.length === b.length && a.every((n, i) => n === b[i]);
 
@@ -76,11 +88,11 @@ export function scaleChords(root: number, id: ScaleId, sevenths: boolean): Scale
     if (!quality) throw new Error(`No chord quality for step ${step + 1} of ${harmonyId}`);
     const shift = pitchClass(note.pitchClass - root - MAJOR_STEPS[step]);
     const accidental = shift === 11 ? 'b' : shift === 1 ? '#' : '';
-    const roman = MINOR_THIRD.has(quality) ? ROMANS[step].toLowerCase() : ROMANS[step];
+    const roman = hasMinorThird(quality) ? ROMANS[step].toLowerCase() : ROMANS[step];
     const suffix = QUALITIES[quality].suffix;
     return {
       step,
-      numeral: accidental + roman + (sevenths ? (quality === 'm7' ? '7' : suffix) : ''),
+      numeral: accidental + roman + numeralSuffix(quality, sevenths),
       name: note.name + suffix,
       quality,
       root: note,

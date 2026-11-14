@@ -1,6 +1,7 @@
 import { INSTRUMENTS } from '../../core/instruments';
-import { SCALES } from '../../core/scales';
-import { DEFAULT_FRETBOARD_CHOICE, FIRST_FRET, LAST_FRET, ROOT_OPTIONS, fretboardSheet as sheetFor, isFretboardChoice, stepPosition, windowLabel, withOfferedMove, type FretboardChoice, type FretboardSheet, type SheetMove } from '../../app/fretboardSheet';
+import { MOODS, type Mood } from '../../core/moods';
+import { SCALES, isScaleId } from '../../core/scales';
+import { DEFAULT_FRETBOARD_CHOICE, FIRST_FRET, LAST_FRET, ROOT_OPTIONS, chooseScale, fretboardSheet as sheetFor, isFretboardChoice, stepPosition, toggleMood, windowLabel, withOfferedMove, type FretboardChoice, type FretboardSheet, type SheetMove } from '../../app/fretboardSheet';
 import type { Progression, ProgressionChord } from '../../core/progressions';
 import { pref, setPref } from '../../app/storage';
 import { byId } from '../dom';
@@ -8,13 +9,18 @@ import { setSelectValue } from '../shell/dropdown';
 import { dismissHelpOnBackdrop } from '../shell/helpDialogs';
 import { fretboardSvg } from './fretboardSvg';
 
-const NO_PROGRESSIONS = 'Progressions are listed for major, minor, pentatonic and blues scales.';
+const NO_MOOD = 'Pick a mood to set a scale and the progressions that carry it.';
 
 function element<K extends keyof HTMLElementTagNameMap>(tag: K, className: string, text?: string): HTMLElementTagNameMap[K] {
   const node = document.createElement(tag);
   if (className) node.className = className;
   if (text !== undefined) node.textContent = text;
   return node;
+}
+
+function moodWhyFor(mood: Mood | null): string {
+  if (!mood) return NO_MOOD;
+  return `${mood.name}: ${mood.why}`;
 }
 
 function movesHintFor(sheet: FretboardSheet): string {
@@ -49,6 +55,16 @@ export function fretboardSheet() {
   const previous = byId('fretboardPrevious', HTMLButtonElement), next = byId('fretboardNext', HTMLButtonElement);
   const progressionList = byId('fretboardProgressions'), moveList = byId('fretboardMoves'), movesHint = byId('fretboardMovesHint');
   const moveText = byId('fretboardMoveText'), fits = byId('fretboardFits', HTMLButtonElement);
+  const moodWhy = byId('fretboardMoodWhy');
+  const moodButton = (mood: Mood) => {
+    const button = element('button', 'toggle', mood.name);
+    button.type = 'button';
+    button.dataset.mood = mood.id;
+    button.onclick = () => commit(toggleMood(choice, mood.id));
+    return button;
+  };
+  const moodButtons = MOODS.map(moodButton);
+  byId('fretboardMoods').replaceChildren(...moodButtons);
   const chordButton = (step: number | null) => {
     const button = Object.assign(document.createElement('button'), { type: 'button', className: 'toggle fretboard-chord' });
     button.onclick = () => choose({ chord: step, progression: null, bar: null });
@@ -66,7 +82,9 @@ export function fretboardSheet() {
   dismissHelpOnBackdrop(dialog);
   keepFocusClearOf(byId('fretboardView'), dialog);
   root.onchange = () => choose({ root: Number(root.value) });
-  scale.onchange = () => choose({ scale: scale.value as FretboardChoice['scale'], progression: null, bar: null });
+  scale.onchange = () => {
+    if (isScaleId(scale.value)) commit(chooseScale(choice, scale.value));
+  };
   instrument.onchange = () => choose({ instrument: instrument.value });
   degrees.onclick = () => choose({ labels: choice.labels === 'degrees' ? 'names' : 'degrees' });
   sevenths.onclick = () => choose({ sevenths: !choice.sevenths });
@@ -84,7 +102,10 @@ export function fretboardSheet() {
   }
 
   function choose(change: Partial<FretboardChoice>) {
-    const next = { ...choice, ...change };
+    commit({ ...choice, ...change });
+  }
+
+  function commit(next: FretboardChoice) {
     if (!isFretboardChoice(next)) return;
     choice = withOfferedMove(next);
     setPref('fretboardSheet', choice);
@@ -99,6 +120,7 @@ export function fretboardSheet() {
     sevenths.setAttribute('aria-pressed', String(choice.sevenths));
     const sheet = sheetFor(choice);
     windows = sheet.windows;
+    showMood(sheet);
     chordButtons[0].textContent = 'No chord';
     chordButtons[0].setAttribute('aria-pressed', String(!sheet.chord));
     sheet.chords.forEach((chord, index) => {
@@ -121,11 +143,16 @@ export function fretboardSheet() {
     strings.replaceChildren(...sheet.strings.map(({ text }) => Object.assign(document.createElement('li'), { textContent: text })));
   }
 
-  function showProgressions(sheet: FretboardSheet) {
-    if (!sheet.progressions.length) {
-      replaceKeepingFocus(progressionList, [element('p', 'fretboard-hint', NO_PROGRESSIONS)]);
-      return;
+  function showMood(sheet: FretboardSheet) {
+    for (const button of moodButtons) {
+      const picked = button.dataset.mood === sheet.mood?.id;
+      button.setAttribute('aria-pressed', String(picked));
     }
+    const why = moodWhyFor(sheet.mood);
+    if (moodWhy.textContent !== why) moodWhy.textContent = why;
+  }
+
+  function showProgressions(sheet: FretboardSheet) {
     replaceKeepingFocus(progressionList, sheet.progressions.map(progression => progressionRow(sheet, progression)));
   }
 
