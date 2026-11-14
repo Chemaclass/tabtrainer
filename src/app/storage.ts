@@ -22,7 +22,7 @@ export function saveSong(title: string, text: string): boolean {
 }
 export function removeSong(title: string) { try { const songs = read(); delete songs[title]; localStorage.setItem(LIB, JSON.stringify(songs)); } catch { /* storage unavailable */ } }
 export interface DraftSnapshot { text: string; base: string; picked: string }
-export interface JamChoice { key?: unknown; tempo?: unknown }
+export interface JamChoice { key?: unknown; tempo?: unknown; progression?: unknown; swing?: unknown }
 export interface MixerChoice { plays?: unknown; parts?: unknown }
 interface Preferences {
   family: Family;

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { chordAt, degreeInterval, keyTonic, parseNumeral, type Numeral } from '../../src/core/harmony';
+import { OWN_PROGRESSION, PROGRESSION_PRESETS, chordAt, degreeInterval, isMinorProgression, keyTonic, parseNumeral, presetProgression, type Numeral } from '../../src/core/harmony';
 import { pitchClassName, pitchClassOf, vexKey } from '../../src/core/theory';
 
 const progression = (text: string): Numeral[] => text.split(' ').map(t => {
@@ -83,6 +83,41 @@ describe('degreeInterval', () => {
     expect(degreeInterval(major, '3')).toBe(0);
     expect(degreeInterval(minor, '3')).toBe(0);
     expect(degreeInterval(minor, '5')).toBe(7);
+  });
+  it('plays the major seventh for b7 over a maj7 chord', () => {
+    const p = progression('Imaj7 ii7');
+    const [maj7, m7] = p.map((_, bar) => chordAt(p, 'C', bar));
+    expect(degreeInterval(maj7, 'b7')).toBe(11);
+    expect(degreeInterval(m7, 'b7')).toBe(10);
+  });
+});
+
+describe('progression presets', () => {
+  const chordNames = (numerals: Numeral[], key: string) => numerals.map((_, bar) => chordAt(numerals, key, bar).name);
+  const preset = (slug: string, own = progression('I7 IV7')) => presetProgression(slug, own)!;
+
+  it('offers the presets by name and keeps the groove progression as the default', () => {
+    expect(PROGRESSION_PRESETS.map(p => p.name)).toEqual(['12 bar blues', 'Minor blues', 'I IV V', 'I V vi IV', 'i bVII bVI bVII', 'ii V I', 'One chord vamp']);
+    expect(preset(OWN_PROGRESSION).map(n => n.text)).toEqual(['I7', 'IV7']);
+    expect(presetProgression('polka', progression('I'))).toBeNull();
+  });
+  it('spells ii V I in Bb as Cm7, F7 and Bbmaj7', () => {
+    expect(chordNames(preset('ii-v-i'), 'Bb')).toEqual(['Cm7', 'F7', 'Bbmaj7', 'Bbmaj7']);
+  });
+  it('spells the blues and minor presets in their keys', () => {
+    expect(chordNames(preset('12-bar-blues'), 'A')).toEqual(['A7', 'D7', 'A7', 'A7', 'D7', 'D7', 'A7', 'A7', 'E7', 'D7', 'A7', 'E7']);
+    expect(chordNames(preset('minor-blues'), 'Am').slice(8)).toEqual(['F7', 'E7', 'Am7', 'E7']);
+    expect(chordNames(preset('i-bvii-bvi-bvii'), 'Em')).toEqual(['Em', 'D', 'C', 'D']);
+    expect(chordNames(preset('i-v-vi-iv'), 'G')).toEqual(['G', 'D', 'Em', 'C']);
+  });
+  it('vamps on the first chord of the groove for four bars', () => {
+    expect(preset('one-chord', progression('i7 IV7')).map(n => n.text)).toEqual(['i7', 'i7', 'i7', 'i7']);
+  });
+  it('tells a minor progression from its first chord', () => {
+    expect(isMinorProgression(preset('minor-blues'))).toBe(true);
+    expect(isMinorProgression(preset('i-bvii-bvi-bvii'))).toBe(true);
+    expect(isMinorProgression(preset('ii-v-i'))).toBe(false);
+    expect(isMinorProgression(preset('12-bar-blues'))).toBe(false);
   });
 });
 

@@ -146,12 +146,15 @@
   </main>
   <main id="jamScreen" class="jam" aria-labelledby="jamTitle" hidden>
     <div class="jam-intro"><div id="jamContext" class="library-context">Jam</div><h1 id="jamTitle" tabindex="-1"></h1><p id="jamAbout"></p></div>
+    <nav class="jam-grooves" aria-labelledby="jamGroovesTitle"><h2 id="jamGroovesTitle" class="jam-bars-title">Grooves</h2><ul id="jamGrooves" class="jam-groove-list"></ul></nav>
     <div class="jam-controls">
       <button id="jamPlay" class="primary jam-play" title="Play or stop (Space)">Play</button>
       <div class="jam-tempo"><div class="jam-tempo-head"><label for="jamTempo">Tempo</label><output id="jamTempoOut" for="jamTempo"></output></div><input id="jamTempo" type="range" min="40" max="220" step="1" /></div>
       <div class="jam-key"><label for="jamKey">Key</label><select id="jamKey"></select></div>
+      <div class="jam-key"><label for="jamProgression">Progression</label><select id="jamProgression"></select></div>
+      <div class="jam-tempo"><div class="jam-tempo-head"><label for="jamSwing">Swing</label><output id="jamSwingOut" for="jamSwing"></output></div><input id="jamSwing" type="range" min="50" max="66" step="1" /></div>
     </div>
-    <h2 id="jamBarsTitle" class="jam-bars-title">Progression</h2>
+    <h2 id="jamBarsTitle" class="jam-bars-title">Chords</h2>
     <ol id="jamBars" class="jam-bars" aria-labelledby="jamBarsTitle"></ol>
     <section class="jam-mixer" aria-labelledby="jamMixerTitle">
       <div class="jam-mixer-head">
@@ -351,8 +354,39 @@ time: 4/4
       <tr><td><code># ...</code></td><td>comment</td></tr>
     </table>
     <h2>Jam</h2>
-    <p>Open Jam from the top bar to improvise over a looping groove of drums, bass and keys. Press Play or <kbd>Space</kbd>, then pick a tempo and a key. The chord names follow the key, and the outlined bar is the one you hear. Changes to tempo and key are heard from the next bar. The app remembers both for each groove.</p>
+    <p>Open Jam from the top bar to improvise over a looping groove of drums, bass and keys. Pick a groove from the list, press Play or <kbd>Space</kbd>, then choose a tempo and a key. The chord names follow the key, and the outlined bar is the one you hear. Changes are heard from the next bar.</p>
+    <p>Progression swaps the groove's chords for another set, such as a 12 bar blues or ii V I. Swing moves the off beat notes from straight to a full triplet. The app remembers tempo, key, progression and swing for each groove.</p>
     <p>In the mixer, choose what you play. Bass mutes the backing bass so you take its place. Each part has its own mute button and volume. The app remembers the mixer for all grooves.</p>
+    <h2>Writing a groove</h2>
+    <p>A groove is plain text: the same header lines as a song, then one line of steps per part.</p>
+<pre>title: My shuffle
+genre: blues
+about: A twelve bar shuffle to practise blues lines.
+tempo: 80
+key: A                 # the chords follow any key
+time: 4/4
+swing: 66              # 50 is straight, 66 is a triplet shuffle, up to 75
+progression: I7 IV7 I7 I7 | IV7 IV7 I7 I7 | V7 IV7 I7 V7
+
+hat:   xoXoxoXo        # one bar of 8 steps, repeated every bar
+snare: ..X...X. | ..X..oX.
+kick:  X...x... | X...x..o
+keys:  ..X-..X-
+bass:  1 - 3 - 5 - 6 - | b7 - 6 - 5 - 3 -</pre>
+    <table>
+      <tr><td><code>genre:</code></td><td>the style shown in the groove list, such as <code>blues</code>, <code>rock</code>, <code>reggae</code> or <code>funk</code></td></tr>
+      <tr><td><code>about:</code></td><td>one line on what the groove practises, shown under the title</td></tr>
+      <tr><td><code>swing:</code></td><td>how late the off beat notes land: <code>50</code> is straight, <code>66</code> is a triplet, up to <code>75</code>. The Jam screen starts from this value</td></tr>
+      <tr><td><code>progression:</code></td><td>the chords the groove plays by default. The Jam screen can swap them for another progression</td></tr>
+      <tr><td><code>I7 iv bVII</code></td><td>one chord per bar as a roman numeral: upper case is major, lower case is minor, <code>b</code> or <code>#</code> shifts it. Numerals count from the major scale of the key's root, so a minor key uses <code>i iv v bIII bVI bVII</code></td></tr>
+      <tr><td><code>7 maj7 m7 m7b5 dim sus4 5</code></td><td>chord qualities after the numeral</td></tr>
+      <tr><td><code>kick snare hat openhat ride crash</code></td><td>drum lines: <code>X</code> accent, <code>x</code> hit, <code>o</code> soft hit, <code>.</code> silence</td></tr>
+      <tr><td><code>keys</code></td><td>chord stabs: <code>X</code> accent, <code>x</code> stab, <code>-</code> hold the stab, <code>.</code> silence</td></tr>
+      <tr><td><code>bass</code></td><td>chord degrees separated by spaces: <code>1 3 5 6 b7 8</code>, <code>-</code> hold, <code>.</code> silence. <code>3</code> and <code>5</code> follow the chord, so <code>3</code> is the minor third of a minor chord and the root of a power chord. <code>b7</code> is the major seventh of a maj7 chord. Each bar moves by whole octaves to stay between E1 and G3, the range of a 4 string bass</td></tr>
+      <tr><td><code>|</code></td><td>starts the next bar of a part; a part shorter than the progression repeats</td></tr>
+      <tr><td><code># ...</code></td><td>comment, on its own line or after a space (<code>#IV</code> is a numeral)</td></tr>
+    </table>
+    <p>The steps in a bar set its grid. In 4/4 that is 8 for eighths, 12 for triplets or 16 for sixteenths. Swing moves the off beat eighths, or the off beat sixteenths when no part plays eighths. With another progression, each part repeats its bars over the new chords.</p>
     <p class="muted">The app saves your songs in this browser. Use Download and Open to move a song to another device or share it.</p>
     <footer class="dialog-credit">Made by <a href="https://chemaclass.com" target="_blank" rel="noopener">Chemaclass</a> · <a href="https://github.com/Chemaclass/tabtrainer" target="_blank" rel="noopener">Source code on GitHub</a></footer>
   </dialog>

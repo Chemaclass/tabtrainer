@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { readFileSync, readdirSync } from 'node:fs';
-import { Jam, MIXER_PARTS, Mixer, bundledGrooves, grooveSlug, jamKeys } from '../../src/app/jam';
+import { JAM_SWING, Jam, MIXER_PARTS, Mixer, bundledGrooves, grooveSlug, jamKeys } from '../../src/app/jam';
 import { parseGroove } from '../../src/core/groove';
 
 const files = Object.fromEntries(readdirSync('src/grooves').map(name => [`./grooves/${name}`, readFileSync(`src/grooves/${name}`, 'utf8')]));
@@ -51,7 +51,10 @@ describe('jam', () => {
     const jam = new Jam(grooves);
     jam.setKey('C'); jam.setTempo(120);
     jam.choose('minor-vamp'); jam.setTempo(70);
-    expect(JSON.parse(stored.get('tabtrainer:jam') ?? '{}')).toEqual({ 'blues-shuffle': { key: 'C', tempo: 120 }, 'minor-vamp': { key: 'Bbm', tempo: 70 } });
+    expect(JSON.parse(stored.get('tabtrainer:jam') ?? '{}')).toEqual({
+      'blues-shuffle': { key: 'C', tempo: 120, progression: 'groove', swing: 66 },
+      'minor-vamp': { key: 'Bbm', tempo: 70, progression: 'groove', swing: 50 },
+    });
     const reloaded = new Jam(grooves);
     expect([reloaded.key, reloaded.tempo]).toEqual(['C', 120]);
     reloaded.choose('minor-vamp');
@@ -69,6 +72,70 @@ describe('jam', () => {
     expect(JSON.parse(stored.get('tabtrainer:jam') ?? '{}').other).toEqual({ key: 'G', tempo: 90 });
     stored.set('tabtrainer:jam', '{bad');
     expect(new Jam(bundledGrooves(files)).key).toBe('A');
+  });
+});
+
+describe('jam progression and swing', () => {
+  const offBeats = (jam: Jam) => jam.timeline().drums.filter(h => h.drum === 'hat' && h.bar === 0).map(h => +(h.beat % 1).toFixed(4)).filter(f => f > 0);
+
+  it('lists the grooves grouped by genre and opens one by its slug', () => {
+    const jam = new Jam(bundledGrooves(files));
+    expect(jam.list.map(g => g.slug)).toEqual(['blues-shuffle', 'rock-straight-eighths', 'reggae-one-drop', 'funk-sixteenths']);
+    expect(jam.choose('reggae-one-drop')).toBe(true);
+    expect([jam.groove.genre, jam.key, jam.tempo, jam.swing]).toEqual(['reggae', 'Am', 74, 58]);
+  });
+  it('keeps grooves of one genre together', () => {
+    const extra = { './grooves/05-blues-slow.txt': 'title: Slow blues\ngenre: blues\nprogression: I7\nkick: x...' };
+    expect(new Jam(bundledGrooves({ ...files, ...extra })).list.map(g => g.slug).slice(0, 2)).toEqual(['blues-shuffle', 'blues-slow']);
+  });
+  it('plays ii V I in Bb with the bass and keys on its chords, the blues walk falling from the major seventh of Bbmaj7', () => {
+    const jam = new Jam(bundledGrooves(files));
+    expect(jam.setProgression('ii-v-i')).toBe(true);
+    expect(jam.setKey('Bb')).toBe(true);
+    const t = jam.timeline();
+    expect(t.bars.map(b => b.chord.name)).toEqual(['Cm7', 'F7', 'Bbmaj7', 'Bbmaj7']);
+    expect(t.bars.map(({ bar }) => t.bass.find(h => h.bar === bar)!.midi[0] % 12)).toEqual([0, 5, 10, 9]);
+    expect(t.bars.map(({ bar }) => t.keys.find(h => h.bar === bar)!.midi.map(m => m % 12).sort((a, b) => a - b))).toEqual([[0, 3, 7, 10], [0, 3, 5, 9], [2, 5, 9, 10], [2, 5, 9, 10]]);
+    expect(jam.setProgression('ii-v-i')).toBe(false);
+    expect(jam.setProgression('polka')).toBe(false);
+  });
+  it('switches the key list to the mode of the progression and keeps the tonic', () => {
+    const jam = new Jam(bundledGrooves(files));
+    jam.setProgression('minor-blues');
+    expect(jam.key).toBe('Am');
+    expect(jam.keys.every(k => k.endsWith('m'))).toBe(true);
+    expect(jam.timeline().bars[0].chord.name).toBe('Am7');
+    jam.setProgression('groove');
+    expect(jam.key).toBe('A');
+  });
+  it('moves the rock off beats from straight to the triplet and back', () => {
+    const jam = new Jam(bundledGrooves(files));
+    jam.choose('rock-straight-eighths');
+    expect(jam.swing).toBe(50);
+    expect(offBeats(jam)).toEqual([0.5, 0.5, 0.5, 0.5]);
+    jam.setSwing(100);
+    expect(jam.swing).toBe(JAM_SWING.max);
+    expect(offBeats(jam)).toEqual(Array(4).fill(+(2 / 3).toFixed(4)));
+    jam.setSwing(0);
+    expect(offBeats(jam)).toEqual([0.5, 0.5, 0.5, 0.5]);
+    expect(jam.setSwing(NaN)).toBe(false);
+  });
+  it('remembers progression and swing for each groove', () => {
+    const grooves = bundledGrooves(files);
+    const jam = new Jam(grooves);
+    jam.setProgression('ii-v-i'); jam.setSwing(60);
+    jam.choose('funk-sixteenths');
+    expect([jam.progression, jam.swing]).toEqual(['groove', 54]);
+    jam.setProgression('one-chord');
+    const reloaded = new Jam(grooves);
+    expect([reloaded.progression, reloaded.swing]).toEqual(['ii-v-i', 60]);
+    reloaded.choose('funk-sixteenths');
+    expect([reloaded.progression, reloaded.swing, reloaded.key]).toEqual(['one-chord', 54, 'Em']);
+  });
+  it('ignores a saved progression or swing that does not fit', () => {
+    stored.set('tabtrainer:jam', JSON.stringify({ 'blues-shuffle': { progression: 'polka', swing: 'lots' } }));
+    const jam = new Jam(bundledGrooves(files));
+    expect([jam.progression, jam.swing]).toEqual(['groove', 66]);
   });
 });
 

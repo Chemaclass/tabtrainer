@@ -1,0 +1,17 @@
+title: Straight eighths rock in E
+genre: rock
+about: A driving rock groove in E to practise lines over the I, bVII and IV chords with straight eighths.
+tempo: 116
+key: E
+time: 4/4
+swing: 50
+progression: I bVII IV I | I bVII IV V
+
+# eight straight eighths per bar: 1 & 2 & 3 & 4 &
+crash: x....... | ........ | ........ | ........ | x....... | ........ | ........ | ........
+hat:   XxXxXxXx
+snare: ..X...X. | ..X...X. | ..X...X. | ..X...X. | ..X...X. | ..X...X. | ..X...X. | ..X..xXX
+kick:  X...Xx.. | X..xX... | X...Xx.. | X..xX...
+keys:  X---x--. | X---x--. | X---x--. | X---x-x-
+# the root on every eighth, a climb to the octave before the repeat, and the third of V leading back to I
+bass:  1 1 1 1 1 1 1 1 | 1 1 1 1 1 1 1 1 | 1 1 1 1 1 1 1 1 | 1 1 1 1 5 5 8 8 | 1 1 1 1 1 1 1 1 | 1 1 1 1 1 1 1 1 | 1 1 1 1 1 1 1 1 | 1 1 1 1 5 5 3 3

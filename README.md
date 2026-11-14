@@ -16,6 +16,7 @@ TabTrainer is a free web app with no account and no server. Your songs stay in y
 - **Start anywhere:** select a note or bar, then press Play. `Space` pauses and resumes. Stop goes back to your selection.
 - **Follow along:** the playing note turns red, and the page scrolls with it. Press `S` for continuous scrolling at your own speed.
 - **Editor:** write songs in plain text and see the score update as you type. Errors name their line.
+- **Jam:** improvise over a looping groove of drums, bass and keys in blues, rock, reggae or funk. Pick the key, tempo, chord progression and swing, and mute the part you play.
 - **Fretboard:** see where the notes of any key and scale sit on your bass or guitar, as note names or degrees.
 - **Your files:** download a song as `.txt` to share it or move it to another device.
 
@@ -78,15 +79,19 @@ bass:  1 - 3 - 5 - 6 - | b7 - 6 - 5 - 3 -
 
 | Syntax | Meaning |
 | --- | --- |
+| `genre:` | the style shown in the groove list, such as `blues`, `rock`, `reggae` or `funk` |
+| `about:` | one line on what the groove practises, shown under the title |
+| `swing:` | how late the off beat notes land: `50` is straight, `66` is a triplet, up to `75`. The Jam screen starts from this value |
+| `progression:` | the chords the groove plays by default. The Jam screen can swap them for another progression |
 | `I7 iv bVII` | one chord per bar as a roman numeral: upper case is major, lower case is minor, `b` or `#` shifts it. Numerals count from the major scale of the key's root, so a minor key uses `i iv v bIII bVI bVII` |
 | `7 maj7 m7 m7b5 dim sus4 5` | chord qualities after the numeral |
 | `kick snare hat openhat ride crash` | drum lines: `X` accent, `x` hit, `o` soft hit, `.` silence |
 | `keys` | chord stabs: `X` accent, `x` stab, `-` hold the stab, `.` silence |
-| `bass` | chord degrees separated by spaces: `1 3 5 6 b7 8`, `-` hold, `.` silence. `3` and `5` follow the chord, so `3` is the minor third of a minor chord and the root of a power chord. Each bar moves by whole octaves to stay between E1 and G3, the range of a 4 string bass |
+| `bass` | chord degrees separated by spaces: `1 3 5 6 b7 8`, `-` hold, `.` silence. `3` and `5` follow the chord, so `3` is the minor third of a minor chord and the root of a power chord. `b7` is the major seventh of a maj7 chord. Each bar moves by whole octaves to stay between E1 and G3, the range of a 4 string bass |
 | `\|` | starts the next bar of a part; a part shorter than the progression repeats |
 | `# ...` | comment, on its own line or after a space (`#IV` is a numeral) |
 
-The steps in a bar set its grid. In 4/4 that is 8 for eighths, 12 for triplets or 16 for sixteenths. Swing moves the off beat eighths, or the off beat sixteenths when no part plays eighths.
+The steps in a bar set its grid. In 4/4 that is 8 for eighths, 12 for triplets or 16 for sixteenths. Swing moves the off beat eighths, or the off beat sixteenths when no part plays eighths. With another progression, each part repeats its bars over the new chords.
 
 ## Development
 
