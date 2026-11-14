@@ -34,7 +34,11 @@ import { PassagePlayback } from './app/passagePlayback';
 import { playbackShortcut } from './app/playbackShortcut';
 import { Navigation, navigationState, type Route } from './app/navigation';
 import { DraftSession, titleOf } from './app/draftSession';
-import { editorResize } from './ui/editor/editorResize';
+import { editorPane } from './ui/editor/editorPane';
+import { playerPanel } from './ui/player/playerPanel';
+import { theme } from './ui/shell/theme';
+import { closeOnChoice, closeOnOutside } from './ui/shell/disclosure';
+import { publishHeight } from './ui/shell/layoutMetrics';
 import { libraryView } from './ui/library/libraryView';
 import { hasPracticeLevels } from './app/practiceLevels';
 import { categoryCounts, isLibraryKind, nextExercise, type CatalogueEntry, type LibraryKind } from './app/catalogue';
@@ -304,11 +308,7 @@ const showSpeed = () => {
 speed.value = String(pref('speed', 100)); player.speed = +speed.value / 100;
 speed.oninput = () => { const value = +speed.value; player.setSpeed(value / 100); setPref('speed', value); showSpeed(); };
 document.querySelectorAll<HTMLButtonElement>('[data-speed]').forEach(b => { b.onclick = () => { speed.value = b.dataset.speed!; speed.dispatchEvent(new Event('input')); }; });
-const panels = document.querySelectorAll<HTMLDetailsElement>('.timing, .speed-practice');
-document.addEventListener('click', e => { panels.forEach(panel => { if (!panel.contains(e.target as Node)) panel.open = false; }); });
-panels.forEach(panel => panel.addEventListener('keydown', e => {
-  if (e.key === 'Escape') { e.stopPropagation(); panel.open = false; panel.querySelector('summary')!.focus(); }
-}));
+document.querySelectorAll<HTMLDetailsElement>('.timing, .speed-practice').forEach(closeOnOutside);
 const practiceEnabled = $('speedPracticeChk', HTMLInputElement);
 const practiceRepetitions = $('speedPracticeRepetitions', HTMLInputElement);
 const practiceIncrease = $('speedPracticeIncrease', HTMLInputElement);
@@ -484,21 +484,7 @@ document.addEventListener('keydown', e => {
 const unpick = () => { workspace.unpick(); fillSongList(); };
 const fileMenu = one('.file-menu', HTMLDetailsElement);
 $('openBtn').onclick = () => $('openFile', HTMLInputElement).click();
-fileMenu.addEventListener('click', e => {
-  if ((e.target as Element).closest('button')) {
-    const returnFocus = fileMenu.contains(document.activeElement);
-    fileMenu.open = false;
-    if (returnFocus) fileMenu.querySelector('summary')!.focus();
-  }
-});
-document.addEventListener('click', e => {
-  if (!fileMenu.contains(e.target as Node)) fileMenu.open = false;
-});
-fileMenu.addEventListener('keydown', e => {
-  if (e.key === 'Escape') {
-    e.stopPropagation(); fileMenu.open = false; fileMenu.querySelector('summary')!.focus();
-  }
-});
+closeOnChoice(fileMenu); closeOnOutside(fileMenu);
 const hasChanges = () => draftSession.hasChanges();
 // The link opens the bundled song, so it would drop unsaved edits.
 function showShare() { $('shareBtn').hidden = bundledPath(workspace.picked) === null || draftSession.hasChanges(); }
@@ -534,7 +520,7 @@ function saveCurrent(): boolean {
   workspace.pick(savedRef(title), 'mine'); persistDraft(); fillSongList(); showLink();
   announceSave(`Saved "${title}" in this browser`); return true;
 }
-$('newBtn').onclick = () => replaceCurrent(() => { const text = newSong(); unpick(); setScreen('practice'); loadText(text); showLink(true); showEditor(true); src.focus(); });
+$('newBtn').onclick = () => replaceCurrent(() => { const text = newSong(); unpick(); setScreen('practice'); loadText(text); showLink(true); editor.show(true); src.focus(); });
 $('saveBtn').onclick = () => { saveCurrent(); };
 $('recoverDownload').onclick = () => $('dlBtn').click();
 $('dlBtn').onclick = () => {
@@ -550,9 +536,7 @@ $('openFile', HTMLInputElement).onchange = async e => {
     if (draftSession.isCurrent(generation)) replaceCurrent(() => { unpick(); setScreen('practice'); loadText(text); showLink(true); });
   } catch { announceSave('Could not open that file. Your current text is still here.', true); }
 };
-const showEditor = (on: boolean) => { one('.layout').classList.toggle('noedit', !on); $('editBtn').classList.toggle('on', on); $('editBtn').setAttribute('aria-pressed', String(on)); setPref('editor', on); setTimeout(draw, 50); };
-editorResize($('editorPane'), $('editorResize'), draw);
-$('hideEditorBtn').onclick = () => { showEditor(false); $('editBtn').focus(); };
+const editor = editorPane(draw);
 $('shareBtn').onclick = async () => {
   const version = openSong.versionSlug();
   const root = new URL(import.meta.env.BASE_URL, location.origin).href;
@@ -568,51 +552,29 @@ $('shareBtn').onclick = async () => {
     if (!(error instanceof DOMException && error.name === 'AbortError')) announceSave(`Could not copy the link: ${url}`, true, false);
   }
 };
-$('editBtn').onclick = () => showEditor(one('.layout').classList.contains('noedit'));
 const showNotationState = () => { $('notaBtn').setAttribute('aria-pressed', String(showNota)); $('tabBtn').setAttribute('aria-pressed', String(!showNota)); };
 const setNotation = (on: boolean) => { showNota = on; setPref('notation', on); $('notaBtn').classList.toggle('on', on); $('tabBtn').classList.toggle('on', !on); showNotationState(); draw(); };
 $('notaBtn').onclick = () => setNotation(true);
 $('tabBtn').onclick = () => setNotation(false);
 $('zoomIn').onclick = () => { zoom = Math.min(1.8, +(zoom + 0.1).toFixed(2)); setPref('zoom', zoom); draw(); };
 $('zoomOut').onclick = () => { zoom = Math.max(0.6, +(zoom - 0.1).toFixed(2)); setPref('zoom', zoom); draw(); };
-const setPlayerExpanded = (open: boolean) => { one('.player').classList.toggle('open', open); $('moreBtn').setAttribute('aria-expanded', String(open)); setPref('playerExpanded', open); };
-setPlayerExpanded(pref('playerExpanded', false));
-$('moreBtn').onclick = () => setPlayerExpanded($('moreBtn').getAttribute('aria-expanded') !== 'true');
-const setPlayerMinimized = (minimized: boolean) => {
-  document.documentElement.classList.toggle('player-min', minimized);
-  const label = minimized ? 'Show the controls' : 'Hide the controls', button = $('minimizeBtn');
-  button.setAttribute('aria-expanded', String(!minimized)); button.setAttribute('aria-label', label); button.title = label;
-  setPref('playerMinimized', minimized);
-};
-setPlayerMinimized(pref('playerMinimized', false));
-$('minimizeBtn').onclick = () => { setPlayerMinimized(!document.documentElement.classList.contains('player-min')); draw(); };
+playerPanel(draw);
 $('closeContinuationBtn').onclick = () => { continuationDismissed = true; $('playBtn').focus(); $('exerciseContinuation').hidden = true; };
-const systemDark = matchMedia('(prefers-color-scheme: dark)');
-const showTheme = (theme: 'light' | 'dark') => {
-  document.documentElement.dataset.theme = theme;
-  const label = `Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`;
-  $('themeBtn').setAttribute('aria-label', label); $('themeBtn').title = label;
-};
-showTheme(pref('theme', null) ?? (systemDark.matches ? 'dark' : 'light'));
-systemDark.addEventListener('change', e => { if (pref('theme', null) === null) showTheme(e.matches ? 'dark' : 'light'); });
-$('themeBtn').onclick = () => {
-  const next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
-  setPref('theme', next === (systemDark.matches ? 'dark' : 'light') ? null : next); showTheme(next);
-};
+theme();
 $('syntaxHelpBtn').onclick = () => $('help', HTMLDialogElement).showModal();
 (window as never as { tabtrainer: unknown }).tabtrainer = { player, removeSong, onsetKey };
 
 // the player wraps at narrow widths; reserve exactly its height below the page and the sticky editor
-new ResizeObserver(([e]) => document.documentElement.style.setProperty('--deck-h', `${Math.ceil(e.borderBoxSize[0].blockSize)}px`)).observe(one('.player'));
-new ResizeObserver(([e]) => document.documentElement.style.setProperty('--top-h', `${Math.ceil(e.borderBoxSize[0].blockSize)}px`)).observe(one('.top'));
-new ResizeObserver(([e]) => document.documentElement.style.setProperty('--continuation-h', `${Math.ceil(e.borderBoxSize[0].blockSize)}px`)).observe($('exerciseContinuation'));
-new ResizeObserver(([e]) => document.documentElement.style.setProperty('--save-state-h', `${Math.ceil(e.borderBoxSize[0].blockSize)}px`)).observe(one('.save-state'));
+publishHeight(one('.player'), '--deck-h');
+publishHeight(one('.top'), '--top-h');
+publishHeight($('exerciseContinuation'), '--continuation-h');
+publishHeight(one('.save-state'), '--save-state-h');
 
 // ---------- start ----------
 $('notaBtn').classList.toggle('on', showNota); $('tabBtn').classList.toggle('on', !showNota);
 showNotationState();
 setPlayLabel();
-showEditor(pref('editor', false));
+editor.show(pref('editor', false));
 const plan = startupPlan({ search: location.search, historyPick: storedNavigation?.picked ?? null, draft: pref('draft', null), last: pref('last', null), lastPick: pref('picked', '') }, songbook);
 const linkedVersion = new URLSearchParams(location.search).get('version');
 switch (plan.kind) {
