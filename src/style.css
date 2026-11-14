@@ -20,7 +20,7 @@ button,.btn,select{font:500 14px/20px var(--ui);color:var(--ink);background:none
 select{appearance:none;-webkit-appearance:none;min-height:44px;padding:8px 36px 8px 12px;border-color:var(--control-border);background-color:var(--page);background-image:var(--select-arrow);background-repeat:no-repeat;background-size:14px;background-position:right 12px center}
 select:hover{border-color:var(--control-hover)}
 button:disabled{opacity:.5;cursor:default}
-summary:focus-visible,button:focus-visible,.btn:focus-visible,select:focus-visible,input:focus-visible,.pill:has(input:focus-visible){outline:2px solid var(--ink);outline-offset:2px}
+a:focus-visible,summary:focus-visible,button:focus-visible,.btn:focus-visible,select:focus-visible,input:focus-visible,.pill:has(input:focus-visible){outline:2px solid var(--ink);outline-offset:2px}
 .grow{flex:1}
 .caps,.lbl{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase}
 .divider{width:1px;height:20px;background:var(--rule);flex-shrink:0}
