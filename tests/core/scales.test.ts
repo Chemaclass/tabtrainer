@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { SCALES, isScaleId, rootName, scaleById, scaleChords, scaleNotes, scaleTitle, type ScaleId } from '../../src/core/scales';
+import { SCALES, fittingScales, isScaleId, rootName, scaleById, scaleChords, scaleNotes, scaleTitle, type ScaleId } from '../../src/core/scales';
 import { parseNumeral } from '../../src/core/harmony';
 import { scaleStepName } from '../../src/core/theory';
 
@@ -134,5 +134,16 @@ describe('scale chords', () => {
     expect(chordNames(9, 'minor-pentatonic')).toEqual(chordNames(9, 'minor'));
     expect(chordNames(9, 'blues')).toEqual(chordNames(9, 'minor'));
     expect(chordNames(0, 'major-pentatonic')).toEqual(chordNames(0, 'major'));
+  });
+});
+
+describe('fitting scales', () => {
+  it('leads with minor pentatonic and blues for blues and rock', () => {
+    expect(fittingScales({ minorKey: false, bluesy: true })).toEqual(['minor-pentatonic', 'blues', 'major', 'major-pentatonic']);
+    expect(fittingScales({ minorKey: true, bluesy: true })).toEqual(['minor-pentatonic', 'blues', 'minor', 'dorian']);
+  });
+  it('leads with major or natural minor for other grooves', () => {
+    expect(fittingScales({ minorKey: false, bluesy: false })).toEqual(['major', 'major-pentatonic']);
+    expect(fittingScales({ minorKey: true, bluesy: false })).toEqual(['minor', 'minor-pentatonic', 'dorian']);
   });
 });

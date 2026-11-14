@@ -2,14 +2,21 @@ import { JAM_SWING, type Jam } from '../../app/jam';
 import { playbackShortcut } from '../../app/playbackShortcut';
 import { pref, setPref } from '../../app/storage';
 import type { LoopEngine } from '../../audio/loopEngine';
+import type { GrooveBar } from '../../core/grooveTimeline';
 import { OWN_PROGRESSION, PROGRESSION_PRESETS } from '../../core/harmony';
 import { byId, fillRange } from '../dom';
 import { setSelectValue } from '../shell/dropdown';
 import { grooveList } from './grooveList';
 
-interface JamViewHandlers { active: () => boolean; choose: (slug: string) => void; changed: () => void; shareLink: () => string }
+interface JamViewHandlers {
+  active: () => boolean;
+  choose: (slug: string) => void;
+  changed: () => void;
+  chordsChanged: (bars: readonly GrooveBar[]) => void;
+  shareLink: () => string;
+}
 
-export function jamView(jam: Jam, engine: LoopEngine, { active, choose, changed, shareLink }: JamViewHandlers) {
+export function jamView(jam: Jam, engine: LoopEngine, { active, choose, changed, chordsChanged, shareLink }: JamViewHandlers) {
   const play = byId('jamPlay', HTMLButtonElement), tempo = byId('jamTempo', HTMLInputElement), tempoOut = byId('jamTempoOut', HTMLOutputElement);
   const key = byId('jamKey', HTMLSelectElement), bars = byId('jamBars', HTMLOListElement), progression = byId('jamProgression', HTMLSelectElement);
   const swing = byId('jamSwing', HTMLInputElement), swingOut = byId('jamSwingOut', HTMLOutputElement);
@@ -74,7 +81,9 @@ export function jamView(jam: Jam, engine: LoopEngine, { active, choose, changed,
     bars.children[bar ?? -1]?.setAttribute('aria-current', 'true');
   }
   function showBars() {
-    bars.replaceChildren(...jam.timeline().bars.map(({ bar, chord }) => {
+    const timelineBars = jam.timeline().bars;
+    chordsChanged(timelineBars);
+    bars.replaceChildren(...timelineBars.map(({ bar, chord }) => {
       const item = document.createElement('li'), number = document.createElement('span'), name = document.createElement('span');
       const hidden = (text: string) => { const span = document.createElement('span'); span.className = 'sr-only'; span.textContent = text; return span; };
       number.className = 'jam-bar-no'; number.append(hidden('Bar '), String(bar + 1), hidden(': '));

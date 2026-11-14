@@ -22,8 +22,9 @@ export function saveSong(title: string, text: string): boolean {
 }
 export function removeSong(title: string) { try { const songs = read(); delete songs[title]; localStorage.setItem(LIB, JSON.stringify(songs)); } catch { /* storage unavailable */ } }
 export interface DraftSnapshot { text: string; base: string; picked: string }
-export interface JamChoice { key?: unknown; tempo?: unknown; progression?: unknown; swing?: unknown }
+export interface JamChoice { key?: unknown; tempo?: unknown; progression?: unknown; swing?: unknown; scale?: unknown }
 export interface MixerChoice { plays?: unknown; parts?: unknown }
+export interface JamFretboardChoice { bass?: unknown; labels?: unknown }
 interface Preferences {
   family: Family;
   libraryKind: LibraryKind;
@@ -49,6 +50,7 @@ interface Preferences {
   jam: Record<string, JamChoice>;
   jamMixer: MixerChoice;
   jamCountIn: boolean;
+  jamFretboard: JamFretboardChoice;
 }
 const finiteBetween = (value: unknown, min: number, max: number): value is number => typeof value === 'number' && Number.isFinite(value) && value >= min && value <= max;
 const isBoolean = (value: unknown): value is boolean => typeof value === 'boolean';
@@ -78,6 +80,7 @@ const validators: { [K in keyof Preferences]: (value: unknown) => value is Prefe
   jam: (value): value is Record<string, JamChoice> => !!value && typeof value === 'object' && !Array.isArray(value),
   jamMixer: (value): value is MixerChoice => !!value && typeof value === 'object' && !Array.isArray(value),
   jamCountIn: isBoolean,
+  jamFretboard: (value): value is JamFretboardChoice => !!value && typeof value === 'object' && !Array.isArray(value),
 };
 const upgrades: { [K in keyof Preferences]?: (value: unknown) => unknown } = {
   fretboardSheet: withFretboardDefaults,

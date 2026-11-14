@@ -1,7 +1,8 @@
 import { INSTRUMENTS } from '../../core/instruments';
 import { MOODS, type Mood } from '../../core/moods';
 import { SCALES, isScaleId } from '../../core/scales';
-import { DEFAULT_FRETBOARD_CHOICE, FIRST_FRET, LAST_FRET, ROOT_OPTIONS, chooseScale, fretboardSheet as sheetFor, isFretboardChoice, stepPosition, toggleMood, windowLabel, withOfferedMove, type FretboardChoice, type FretboardSheet, type SheetMove } from '../../app/fretboardSheet';
+import { FIRST_FRET, LAST_FRET } from '../../app/fretboardMarks';
+import { DEFAULT_FRETBOARD_CHOICE, ROOT_OPTIONS, chooseScale, fretboardSheet as sheetFor, isFretboardChoice, stepPosition, toggleMood, windowLabel, withOfferedMove, type FretboardChoice, type FretboardSheet, type SheetMove } from '../../app/fretboardSheet';
 import type { Progression, ProgressionChord } from '../../core/progressions';
 import { pref, setPref } from '../../app/storage';
 import { byId } from '../dom';

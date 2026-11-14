@@ -48,8 +48,9 @@ export const rootName = (root: number, id: ScaleId) => spellPitchClass(root, use
 
 const degreeStep = (degree: string) => Number(degree.replace(/^[b#]/, '')) - 1;
 
-export function scaleNotes(root: number, id: ScaleId): ScaleNote[] {
-  const scale = scaleById(id), key = rootName(root, id);
+/** The notes of a scale, spelled up from rootSpelling: pass the key's own name so Db keeps its flats. */
+export function scaleNotes(root: number, id: ScaleId, rootSpelling = rootName(root, id)): ScaleNote[] {
+  const scale = scaleById(id), key = rootSpelling;
   return scale.intervals.map((interval, index) => {
     const pc = pitchClass(root + interval), degree = scale.degrees[index];
     const name = scale.flatIntervals?.includes(interval) ? spellPitchClass(pc, true) : letterName(pc, key, degreeStep(degree));
@@ -75,11 +76,14 @@ function numeralSuffix(quality: Quality, sevenths: boolean): string {
   return SEVENTH_NUMERAL_SUFFIXES[quality] ?? QUALITIES[quality].suffix;
 }
 
+/** The scale whose chords a scale plays over: its parent for pentatonic and blues, itself otherwise. */
+export const harmonyScaleId = (id: ScaleId): ScaleId => scaleById(id).chordsFrom ?? id;
+
 const sameIntervals = (a: readonly number[], b: readonly number[]) => a.length === b.length && a.every((n, i) => n === b[i]);
 
 /** The chord on each step of the scale, stacked in thirds; pentatonic and blues use their parent scale. */
 export function scaleChords(root: number, id: ScaleId, sevenths: boolean): ScaleChord[] {
-  const harmonyId = scaleById(id).chordsFrom ?? id;
+  const harmonyId = harmonyScaleId(id);
   const notes = scaleNotes(root, harmonyId);
   return notes.map((note, step) => {
     const tones = (sevenths ? [0, 2, 4, 6] : [0, 2, 4]).map(third => notes[(step + third) % notes.length]);
@@ -99,4 +103,18 @@ export function scaleChords(root: number, id: ScaleId, sevenths: boolean): Scale
       tones,
     };
   });
+}
+
+const MAJOR_KEY_SCALES: readonly ScaleId[] = ['major', 'major-pentatonic'];
+const MINOR_KEY_SCALES: readonly ScaleId[] = ['minor', 'minor-pentatonic', 'dorian'];
+const BLUES_SCALES: readonly ScaleId[] = ['minor-pentatonic', 'blues'];
+
+export interface ScaleFit { minorKey: boolean; bluesy: boolean }
+
+/** The scales that fit a key, the usual one first: blues and rock lead with minor pentatonic and blues. */
+export function fittingScales({ minorKey, bluesy }: ScaleFit): ScaleId[] {
+  const keyScales = minorKey ? MINOR_KEY_SCALES : MAJOR_KEY_SCALES;
+  if (!bluesy) return [...keyScales];
+  const otherKeyScales = keyScales.filter(id => !BLUES_SCALES.includes(id));
+  return [...BLUES_SCALES, ...otherKeyScales];
 }

@@ -157,6 +157,17 @@
     </div>
     <h2 id="jamBarsTitle" class="jam-bars-title">Chords</h2>
     <ol id="jamBars" class="jam-bars" aria-labelledby="jamBarsTitle"></ol>
+    <section class="jam-fretboard" aria-labelledby="jamFretboardTitle">
+      <h2 id="jamFretboardTitle" class="jam-bars-title">Fretboard</h2>
+      <div class="jam-fretboard-controls">
+        <div class="jam-key"><label for="jamScale">Scale</label><select id="jamScale"></select></div>
+        <div id="jamStringsField" class="jam-key"><label for="jamStrings">Bass</label><select id="jamStrings"><option value="bass4">4 strings</option><option value="bass5">5 strings</option><option value="bass6">6 strings</option></select></div>
+        <button id="jamDegrees" class="toggle" aria-pressed="false">Show degrees</button>
+      </div>
+      <p id="jamFretboardChord" class="jam-fretboard-chord" aria-live="polite"></p>
+      <p class="jam-fretboard-details"><span id="jamFretboardNext"></span>. <span id="jamFretboardScale"></span>.</p>
+      <div id="jamFretboardBoard" class="fretboard-board" tabindex="0" role="region" aria-label="Fretboard, scrolls sideways"></div>
+    </section>
     <section class="jam-mixer" aria-labelledby="jamMixerTitle">
       <div class="jam-mixer-head">
         <h2 id="jamMixerTitle" class="jam-bars-title">Mixer</h2>

@@ -2,6 +2,7 @@ import { parseGroove, type Groove } from '../core/groove';
 import { buildGrooveTimeline, type GrooveTimeline } from '../core/grooveTimeline';
 import { OWN_PROGRESSION, isMinorProgression, keyTonic, presetProgression, type Numeral } from '../core/harmony';
 import { isFamily, type Family } from '../core/instruments';
+import { fittingScales, isScaleId, type ScaleId } from '../core/scales';
 import { grooveSlug, type JamSetup } from './jamLink';
 import { pref, setPref, type JamChoice } from './storage';
 
@@ -11,6 +12,9 @@ export const JAM_TEMPO = { min: 40, max: 220 } as const;
 export const JAM_SWING = { min: 50, max: 66 } as const;
 const MAJOR_KEYS: readonly string[] = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B'];
 const MINOR_KEYS: readonly string[] = ['Cm', 'C#m', 'Dm', 'Ebm', 'Em', 'Fm', 'F#m', 'Gm', 'G#m', 'Am', 'Bbm', 'Bm'];
+const BLUESY_GENRES: ReadonlySet<string> = new Set(['blues', 'rock']);
+
+const isMinorKey = (key: string) => key.endsWith('m');
 
 export function bundledGrooves(files: Record<string, string>): BundledGroove[] {
   return Object.keys(files).sort().map(path => ({ slug: grooveSlug(path), groove: parseGroove(files[path]).groove }));
@@ -21,7 +25,7 @@ function byGenre(grooves: readonly BundledGroove[]): BundledGroove[] {
   return genres.flatMap(genre => grooves.filter(g => g.groove.genre === genre));
 }
 
-export const jamKeys = (groove: Groove): readonly string[] => (groove.key.endsWith('m') ? MINOR_KEYS : MAJOR_KEYS);
+export const jamKeys = (groove: Groove): readonly string[] => (isMinorKey(groove.key) ? MINOR_KEYS : MAJOR_KEYS);
 
 function jamKey(keys: readonly string[], key: string, fallback: string): string {
   if (keys.includes(key)) return key;
@@ -41,6 +45,7 @@ export class Jam {
   private chosenTempo = 0;
   private chosenProgression = OWN_PROGRESSION;
   private chosenSwing: number = JAM_SWING.min;
+  private chosenScale: ScaleId | null = null;
 
   constructor(grooves: readonly BundledGroove[]) {
     if (!grooves.length) throw new Error('No bundled grooves');
@@ -59,6 +64,17 @@ export class Jam {
   get keys(): readonly string[] {
     if (this.chosenProgression === OWN_PROGRESSION) return jamKeys(this.groove);
     return isMinorProgression(this.chords()) ? MINOR_KEYS : MAJOR_KEYS;
+  }
+  get scales(): ScaleId[] {
+    const minorKey = isMinorKey(this.chosenKey);
+    const bluesy = BLUESY_GENRES.has(this.groove.genre);
+    return fittingScales({ minorKey, bluesy });
+  }
+  /** The chosen scale while it fits the key, otherwise the usual scale of the groove. */
+  get scale(): ScaleId {
+    const scales = this.scales;
+    if (this.chosenScale && scales.includes(this.chosenScale)) return this.chosenScale;
+    return scales[0];
   }
 
   choose(slug: string): boolean {
@@ -115,6 +131,13 @@ export class Jam {
     return true;
   }
 
+  setScale(id: ScaleId): boolean {
+    if (!this.scales.includes(id) || id === this.scale) return false;
+    this.chosenScale = id;
+    this.save();
+    return true;
+  }
+
   timeline(): GrooveTimeline {
     return buildGrooveTimeline({ ...this.groove, progression: this.chords(), swing: this.chosenSwing }, this.chosenKey);
   }
@@ -125,15 +148,16 @@ export class Jam {
 
   private load() {
     const saved: unknown = Object.hasOwn(pref('jam', {}), this.slug) ? pref('jam', {})[this.slug] : null;
-    const { key, tempo, progression, swing } = saved && typeof saved === 'object' ? saved as JamChoice : {};
+    const { key, tempo, progression, swing, scale } = saved && typeof saved === 'object' ? saved as JamChoice : {};
     this.chosenProgression = typeof progression === 'string' && presetProgression(progression, this.groove.progression) ? progression : OWN_PROGRESSION;
     this.chosenKey = jamKey(this.keys, typeof key === 'string' ? key : this.groove.key, this.groove.key);
     this.chosenTempo = clamp(isFiniteNumber(tempo) ? tempo : this.groove.tempo, JAM_TEMPO);
     this.chosenSwing = clamp(isFiniteNumber(swing) ? swing : this.groove.swing, JAM_SWING);
+    this.chosenScale = isScaleId(scale) ? scale : null;
   }
 
   private save() {
-    const choice = { key: this.chosenKey, tempo: this.chosenTempo, progression: this.chosenProgression, swing: this.chosenSwing };
+    const choice = { key: this.chosenKey, tempo: this.chosenTempo, progression: this.chosenProgression, swing: this.chosenSwing, scale: this.chosenScale ?? undefined };
     setPref('jam', { ...pref('jam', {}), [this.slug]: choice });
   }
 }

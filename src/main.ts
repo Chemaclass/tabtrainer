@@ -16,6 +16,7 @@ import { PassagePlayback } from './app/passagePlayback';
 import { Navigation, navigationState, readRoute, type Route } from './app/navigation';
 import { DraftSession } from './app/draftSession';
 import { Jam, Mixer, bundledGrooves } from './app/jam';
+import { JamFretboardSettings } from './app/jamFretboard';
 import { jamShareLink, type JamSetup } from './app/jamLink';
 import { draftFlow } from './ui/editor/draftFlow';
 import { editorPane } from './ui/editor/editorPane';
@@ -35,6 +36,7 @@ import { transport } from './ui/player/transport';
 import { scoreView } from './ui/practice/scoreView';
 import { songHeader } from './ui/practice/songHeader';
 import { helpDialogs } from './ui/shell/helpDialogs';
+import { jamFretboardView } from './ui/jam/jamFretboard';
 import { jamView } from './ui/jam/jamView';
 import { mixerView } from './ui/jam/mixer';
 import { publishLayoutHeights } from './ui/shell/layoutMetrics';
@@ -58,14 +60,16 @@ const loop = new LoopEngine();
 
 helpDialogs();
 const view = screens(chooseFamily, () => showJam(jam.slug));
+const mixer = new Mixer(workspace.family);
+const jamFretboard = jamFretboardView(jam, mixer, new JamFretboardSettings(), loop);
 const jamming = jamView(jam, loop, {
   active: () => workspace.screen === 'jam',
   choose: slug => showJam(slug),
   changed: () => showLink(),
+  chordsChanged: bars => jamFretboard.show(bars),
   shareLink: () => jamShareLink(new URL(import.meta.env.BASE_URL, location.origin).href, jam.slug, jam.setup, import.meta.env.DEV),
 });
-const mixer = new Mixer(workspace.family);
-const mixing = mixerView(mixer, loop);
+const mixing = mixerView(mixer, loop, () => jamFretboard.show());
 const saveView = saveState(draftSession, workspace, () => files.download(), () => { setScreen('practice', true); showLink(true); });
 const score = scoreView({
   redraw: draw,
@@ -138,7 +142,10 @@ function showLibrary(kind = workspace.kind, push = true) {
 function showJam(slug: string, push = true, setup: JamSetup = {}) {
   const arriving = workspace.screen !== 'jam';
   if (jam.open(slug, setup)) jamming.show();
-  if (mixer.followLibrary(workspace.family)) mixing.show();
+  if (mixer.followLibrary(workspace.family)) {
+    mixing.show();
+    jamFretboard.show();
+  }
   setScreen('jam', arriving); showLink(push);
 }
 function pickSong(ref: string) {
