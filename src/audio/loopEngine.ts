@@ -1,12 +1,10 @@
-import { HAT_DRUMS } from '../core/groove';
-import type { DrumHit, GrooveTimeline } from '../core/grooveTimeline';
+import { HAT_DRUMS, type BackingPart } from '../core/groove';
+import type { DrumHit, GrooveBar, GrooveTimeline, PitchedHit } from '../core/grooveTimeline';
 import { DrumKit } from './drumKit';
 import { DRUM_KIT_TUNINGS, type DrummerFeel } from './drumKits';
 import { DrumRoom } from './drumRoom';
 import { Synth } from './synth';
 
-export const BACKING_PARTS = ['drums', 'bass', 'keys'] as const;
-export type BackingPart = typeof BACKING_PARTS[number];
 export interface LoopState { playing: boolean; countingIn: boolean; beat: number | null; bar: number | null; loop: number }
 export interface HumanizeLimits { seed: number; time: number; velocity: number }
 export interface HitOffset { time: number; velocity: number }
@@ -21,21 +19,45 @@ const START_DELAY = 0.08;
 const STOP_FADE = 0.015;
 const EPSILON = 1e-6;
 const PART_LEVEL: Record<BackingPart, number> = { drums: 0.9, bass: 0.8, keys: 0.45 };
+const BASS_VOICE_LEVEL = 0.4;
+const KEYS_VOICE_LEVEL = 0.5;
+const SOFTEST_DRUM = 0.05;
+const PART_GAIN_TIME = 0.01;
+const SECONDS_PER_MINUTE = 60;
 const LIMITER = { threshold: -6, knee: 0, ratio: 20, attack: 0.002, release: 0.12 } as const;
 const LOOSEST_FEEL = Math.max(...Object.values(DRUM_KIT_TUNINGS).map(tuning => tuning.feel.looseness));
 
 export const DEFAULT_HUMANIZE: HumanizeLimits = { seed: 1, time: 0.006, velocity: 0.08 };
 
-export function humanize(limits: HumanizeLimits, loop: number, hit: number): HitOffset {
-  let x = (Math.imul(limits.seed, 0x9e3779b1) ^ Math.imul(loop + 1, 0x85ebca6b) ^ Math.imul(hit + 1, 0xc2b2ae35)) >>> 0;
-  const next = () => {
+const UINT32_RANGE = 4294967296;
+
+/** Mixes the seed, loop and hit into one 32 bit state, so each hit of each loop gets its own offsets. */
+function hitState(seed: number, loop: number, hit: number): number {
+  return (Math.imul(seed, 0x9e3779b1) ^ Math.imul(loop + 1, 0x85ebca6b) ^ Math.imul(hit + 1, 0xc2b2ae35)) >>> 0;
+}
+
+/** The mulberry32 generator: repeatable numbers from 0 up to 1. */
+function mulberry32(state: number): () => number {
+  let x = state;
+  return () => {
     x = (x + 0x6d2b79f5) >>> 0;
     let t = Math.imul(x ^ (x >>> 15), 1 | x);
     t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    return ((t ^ (t >>> 14)) >>> 0) / UINT32_RANGE;
   };
-  return { time: (next() * 2 - 1) * limits.time, velocity: (next() * 2 - 1) * limits.velocity };
 }
+
+const spread = (random: number, limit: number) => (random * 2 - 1) * limit;
+
+export function humanize(limits: HumanizeLimits, loop: number, hit: number): HitOffset {
+  const random = mulberry32(hitState(limits.seed, loop, hit));
+  const time = spread(random(), limits.time);
+  const velocity = spread(random(), limits.velocity);
+  return { time, velocity };
+}
+
+/** The index of the bar playing at a beat of the loop, or -1 past the last bar; a beat a hair before a bar line counts as the next bar. */
+const barIndexAt = (bars: readonly GrooveBar[], beatInLoop: number) => bars.findIndex(bar => beatInLoop < bar.start + bar.length - EPSILON);
 
 export class LoopEngine {
   private synth: Synth;
@@ -70,23 +92,28 @@ export class LoopEngine {
 
   get playing() { return this.timer !== null; }
 
+  private get secondsPerBeat() { return SECONDS_PER_MINUTE / this.tempo; }
+
   on(fn: (state: LoopState) => void) { this.listeners.push(fn); }
 
   play() {
     if (this.playing) this.stop();
     if (!this.timeline || !this.synth.ensure()) return;
     this.connect();
-    const start = this.synth.now + START_DELAY, spb = 60 / this.tempo;
+    const start = this.synth.now + START_DELAY;
+    const spb = this.secondsPerBeat;
     const clicks = this.countIn ? Math.round(this.timeline.bars[0].length) : 0;
     for (let i = 0; i < clicks; i++) this.synth.click(start + i * spb, i === 0, 'count-in', this.clickVolume);
-    const t0 = start + clicks * spb;
-    this.countStart = start; this.countSpb = spb; this.countClicks = clicks;
-    this.countEnd = clicks ? t0 : 0;
-    this.out!.gain.cancelScheduledValues(t0 - STOP_FADE);
-    this.out!.gain.setValueAtTime(1, t0 - STOP_FADE);
-    this.current = { time: t0, beat: 0, spb, timeline: this.timeline };
+    const firstBeat = start + clicks * spb;
+    this.countStart = start;
+    this.countSpb = spb;
+    this.countClicks = clicks;
+    this.countEnd = clicks ? firstBeat : 0;
+    this.out!.gain.cancelScheduledValues(firstBeat - STOP_FADE);
+    this.out!.gain.setValueAtTime(1, firstBeat - STOP_FADE);
+    this.current = { time: firstBeat, beat: 0, spb, timeline: this.timeline };
     this.next = null;
-    this.scheduledUntil = t0;
+    this.scheduledUntil = firstBeat;
     this.timer = window.setInterval(() => this.tick(), TICK_MS);
     if (typeof document !== 'undefined') document.addEventListener('visibilitychange', this.onVisibility);
     this.emit();
@@ -103,7 +130,8 @@ export class LoopEngine {
       this.synth.cancel('count-in');
     }
     this.kit.reset();
-    this.current = null; this.next = null;
+    this.current = null;
+    this.next = null;
     this.emit();
   }
 
@@ -121,7 +149,9 @@ export class LoopEngine {
 
   setCountIn(enabled: boolean) { this.countIn = enabled; }
 
-  setClickVolume(volume: number) { if (Number.isFinite(volume)) this.clickVolume = Math.max(0, Math.min(1, volume)); }
+  setClickVolume(volume: number) {
+    if (Number.isFinite(volume)) this.clickVolume = Math.max(0, Math.min(1, volume));
+  }
 
   setRoom(enabled: boolean) {
     this.roomEnabled = enabled;
@@ -131,7 +161,7 @@ export class LoopEngine {
   setPartGain(part: BackingPart, gain: number) {
     if (!Number.isFinite(gain)) return;
     this.gains[part] = Math.max(0, gain);
-    if (this.buses && this.synth.started) this.buses[part].gain.setTargetAtTime(this.level(part), this.synth.now, 0.01);
+    if (this.buses && this.synth.started) this.buses[part].gain.setTargetAtTime(this.level(part), this.synth.now, PART_GAIN_TIME);
   }
 
   private level(part: BackingPart) { return PART_LEVEL[part] * this.gains[part]; }
@@ -142,9 +172,15 @@ export class LoopEngine {
     const limiter = this.limiter();
     this.out = ctx.createGain();
     this.out.connect(limiter);
-    const bus = (part: BackingPart) => { const g = ctx.createGain(); g.gain.value = this.level(part); g.connect(this.out!); return g; };
-    this.buses = { drums: bus('drums'), bass: bus('bass'), keys: bus('keys') };
+    this.buses = { drums: this.bus('drums'), bass: this.bus('bass'), keys: this.bus('keys') };
     this.room = new DrumRoom(ctx, this.buses.drums, this.out, this.roomEnabled);
+  }
+
+  private bus(part: BackingPart): GainNode {
+    const bus = this.synth.context.createGain();
+    bus.gain.value = this.level(part);
+    bus.connect(this.out!);
+    return bus;
   }
 
   private limiter(): AudioNode {
@@ -161,31 +197,47 @@ export class LoopEngine {
   private reschedule() {
     if (!this.playing || !this.current || !this.timeline) return;
     const now = this.synth.now;
-    if (this.next && now >= this.next.time) { this.current = this.next; this.next = null; }
+    this.advanceToNext(now);
     const base = this.current;
     if (now < base.time) {
-      this.synth.cancelFuture('backing', now);
-      const counting = now < this.countEnd;
-      if (counting) this.recount(now);
-      this.current = { time: counting ? this.countEnd : base.time, beat: this.mapBeat(base, base.beat, this.timeline), spb: 60 / this.tempo, timeline: this.timeline };
-      this.next = null;
-      this.scheduledUntil = this.current.time;
+      this.restartBeforeFirstBeat(base, this.timeline, now);
       return;
     }
-    const at = this.nextBarLine(base, this.beatAt(base, now + this.limits.time * LOOSEST_FEEL + EPSILON));
+    // A humanized hit can sound this much before its beat, so the change skips a bar line that close
+    const earliestHeard = now + this.limits.time * LOOSEST_FEEL + EPSILON;
+    const at = this.nextBarLine(base, this.beatAt(base, earliestHeard));
     const time = this.timeAt(base, at);
-    this.next = { time, beat: this.mapBeat(base, at, this.timeline), spb: 60 / this.tempo, timeline: this.timeline };
+    this.next = { time, beat: this.mapBeat(base, at, this.timeline), spb: this.secondsPerBeat, timeline: this.timeline };
     this.synth.cancelFuture('backing', time - EPSILON);
     this.scheduledUntil = Math.min(this.scheduledUntil, time);
+  }
+
+  /** Nothing has played yet, so the new tempo or timeline replaces the current segment outright. */
+  private restartBeforeFirstBeat(base: Segment, timeline: GrooveTimeline, now: number) {
+    this.synth.cancelFuture('backing', now);
+    const counting = now < this.countEnd;
+    if (counting) this.recount(now);
+    const time = counting ? this.countEnd : base.time;
+    this.current = { time, beat: this.mapBeat(base, base.beat, timeline), spb: this.secondsPerBeat, timeline };
+    this.next = null;
+    this.scheduledUntil = time;
+  }
+
+  private advanceToNext(now: number) {
+    if (!this.next || now < this.next.time) return;
+    this.current = this.next;
+    this.next = null;
   }
 
   private recount(now: number) {
     const next = Math.ceil((now - this.countStart) / this.countSpb - EPSILON);
     if (next >= this.countClicks) return;
-    const at = this.countStart + next * this.countSpb, spb = 60 / this.tempo;
+    const at = this.countStart + next * this.countSpb;
+    const spb = this.secondsPerBeat;
     this.synth.cancelFuture('count-in', now);
     for (let i = next; i < this.countClicks; i++) this.synth.click(at + (i - next) * spb, i === 0, 'count-in', this.clickVolume);
-    this.countStart = at - next * spb; this.countSpb = spb;
+    this.countStart = at - next * spb;
+    this.countSpb = spb;
     this.countEnd = at + (this.countClicks - next) * spb;
   }
 
@@ -193,25 +245,29 @@ export class LoopEngine {
   private timeAt(seg: Segment, beat: number) { return seg.time + (beat - seg.beat) * seg.spb; }
 
   private nextBarLine(seg: Segment, beat: number) {
-    const { total, bars } = seg.timeline, loop = Math.floor(beat / total);
+    const { total, bars } = seg.timeline;
+    const loop = Math.floor(beat / total);
     const inLoop = beat - loop * total;
     const bar = bars.find(b => b.start > inLoop + EPSILON);
     return bar ? loop * total + bar.start : (loop + 1) * total;
   }
 
+  /** The start of the matching bar in the new timeline, so a change of groove keeps the place in the form. */
   private mapBeat(seg: Segment, beat: number, timeline: GrooveTimeline) {
-    const { total, bars } = seg.timeline, loop = Math.floor(beat / total + EPSILON);
+    const { total, bars } = seg.timeline;
+    const loop = Math.floor(beat / total + EPSILON);
     const inLoop = beat - loop * total;
-    const index = Math.max(0, bars.findIndex(b => inLoop < b.start + b.length - EPSILON));
+    const index = Math.max(0, barIndexAt(bars, inLoop));
     return loop * timeline.total + timeline.bars[index % timeline.bars.length].start;
   }
 
   private lookAhead() { return typeof document !== 'undefined' && document.hidden ? HIDDEN_LOOK_AHEAD : LOOK_AHEAD; }
 
   private tick() {
-    const now = this.synth.now, end = now + this.lookAhead();
+    const now = this.synth.now;
+    const end = now + this.lookAhead();
     this.synth.forget(now);
-    if (this.next && now >= this.next.time) { this.current = this.next; this.next = null; }
+    this.advanceToNext(now);
     const from = Math.max(now, this.scheduledUntil);
     if (this.current && from < end) {
       if (this.next && this.next.time < end) {
@@ -226,26 +282,29 @@ export class LoopEngine {
   private schedule(seg: Segment, from: number, to: number) {
     if (to <= from) return;
     const { total, drums, bass, keys, voice } = seg.timeline;
-    const first = Math.floor(this.beatAt(seg, from) / total), last = Math.floor(this.beatAt(seg, to) / total);
+    const first = Math.floor(this.beatAt(seg, from) / total);
+    const last = Math.floor(this.beatAt(seg, to) / total);
     const limits = { ...this.limits, time: this.limits.time * this.feel(seg).looseness };
+    const inWindow = (when: number) => when >= from && when < to;
     for (let loop = Math.max(0, first); loop <= last; loop++) {
+      const timeOf = (hit: DrumHit | PitchedHit) => this.timeAt(seg, loop * total + hit.beat);
       drums.forEach((hit, i) => {
-        const when = this.timeAt(seg, loop * total + hit.beat);
-        if (when >= from && when < to) this.playDrum(seg, hit, when, humanize(limits, loop, i));
+        const when = timeOf(hit);
+        if (inWindow(when)) this.playDrum(seg, hit, when, humanize(limits, loop, i));
       });
       for (const hit of bass) {
-        const when = this.timeAt(seg, loop * total + hit.beat);
-        if (when >= from && when < to) this.synth.voice(when, hit.midi[0], hit.length * seg.spb, hit.velocity * 0.4, this.buses!.bass, 'backing');
+        const when = timeOf(hit);
+        if (inWindow(when)) this.synth.voice(when, hit.midi[0], hit.length * seg.spb, hit.velocity * BASS_VOICE_LEVEL, this.buses!.bass, 'backing');
       }
       for (const hit of keys) {
-        const when = this.timeAt(seg, loop * total + hit.beat);
-        if (when >= from && when < to) this.synth[voice](when, hit.midi, hit.length * seg.spb, hit.velocity * 0.5, this.buses!.keys);
+        const when = timeOf(hit);
+        if (inWindow(when)) this.synth[voice](when, hit.midi, hit.length * seg.spb, hit.velocity * KEYS_VOICE_LEVEL, this.buses!.keys);
       }
     }
   }
 
   private playDrum(seg: Segment, hit: DrumHit, when: number, offset: HitOffset) {
-    const velocity = Math.max(0.05, Math.min(1, hit.velocity * (1 + offset.velocity)));
+    const velocity = Math.max(SOFTEST_DRUM, Math.min(1, hit.velocity * (1 + offset.velocity)));
     const drift = this.isPinned(seg, hit) ? 0 : offset.time;
     const lag = HAT_DRUMS.includes(hit.drum) ? this.feel(seg).hatLagSeconds : 0;
     this.kit.play(hit.drum, when, velocity, this.buses!.drums, drift + lag, seg.timeline.kit);
@@ -260,16 +319,24 @@ export class LoopEngine {
   }
 
   private emit() {
-    const seg = this.current && this.next && this.synth.now >= this.next.time ? this.next : this.current;
-    let state: LoopState = { playing: this.playing, countingIn: false, beat: null, bar: null, loop: 0 };
-    if (this.playing && this.synth.now - this.synth.latency < this.countEnd) state.countingIn = true;
-    else if (seg && this.playing) {
-      const heard = Math.max(seg.time, this.synth.now - this.synth.latency);
-      const beat = Math.max(0, this.beatAt(seg, heard)), { total, bars } = seg.timeline;
-      const loop = Math.floor(beat / total + EPSILON), inLoop = Math.max(0, beat - loop * total);
-      const bar = bars.find(b => inLoop < b.start + b.length - EPSILON) ?? bars[bars.length - 1];
-      state = { playing: true, countingIn: false, beat: inLoop, bar: bar.bar, loop };
-    }
+    const state = this.state();
     this.listeners.forEach(fn => fn(state));
+  }
+
+  /** What the listener hears now, which lags what is scheduled by the output latency. */
+  private state(): LoopState {
+    const noBeat: LoopState = { playing: this.playing, countingIn: false, beat: null, bar: null, loop: 0 };
+    if (!this.playing) return noBeat;
+    const heardNow = this.synth.now - this.synth.latency;
+    if (heardNow < this.countEnd) return { ...noBeat, countingIn: true };
+    const seg = this.current && this.next && this.synth.now >= this.next.time ? this.next : this.current;
+    if (!seg) return noBeat;
+    const heard = Math.max(seg.time, heardNow);
+    const beat = Math.max(0, this.beatAt(seg, heard));
+    const { total, bars } = seg.timeline;
+    const loop = Math.floor(beat / total + EPSILON);
+    const inLoop = Math.max(0, beat - loop * total);
+    const bar = bars[barIndexAt(bars, inLoop)] ?? bars[bars.length - 1];
+    return { playing: true, countingIn: false, beat: inLoop, bar: bar.bar, loop };
   }
 }

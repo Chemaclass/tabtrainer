@@ -8,7 +8,7 @@ const ROOM = {
   channels: 2,
 };
 
-export function roomImpulse(context: BaseAudioContext): AudioBuffer {
+function roomImpulse(context: BaseAudioContext): AudioBuffer {
   const { sampleRate } = context;
   const length = Math.ceil(ROOM.seconds * sampleRate);
   const silentStart = Math.round(ROOM.preDelay * sampleRate);
