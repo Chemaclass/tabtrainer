@@ -14,3 +14,6 @@ export function normalizeSongReference(value: string, paths: string[]): string {
   const path = paths.find(path => withoutOrder(path) === wanted);
   return path ? 'demo:' + path : value;
 }
+// Points at the static page the build writes per song, so link previews show the song's own title.
+export const shareUrl = (root: string, path: string, version: string | null) =>
+  `${root}${songSlug(path)}/${version ? `?${new URLSearchParams({ version })}` : ''}`;

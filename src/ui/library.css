@@ -139,3 +139,9 @@ body:not(.library-view) .library-nav,body:not(.library-view) .dropdown:has([data
 @media(max-width:359px){
   .brand{gap:0;font-size:0}
 }
+#shareBtn[hidden]{display:none}
+.site-footer{max-width:1600px;margin:0 auto;padding:0 64px 40px;font-size:13px;color:var(--mut)}
+.site-footer a{color:var(--ink)}
+body:not(.library-view) .site-footer{display:none}
+@media(max-width:899px){.site-footer{padding:0 32px 32px}}
+@media(max-width:599px){.site-footer{padding:0 24px 24px}}

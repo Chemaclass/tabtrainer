@@ -5,6 +5,21 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>TabTrainer: learn bass and guitar from tab and notation</title>
   <meta name="description" content="Free, open-source tab and notation player for electric bass and guitar. Slow a song down, loop the hard bars, and follow each note as it plays." />
+  <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#0f0f0f" media="(prefers-color-scheme: dark)" />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="TabTrainer" />
+  <meta property="og:title" content="TabTrainer: learn bass and guitar from tab and notation" />
+  <meta property="og:description" content="Free, open-source tab and notation player for electric bass and guitar. Slow a song down, loop the hard bars, and follow each note as it plays." />
+  <meta property="og:url" content="__SITE_URL__" />
+  <meta property="og:image" content="__SITE_URL__og.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="TabTrainer: notation and tab for bass and guitar" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <script type="application/ld+json">
+    {"@context":"https://schema.org","@type":"WebApplication","name":"TabTrainer","url":"__SITE_URL__","description":"Free, open-source tab and notation player for electric bass and guitar. Slow a song down, loop the hard bars, and follow each note as it plays.","applicationCategory":"MusicApplication","operatingSystem":"Any web browser","isAccessibleForFree":true,"offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"author":{"@type":"Person","name":"Jose Maria Valera Reales","alternateName":"Chemaclass","url":"https://chemaclass.com"},"codeRepository":"https://github.com/Chemaclass/tabtrainer"}
+  </script>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='14' fill='%23111111'/><g stroke='%23fff' stroke-width='3'><line x1='12' y1='20' x2='52' y2='20'/><line x1='12' y1='30' x2='52' y2='30'/><line x1='12' y1='40' x2='52' y2='40'/></g><circle cx='38' cy='30' r='8' fill='%23e0312b'/></svg>" />
   <script>
     let theme = null;
@@ -36,6 +51,7 @@
       <input id="openFile" type="file" accept=".txt,.tab,.tabt,text/plain" hidden />
       <button id="saveBtn" class="ghost" title="Save to this browser's library">Save</button>
       <button id="dlBtn" class="ghost" title="Download the song as a text file">Download</button>
+      <button id="shareBtn" class="ghost" title="Copy a link that opens this song">Copy link</button>
       <button id="syntaxHelpBtn" class="ghost">Song format help</button>
       </nav>
     </details>
@@ -69,6 +85,7 @@
       <section class="reading-guide"><div class="guide-card"><h2>Make a little progress.</h2><p>Start slowly. A few comfortable bars are a good practice session.</p><button id="readTabBtn">How to read tab →</button></div><ol><li>Choose a comfortable level.</li><li>Try 50% or 75% speed.</li><li>Loop a few bars until they feel comfortable.</li></ol></section>
     </aside>
   </main>
+  <footer class="site-footer">Free and open source. Made by <a href="https://chemaclass.com" target="_blank" rel="noopener">Chemaclass</a> · <a href="https://github.com/Chemaclass/tabtrainer" target="_blank" rel="noopener">Source code on GitHub</a></footer>
   <div id="practiceScreen" hidden>
   <main class="layout noedit">
     <section id="editorPane" class="editor">
@@ -169,6 +186,7 @@ D |-------------|
 A |-----3-------|
 E |-0-------3---|</pre>
     <p>Read from left to right: play the open E string, fret 3 on the A string, then fret 3 on the E string.</p><p>Press Play to hear the rhythm. Start at 50% speed, follow the highlighted notes, and repeat a few bars until they feel comfortable.</p>
+    <footer class="dialog-credit">Made by <a href="https://chemaclass.com" target="_blank" rel="noopener">Chemaclass</a> · <a href="https://github.com/Chemaclass/tabtrainer" target="_blank" rel="noopener">Source code on GitHub</a></footer>
   </dialog>
   <dialog id="help">
     <form method="dialog"><button class="close round" aria-label="Close">✕</button></form>
@@ -208,6 +226,7 @@ time: 4/4
       <tr><td><code># ...</code></td><td>comment</td></tr>
     </table>
     <p class="muted">The app saves your songs in this browser. Use Download and Open to move a song to another device or share it.</p>
+    <footer class="dialog-credit">Made by <a href="https://chemaclass.com" target="_blank" rel="noopener">Chemaclass</a> · <a href="https://github.com/Chemaclass/tabtrainer" target="_blank" rel="noopener">Source code on GitHub</a></footer>
   </dialog>
   <script type="module" src="/src/main.ts"></script>
 </body>

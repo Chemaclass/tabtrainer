@@ -22,7 +22,7 @@ import { FAMILIES, familyOf, isFamily, type Family } from './core/instruments';
 import { renderSong } from './render/notation';
 import { Player } from './audio/player';
 import { library, removeSong, pref, setPref, recentPractice, recordPractice } from './ui/storage';
-import { findBySlug, normalizeSongReference, versionSlug } from './ui/songLink';
+import { findBySlug, normalizeSongReference, shareUrl, songSlug, versionSlug } from './ui/songLink';
 import { AutoScroller } from './ui/scrolling';
 import { Passage } from './ui/passage';
 import { playbackShortcut } from './ui/playbackShortcut';
@@ -108,13 +108,15 @@ function showLink(push = false) {
     : { screen, picked, version: parsed && parsed.versions.length > 1 ? versionSlug(parsed.versions[versionIdx].name) : null };
   navigation.show(route, picked, push);
 }
+const siteTitle = document.title;
+function showTitle() { document.title = screen === 'practice' && song ? `${song.meta.title} · TabTrainer` : siteTitle; }
 function setScreen(next: 'library' | 'practice', focus = false) {
   if (next === 'library') { player.stop(); if (scrollMode === 'continuous') setScrollMode('off'); }
   if (next === 'practice' && song) { family = familyOf(song.meta.instrument); setPref('family', family); setSelectValue($<HTMLSelectElement>('familySelect'), family); }
   screen = next; document.body.classList.toggle('library-view', next === 'library');
   $('libraryScreen').hidden = next !== 'library'; $('practiceScreen').hidden = next !== 'practice';
   document.querySelector<HTMLElement>('.player')!.hidden = next !== 'practice';
-  fillSongList(); showDirtyState();
+  showTitle(); fillSongList(); showDirtyState();
   if (next === 'practice') requestAnimationFrame(draw);
   if (focus) { window.scrollTo(0, 0); $(next === 'library' ? 'libraryTitle' : 'title').focus({ preventScroll: true }); }
 }
@@ -137,6 +139,7 @@ function renderPracticeNavigation() {
   $('nextExerciseBtn').hidden = !next; $('allExercisesBtn').hidden = !!next;
   if (next) { $('nextExerciseTitle').textContent = next.title; $('nextExerciseBtn').onclick = () => pickSong(next.value); }
   $('backLibraryBtn').onclick = () => showLibrary(kind);
+  showShare();
 }
 $('homeBtn').onclick = () => showLibrary();
 $('allExercisesBtn').onclick = () => showLibrary('exercises');
@@ -186,7 +189,7 @@ function update(resetLoop: boolean) {
   const f = familyOf(s.meta.instrument);
   if (screen === 'practice' && f !== family) { family = f; setPref('family', f); showFamily(); }
   $('barTotal').textContent = String(s.bars.length || '–');
-  document.title = `${s.meta.title} · TabTrainer`;
+  showTitle();
   const wasPlaying = player.playing;
   player.load(buildTimeline(s), s.meta.tempo); onsets = onsetsOf(player.notes);
   renderPracticeNavigation(); applyLoop(); draw(); showSpeed(); if (wasPlaying) setPlayLabel();
@@ -540,15 +543,18 @@ fileMenu.addEventListener('keydown', e => {
   }
 });
 const hasChanges = () => draftSession.hasChanges();
+// The link opens the bundled song, so it would drop unsaved edits.
+function showShare() { $('shareBtn').hidden = !picked.startsWith('demo:') || draftSession.hasChanges(); }
 function showDirtyState() {
   $('returnDraftBtn').hidden = screen !== 'library' || !hasChanges();
   document.querySelector<HTMLElement>('.save-state')!.hidden = !hasChanges() && !$('saveFeedback').textContent;
+  showShare();
   $('dirtyState').textContent = hasChanges() ? `Unsaved changes${draftSession.stored ? '' : ' (draft recovery unavailable)'}` : 'No unsaved changes';
 }
-function announceSave(message: string, failed = false) {
+function announceSave(message: string, failed = false, offerDownload = failed) {
   $('saveFeedback').textContent = message;
   $('saveFeedback').classList.toggle('bad', failed);
-  $('recoverDownload').hidden = !failed; showDirtyState();
+  $('recoverDownload').hidden = !offerDownload; showDirtyState();
 }
 function persistDraft() {
   draftSession.persist(picked);
@@ -590,6 +596,19 @@ $<HTMLInputElement>('openFile').onchange = async e => {
 const showEditor = (on: boolean) => { document.querySelector('.layout')!.classList.toggle('noedit', !on); $('editBtn').classList.toggle('on', on); $('editBtn').setAttribute('aria-pressed', String(on)); setPref('editor', on); setTimeout(draw, 50); };
 editorResize($('editorPane'), $('editorResize'), draw);
 $('hideEditorBtn').onclick = () => { showEditor(false); $('editBtn').focus(); };
+$('shareBtn').onclick = async () => {
+  const version = parsed && parsed.versions.length > 1 ? versionSlug(parsed.versions[versionIdx].name) : null;
+  const root = new URL(import.meta.env.BASE_URL, location.origin).href;
+  // Only the build writes the per-song pages.
+  const url = import.meta.env.DEV ? `${root}?${new URLSearchParams({ song: songSlug(picked.slice(5)), ...version && { version } })}` : shareUrl(root, picked.slice(5), version);
+  try {
+    if (navigator.share && matchMedia('(pointer:coarse)').matches) { await navigator.share({ title: document.title, url }); return; }
+    await navigator.clipboard.writeText(url);
+    announceSave(`Link copied: ${url}`);
+  } catch (error) {
+    if (!(error instanceof DOMException && error.name === 'AbortError')) announceSave(`Could not copy the link: ${url}`, true, false);
+  }
+};
 $('editBtn').onclick = () => showEditor(document.querySelector('.layout')!.classList.contains('noedit'));
 const showNotationState = () => { $('notaBtn').setAttribute('aria-pressed', String(showNota)); $('tabBtn').setAttribute('aria-pressed', String(!showNota)); };
 const setNotation = (on: boolean) => { showNota = on; setPref('notation', on); $('notaBtn').classList.toggle('on', on); $('tabBtn').classList.toggle('on', !on); showNotationState(); draw(); };
