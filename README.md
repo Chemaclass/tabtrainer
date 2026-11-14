@@ -54,6 +54,39 @@ time: 4/4
 | `== Bass line` | starts another version of the song, such as a solo arrangement |
 | `# ...` | comment |
 
+## Groove format
+
+A groove is a backing loop to improvise over. Bundled grooves live in `src/grooves/`. The headers work like the song format; then each part gets one line of steps.
+
+```text
+title: My shuffle
+genre: blues
+about: A twelve bar shuffle to practise blues lines.
+tempo: 80
+key: A                 # the chords follow any key
+time: 4/4
+swing: 66              # 50 is straight, 66 is a triplet shuffle, up to 75
+progression: I7 IV7 I7 I7 | IV7 IV7 I7 I7 | V7 IV7 I7 V7
+
+hat:   xoXoxoXo        # one bar of 8 steps, repeated every bar
+snare: ..X...X. | ..X..oX.
+kick:  X...x... | X...x..o
+keys:  ..X-..X-
+bass:  1 - 3 - 5 - b7 -
+```
+
+| Syntax | Meaning |
+| --- | --- |
+| `I7 iv bVII` | one chord per bar as a roman numeral: upper case is major, lower case is minor, `b` or `#` shifts it. Numerals count from the major scale of the key's root, so a minor key uses `i iv v bIII bVI bVII` |
+| `7 maj7 m7 m7b5 dim sus4 5` | chord qualities after the numeral |
+| `kick snare hat openhat ride crash` | drum lines: `X` accent, `x` hit, `o` soft hit, `.` silence |
+| `keys` | chord stabs: `X` accent, `x` stab, `-` hold the stab, `.` silence |
+| `bass` | chord degrees separated by spaces: `1 3 5 b7 8`, `-` hold, `.` silence |
+| `\|` | starts the next bar of a part; a part shorter than the progression repeats |
+| `# ...` | comment, on its own line or after a space (`#IV` is a numeral) |
+
+The steps in a bar set its grid. In 4/4 that is 8 for eighths, 12 for triplets or 16 for sixteenths. Swing moves the off beat eighths, or the off beat sixteenths when no part plays eighths.
+
 ## Development
 
 ```bash

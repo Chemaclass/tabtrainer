@@ -1,0 +1,15 @@
+title: Blues shuffle in A
+genre: blues
+about: A twelve bar shuffle in A to practise blues lines over the I, IV and V chords.
+tempo: 80
+key: A
+time: 4/4
+swing: 66
+progression: I7 IV7 I7 I7 | IV7 IV7 I7 I7 | V7 IV7 I7 V7
+
+# eight swung eighths per bar: 1 & 2 & 3 & 4 &
+crash: x....... | ........ | ........ | ........ | ........ | ........ | ........ | ........ | ........ | ........ | ........ | ........
+hat:   xoXoxoXo
+snare: ..X...X. | ..X..oX.
+kick:  X...x... | X...x..o
+keys:  ..X-..X- | ..X-.xX-
