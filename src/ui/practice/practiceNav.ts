@@ -15,6 +15,7 @@ export interface PracticeNavState {
 export function practiceNav(onBack: (kind: LibraryKind) => void, onNext: (value: string) => void) {
   const continuation = byId('exerciseContinuation'), nextButton = byId('nextExerciseBtn'), allButton = byId('allExercisesBtn');
   let dismissed = false;
+  allButton.onclick = () => onBack('exercises');
   byId('closeContinuationBtn').onclick = () => { dismissed = true; byId('playBtn').focus(); continuation.hidden = true; };
   return {
     show({ title, instrument, kind, next, practising }: PracticeNavState) {

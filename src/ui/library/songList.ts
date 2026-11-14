@@ -24,7 +24,6 @@ export function songList(songbook: Songbook, workspace: Workspace, openSong: Ope
   const practice = practiceNav(kind => actions.showLibrary(kind), actions.pick);
   const catalogue = libraryView(ref => actions.pick(ref), actions.newSong, () => actions.openFile(), () => { actions.showLibrary('exercises'); byId('libraryTitle').focus({ preventScroll: true }); });
   byId('homeBtn').onclick = () => actions.showLibrary();
-  byId('allExercisesBtn').onclick = () => actions.showLibrary('exercises');
   byId('libraryOpenBtn').onclick = () => actions.openFile();
   function showNavigation() {
     tabs.show(categoryCounts(entries, workspace.family), workspace.kind);
