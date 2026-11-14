@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { Navigation, navigationState, readRoute, routeSearch, type Route } from '../src/ui/navigation';
+import { Navigation, navigationState, readRoute, routeSearch, type Route } from '../src/app/navigation';
 
 const path = './songs/bass/songs/07-a-dawning.txt';
 describe('routes', () => {

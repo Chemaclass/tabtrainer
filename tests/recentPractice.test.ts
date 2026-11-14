@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { recentPractice, recordPractice } from '../src/ui/storage';
+import { recentPractice, recordPractice } from '../src/app/storage';
 
 afterEach(() => vi.unstubAllGlobals());
 describe('recent practice', () => {

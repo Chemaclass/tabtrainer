@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { playbackShortcut } from '../src/ui/playbackShortcut';
+import { playbackShortcut } from '../src/app/playbackShortcut';
 
 function event(overrides: Partial<KeyboardEvent> = {}) {
   return {

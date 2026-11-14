@@ -2,7 +2,7 @@ import { defineConfig, type Plugin } from 'vite';
 import { mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { sharePage, sitemap, songMeta } from './src/build/sharePages';
-import { songSlug } from './src/ui/songLink';
+import { songSlug } from './src/app/songLink';
 
 // GitHub Pages serves the app from /<repo>/. For a custom domain, set BASE=/ and SITE_URL to its address.
 const base = process.env.BASE ?? '/tabtrainer/';

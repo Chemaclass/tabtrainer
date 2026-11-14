@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { readdirSync } from 'node:fs';
-import { findBySlug, normalizeSongReference, songSlug, versionSlug } from '../src/ui/songLink';
+import { findBySlug, normalizeSongReference, songSlug, versionSlug } from '../src/app/songLink';
 
 describe('song links', () => {
   it('names a song by family and file name, without the order number', () => {

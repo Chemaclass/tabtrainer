@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { library, saveSong, setPref } from '../src/ui/storage';
+import { library, saveSong, setPref } from '../src/app/storage';
 
 afterEach(() => vi.unstubAllGlobals());
 describe('saving songs', () => {
@@ -30,7 +30,7 @@ describe('preferences', () => {
     vi.stubGlobal('localStorage', { getItem: () => JSON.stringify(value) });
   }
   it('rejects valid JSON with the wrong type or bounds', async () => {
-    const { pref } = await import('../src/ui/storage');
+    const { pref } = await import('../src/app/storage');
     store('false'); expect(pref('editor', false)).toBe(false);
     store('dark'); expect(pref('theme', null)).toBe('dark');
     store('blue'); expect(pref('theme', null)).toBeNull();
@@ -40,7 +40,7 @@ describe('preferences', () => {
     store('piano'); expect(pref('family', 'bass')).toBe('bass');
   });
   it('validates practice timing preferences and falls back when storage is blocked', async () => {
-    const { pref } = await import('../src/ui/storage');
+    const { pref } = await import('../src/app/storage');
     store(true); expect(pref('metronome', false)).toBe(true); expect(pref('countIn', false)).toBe(true);
     store('true'); expect(pref('metronome', false)).toBe(false); expect(pref('countIn', false)).toBe(false);
     for (const value of [0, 50, 100]) { store(value); expect(pref('clickVolume', 50)).toBe(value); }
@@ -49,7 +49,7 @@ describe('preferences', () => {
     expect(pref('metronome', false)).toBe(false); expect(pref('countIn', false)).toBe(false); expect(pref('clickVolume', 50)).toBe(50);
   });
   it('retains valid settings and checks every recovered draft field', async () => {
-    const { pref } = await import('../src/ui/storage');
+    const { pref } = await import('../src/app/storage');
     store(0.8); expect(pref('zoom', 1)).toBe(0.8);
     store(true); expect(pref('notation', false)).toBe(true);
     store({ text: 'changed', base: 'original', picked: 'lib:Song' });
@@ -61,7 +61,7 @@ describe('preferences', () => {
 describe('gradual speed settings', () => {
   const fallback = { repetitions: 4, increase: 5, target: 100 };
   it('reads valid settings and rejects malformed or missing values', async () => {
-    const { pref } = await import('../src/ui/storage');
+    const { pref } = await import('../src/app/storage');
     let raw: string | null = null;
     vi.stubGlobal('localStorage', { getItem: () => raw });
     expect(pref('speedPractice', fallback)).toEqual(fallback);
@@ -75,7 +75,7 @@ describe('gradual speed settings', () => {
     expect(pref('speedPractice', fallback)).toEqual(fallback);
   });
   it('only saves valid settings and handles blocked writes', async () => {
-    const { pref } = await import('../src/ui/storage');
+    const { pref } = await import('../src/app/storage');
     const values = new Map<string, string>();
     vi.stubGlobal('localStorage', { getItem: (key: string) => values.get(key) ?? null, setItem: (key: string, value: string) => values.set(key, value) });
     const valid = { repetitions: 4, increase: 5, target: 80 };

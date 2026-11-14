@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { Passage } from '../src/ui/passage';
+import { Passage } from '../src/app/passage';
 
 function song() { const passage = new Passage(); passage.setSong(8, true); return passage; }
 describe('practice passage', () => {

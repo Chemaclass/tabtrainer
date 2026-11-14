@@ -14,7 +14,8 @@ A static web app for practising bass and guitar from tab and notation. TypeScrip
 - `src/core/`: song model, text parser and serializer, timeline, instruments.
 - `src/render/notation.ts` draws notation and tab with VexFlow.
 - `src/audio/player.ts` is the Web Audio player. `src/main.ts` wires the page.
-- `src/ui/` keeps the local song library and preferences in the browser.
+- `src/app/`: what the app knows and decides without the page: saved songs and preferences, navigation, catalogue, passage, scrolling. No `document`.
+- `src/ui/`: DOM code only.
 - `src/songs/<instrument>/<exercises|songs>/NN-name.txt` are the bundled songs. Add one with the `new-song` skill.
 
 ## Before you finish

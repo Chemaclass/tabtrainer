@@ -1,5 +1,5 @@
 import { parseSong } from '../core/parser';
-import { songSlug } from '../ui/songLink';
+import { songSlug } from '../app/songLink';
 
 export interface SongMeta { title: string; about: string; family: string }
 
