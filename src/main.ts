@@ -46,6 +46,7 @@ import { scrollControls } from './ui/player/scrollControls';
 import { speedControls } from './ui/player/speedControls';
 import { speedPracticePanel } from './ui/player/speedPracticePanel';
 import { timingPanel } from './ui/player/timingPanel';
+import { transport } from './ui/player/transport';
 import { scoreView } from './ui/practice/scoreView';
 
 const songbook = new Songbook(import.meta.glob('./songs/*/*/*.txt', { query: '?raw', import: 'default', eager: true }) as Record<string, string>, library);
@@ -183,7 +184,7 @@ function update(resetLoop: boolean) {
   showTitle();
   const wasPlaying = player.playing;
   player.load(buildTimeline(s), s.meta.tempo); onsets = onsetsOf(player.notes);
-  renderPracticeNavigation(); applyLoop(); draw(); speed.show(); if (wasPlaying) setPlayLabel();
+  renderPracticeNavigation(); applyLoop(); draw(); speed.show(); if (wasPlaying) transportView.showPlayButton();
 }
 function renderVersions() {
   const versions = openSong.versions, versionIdx = openSong.versionIndex;
@@ -249,38 +250,25 @@ function draw() {
 }
 
 // ---------- player wiring ----------
-const setPlayLabel = () => {
-  const b = $('playBtn'); b.classList.toggle('pause', player.playing);
-  b.setAttribute('aria-label', player.playing ? 'Pause' : player.canResume ? 'Resume' : 'Play');
-};
 let onsets: number[] = [];
 let playbackWasActive = false;
-let lastPhase = player.phase;
-player.on(({ beat, playing, phase, countInRemaining }) => {
-  const display = $('countInDisplay');
-  display.hidden = phase !== 'counting-in';
-  display.textContent = phase === 'counting-in' ? `Count-in: ${countInRemaining ?? ''}` : '';
-  if (phase !== lastPhase) {
-    $('playbackStatus').textContent = phase === 'counting-in' ? 'Counting in' : phase === 'playing' ? 'Playing' : phase === 'paused' ? 'Paused' : 'Stopped';
-    lastPhase = phase;
-  }
-  setPlayLabel();
-  if (phase === 'counting-in') { playbackWasActive = false; return; }
+player.on(state => {
+  transportView.show(state);
+  if (state.phase === 'counting-in') { playbackWasActive = false; return; }
   const started = player.playing && !playbackWasActive; playbackWasActive = player.playing;
   if (started && workspace.picked) { recordPractice(workspace.picked); fillSongList(); }
-  if (beat === null) { passagePlayback.deselect(); showPassage(); score.clear(); $('barNo').textContent = '–'; return; }
-  score.highlight(playing ? onsetAt(onsets, beat) : null);
-  const bar = player.barAt(beat); $('barNo').textContent = bar ? String(bar) : '–';
+  if (state.beat === null) { passagePlayback.deselect(); showPassage(); score.clear(); transportView.showBar(null); return; }
+  score.highlight(state.playing ? onsetAt(onsets, state.beat) : null);
+  const bar = player.barAt(state.beat); transportView.showBar(bar);
   const newLine = score.showBar(bar);
   if (scrolling.follows() && player.playing && (newLine || started)) score.followLine();
 });
-$('playBtn').onclick = () => player.toggle();
 function stopPlayback() {
   scrolling.stopContinuous();
   passagePlayback.stop();
   showPassage();
 }
-$('stopBtn').onclick = stopPlayback;
+const transportView = transport(player, stopPlayback);
 const speed = speedControls(player);
 document.querySelectorAll<HTMLDetailsElement>('.timing, .speed-practice').forEach(closeOnOutside);
 const speedPractice = speedPracticePanel(player, () => passage.snapshot().repeat, speed.show);
@@ -416,7 +404,7 @@ publishHeight($('exerciseContinuation'), '--continuation-h');
 publishHeight(one('.save-state'), '--save-state-h');
 
 // ---------- start ----------
-setPlayLabel();
+transportView.showPlayButton();
 editor.show(pref('editor', false));
 const plan = startupPlan({ search: location.search, historyPick: storedNavigation?.picked ?? null, draft: pref('draft', null), last: pref('last', null), lastPick: pref('picked', '') }, songbook);
 const linkedVersion = new URLSearchParams(location.search).get('version');
