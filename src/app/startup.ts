@@ -19,7 +19,7 @@ export type StartupPlan =
 export function startupPlan(input: StartupInput, songbook: Pick<Songbook, 'paths' | 'text'>): StartupPlan {
   const resolve = (ref: string) => normalizeSongReference(ref, songbook.paths);
   const query = new URLSearchParams(input.search);
-  const linked = findBySlug(songbook.paths, query.get('song') ?? '');
+  const linked = query.get('view') === 'jam' ? undefined : findBySlug(songbook.paths, query.get('song') ?? '');
   const historyPick = input.historyPick === null ? null : resolve(input.historyPick);
   const savedReopened = query.get('view') === 'practice' && historyPick !== null && isSavedRef(historyPick) && songbook.text(historyPick) !== undefined;
   const requested = linked ? bundledRef(linked) : savedReopened ? historyPick : null;

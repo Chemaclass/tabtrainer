@@ -25,7 +25,7 @@ export function songList(songbook: Songbook, workspace: Workspace, openSong: Ope
   const catalogue = libraryView(ref => actions.pick(ref), actions.newSong, () => actions.openFile(), () => { actions.showLibrary('exercises'); byId('libraryTitle').focus({ preventScroll: true }); });
   byId('libraryOpenBtn').onclick = () => actions.openFile();
   function showNavigation() {
-    tabs.show(categoryCounts(entries, workspace.family), workspace.kind);
+    tabs.show(categoryCounts(entries, workspace.family), workspace.screen === 'jam' ? null : workspace.kind);
     const kind = entries.find(e => e.value === workspace.picked)?.kind ?? 'mine';
     const song = openSong.song;
     practice.show({

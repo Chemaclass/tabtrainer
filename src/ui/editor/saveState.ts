@@ -9,7 +9,7 @@ export function saveState(draftSession: DraftSession, workspace: Workspace, onDo
   // The link opens the bundled song, so it would drop unsaved edits.
   function showShare() { byId('shareBtn').hidden = bundledPath(workspace.picked) === null || draftSession.hasChanges(); }
   function show() {
-    byId('returnDraftBtn').hidden = workspace.screen !== 'library' || !hasChanges();
+    byId('returnDraftBtn').hidden = workspace.screen === 'practice' || !hasChanges();
     one('.save-state').hidden = !hasChanges() && !feedback.textContent;
     showShare();
     byId('dirtyState').textContent = hasChanges() ? `Unsaved changes${draftSession.stored ? '' : ' (draft recovery unavailable)'}` : 'No unsaved changes';

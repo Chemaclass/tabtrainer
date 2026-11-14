@@ -3,14 +3,15 @@ import { isLibraryKind, type LibraryKind } from './catalogue';
 import type { Route } from './navigation';
 import { pref, setPref } from './storage';
 
-export type Screen = 'library' | 'practice';
+export type Screen = 'library' | 'practice' | 'jam';
 
 export class Workspace {
   private constructor(private shown: Screen, private libraryKind: LibraryKind, private instrument: Family, private ref = '') {}
 
   static fromQuery(search: string) {
     const query = new URLSearchParams(search);
-    const screen: Screen = query.has('song') || query.get('view') === 'practice' ? 'practice' : 'library';
+    const view = query.get('view');
+    const screen: Screen = view === 'jam' ? 'jam' : query.has('song') || view === 'practice' ? 'practice' : 'library';
     const kind = query.get('kind') ?? pref('libraryKind', 'exercises');
     const family = query.get('instrument') ?? pref('family', 'bass');
     return new Workspace(screen, isLibraryKind(kind) ? kind : 'exercises', isFamily(family) ? family : 'bass');
@@ -50,7 +51,8 @@ export class Workspace {
 
   restore(ref: string) { this.ref = ref; }
 
-  route(version: string | null): Route {
+  route(version: string | null, groove = ''): Route {
+    if (this.shown === 'jam') return { screen: 'jam', groove };
     return this.shown === 'library' ? { screen: 'library', kind: this.libraryKind, family: this.instrument } : { screen: 'practice', picked: this.ref, version };
   }
 

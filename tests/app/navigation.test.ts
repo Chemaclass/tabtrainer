@@ -23,6 +23,17 @@ describe('routes', () => {
     expect(search).toBe('view=practice'); expect(readRoute(search, [], route.picked)).toEqual(route);
     expect(readRoute(search, []).screen).toBe('practice');
   });
+  it('round trips the jam screen and drops song and library parameters', () => {
+    const route: Route = { screen: 'jam', groove: 'blues-shuffle' };
+    const search = routeSearch('?song=bass/a-dawning&version=solo&kind=songs&instrument=guitar&extra=keep', route);
+    expect(search).toBe('extra=keep&view=jam&groove=blues-shuffle');
+    expect(readRoute(search, [path])).toEqual(route);
+    expect(readRoute('?view=jam', [path])).toEqual({ screen: 'jam', groove: '' });
+  });
+  it('leaves the groove out of other screens', () => {
+    expect(new URLSearchParams(routeSearch('?view=jam&groove=blues-shuffle', { screen: 'library', kind: 'songs', family: null })).has('groove')).toBe(false);
+    expect(routeSearch('?view=jam&groove=blues-shuffle', { screen: 'practice', picked: 'demo:' + path, version: null })).toBe('song=bass/a-dawning');
+  });
   it('normalizes unknown library categories and instruments', () => {
     expect(readRoute('?kind=unknown&instrument=piano', [])).toEqual({ screen: 'library', kind: 'exercises', family: null });
     expect(navigationState({ app: 'tabtrainer', index: 1.5, picked: '' })).toBeNull();

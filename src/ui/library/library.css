@@ -153,3 +153,7 @@ body:not(.library-view) .library-nav,body:not(.library-view) .dropdown:has([data
 body:not(.library-view) .site-footer{display:none}
 @media(max-width:899px){.site-footer{padding:0 32px 32px}}
 @media(max-width:599px){.site-footer{padding:0 24px 24px}}
+@media(max-width:419px){
+  .library-nav button{flex:auto;white-space:nowrap;font-size:13px}
+  .library-nav .nav-count{min-width:0;padding:3px 4px}
+}
