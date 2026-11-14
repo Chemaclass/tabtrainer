@@ -1,4 +1,5 @@
 import type { TimedNote, BarSpan } from '../core/timeline';
+import { Synth } from './synth';
 import { advanceSpeedPractice, isSpeedPracticeConfig, type SpeedPracticeConfig, type SpeedPracticeProgress } from '../core/speedPractice';
 
 export interface SpeedPracticeState { enabled: boolean; active: boolean; startingSpeed: number | null; speed: number; completed: number; repetitions: number; target: number; reached: boolean }
@@ -9,8 +10,6 @@ export interface LoopCompletion { time: number; traversal: number; full: boolean
 export type PlayerPhase = 'stopped' | 'counting-in' | 'playing' | 'paused';
 export interface PlayerState { playing: boolean; beat: number | null; phase: PlayerPhase; countInRemaining: number | null }
 type Listener = (s: PlayerState) => void;
-type SourceKind = 'instrument' | 'count-in' | 'metronome';
-type Scheduled = { node: OscillatorNode; kind: SourceKind; start: number; end: number };
 
 export class Player {
   private practice: SpeedPracticeConfig | null = null;
@@ -23,14 +22,12 @@ export class Player {
   private previousPass: Pass | null = null;
   private nextPassId = 1;
   private resumeEligible = false;
-  private ctx: AudioContext | null = null;
-  private master: GainNode | null = null;
+  private synth = new Synth();
   private timer: number | null = null;
   private t0 = 0; private from = 0; private to = 0;
   private paused: number | null = null;
   private resumeMusic = false;
   private listeners: Listener[] = [];
-  private sources: Scheduled[] = [];
   private scheduledUntil = 0; private clickScheduledUntil = 0;
   private countStart = 0; private countEnd = 0; private countBeats = 0; private countStep = 1;
   private state: PlayerPhase = 'stopped';
@@ -56,20 +53,20 @@ export class Player {
     this.practice = { ...config }; this.baseline = Math.round(this.speed * 100); this.progress = { speed: this.baseline, completed: 0 };
     this.practiceActive = this.playing;
     this.resumeEligible = this.paused !== null && Math.abs(this.paused - this.passageStart()) < 1e-6;
-    if (this.playing && this.ctx) {
-      this.rebuildPractice(this.ctx.currentTime <= this.t0 && Math.abs(this.from - this.passageStart()) < 1e-6);
+    if (this.playing && this.synth.started) {
+      this.rebuildPractice(this.synth.now <= this.t0 && Math.abs(this.from - this.passageStart()) < 1e-6);
     }
     this.emitPractice('enabled'); return true;
   }
   private endPractice() {
     if (!this.practice) return;
     this.reconcile();
-    const beat = this.playing && this.ctx ? this.position(this.ctx.currentTime) : null;
+    const beat = this.playing && this.synth.started ? this.position(this.synth.now) : null;
     this.resumeEligible = false;
     this.practice = null; this.baseline = null; this.practiceActive = false; this.progress = { speed: Math.round(this.speed * 100), completed: 0 }; this.passes = [];
-    if (beat !== null && this.ctx && this.state === 'playing') {
-      this.cancelFuture(); this.from = beat; this.t0 = Math.max(this.ctx.currentTime, this.t0); this.rescheduleFrom(this.ctx.currentTime);
-    } else if (this.playing && this.ctx) { this.cancelFuture(); this.rescheduleFrom(this.ctx.currentTime); }
+    if (beat !== null && this.synth.started && this.state === 'playing') {
+      this.synth.cancelFuture(); this.from = beat; this.t0 = Math.max(this.synth.now, this.t0); this.rescheduleFrom(this.synth.now);
+    } else if (this.playing && this.synth.started) { this.synth.cancelFuture(); this.rescheduleFrom(this.synth.now); }
     this.emitPractice('ended');
   }
   on(fn: Listener) { this.listeners.push(fn); }
@@ -77,66 +74,24 @@ export class Player {
   get playing() { return this.state === 'playing' || this.state === 'counting-in'; }
   get phase() { return this.state; }
   get countInRemaining() {
-    if (this.state !== 'counting-in' || !this.ctx) return null;
-    return Math.max(1, Math.min(this.countBeats, Math.ceil((this.countEnd - Math.max(this.ctx.currentTime, this.countStart)) / (this.countStep * this.spb()))));
+    if (this.state !== 'counting-in' || !this.synth.started) return null;
+    return Math.max(1, Math.min(this.countBeats, Math.ceil((this.countEnd - Math.max(this.synth.now, this.countStart)) / (this.countStep * this.spb()))));
   }
   get canResume() { return this.resumeMusic && this.state === 'paused'; }
   get pausedAt() { return this.paused; }
   private passageStart() { return (this.range ?? [0, this.total])[0]; }
   private spb() { return 60 / (this.tempo * this.speed); }
-  private remember(node: OscillatorNode, kind: SourceKind, start: number, end: number) { this.sources.push({ node, kind, start, end }); }
-  private cancel(kind?: SourceKind) {
-    const now = this.ctx?.currentTime ?? 0;
-    this.sources = this.sources.filter(s => {
-      if (kind && s.kind !== kind) return s.end > now;
-      try { s.node.stop(now); } catch { /* The source has already ended. */ }
-      return false;
-    });
-  }
   private rescheduleFrom(time: number) { this.scheduledUntil = time + 1e-6; this.clickScheduledUntil = this.scheduledUntil; }
-  private cancelFuture() {
-    const now = this.ctx?.currentTime ?? 0;
-    this.sources = this.sources.filter(s => {
-      if (s.start <= now) return s.end > now;
-      try { s.node.stop(now); } catch { /* The source has already ended. */ }
-      return false;
-    });
-  }
-  private voice(when: number, midi: number, dur: number, vel: number) {
-    const ctx = this.ctx!, f = 440 * Math.pow(2, (midi - 69) / 12);
-    const o = ctx.createOscillator(), o2 = ctx.createOscillator(), g = ctx.createGain(), lp = ctx.createBiquadFilter(), g2 = ctx.createGain();
-    o.type = 'sawtooth'; o2.type = 'sine'; o.frequency.value = f; o2.frequency.value = f;
-    lp.type = 'lowpass'; lp.frequency.setValueAtTime(Math.min(5000, f * 10), when); lp.frequency.exponentialRampToValueAtTime(Math.max(180, f * 2), when + 0.4);
-    g.gain.setValueAtTime(0.0001, when); g.gain.exponentialRampToValueAtTime(vel, when + 0.008); g.gain.exponentialRampToValueAtTime(0.0008, when + dur);
-    g2.gain.value = 0.6; o.connect(lp); o2.connect(g2); g2.connect(g); lp.connect(g); g.connect(this.master!);
-    o.start(when); o2.start(when); o.stop(when + dur + 0.05); o2.stop(when + dur + 0.05);
-    this.remember(o, 'instrument', when, when + dur + 0.05); this.remember(o2, 'instrument', when, when + dur + 0.05);
-  }
-  private click(when: number, accent: boolean, kind: 'count-in' | 'metronome') {
-    if (this.clickVolume === 0) return;
-    const o = this.ctx!.createOscillator(), g = this.ctx!.createGain();
-    o.type = 'sine'; o.frequency.value = accent ? 1200 : 800;
-    g.gain.setValueAtTime(Math.max(0.0001, this.clickVolume * (accent ? 0.5 : 0.3)), when);
-    g.gain.exponentialRampToValueAtTime(0.0001, when + 0.04);
-    o.connect(g); g.connect(this.master!); o.start(when); o.stop(when + 0.04); this.remember(o, kind, when, when + 0.04);
-  }
-  private ensure(): boolean {
-    try { this.ctx = this.ctx ?? new (window.AudioContext || (window as never as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)(); }
-    catch { return false; }
-    void this.ctx.resume();
-    this.master = this.ctx.createGain(); this.master.gain.value = 0.8; this.master.connect(this.ctx.destination);
-    return true;
-  }
   private barFor(beat: number) { return this.bars.find(b => beat >= b.start - 1e-6 && beat < b.start + b.length - 1e-6) ?? this.bars[0]; }
   play(fromBeat?: number) {
     if (this.playing) this.halt();
-    if (!this.ensure()) return;
+    if (!this.synth.ensure()) return;
     const [a, z] = this.range ?? [0, this.total];
     const resume = fromBeat === undefined && this.canResume;
     const start = fromBeat ?? this.paused ?? a;
     this.from = start; this.to = start >= z ? this.total : z;
     this.paused = null; this.resumeMusic = false;
-    const now = this.ctx!.currentTime;
+    const now = this.synth.now;
     const bar = this.barFor(start);
     if (!resume && this.countIn && bar) {
       this.countBeats = bar.beats; this.countStep = 4 / bar.beatValue;
@@ -156,9 +111,9 @@ export class Player {
     this.passes = [{ start, end: start + (this.to - from) * this.spb(), from, speed: this.speed, eligible, id: this.nextPassId++, progress: { ...this.progress } }];
   }
   private rebuildPractice(eligible: boolean) {
-    if (!this.ctx) return;
-    const now = this.ctx.currentTime, beat = this.position(now);
-    this.cancelFuture();
+    if (!this.synth.started) return;
+    const now = this.synth.now, beat = this.position(now);
+    this.synth.cancelFuture();
     if (this.state === 'counting-in') this.makeFirstPass(this.t0, this.from, eligible);
     else this.makeFirstPass(Math.max(now, this.t0), beat, eligible);
     this.rescheduleFrom(now);
@@ -177,8 +132,8 @@ export class Player {
     }
   }
   private reconcile() {
-    if (!this.practice || !this.ctx || !this.playing || !this.passes.length) return;
-    const now = this.ctx.currentTime; this.extendPasses(now);
+    if (!this.practice || !this.synth.started || !this.playing || !this.passes.length) return;
+    const now = this.synth.now; this.extendPasses(now);
     while (this.passes.length > 1 && this.passes[0].end <= now) {
       const pass = this.passes.shift()!, next = this.passes[0], previous = this.progress;
       this.previousPass = pass;
@@ -205,14 +160,14 @@ export class Player {
     for (const n of this.notes) {
       if (n.beat < passFrom - 1e-6 || n.beat >= this.to - 1e-6) continue;
       const when = passStart + (n.beat - passFrom) * spb;
-      if (when >= musicFrom && when < end && !this.mute.has(n.string)) this.voice(when, n.midi, Math.max(0.15, n.ring * spb), n.soft ? 0.14 : 0.28);
+      if (when >= musicFrom && when < end && !this.mute.has(n.string)) this.synth.voice(when, n.midi, Math.max(0.15, n.ring * spb), n.soft ? 0.14 : 0.28);
     }
     if (!this.metronome) return;
     for (const b of this.bars) for (let i = 0; i < b.beats; i++) {
       const beat = b.start + i * 4 / b.beatValue;
       if (beat < passFrom - 1e-6 || beat >= this.to - 1e-6) continue;
       const when = passStart + (beat - passFrom) * spb;
-      if (when >= clickFrom && when < end) this.click(when, i === 0, 'metronome');
+      if (when >= clickFrom && when < end) this.synth.click(when, i === 0, 'metronome', this.clickVolume);
     }
   }
   private scheduleMusic(start: number, clickStart: number, end: number) {
@@ -241,13 +196,13 @@ export class Player {
     }
   }
   private tick() {
-    const now = this.ctx!.currentTime, end = now + 0.25;
+    const now = this.synth.now, end = now + 0.25;
     this.reconcile();
-    this.sources = this.sources.filter(s => s.end > now);
+    this.synth.forget(now);
     if (this.state === 'counting-in') {
       for (let i = 0; i < this.countBeats; i++) {
         const when = this.countStart + i * this.countStep * this.spb();
-        if (when >= Math.max(now, this.scheduledUntil) && when < end) this.click(when, i === 0, 'count-in');
+        if (when >= Math.max(now, this.scheduledUntil) && when < end) this.synth.click(when, i === 0, 'count-in', this.clickVolume);
       }
       if (now >= this.countEnd) this.state = 'playing';
     }
@@ -255,13 +210,12 @@ export class Player {
     this.scheduledUntil = end; this.clickScheduledUntil = end;
     if (this.state === 'counting-in') { this.emit(this.from); return; }
     if (!this.loop && now >= this.t0 + (this.to - this.from) * this.spb()) { this.stop(); return; }
-    const latency = this.ctx!.outputLatency || this.ctx!.baseLatency || 0;
-    this.emit(this.position(Math.max(this.t0, now - latency)));
+    this.emit(this.position(Math.max(this.t0, now - this.synth.latency)));
   }
   private halt() {
     if (this.timer !== null) clearInterval(this.timer);
-    this.timer = null; this.cancel();
-    if (this.master && this.ctx) this.master.gain.setTargetAtTime(0, this.ctx.currentTime, 0.03);
+    this.timer = null; this.synth.cancel();
+    this.synth.silence();
   }
   private restart(beat: number) {
     this.halt(); this.state = 'paused'; this.paused = beat; this.resumeMusic = true; this.play();
@@ -271,21 +225,21 @@ export class Player {
     const old = this.range ?? [0, this.total], next = range ?? [0, this.total];
     if (this.loop !== loop || old[0] !== next[0] || old[1] !== next[1]) this.endPractice();
     else if (this.practice) return;
-    const beat = this.playing && this.ctx ? this.position(this.ctx.currentTime) : this.paused;
+    const beat = this.playing && this.synth.started ? this.position(this.synth.now) : this.paused;
     this.range = range; this.loop = loop;
     const [a, z] = range ?? [0, this.total]; this.to = z;
-    if (this.state === 'counting-in' && this.ctx) {
+    if (this.state === 'counting-in' && this.synth.started) {
       if (this.from < a || this.from >= z) {
         this.halt(); this.state = 'paused'; this.paused = a; this.resumeMusic = false; this.emit(a);
       } else {
-        this.cancelFuture();
-        this.rescheduleFrom(this.ctx.currentTime);
+        this.synth.cancelFuture();
+        this.rescheduleFrom(this.synth.now);
       }
-    } else if (this.state === 'playing' && this.ctx) {
+    } else if (this.state === 'playing' && this.synth.started) {
       if (beat === null || beat < a || beat >= z) this.restart(a);
       else {
-        const now = this.ctx.currentTime;
-        this.cancelFuture(); this.from = beat; this.t0 = Math.max(now, this.t0);
+        const now = this.synth.now;
+        this.synth.cancelFuture(); this.from = beat; this.t0 = Math.max(now, this.t0);
         this.rescheduleFrom(now);
       }
     }
@@ -309,27 +263,27 @@ export class Player {
     this.setPosition(target);
   }
   pause() {
-    if (!this.playing || !this.ctx) return;
+    if (!this.playing || !this.synth.started) return;
     this.reconcile();
     this.resumeEligible = this.passes[0]?.eligible ?? false;
     const counting = this.state === 'counting-in';
-    const wrapped = this.loop && this.ctx.currentTime >= this.t0 + (this.to - this.from) * this.spb();
+    const wrapped = this.loop && this.synth.now >= this.t0 + (this.to - this.from) * this.spb();
     const passStart = this.practice && this.passes.length ? this.passes[0].from : wrapped ? this.passageStart() : this.from;
-    this.paused = counting ? this.from : Math.max(passStart, this.position(this.ctx.currentTime) - 0.05);
+    this.paused = counting ? this.from : Math.max(passStart, this.position(this.synth.now) - 0.05);
     this.halt(); this.state = 'paused'; this.resumeMusic = !counting; this.emit(this.paused);
   }
   toggle() { if (this.playing) this.pause(); else this.play(); }
   stop() { this.reconcile(); this.halt(); this.state = 'stopped'; this.paused = null; this.resumeMusic = false; this.passes = []; if (this.practice && this.baseline !== null) { this.speed = this.baseline / 100; this.progress = { speed: this.baseline, completed: 0 }; this.practiceActive = false; this.emitPractice('reset'); } this.emit(null); }
   setSpeed(s: number) {
     this.endPractice();
-    const now = this.ctx?.currentTime ?? 0, beat = this.state === 'playing' ? this.position(now) : null;
+    const now = this.synth.now, beat = this.state === 'playing' ? this.position(now) : null;
     if (this.state === 'counting-in') {
       const oldSpb = this.spb(), elapsed = Math.max(0, (now - this.countStart) / oldSpb), lead = Math.max(0, this.countStart - now);
-      this.cancel(); this.speed = s; this.countStart = now + lead - elapsed * this.spb(); this.countEnd = this.countStart + this.countBeats * this.countStep * this.spb(); this.t0 = this.countEnd; this.rescheduleFrom(now); return;
+      this.synth.cancel(); this.speed = s; this.countStart = now + lead - elapsed * this.spb(); this.countEnd = this.countStart + this.countBeats * this.countStep * this.spb(); this.t0 = this.countEnd; this.rescheduleFrom(now); return;
     }
     this.speed = s; if (beat !== null) this.restart(beat);
   }
-  setMetronome(enabled: boolean) { this.metronome = enabled; if (!enabled) this.cancel('metronome'); else if (this.playing && this.ctx) this.clickScheduledUntil = this.ctx.currentTime + 1e-6; }
+  setMetronome(enabled: boolean) { this.metronome = enabled; if (!enabled) this.synth.cancel('metronome'); else if (this.playing && this.synth.started) this.clickScheduledUntil = this.synth.now + 1e-6; }
   setCountIn(enabled: boolean) { this.countIn = enabled; }
   setClickVolume(volume: number) { if (Number.isFinite(volume)) this.clickVolume = Math.max(0, Math.min(1, volume)); }
   barAt(beat: number): number | null { const b = this.bars.find(x => beat >= x.start - 1e-6 && beat < x.start + x.length); return b ? b.bar : null; }
