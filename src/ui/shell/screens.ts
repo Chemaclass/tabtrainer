@@ -14,6 +14,7 @@ export function screens(onFamily: (family: Family) => void, onJam: () => void) {
     showFamily(family: Family) { setSelectValue(familySelect, family); },
     show(screen: Screen) {
       document.body.classList.toggle('library-view', screen !== 'practice');
+      document.body.classList.toggle('jam-view', screen === 'jam');
       byId('libraryScreen').hidden = screen !== 'library'; byId('practiceScreen').hidden = screen !== 'practice'; byId('jamScreen').hidden = screen !== 'jam';
       if (screen === 'jam') jamNav.setAttribute('aria-current', 'page'); else jamNav.removeAttribute('aria-current');
       one('.player').hidden = screen !== 'practice';
