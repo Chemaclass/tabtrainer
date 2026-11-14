@@ -1,4 +1,4 @@
-import { APPROACH, HALF_STEP_BELOW, type Drum, type DrumKitName, type Groove, type GrooveGrid, type KeysVoice } from './groove';
+import { APPROACH, FILL_BEATS, HALF_STEP_BELOW, type Drum, type DrumKitName, type Groove, type GrooveGrid, type KeysVoice } from './groove';
 import { chordAt, degreeInterval, keyTonic, type BassDegree, type Chord } from './harmony';
 import { pitchClass, safeKey } from './theory';
 
@@ -13,8 +13,6 @@ export const BASS_RANGE = { low: 28, high: 55 } as const;
 export const KEYS_RANGE = { low: 57, high: 68 } as const;
 export const POWER_CHORD_RANGE = { low: 45, high: 68 } as const;
 const EPSILON = 1e-9;
-const FILL_BEATS = 2;
-const FILL_STEP = 0.25;
 // A descending sixteenth note run over the last two beats of the progression
 const FILL: readonly { drum: Drum; steps: string }[] = [
   { drum: 'snare', steps: 'Xx......' },
@@ -178,11 +176,16 @@ function stepOffset(offset: number, stepLength: number, { pair, ratio }: Placeme
 
 function fillHits(bar: GrooveBar, placement: Placement): DrumHit[] {
   const fillStart = bar.length - FILL_BEATS;
-  return FILL.flatMap(({ drum, steps }) => [...steps].flatMap((step, i) => {
-    if (isRest(step)) return [];
-    const beat = bar.start + stepOffset(fillStart + i * FILL_STEP, FILL_STEP, placement);
-    return [{ beat, bar: bar.bar, drum, velocity: VELOCITY[step] }];
-  }));
+  const hits: DrumHit[] = [];
+  for (const { drum, steps } of FILL) {
+    const stepLength = FILL_BEATS / steps.length;
+    [...steps].forEach((step, i) => {
+      if (isRest(step)) return;
+      const beat = bar.start + stepOffset(fillStart + i * stepLength, stepLength, placement);
+      hits.push({ beat, bar: bar.bar, drum, velocity: VELOCITY[step] });
+    });
+  }
+  return hits;
 }
 
 function withFill(drums: DrumHit[], bar: GrooveBar, placement: Placement): DrumHit[] {

@@ -3,7 +3,7 @@ import { vi } from 'vitest';
 export type FakeParam = ReturnType<typeof param>;
 export interface FakeSource { kind: 'oscillator' | 'noise'; type: string; frequency: FakeParam; detune: FakeParam; start: ReturnType<typeof vi.fn>; stop: ReturnType<typeof vi.fn>; connect: (to: unknown) => void; buffer?: unknown; loop?: boolean }
 export interface FakeCompressor { threshold: FakeParam; knee: FakeParam; ratio: FakeParam; attack: FakeParam; release: FakeParam; connect: (to: unknown) => void; outputs: unknown[] }
-export interface FakeGain { gain: FakeParam; connect: (to: unknown) => void; outputs: unknown[] }
+export interface FakeGain { gain: FakeParam; connect: (to: unknown) => void; disconnect: (from: unknown) => void; outputs: unknown[] }
 
 const param = (value = 0) => ({
   value,
@@ -26,7 +26,7 @@ export function fakeAudio() {
     sampleRate = 8000;
     get currentTime() { return clock.now; }
     resume() { return Promise.resolve(); }
-    createGain() { const g: FakeGain = { gain: param(1), outputs: [], connect(to) { g.outputs.push(to); } }; gains.push(g); return g; }
+    createGain() { const g: FakeGain = { gain: param(1), outputs: [], connect(to) { g.outputs.push(to); }, disconnect(from) { g.outputs = g.outputs.filter(o => o !== from); } }; gains.push(g); return g; }
     createOscillator() { return source('oscillator'); }
     createBufferSource() { const s = source('noise'); s.buffer = null; return s; }
     createBiquadFilter() { const f = { type: '', frequency: param(), Q: param(), connect() {} }; filters.push(f); return f; }

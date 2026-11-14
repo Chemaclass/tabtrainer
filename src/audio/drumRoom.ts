@@ -5,7 +5,6 @@ const ROOM = {
   // How much of each new noise sample passes the one pole low pass: lower is a darker, softer room
   wallBrightness: 0.35,
   level: 0.22,
-  switchTime: 0.02,
   channels: 2,
 };
 
@@ -27,21 +26,25 @@ export function roomImpulse(context: BaseAudioContext): AudioBuffer {
   return impulse;
 }
 
+// Switching off unplugs the drums from the reverb, so it stops costing CPU and its tail rings out on its own
 export class DrumRoom {
-  readonly input: AudioNode;
-  private wet: GainNode;
+  private reverb: ConvolverNode;
+  private enabled = false;
 
-  constructor(private context: BaseAudioContext, out: AudioNode, enabled: boolean) {
-    const reverb = context.createConvolver();
-    reverb.buffer = roomImpulse(context);
-    this.wet = context.createGain();
-    this.wet.gain.value = enabled ? ROOM.level : 0;
-    reverb.connect(this.wet);
-    this.wet.connect(out);
-    this.input = reverb;
+  constructor(context: BaseAudioContext, private drums: AudioNode, out: AudioNode, enabled: boolean) {
+    this.reverb = context.createConvolver();
+    this.reverb.buffer = roomImpulse(context);
+    const wet = context.createGain();
+    wet.gain.value = ROOM.level;
+    this.reverb.connect(wet);
+    wet.connect(out);
+    this.setEnabled(enabled);
   }
 
   setEnabled(enabled: boolean) {
-    this.wet.gain.setTargetAtTime(enabled ? ROOM.level : 0, this.context.currentTime, ROOM.switchTime);
+    if (enabled === this.enabled) return;
+    this.enabled = enabled;
+    if (enabled) this.drums.connect(this.reverb);
+    else this.drums.disconnect(this.reverb);
   }
 }

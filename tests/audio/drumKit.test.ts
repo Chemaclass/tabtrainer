@@ -99,6 +99,22 @@ describe('DrumKit', () => {
       expect(open.sources.every(s => stopAt(s) < 4.35)).toBe(true);
     });
   }
+  it('lets a closed and an open hi-hat on the same step both ring, whichever lands first', () => {
+    const audio = setup();
+    const record = recorder(audio);
+    const open = record(() => audio.kit.play('openhat', 4, 1, audio.out, -0.004));
+    audio.kit.play('hat', 4, 1, audio.out, 0.004);
+    expect(open.sources.every(s => s.stop.mock.calls.length === 1)).toBe(true);
+  });
+  it('forgets ringing drums after a reset, so a restart cannot revive a cancelled tail', () => {
+    const audio = setup();
+    const record = recorder(audio);
+    const open = record(() => audio.kit.play('openhat', 4, 1, audio.out));
+    audio.synth.cancel('backing', 4);
+    audio.kit.reset();
+    audio.kit.play('hat', 4.05, 1, audio.out);
+    expect(open.sources.every(s => stopAt(s) === 4)).toBe(true);
+  });
   it('cuts the ring of a drum short when the same drum is struck again, and leaves other drums ringing', () => {
     const audio = setup();
     const record = recorder(audio);

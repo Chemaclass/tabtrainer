@@ -4,6 +4,8 @@ import { isKey } from './theory';
 
 export const DRUMS = ['kick', 'snare', 'rim', 'hat', 'halfhat', 'openhat', 'pedalhat', 'ride', 'bell', 'crash', 'hightom', 'midtom', 'lowtom'] as const;
 export type Drum = typeof DRUMS[number];
+export const HAT_DRUMS: readonly Drum[] = ['hat', 'halfhat', 'openhat', 'pedalhat'];
+export const FILL_BEATS = 2;
 export const DRUM_KITS = ['rock', 'blues', 'funk', 'reggae', 'jazz', 'metal', 'electronic'] as const;
 export type DrumKitName = typeof DRUM_KITS[number];
 export type GroovePart = Drum | 'bass' | 'keys';
@@ -51,6 +53,7 @@ export function parseGroove(src: string): GrooveResult {
   const groove: Groove = { title: 'Untitled', genre: '', tempo: 90, key: 'C', time: [4, 4], swing: 50, progression: [], voice: 'keys', kit: 'rock', fill: false, grids: [] };
   const rawGrids: { part: GroovePart; text: string; line: number }[] = [];
   let progressionLine = 0;
+  let fillLine = 0;
 
   src.replace(/\r\n?/g, '\n').split('\n').forEach((raw, i) => {
     const line = i + 1;
@@ -84,7 +87,7 @@ export function parseGroove(src: string): GrooveResult {
     }
     else if (name === 'voice') { if (isVoice(v)) groove.voice = v; else warn(line, `Unknown voice "${v}": use ${KEYS_VOICES.join(', ')}`); }
     else if (name === 'kit') { if (isDrumKit(v)) groove.kit = v; else warn(line, `Unknown kit "${v}": use ${DRUM_KITS.join(', ')}`); }
-    else if (name === 'fill') { if (Object.hasOwn(FILL_SWITCH, v)) groove.fill = FILL_SWITCH[v]; else warn(line, `Fill must be on or off (got "${v}")`); }
+    else if (name === 'fill') { if (Object.hasOwn(FILL_SWITCH, v)) { groove.fill = FILL_SWITCH[v]; fillLine = line; } else warn(line, `Fill must be on or off (got "${v}")`); }
     else if (isPart(name)) {
       if (rawGrids.some(g => g.part === name)) warn(line, `There is already a "${name}:" line`);
       else rawGrids.push({ part: name, text: v, line });
@@ -95,6 +98,8 @@ export function parseGroove(src: string): GrooveResult {
   if (!groove.progression.length) warn(1, 'No progression yet. Add a line like:  progression: I7 IV7 I7 V7');
 
   const [beats, beatValue] = groove.time;
+  const barLength = (beats * 4) / beatValue;
+  if (groove.fill && barLength < FILL_BEATS) warn(fillLine, `A fill needs a bar of at least ${FILL_BEATS} beats, so this ${beats}/${beatValue} groove plays none`);
   const stepCounts = (beatValue >= 8 ? [1, 2] : [2, 3, 4]).map(n => n * beats);
   for (const { part, text, line } of rawGrids) {
     const bars = text.split('|').map(bar => splitSteps(part, bar));

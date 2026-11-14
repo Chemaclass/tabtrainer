@@ -16,7 +16,7 @@ const close = (a: number, b: number, within = 1e-3) => Math.abs(a - b) < within;
 function setup(timeline = inA, tempo = 80) {
   const audio = fakeAudio();
   const synth = new Synth();
-  const kit = { play: vi.fn() };
+  const kit = { play: vi.fn(), reset: vi.fn() };
   const keys = vi.spyOn(synth, 'keys');
   const bass = vi.spyOn(synth, 'voice');
   const cancelFuture = vi.spyOn(synth, 'cancelFuture');
@@ -267,17 +267,25 @@ describe('LoopEngine drum room', () => {
     const wet = room.outputs[0] as FakeGain;
     expect(wet.outputs).toEqual([drums.outputs[0]]);
     expect(wet.gain.value).toBeGreaterThan(0);
+    expect(wet.gain.value).toBeLessThan(0.5);
   });
-  it('turns the room off and on again', () => {
-    const { engine, convolvers, advance } = setup();
+  it('unplugs the drums from the room when it is off and plugs them back in', () => {
+    const { engine, convolvers, kit, advance } = setup();
     engine.setRoom(false);
     engine.play(); advance(1);
-    const wet = convolvers[0].outputs[0] as { gain: { value: number; setTargetAtTime: ReturnType<typeof vi.fn> } };
-    expect(wet.gain.value).toBe(0);
+    const drums = kit.play.mock.calls[0][3] as unknown as FakeGain;
+    const [room] = convolvers;
+    expect(drums.outputs).not.toContain(room);
     engine.setRoom(true);
-    expect(wet.gain.setTargetAtTime.mock.calls.at(-1)![0]).toBeGreaterThan(0);
+    expect(drums.outputs).toContain(room);
     engine.setRoom(false);
-    expect(wet.gain.setTargetAtTime.mock.calls.at(-1)![0]).toBe(0);
+    expect(drums.outputs).not.toContain(room);
+  });
+  it('forgets ringing drums on stop', () => {
+    const { engine, kit, advance } = setup();
+    engine.play(); advance(1);
+    engine.stop();
+    expect(kit.reset).toHaveBeenCalled();
   });
 });
 

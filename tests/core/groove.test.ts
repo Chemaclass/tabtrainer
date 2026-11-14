@@ -99,6 +99,7 @@ describe('parseGroove', () => {
     expect(parseGroove(head).groove.fill).toBe(false);
     expect(parseGroove(`${head}fill: on\n`).groove.fill).toBe(true);
     expect(parseGroove(`${head}fill: off\n`).groove.fill).toBe(false);
+    expect(parseGroove('time: 3/8\nfill: on\nprogression: I\n').issues).toEqual([expect.objectContaining({ line: 2, message: expect.stringContaining('at least 2 beats') })]);
     const { groove, issues } = parseGroove(`${head}fill: yes\n`);
     expect(groove.fill).toBe(false);
     expect(issues).toEqual([expect.objectContaining({ line: 6, message: expect.stringContaining('on or off') })]);

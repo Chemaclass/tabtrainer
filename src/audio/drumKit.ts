@@ -2,12 +2,35 @@ import type { Drum, DrumKitName } from '../core/groove';
 import { DRUM_KIT_TUNINGS, type DrumKitTuning, type HatTuning, type SnareTuning } from './drumKits';
 import type { Synth } from './synth';
 
-interface Hit { when: number; velocity: number; level: number; out: AudioNode; tuning: DrumKitTuning }
-interface ToneRange { soft: number; hard: number }
-interface MetalTone { fundamental: number; band: ToneRange; bandQ: number; highpass: number; level: number; decay: number }
+interface ToneRange {
+  soft: number;
+  hard: number;
+}
+
+interface MetalTone {
+  fundamental: number;
+  band: ToneRange;
+  bandQ: number;
+  highpass: number;
+  level: number;
+  decay: number;
+}
+
 type MetalVoicing = Omit<MetalTone, 'decay'>;
-interface RingingVoice { start: number; end: number; envelopes: GainNode[]; sources: AudioScheduledSourceNode[] }
 type HatState = 'closed' | 'half' | 'open' | 'pedal';
+type Instrument = 'kick' | 'snare' | 'rim' | 'hat' | 'ride' | 'crash' | 'hightom' | 'midtom' | 'lowtom';
+
+interface Strike {
+  when: number;
+  gridTime: number;
+  velocity: number;
+  level: number;
+  out: AudioNode;
+  tuning: DrumKitTuning;
+  end: number;
+  envelopes: GainNode[];
+  sources: AudioScheduledSourceNode[];
+}
 
 const SILENT = 0.0001;
 // e^-7 is about -60 dB, where a decaying hit is inaudible
@@ -15,6 +38,9 @@ const DECAYS_TO_SILENCE = 7;
 const NOISE_SECONDS = 1;
 const VELOCITY_CURVE = 1.6;
 const CLICK_ATTACK = 0.0005;
+const RANDOM_MULTIPLIER = 1664525;
+const RANDOM_INCREMENT = 1013904223;
+const UINT32_RANGE = 4294967296;
 
 const KICK = {
   attack: 0.002,
@@ -37,17 +63,28 @@ const SNARE = {
 };
 
 const RIM = {
+  attack: 0.0005,
   woodFrequency: 520,
   woodLevel: 0.5,
   woodDecay: 0.018,
   ringFrequency: 1720,
   ringLevel: 0.32,
   ringDecay: 0.007,
-  attack: 0.0005,
   clickBand: { soft: 2000, hard: 3200 },
   clickQ: 1.4,
   clickLevel: 0.35,
   clickDecay: 0.005,
+};
+
+const TOM = {
+  attack: 0.002,
+  pitchBend: 1.35,
+  pitchDrop: 0.06,
+  level: 0.9,
+  stickBand: { soft: 1500, hard: 3500 },
+  stickQ: 1,
+  stickLevel: 0.3,
+  stickDecay: 0.006,
 };
 
 // The six square wave ratios of the classic analog hi-hat: inharmonic, so their sum sounds like metal
@@ -65,34 +102,58 @@ const HAT = {
   pedalDecay: 0.015,
 };
 
-const RIDE: MetalVoicing = { fundamental: 52, band: { soft: 4500, hard: 7500 }, bandQ: 1.2, highpass: 2500, level: 1.8 };
-const BELL: MetalVoicing = { fundamental: 70, band: { soft: 2400, hard: 3600 }, bandQ: 3, highpass: 1200, level: 2 };
+const RIDE: MetalVoicing = {
+  fundamental: 52,
+  band: { soft: 4500, hard: 7500 },
+  bandQ: 1.2,
+  highpass: 2500,
+  level: 1.8,
+};
+
+const BELL: MetalVoicing = {
+  fundamental: 70,
+  band: { soft: 2400, hard: 3600 },
+  bandQ: 3,
+  highpass: 1200,
+  level: 2,
+};
+
 const BELL_DECAY_RATIO = 0.8;
-const CRASH: MetalVoicing = { fundamental: 46, band: { soft: 5000, hard: 8500 }, bandQ: 0.6, highpass: 3000, level: 1.8 };
+
+const CRASH: MetalVoicing = {
+  fundamental: 46,
+  band: { soft: 5000, hard: 8500 },
+  bandQ: 0.6,
+  highpass: 3000,
+  level: 1.8,
+};
+
 const CRASH_WASH_LEVEL = 1.5;
 
 // A drum struck again cuts its old ring short, as a real one does, which caps how many sources play at once
 const RESTRIKE_RELEASE = 0.02;
 const HAT_CHOKE = 0.006;
-const HATS: readonly Drum[] = ['hat', 'halfhat', 'openhat', 'pedalhat'];
-const instrumentOf = (drum: Drum): string => (HATS.includes(drum) ? 'hat' : drum === 'bell' ? 'ride' : drum);
 
-const TOM = {
-  attack: 0.002,
-  pitchBend: 1.35,
-  pitchDrop: 0.06,
-  level: 0.9,
-  stickBand: { soft: 1500, hard: 3500 },
-  stickQ: 1,
-  stickLevel: 0.3,
-  stickDecay: 0.006,
+const INSTRUMENT: Record<Drum, Instrument> = {
+  kick: 'kick',
+  snare: 'snare',
+  rim: 'rim',
+  hat: 'hat',
+  halfhat: 'hat',
+  openhat: 'hat',
+  pedalhat: 'hat',
+  ride: 'ride',
+  bell: 'ride',
+  crash: 'crash',
+  hightom: 'hightom',
+  midtom: 'midtom',
+  lowtom: 'lowtom',
 };
 
 const clampVelocity = (velocity: number) => Math.max(0, Math.min(1, velocity));
 const loudness = (velocity: number) => Math.pow(clampVelocity(velocity), VELOCITY_CURVE);
 const brightness = (range: ToneRange, velocity: number) => range.soft * Math.pow(range.hard / range.soft, velocity);
 const endOf = (when: number, attack: number, decay: number) => when + attack + decay * DECAYS_TO_SILENCE;
-const silentVoice = (start: number): RingingVoice => ({ start, end: start, envelopes: [], sources: [] });
 
 function connectInSeries(...nodes: AudioNode[]) {
   for (let i = 1; i < nodes.length; i++) nodes[i - 1].connect(nodes[i]);
@@ -105,93 +166,101 @@ function glide(param: AudioParam, from: number, to: number, when: number, durati
 
 export class DrumKit {
   private noiseBuffer: AudioBuffer | null = null;
-  private ringing = new Map<string, RingingVoice>();
-  // Every source and envelope made during one strike joins its voice, so the next strike of that instrument can release them
-  private voice = silentVoice(0);
+  private ringing = new Map<Instrument, Strike>();
   private seed = 1;
-  private gridTime = 0;
 
   constructor(private synth: Synth) {}
 
   play(drum: Drum, when: number, velocity: number, out: AudioNode, offset = 0, kit: DrumKitName = 'rock') {
     const level = loudness(velocity);
     if (level <= 0) return;
-    this.gridTime = when;
-    const hit: Hit = { when: Math.max(this.synth.now, when + offset), velocity: clampVelocity(velocity), level, out, tuning: DRUM_KIT_TUNINGS[kit] };
-    const instrument = instrumentOf(drum);
-    this.release(this.ringing.get(instrument), hit.when, HATS.includes(drum) ? HAT_CHOKE : RESTRIKE_RELEASE);
-    this.voice = silentVoice(hit.when);
-    this.strike(drum, hit);
-    this.ringing.set(instrument, this.voice);
+    const start = Math.max(this.synth.now, when + offset);
+    const strike: Strike = {
+      when: start,
+      gridTime: when,
+      velocity: clampVelocity(velocity),
+      level,
+      out,
+      tuning: DRUM_KIT_TUNINGS[kit],
+      end: start,
+      envelopes: [],
+      sources: [],
+    };
+    const instrument = INSTRUMENT[drum];
+    this.release(this.ringing.get(instrument), strike, instrument === 'hat' ? HAT_CHOKE : RESTRIKE_RELEASE);
+    this.strike(drum, strike);
+    this.ringing.set(instrument, strike);
   }
 
-  private strike(drum: Drum, hit: Hit) {
+  reset() {
+    this.ringing.clear();
+  }
+
+  private strike(drum: Drum, strike: Strike) {
     switch (drum) {
-      case 'kick': return this.kick(hit);
-      case 'snare': return this.snare(hit);
-      case 'rim': return this.rim(hit);
-      case 'hat': return this.hat(hit, 'closed');
-      case 'halfhat': return this.hat(hit, 'half');
-      case 'openhat': return this.hat(hit, 'open');
-      case 'pedalhat': return this.hat(hit, 'pedal');
-      case 'ride': return this.ride(hit);
-      case 'bell': return this.bell(hit);
-      case 'crash': return this.crash(hit);
-      case 'hightom': return this.tom(hit, hit.tuning.tom.high);
-      case 'midtom': return this.tom(hit, hit.tuning.tom.mid);
-      case 'lowtom': return this.tom(hit, hit.tuning.tom.low);
+      case 'kick': return this.kick(strike);
+      case 'snare': return this.snare(strike);
+      case 'rim': return this.rim(strike);
+      case 'hat': return this.hat(strike, 'closed');
+      case 'halfhat': return this.hat(strike, 'half');
+      case 'openhat': return this.hat(strike, 'open');
+      case 'pedalhat': return this.hat(strike, 'pedal');
+      case 'ride': return this.ride(strike);
+      case 'bell': return this.bell(strike);
+      case 'crash': return this.crash(strike);
+      case 'hightom': return this.tom(strike, strike.tuning.tom.high);
+      case 'midtom': return this.tom(strike, strike.tuning.tom.mid);
+      case 'lowtom': return this.tom(strike, strike.tuning.tom.low);
     }
   }
 
   private get ctx() { return this.synth.context; }
 
-  private kick(hit: Hit) {
-    const { when, velocity, level, out } = hit;
-    const tuning = hit.tuning.kick;
-    const body = this.oscillator('sine', tuning.endFrequency, when, endOf(when, KICK.attack, tuning.decay));
-    const accentedStart = tuning.startFrequency * (1 + KICK.accentPitchRise * velocity);
-    glide(body.frequency, accentedStart, tuning.endFrequency, when, tuning.pitchDrop);
-    connectInSeries(body, this.envelope(when, level, KICK.attack, tuning.decay), out);
-    this.noiseClick(hit, KICK.clickBand, KICK.clickQ, level * tuning.clickLevel, KICK.clickDecay);
+  private kick(strike: Strike) {
+    const tuning = strike.tuning.kick;
+    const body = this.tone(strike, 'sine', tuning.endFrequency, strike.level, KICK.attack, tuning.decay);
+    const accentedStart = tuning.startFrequency * (1 + KICK.accentPitchRise * strike.velocity);
+    glide(body.frequency, accentedStart, tuning.endFrequency, strike.when, tuning.pitchDrop);
+    this.noiseClick(strike, KICK.clickBand, KICK.clickQ, strike.level * tuning.clickLevel, KICK.clickDecay);
   }
 
-  private snare(hit: Hit) {
-    this.snareBody(hit, hit.tuning.snare);
-    this.snareNoise(hit, hit.tuning.snare);
+  private snare(strike: Strike) {
+    this.snareBody(strike, strike.tuning.snare);
+    this.snareNoise(strike, strike.tuning.snare);
   }
 
-  private snareBody(hit: Hit, tuning: SnareTuning) {
-    const { when, level, out } = hit;
+  private snareBody(strike: Strike, tuning: SnareTuning) {
+    const { when, level, out } = strike;
     const end = endOf(when, SNARE.attack, tuning.bodyDecay);
-    const body = this.envelope(when, level * SNARE.modeLevel, SNARE.attack, tuning.bodyDecay);
+    const body = this.envelope(strike, level * SNARE.modeLevel, SNARE.attack, tuning.bodyDecay);
     body.connect(out);
     for (const frequency of [tuning.lowMode, tuning.highMode]) {
-      const mode = this.oscillator('triangle', frequency, when, end);
+      const mode = this.oscillator(strike, 'triangle', frequency, end);
       glide(mode.frequency, frequency, frequency * SNARE.modePitchDrop, when, SNARE.modePitchTime);
       mode.connect(body);
     }
   }
 
-  private snareNoise(hit: Hit, tuning: SnareTuning) {
-    const { when, velocity, level, out } = hit;
-    const noise = this.noise(when, endOf(when, SNARE.attack, tuning.wireDecay));
+  private snareNoise(strike: Strike, tuning: SnareTuning) {
+    const { when, velocity, level, out } = strike;
+    const noise = this.noise(strike, endOf(when, SNARE.attack, tuning.wireDecay));
     const snap = this.filter('bandpass', brightness(SNARE.snapBand, velocity), SNARE.snapQ);
+    const snapLevel = this.envelope(strike, level * tuning.snapLevel, SNARE.attack, SNARE.snapDecay);
     const wires = this.filter('bandpass', brightness(SNARE.wireBand, velocity), SNARE.wireQ);
-    connectInSeries(noise, snap, this.envelope(when, level * tuning.snapLevel, SNARE.attack, SNARE.snapDecay), out);
-    connectInSeries(noise, wires, this.envelope(when, level * tuning.wireLevel, SNARE.attack, tuning.wireDecay), out);
+    const wireLevel = this.envelope(strike, level * tuning.wireLevel, SNARE.attack, tuning.wireDecay);
+    connectInSeries(noise, snap, snapLevel, out);
+    connectInSeries(noise, wires, wireLevel, out);
   }
 
-  private rim(hit: Hit) {
-    const { when, level, out } = hit;
-    const wood = this.oscillator('triangle', RIM.woodFrequency, when, endOf(when, RIM.attack, RIM.woodDecay));
-    connectInSeries(wood, this.envelope(when, level * RIM.woodLevel, RIM.attack, RIM.woodDecay), out);
-    const ring = this.oscillator('sine', RIM.ringFrequency, when, endOf(when, RIM.attack, RIM.ringDecay));
-    connectInSeries(ring, this.envelope(when, level * RIM.ringLevel, RIM.attack, RIM.ringDecay), out);
-    this.noiseClick(hit, RIM.clickBand, RIM.clickQ, level * RIM.clickLevel, RIM.clickDecay);
+  private rim(strike: Strike) {
+    const { level } = strike;
+    this.tone(strike, 'triangle', RIM.woodFrequency, level * RIM.woodLevel, RIM.attack, RIM.woodDecay);
+    this.tone(strike, 'sine', RIM.ringFrequency, level * RIM.ringLevel, RIM.attack, RIM.ringDecay);
+    this.noiseClick(strike, RIM.clickBand, RIM.clickQ, level * RIM.clickLevel, RIM.clickDecay);
   }
 
-  private hat(hit: Hit, state: HatState) {
-    this.metal(hit, this.hatTone(hit.tuning.hat, state));
+  private hat(strike: Strike, state: HatState) {
+    this.metal(strike, this.hatTone(strike.tuning.hat, state));
   }
 
   private hatTone(tuning: HatTuning, state: HatState): MetalTone {
@@ -201,67 +270,72 @@ export class DrumKit {
     return { ...voicing, band: HAT.band, level: HAT.level, decay: decays[state] };
   }
 
-  private ride(hit: Hit) {
-    this.metal(hit, { ...RIDE, decay: hit.tuning.cymbal.rideDecay });
+  private ride(strike: Strike) {
+    this.metal(strike, { ...RIDE, decay: strike.tuning.cymbal.rideDecay });
   }
 
-  private bell(hit: Hit) {
-    this.metal(hit, { ...BELL, decay: hit.tuning.cymbal.rideDecay * BELL_DECAY_RATIO });
+  private bell(strike: Strike) {
+    this.metal(strike, { ...BELL, decay: strike.tuning.cymbal.rideDecay * BELL_DECAY_RATIO });
   }
 
-  private crash(hit: Hit) {
-    const tone = { ...CRASH, decay: hit.tuning.cymbal.crashDecay };
-    const metal = this.metal(hit, tone);
+  private crash(strike: Strike) {
+    const tone = { ...CRASH, decay: strike.tuning.cymbal.crashDecay };
+    const metal = this.metal(strike, tone);
     const wash = this.ctx.createGain();
     wash.gain.value = CRASH_WASH_LEVEL;
-    const noise = this.noise(hit.when, endOf(hit.when, METAL_ATTACK, tone.decay));
+    const noise = this.noise(strike, endOf(strike.when, METAL_ATTACK, tone.decay));
     connectInSeries(noise, wash, metal);
   }
 
-  private tom(hit: Hit, frequency: number) {
-    const { when, level, out } = hit;
-    const decay = hit.tuning.tom.decay;
-    const body = this.oscillator('sine', frequency, when, endOf(when, TOM.attack, decay));
-    glide(body.frequency, frequency * TOM.pitchBend, frequency, when, TOM.pitchDrop);
-    connectInSeries(body, this.envelope(when, level * TOM.level, TOM.attack, decay), out);
-    this.noiseClick(hit, TOM.stickBand, TOM.stickQ, level * TOM.stickLevel, TOM.stickDecay);
+  private tom(strike: Strike, frequency: number) {
+    const body = this.tone(strike, 'sine', frequency, strike.level * TOM.level, TOM.attack, strike.tuning.tom.decay);
+    glide(body.frequency, frequency * TOM.pitchBend, frequency, strike.when, TOM.pitchDrop);
+    this.noiseClick(strike, TOM.stickBand, TOM.stickQ, strike.level * TOM.stickLevel, TOM.stickDecay);
   }
 
-  private metal(hit: Hit, tone: MetalTone): AudioNode {
-    const { when, velocity, level, out } = hit;
+  private metal(strike: Strike, tone: MetalTone): AudioNode {
+    const { when, velocity, level, out } = strike;
     const end = endOf(when, METAL_ATTACK, tone.decay);
     const band = this.filter('bandpass', brightness(tone.band, velocity), tone.bandQ);
     const high = this.filter('highpass', tone.highpass);
-    const gain = this.envelope(when, (level * tone.level) / METAL_RATIOS.length, METAL_ATTACK, tone.decay);
+    const gain = this.envelope(strike, (level * tone.level) / METAL_RATIOS.length, METAL_ATTACK, tone.decay);
     connectInSeries(band, high, gain, out);
     for (const ratio of METAL_RATIOS) {
-      const square = this.oscillator('square', tone.fundamental * ratio, when, end);
+      const square = this.oscillator(strike, 'square', tone.fundamental * ratio, end);
       square.detune.value = (this.random() - 0.5) * METAL_DETUNE_CENTS;
       square.connect(band);
     }
     return band;
   }
 
-  private noiseClick(hit: Hit, band: ToneRange, q: number, peak: number, decay: number) {
-    const { when, velocity, out } = hit;
-    const noise = this.noise(when, endOf(when, CLICK_ATTACK, decay));
-    const filter = this.filter('bandpass', brightness(band, velocity), q);
-    connectInSeries(noise, filter, this.envelope(when, peak, CLICK_ATTACK, decay), out);
+  private tone(strike: Strike, type: OscillatorType, frequency: number, peak: number, attack: number, decay: number) {
+    const oscillator = this.oscillator(strike, type, frequency, endOf(strike.when, attack, decay));
+    connectInSeries(oscillator, this.envelope(strike, peak, attack, decay), strike.out);
+    return oscillator;
   }
 
-  private release(voice: RingingVoice | undefined, when: number, time: number) {
-    if (!voice || when <= voice.start || when >= voice.end) return;
-    for (const envelope of voice.envelopes) envelope.gain.setTargetAtTime(0, when, time);
-    const silent = Math.min(voice.end, when + time * DECAYS_TO_SILENCE);
-    for (const source of voice.sources) source.stop(silent);
+  private noiseClick(strike: Strike, band: ToneRange, q: number, peak: number, decay: number) {
+    const noise = this.noise(strike, endOf(strike.when, CLICK_ATTACK, decay));
+    const filter = this.filter('bandpass', brightness(band, strike.velocity), q);
+    connectInSeries(noise, filter, this.envelope(strike, peak, CLICK_ATTACK, decay), strike.out);
   }
 
-  private envelope(when: number, peak: number, attack: number, decay: number) {
+  // Two hits on one grid step, such as a closed and an open hat, both ring, whatever their humanized order
+  private release(ringing: Strike | undefined, next: Strike, time: number) {
+    if (!ringing || ringing.gridTime === next.gridTime) return;
+    if (next.when <= ringing.when || next.when >= ringing.end) return;
+    for (const envelope of ringing.envelopes) envelope.gain.setTargetAtTime(0, next.when, time);
+    const silent = Math.min(ringing.end, next.when + time * DECAYS_TO_SILENCE);
+    for (const source of ringing.sources) source.stop(silent);
+  }
+
+  private envelope(strike: Strike, peak: number, attack: number, decay: number) {
+    const { when } = strike;
     const gain = this.ctx.createGain();
     gain.gain.setValueAtTime(SILENT, when);
     gain.gain.exponentialRampToValueAtTime(Math.max(SILENT, peak), when + attack);
     gain.gain.setTargetAtTime(0, when + attack, decay);
-    this.voice.envelopes.push(gain);
+    strike.envelopes.push(gain);
     return gain;
   }
 
@@ -273,31 +347,31 @@ export class DrumKit {
     return filter;
   }
 
-  private oscillator(type: OscillatorType, frequency: number, when: number, end: number) {
+  private oscillator(strike: Strike, type: OscillatorType, frequency: number, end: number) {
     const oscillator = this.ctx.createOscillator();
     oscillator.type = type;
     oscillator.frequency.value = frequency;
-    oscillator.start(when);
-    this.finish(oscillator, end);
+    oscillator.start(strike.when);
+    this.finish(strike, oscillator, end);
     return oscillator;
   }
 
-  private noise(when: number, end: number) {
+  private noise(strike: Strike, end: number) {
     const noise = this.ctx.createBufferSource();
     noise.buffer = this.sharedNoise();
     noise.loop = true;
-    noise.start(when, this.random() * NOISE_SECONDS);
-    this.finish(noise, end);
+    noise.start(strike.when, this.random() * NOISE_SECONDS);
+    this.finish(strike, noise, end);
     return noise;
   }
 
-  private finish(source: AudioScheduledSourceNode, end: number) {
+  private finish(strike: Strike, source: AudioScheduledSourceNode, end: number) {
     source.stop(end);
-    this.voice.sources.push(source);
-    this.voice.end = Math.max(this.voice.end, end);
     source.onended = () => source.disconnect();
+    strike.sources.push(source);
+    strike.end = Math.max(strike.end, end);
     // Rescheduling at a bar line cancels by grid time, so a humanized hit is tracked at its grid time
-    this.synth.track(source, 'backing', this.gridTime, end);
+    this.synth.track(source, 'backing', strike.gridTime, end);
   }
 
   private sharedNoise() {
@@ -310,7 +384,7 @@ export class DrumKit {
   }
 
   private random() {
-    this.seed = (this.seed * 1664525 + 1013904223) >>> 0;
-    return this.seed / 4294967296;
+    this.seed = (this.seed * RANDOM_MULTIPLIER + RANDOM_INCREMENT) >>> 0;
+    return this.seed / UINT32_RANGE;
   }
 }

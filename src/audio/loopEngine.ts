@@ -1,4 +1,4 @@
-import type { Drum } from '../core/groove';
+import { HAT_DRUMS } from '../core/groove';
 import type { DrumHit, GrooveTimeline } from '../core/grooveTimeline';
 import { DrumKit } from './drumKit';
 import { DRUM_KIT_TUNINGS, type DrummerFeel } from './drumKits';
@@ -10,7 +10,7 @@ export type BackingPart = typeof BACKING_PARTS[number];
 export interface LoopState { playing: boolean; countingIn: boolean; beat: number | null; bar: number | null; loop: number }
 export interface HumanizeLimits { seed: number; time: number; velocity: number }
 export interface HitOffset { time: number; velocity: number }
-export interface LoopEngineOptions { synth?: Synth; kit?: Pick<DrumKit, 'play'>; humanize?: HumanizeLimits }
+export interface LoopEngineOptions { synth?: Synth; kit?: Pick<DrumKit, 'play' | 'reset'>; humanize?: HumanizeLimits }
 
 interface Segment { time: number; beat: number; spb: number; timeline: GrooveTimeline }
 
@@ -22,7 +22,6 @@ const STOP_FADE = 0.015;
 const EPSILON = 1e-6;
 const PART_LEVEL: Record<BackingPart, number> = { drums: 0.9, bass: 0.8, keys: 0.45 };
 const LIMITER = { threshold: -6, knee: 0, ratio: 20, attack: 0.002, release: 0.12 } as const;
-const LAGGING_DRUMS: readonly Drum[] = ['hat', 'halfhat', 'openhat', 'pedalhat'];
 const LOOSEST_FEEL = Math.max(...Object.values(DRUM_KIT_TUNINGS).map(tuning => tuning.feel.looseness));
 
 export const DEFAULT_HUMANIZE: HumanizeLimits = { seed: 1, time: 0.006, velocity: 0.08 };
@@ -40,7 +39,7 @@ export function humanize(limits: HumanizeLimits, loop: number, hit: number): Hit
 
 export class LoopEngine {
   private synth: Synth;
-  private kit: Pick<DrumKit, 'play'>;
+  private kit: Pick<DrumKit, 'play' | 'reset'>;
   private limits: HumanizeLimits;
   private timeline: GrooveTimeline | null = null;
   private tempo = 90;
@@ -103,6 +102,7 @@ export class LoopEngine {
       this.synth.cancel('backing', now + STOP_FADE * 4);
       this.synth.cancel('count-in');
     }
+    this.kit.reset();
     this.current = null; this.next = null;
     this.emit();
   }
@@ -144,8 +144,7 @@ export class LoopEngine {
     this.out.connect(limiter);
     const bus = (part: BackingPart) => { const g = ctx.createGain(); g.gain.value = this.level(part); g.connect(this.out!); return g; };
     this.buses = { drums: bus('drums'), bass: bus('bass'), keys: bus('keys') };
-    this.room = new DrumRoom(ctx, this.out, this.roomEnabled);
-    this.buses.drums.connect(this.room.input);
+    this.room = new DrumRoom(ctx, this.buses.drums, this.out, this.roomEnabled);
   }
 
   private limiter(): AudioNode {
@@ -227,16 +226,12 @@ export class LoopEngine {
   private schedule(seg: Segment, from: number, to: number) {
     if (to <= from) return;
     const { total, drums, bass, keys, voice } = seg.timeline;
-    const feel = DRUM_KIT_TUNINGS[seg.timeline.kit].feel;
     const first = Math.floor(this.beatAt(seg, from) / total), last = Math.floor(this.beatAt(seg, to) / total);
+    const limits = { ...this.limits, time: this.limits.time * this.feel(seg).looseness };
     for (let loop = Math.max(0, first); loop <= last; loop++) {
       drums.forEach((hit, i) => {
         const when = this.timeAt(seg, loop * total + hit.beat);
-        if (when < from || when >= to) return;
-        const offset = humanize({ ...this.limits, time: this.limits.time * feel.looseness }, loop, i);
-        const velocity = Math.max(0.05, Math.min(1, hit.velocity * (1 + offset.velocity)));
-        const drift = this.isPinned(seg, hit) ? 0 : offset.time;
-        this.kit.play(hit.drum, when, velocity, this.buses!.drums, drift + this.lag(hit.drum, feel), seg.timeline.kit);
+        if (when >= from && when < to) this.playDrum(seg, hit, when, humanize(limits, loop, i));
       });
       for (const hit of bass) {
         const when = this.timeAt(seg, loop * total + hit.beat);
@@ -249,12 +244,19 @@ export class LoopEngine {
     }
   }
 
-  private isPinned(seg: Segment, hit: DrumHit) {
-    return hit.drum === 'kick' && Math.abs(hit.beat - seg.timeline.bars[hit.bar].start) < EPSILON;
+  private playDrum(seg: Segment, hit: DrumHit, when: number, offset: HitOffset) {
+    const velocity = Math.max(0.05, Math.min(1, hit.velocity * (1 + offset.velocity)));
+    const drift = this.isPinned(seg, hit) ? 0 : offset.time;
+    const lag = HAT_DRUMS.includes(hit.drum) ? this.feel(seg).hatLagSeconds : 0;
+    this.kit.play(hit.drum, when, velocity, this.buses!.drums, drift + lag, seg.timeline.kit);
   }
 
-  private lag(drum: Drum, feel: DrummerFeel) {
-    return LAGGING_DRUMS.includes(drum) ? feel.hatLagSeconds : 0;
+  private feel(seg: Segment): DrummerFeel {
+    return DRUM_KIT_TUNINGS[seg.timeline.kit].feel;
+  }
+
+  private isPinned(seg: Segment, hit: DrumHit) {
+    return hit.drum === 'kick' && Math.abs(hit.beat - seg.timeline.bars[hit.bar].start) < EPSILON;
   }
 
   private emit() {
