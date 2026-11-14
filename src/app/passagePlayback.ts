@@ -4,6 +4,8 @@ import type { Passage } from './passage';
 export interface SelectedNote { key: string; beat: number; bar: number }
 type PassagePlayer = Pick<Player, 'bars' | 'range' | 'pausedAt' | 'playing' | 'setRange' | 'barRange' | 'seek' | 'seekNote' | 'noteAtKey' | 'stop'>;
 
+export const beatInBar = (beat: number, barStart: number, beatValue: number) => Number(((beat - barStart) * beatValue / 4 + 1).toFixed(3));
+
 export class PassagePlayback {
   private note: SelectedNote | null = null;
 

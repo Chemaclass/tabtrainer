@@ -27,7 +27,8 @@ import { OpenSong } from './app/openSong';
 import { Workspace, type Screen } from './app/workspace';
 import { startupPlan } from './app/startup';
 import { Passage } from './app/passage';
-import { PassagePlayback } from './app/passagePlayback';
+import { PassagePlayback, beatInBar } from './app/passagePlayback';
+import { passageControls } from './ui/player/passageControls';
 import { playbackShortcut } from './app/playbackShortcut';
 import { Navigation, navigationState, type Route } from './app/navigation';
 import { DraftSession, titleOf } from './app/draftSession';
@@ -287,22 +288,17 @@ timingPanel(player);
 
 function showPassage() {
   const state = passage.snapshot();
-  $('loopA', HTMLInputElement).value = String(state.first);
-  $('loopB', HTMLInputElement).value = String(state.last);
-  $('loopA', HTMLInputElement).max = $('loopB', HTMLInputElement).max = String(state.count);
-  $('loopChk', HTMLInputElement).checked = state.repeat;
   speedPractice.show();
   score.markPassage({ selectedNote: passagePlayback.selectedNote?.key, selectedBar: state.selected, inPassage: bar => state.active && passage.includes(bar) });
-  for (const id of ['rangeStart', 'rangeEnd']) $(id, HTMLButtonElement).disabled = !state.selected;
-  $('rangeReset', HTMLButtonElement).disabled = !state.selected && !state.active;
   const note = passagePlayback.selectedNote;
+  let summary = passage.summary();
   if (note) {
     const start = player.bars.find(bar => bar.bar === note.bar)?.start ?? 0;
     const beatValue = openSong.song?.bars.find(bar => bar.index === note.bar)?.beatValue ?? 4;
-    const beat = Number(((note.beat - start) * beatValue / 4 + 1).toFixed(3));
     const range = state.active ? `Bars ${state.first}-${state.last}, ${state.repeat ? 'repeating' : 'play once'}.` : 'Whole song, play once.';
-    $('rangeSummary').textContent = `Selected note in bar ${note.bar}, beat ${beat}. ${range}`;
-  } else $('rangeSummary').textContent = passage.summary();
+    summary = `Selected note in bar ${note.bar}, beat ${beatInBar(note.beat, start, beatValue)}. ${range}`;
+  }
+  passageView.show(state, summary);
 }
 function applyLoop() {
   if (!openSong.song?.bars.length) return;
@@ -310,16 +306,15 @@ function applyLoop() {
   showPassage();
 }
 function selectBar(bar: number) { if (passagePlayback.selectBar(bar)) showPassage(); }
-$('rangeStart').onclick = () => { passage.startAtSelection(); applyLoop(); };
-$('rangeEnd').onclick = () => { passage.endAtSelection(); applyLoop(); };
-$('rangeReset').onclick = () => {
-  passage.clear(); applyLoop(); player.stop(); passage.deselect(); showPassage();
-  if (!score.focusFirstBar()) $('title').focus();
-};
-['loopChk', 'loopA', 'loopB'].forEach(id => $(id).addEventListener('change', () => {
-  passage.setRange($('loopA', HTMLInputElement).valueAsNumber, $('loopB', HTMLInputElement).valueAsNumber, $('loopChk', HTMLInputElement).checked);
-  applyLoop();
-}));
+const passageView = passageControls({
+  onRange: (first, last, repeat) => { passage.setRange(first, last, repeat); applyLoop(); },
+  onStart: () => { passage.startAtSelection(); applyLoop(); },
+  onEnd: () => { passage.endAtSelection(); applyLoop(); },
+  onReset: () => {
+    passage.clear(); applyLoop(); player.stop(); passage.deselect(); showPassage();
+    if (!score.focusFirstBar()) $('title').focus();
+  },
+});
 
 function selectNote(key: string, bar: number) {
   if (!passagePlayback.selectNote(key, bar)) return false;

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { PassagePlayback } from '../../src/app/passagePlayback';
+import { PassagePlayback, beatInBar } from '../../src/app/passagePlayback';
 import { Passage } from '../../src/app/passage';
 import { parseSong } from '../../src/core/parser';
 import { buildTimeline } from '../../src/core/timeline';
@@ -136,5 +136,21 @@ describe('passage playback', () => {
     playback.deselect();
     expect(playback.selectedNote).toBeNull();
     expect(passage.snapshot().selected).toBe(0);
+  });
+});
+
+describe('beat in bar', () => {
+  it('counts from one inside the bar', () => {
+    expect(beatInBar(8, 8, 4)).toBe(1);
+    expect(beatInBar(9.5, 8, 4)).toBe(2.5);
+  });
+
+  it('scales by the bar beat value', () => {
+    expect(beatInBar(9, 8, 8)).toBe(3);
+    expect(beatInBar(8.5, 8, 16)).toBe(3);
+  });
+
+  it('rounds to three decimals', () => {
+    expect(beatInBar(8 + 1 / 3, 8, 4)).toBe(1.333);
   });
 });
