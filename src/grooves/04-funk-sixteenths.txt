@@ -6,6 +6,7 @@ key: Em
 time: 4/4
 swing: 54
 progression: i7 i7 i7 IV7
+kit: funk
 
 # sixteen steps per bar: 1 e & a 2 e & a 3 e & a 4 e & a
 crash:   x............... | ................ | ................ | ................

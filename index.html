@@ -172,6 +172,7 @@
       <div class="jam-mixer-head">
         <h2 id="jamMixerTitle" class="jam-bars-title">Mixer</h2>
         <fieldset class="jam-plays"><legend>I play</legend><label><input type="radio" name="jamPlays" value="bass" /><span>Bass</span></label><label><input type="radio" name="jamPlays" value="guitar" /><span>Guitar</span></label></fieldset>
+        <button id="jamRoom" type="button" class="toggle jam-room">Drum room</button>
       </div>
       <div id="jamMixer" class="jam-mixer-rows"></div>
     </section>
@@ -391,7 +392,7 @@ time: 4/4
     <h2>Jam</h2>
     <p>Open Jam from the top bar to improvise over a looping groove of drums, bass and keys. Pick a groove from the list, press Play or <kbd>Space</kbd>, then choose a tempo and a key. The chord names follow the key, and the outlined bar is the one you hear. Changes are heard from the next bar.</p>
     <p>Progression swaps the groove's chords for another set, such as a 12 bar blues or ii V I. Swing moves the off beat notes from straight to a full triplet. The app remembers tempo, key, progression and swing for each groove.</p>
-    <p>In the mixer, choose what you play. Bass mutes the backing bass so you take its place. Each part has its own mute button and volume. The app remembers the mixer for all grooves.</p>
+    <p>In the mixer, choose what you play. Bass mutes the backing bass so you take its place. Each part has its own mute button and volume. Drum room adds a short room echo to the drums. The app remembers the mixer for all grooves.</p>
     <p>Count-in plays one bar of clicks before the loop starts, at the click volume from the practice Timing menu. Copy link copies an address that opens the groove with your key, tempo, progression and swing.</p>
     <h2>Writing a groove</h2>
     <p>A groove is plain text: the same header lines as a song, then one line of steps per part.</p>
@@ -404,6 +405,8 @@ time: 4/4
 swing: 66              # 50 is straight, 66 is a triplet shuffle, up to 75
 progression: I7 IV7 I7 I7 | IV7 IV7 I7 I7 | V7 IV7 I7 V7
 voice: keys            # keys, organ or drive
+kit: blues             # rock, blues, funk, reggae, jazz, metal or electronic
+fill: on               # a tom fill at the end of the progression, off by default
 
 hat:   xoXoxoXo        # one bar of 8 steps, repeated every bar
 snare: ..X...X. | ..X..oX.
@@ -416,9 +419,11 @@ bass:  1 - 3 - 5 - 6 - | b7 - 6 - 5 - &gt;b1 -</pre>
       <tr><td><code>swing:</code></td><td>how late the off beat notes land: <code>50</code> is straight, <code>66</code> is a triplet, up to <code>75</code>. The Jam screen starts from this value, and its swing slider stops at the triplet</td></tr>
       <tr><td><code>progression:</code></td><td>the chords the groove plays by default. The Jam screen can swap them for another progression</td></tr>
       <tr><td><code>voice:</code></td><td>the sound of the keys part: <code>keys</code> (electric piano, the default), <code>organ</code>, or <code>drive</code>, a distorted voice for power chords</td></tr>
+      <tr><td><code>kit:</code></td><td>the drum sound and feel: <code>rock</code> (the default), <code>blues</code>, <code>funk</code>, <code>reggae</code>, <code>jazz</code>, <code>metal</code> or <code>electronic</code>. Each kit tunes the drums and how loosely they sit on the beat</td></tr>
+      <tr><td><code>fill:</code></td><td><code>on</code> plays a tom fill over the last two beats of the progression, in place of the drum lines there. <code>off</code> is the default</td></tr>
       <tr><td><code>I7 iv bVII</code></td><td>one chord per bar as a roman numeral: upper case is major, lower case is minor, <code>b</code> or <code>#</code> shifts it. Numerals count from the major scale of the key's root, so a minor key uses <code>i iv v bIII bVI bVII</code></td></tr>
       <tr><td><code>7 maj7 m7 m7b5 dim sus4 5</code></td><td>chord qualities after the numeral</td></tr>
-      <tr><td><code>kick snare rim hat openhat ride crash</code></td><td>drum lines (<code>rim</code> is a cross stick): <code>X</code> accent, <code>x</code> hit, <code>o</code> soft hit, <code>.</code> silence</td></tr>
+      <tr><td><code>kick snare rim hat halfhat openhat pedalhat ride bell crash hightom midtom lowtom</code></td><td>drum lines (<code>rim</code> is a cross stick, <code>pedalhat</code> the hi-hat closed by the foot, <code>bell</code> the bell of the ride): <code>X</code> accent, <code>x</code> hit, <code>o</code> soft hit, <code>.</code> silence. A closed or pedal hi-hat stops an open or half open one</td></tr>
       <tr><td><code>keys</code></td><td>chord stabs: <code>X</code> accent, <code>x</code> stab, <code>-</code> hold the stab, <code>.</code> silence</td></tr>
       <tr><td><code>bass</code></td><td>chord degrees separated by spaces: <code>1 2 3 5 6 b7 8</code>, <code>-</code> hold, <code>.</code> silence. <code>3</code> and <code>5</code> follow the chord, so <code>3</code> is the minor third of a minor chord and the root of a power chord. <code>b7</code> is the major seventh of a maj7 chord. Each bar moves by whole octaves to stay between E1 and G3, the range of a 4 string bass</td></tr>
       <tr><td><code>&gt;5 &gt;b1</code></td><td>approach notes in the bass: <code>&gt;</code> plays a degree of the next chord, in the octave nearest its root, so a walking line leads into the chord change. <code>&gt;b1</code> is a half step below the next root, or a half step above when that falls below the bass range</td></tr>

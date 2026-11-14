@@ -6,6 +6,7 @@ key: Am
 time: 4/4
 swing: 58
 progression: i7 iv7 i7 bVII
+kit: reggae
 
 # sixteen steps per bar: 1 e & a 2 e & a 3 e & a 4 e & a
 # one drop: no kick on 1, the kick and snare land together on 3

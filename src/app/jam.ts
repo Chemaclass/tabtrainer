@@ -173,6 +173,7 @@ export class Mixer {
   private player: Family;
   private chosen: boolean;
   private parts: Record<MixerPart, PartLevel>;
+  private roomOn: boolean;
 
   constructor(library: Family = pref('family', 'bass')) {
     const saved = pref('jamMixer', {});
@@ -189,9 +190,12 @@ export class Mixer {
       };
     };
     this.parts = { drums: level('drums'), bass: level('bass'), keys: level('keys') };
+    this.roomOn = typeof saved.room === 'boolean' ? saved.room : true;
   }
 
   get plays() { return this.player; }
+
+  get room() { return this.roomOn; }
 
   level(part: MixerPart): PartLevel { return { ...this.parts[part] }; }
 
@@ -228,5 +232,12 @@ export class Mixer {
     return true;
   }
 
-  private save() { this.chosen = true; setPref('jamMixer', { plays: this.player, parts: this.parts }); }
+  setRoom(on: boolean): boolean {
+    if (on === this.roomOn) return false;
+    this.roomOn = on;
+    this.save();
+    return true;
+  }
+
+  private save() { this.chosen = true; setPref('jamMixer', { plays: this.player, parts: this.parts, room: this.roomOn }); }
 }

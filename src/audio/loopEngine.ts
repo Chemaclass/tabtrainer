@@ -1,5 +1,8 @@
-import type { GrooveTimeline } from '../core/grooveTimeline';
+import type { Drum } from '../core/groove';
+import type { DrumHit, GrooveTimeline } from '../core/grooveTimeline';
 import { DrumKit } from './drumKit';
+import { DRUM_KIT_TUNINGS, type DrummerFeel } from './drumKits';
+import { DrumRoom } from './drumRoom';
 import { Synth } from './synth';
 
 export const BACKING_PARTS = ['drums', 'bass', 'keys'] as const;
@@ -19,6 +22,8 @@ const STOP_FADE = 0.015;
 const EPSILON = 1e-6;
 const PART_LEVEL: Record<BackingPart, number> = { drums: 0.9, bass: 0.8, keys: 0.45 };
 const LIMITER = { threshold: -6, knee: 0, ratio: 20, attack: 0.002, release: 0.12 } as const;
+const LAGGING_DRUMS: readonly Drum[] = ['hat', 'halfhat', 'openhat', 'pedalhat'];
+const LOOSEST_FEEL = Math.max(...Object.values(DRUM_KIT_TUNINGS).map(tuning => tuning.feel.looseness));
 
 export const DEFAULT_HUMANIZE: HumanizeLimits = { seed: 1, time: 0.006, velocity: 0.08 };
 
@@ -42,6 +47,8 @@ export class LoopEngine {
   private gains: Record<BackingPart, number> = { drums: 1, bass: 1, keys: 1 };
   private buses: Record<BackingPart, GainNode> | null = null;
   private out: GainNode | null = null;
+  private room: DrumRoom | null = null;
+  private roomEnabled = true;
   private current: Segment | null = null;
   private next: Segment | null = null;
   private scheduledUntil = 0;
@@ -116,6 +123,11 @@ export class LoopEngine {
 
   setClickVolume(volume: number) { if (Number.isFinite(volume)) this.clickVolume = Math.max(0, Math.min(1, volume)); }
 
+  setRoom(enabled: boolean) {
+    this.roomEnabled = enabled;
+    this.room?.setEnabled(enabled);
+  }
+
   setPartGain(part: BackingPart, gain: number) {
     if (!Number.isFinite(gain)) return;
     this.gains[part] = Math.max(0, gain);
@@ -132,6 +144,8 @@ export class LoopEngine {
     this.out.connect(limiter);
     const bus = (part: BackingPart) => { const g = ctx.createGain(); g.gain.value = this.level(part); g.connect(this.out!); return g; };
     this.buses = { drums: bus('drums'), bass: bus('bass'), keys: bus('keys') };
+    this.room = new DrumRoom(ctx, this.out, this.roomEnabled);
+    this.buses.drums.connect(this.room.input);
   }
 
   private limiter(): AudioNode {
@@ -159,7 +173,7 @@ export class LoopEngine {
       this.scheduledUntil = this.current.time;
       return;
     }
-    const at = this.nextBarLine(base, this.beatAt(base, now + this.limits.time + EPSILON));
+    const at = this.nextBarLine(base, this.beatAt(base, now + this.limits.time * LOOSEST_FEEL + EPSILON));
     const time = this.timeAt(base, at);
     this.next = { time, beat: this.mapBeat(base, at, this.timeline), spb: 60 / this.tempo, timeline: this.timeline };
     this.synth.cancelFuture('backing', time - EPSILON);
@@ -213,15 +227,16 @@ export class LoopEngine {
   private schedule(seg: Segment, from: number, to: number) {
     if (to <= from) return;
     const { total, drums, bass, keys, voice } = seg.timeline;
+    const feel = DRUM_KIT_TUNINGS[seg.timeline.kit].feel;
     const first = Math.floor(this.beatAt(seg, from) / total), last = Math.floor(this.beatAt(seg, to) / total);
     for (let loop = Math.max(0, first); loop <= last; loop++) {
       drums.forEach((hit, i) => {
         const when = this.timeAt(seg, loop * total + hit.beat);
         if (when < from || when >= to) return;
-        const offset = humanize(this.limits, loop, i);
-        const pinned = hit.drum === 'kick' && Math.abs(hit.beat - seg.timeline.bars[hit.bar].start) < EPSILON;
+        const offset = humanize({ ...this.limits, time: this.limits.time * feel.looseness }, loop, i);
         const velocity = Math.max(0.05, Math.min(1, hit.velocity * (1 + offset.velocity)));
-        this.kit.play(hit.drum, when, velocity, this.buses!.drums, pinned ? 0 : offset.time);
+        const drift = this.isPinned(seg, hit) ? 0 : offset.time;
+        this.kit.play(hit.drum, when, velocity, this.buses!.drums, drift + this.lag(hit.drum, feel), seg.timeline.kit);
       });
       for (const hit of bass) {
         const when = this.timeAt(seg, loop * total + hit.beat);
@@ -232,6 +247,14 @@ export class LoopEngine {
         if (when >= from && when < to) this.synth[voice](when, hit.midi, hit.length * seg.spb, hit.velocity * 0.5, this.buses!.keys);
       }
     }
+  }
+
+  private isPinned(seg: Segment, hit: DrumHit) {
+    return hit.drum === 'kick' && Math.abs(hit.beat - seg.timeline.bars[hit.bar].start) < EPSILON;
+  }
+
+  private lag(drum: Drum, feel: DrummerFeel) {
+    return LAGGING_DRUMS.includes(drum) ? feel.hatLagSeconds : 0;
   }
 
   private emit() {

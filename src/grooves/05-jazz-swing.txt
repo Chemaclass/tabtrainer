@@ -6,6 +6,7 @@ key: F
 time: 4/4
 swing: 66
 progression: ii7 V7 Imaj7 Imaj7
+kit: jazz
 
 # eight swung eighths per bar: 1 & 2 & 3 & 4 &
 # the ride plays ding, ding-a-ding: the soft skip note is the swung eighth before 3 and before 1

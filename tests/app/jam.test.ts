@@ -240,6 +240,15 @@ describe('mixer', () => {
     expect(reloaded.plays).toBe('guitar');
     expect(MIXER_PARTS.map(p => reloaded.level(p))).toEqual([{ volume: 100, muted: true }, { volume: 100, muted: false }, { volume: 55, muted: false }]);
   });
+  it('turns the drum room on by default and remembers turning it off', () => {
+    const mixer = new Mixer();
+    expect(mixer.room).toBe(true);
+    expect(mixer.setRoom(false)).toBe(true);
+    expect(mixer.setRoom(false)).toBe(false);
+    expect(new Mixer().room).toBe(false);
+    stored.set('tabtrainer:jamMixer', JSON.stringify({ room: 'quiet' }));
+    expect(new Mixer().room).toBe(true);
+  });
   it('ignores saved values that do not fit and keeps the jam preference working', () => {
     stored.set('tabtrainer:jam', JSON.stringify({ 'blues-shuffle': { key: 'C', tempo: 120 } }));
     stored.set('tabtrainer:jamMixer', JSON.stringify({ plays: 'banjo', parts: { drums: { volume: 300, muted: 'yes' }, bass: 'loud', keys: { volume: 30 } } }));

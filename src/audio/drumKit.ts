@@ -1,176 +1,312 @@
-import type { Drum } from '../core/groove';
+import type { Drum, DrumKitName } from '../core/groove';
+import { DRUM_KIT_TUNINGS, type DrumKitTuning, type HatTuning, type SnareTuning } from './drumKits';
 import type { Synth } from './synth';
 
-const NOISE_SECONDS = 1;
-const RIDE_PARTIALS = [587, 845, 1103, 1517];
-const CRASH_PARTIALS = [431, 619, 893, 1277];
-const RIM = {
-  modes: [
-    { type: 'triangle', frequency: 520, level: 0.5, decay: 0.018 },
-    { type: 'sine', frequency: 1720, level: 0.32, decay: 0.007 },
-  ] as readonly { type: OscillatorType; frequency: number; level: number; decay: number }[],
-  click: { frequency: 2600, q: 1.4, level: 0.35, decay: 0.005, length: 0.04 },
-};
-const RING_DECAYS = 8;
+interface Hit { when: number; velocity: number; level: number; out: AudioNode; tuning: DrumKitTuning }
+interface ToneRange { soft: number; hard: number }
+interface MetalTone { fundamental: number; band: ToneRange; bandQ: number; highpass: number; level: number; decay: number }
+type MetalVoicing = Omit<MetalTone, 'decay'>;
+interface RingingVoice { start: number; end: number; envelopes: GainNode[]; sources: AudioScheduledSourceNode[] }
+type HatState = 'closed' | 'half' | 'open' | 'pedal';
 
-const loudness = (velocity: number) => Math.pow(Math.max(0, Math.min(1, velocity)), 1.6);
+const SILENT = 0.0001;
+// e^-7 is about -60 dB, where a decaying hit is inaudible
+const DECAYS_TO_SILENCE = 7;
+const NOISE_SECONDS = 1;
+const VELOCITY_CURVE = 1.6;
+const CLICK_ATTACK = 0.0005;
+
+const KICK = {
+  attack: 0.002,
+  accentPitchRise: 0.25,
+  clickBand: { soft: 1800, hard: 4500 },
+  clickQ: 0.9,
+  clickDecay: 0.004,
+};
+
+const SNARE = {
+  attack: 0.001,
+  modeLevel: 0.4,
+  modePitchDrop: 0.92,
+  modePitchTime: 0.03,
+  snapBand: { soft: 1200, hard: 3200 },
+  snapQ: 0.8,
+  snapDecay: 0.015,
+  wireBand: { soft: 3500, hard: 7000 },
+  wireQ: 0.7,
+};
+
+const RIM = {
+  woodFrequency: 520,
+  woodLevel: 0.5,
+  woodDecay: 0.018,
+  ringFrequency: 1720,
+  ringLevel: 0.32,
+  ringDecay: 0.007,
+  attack: 0.0005,
+  clickBand: { soft: 2000, hard: 3200 },
+  clickQ: 1.4,
+  clickLevel: 0.35,
+  clickDecay: 0.005,
+};
+
+// The six square wave ratios of the classic analog hi-hat: inharmonic, so their sum sounds like metal
+const METAL_RATIOS = [2, 3, 4.16, 5.43, 6.79, 8.21];
+const METAL_ATTACK = 0.001;
+const METAL_DETUNE_CENTS = 30;
+
+const HAT = {
+  band: { soft: 7000, hard: 10500 },
+  pedalBand: { soft: 5500, hard: 7500 },
+  bandQ: 0.8,
+  highpass: 7000,
+  level: 2.5,
+  pedalLevel: 1.4,
+  pedalDecay: 0.015,
+};
+
+const RIDE: MetalVoicing = { fundamental: 52, band: { soft: 4500, hard: 7500 }, bandQ: 1.2, highpass: 2500, level: 1.8 };
+const BELL: MetalVoicing = { fundamental: 70, band: { soft: 2400, hard: 3600 }, bandQ: 3, highpass: 1200, level: 2 };
+const BELL_DECAY_RATIO = 0.8;
+const CRASH: MetalVoicing = { fundamental: 46, band: { soft: 5000, hard: 8500 }, bandQ: 0.6, highpass: 3000, level: 1.8 };
+const CRASH_WASH_LEVEL = 1.5;
+
+// A drum struck again cuts its old ring short, as a real one does, which caps how many sources play at once
+const RESTRIKE_RELEASE = 0.02;
+const HAT_CHOKE = 0.006;
+const HATS: readonly Drum[] = ['hat', 'halfhat', 'openhat', 'pedalhat'];
+const instrumentOf = (drum: Drum): string => (HATS.includes(drum) ? 'hat' : drum === 'bell' ? 'ride' : drum);
+
+const TOM = {
+  attack: 0.002,
+  pitchBend: 1.35,
+  pitchDrop: 0.06,
+  level: 0.9,
+  stickBand: { soft: 1500, hard: 3500 },
+  stickQ: 1,
+  stickLevel: 0.3,
+  stickDecay: 0.006,
+};
+
+const clampVelocity = (velocity: number) => Math.max(0, Math.min(1, velocity));
+const loudness = (velocity: number) => Math.pow(clampVelocity(velocity), VELOCITY_CURVE);
+const brightness = (range: ToneRange, velocity: number) => range.soft * Math.pow(range.hard / range.soft, velocity);
+const endOf = (when: number, attack: number, decay: number) => when + attack + decay * DECAYS_TO_SILENCE;
+const silentVoice = (start: number): RingingVoice => ({ start, end: start, envelopes: [], sources: [] });
+
+function connectInSeries(...nodes: AudioNode[]) {
+  for (let i = 1; i < nodes.length; i++) nodes[i - 1].connect(nodes[i]);
+}
+
+function glide(param: AudioParam, from: number, to: number, when: number, duration: number) {
+  param.setValueAtTime(from, when);
+  param.exponentialRampToValueAtTime(to, when + duration);
+}
 
 export class DrumKit {
-  private noise: AudioBuffer | null = null;
-  private openHat: { gain: GainNode; start: number } | null = null;
+  private noiseBuffer: AudioBuffer | null = null;
+  private ringing = new Map<string, RingingVoice>();
+  // Every source and envelope made during one strike joins its voice, so the next strike of that instrument can release them
+  private voice = silentVoice(0);
   private seed = 1;
-  private nominal = 0;
+  private gridTime = 0;
 
   constructor(private synth: Synth) {}
 
-  play(drum: Drum, when: number, velocity: number, out: AudioNode, offset = 0) {
+  play(drum: Drum, when: number, velocity: number, out: AudioNode, offset = 0, kit: DrumKitName = 'rock') {
     const level = loudness(velocity);
     if (level <= 0) return;
-    this.nominal = when;
-    when = Math.max(this.synth.now, when + offset);
-    if (drum === 'kick') this.kick(when, level, out);
-    else if (drum === 'snare') this.snare(when, level, out);
-    else if (drum === 'rim') this.rim(when, level, out);
-    else if (drum === 'hat') { this.choke(when); this.hat(when, level, 0.012, out); }
-    else if (drum === 'openhat') { this.choke(when); this.hat(when, level, 0.12, out, true); }
-    else if (drum === 'ride') this.cymbal(when, level * 0.32, 0.45, 5200, RIDE_PARTIALS, out);
-    else this.cymbal(when, level * 0.55, 0.7, 3800, CRASH_PARTIALS, out);
+    this.gridTime = when;
+    const hit: Hit = { when: Math.max(this.synth.now, when + offset), velocity: clampVelocity(velocity), level, out, tuning: DRUM_KIT_TUNINGS[kit] };
+    const instrument = instrumentOf(drum);
+    this.release(this.ringing.get(instrument), hit.when, HATS.includes(drum) ? HAT_CHOKE : RESTRIKE_RELEASE);
+    this.voice = silentVoice(hit.when);
+    this.strike(drum, hit);
+    this.ringing.set(instrument, this.voice);
+  }
+
+  private strike(drum: Drum, hit: Hit) {
+    switch (drum) {
+      case 'kick': return this.kick(hit);
+      case 'snare': return this.snare(hit);
+      case 'rim': return this.rim(hit);
+      case 'hat': return this.hat(hit, 'closed');
+      case 'halfhat': return this.hat(hit, 'half');
+      case 'openhat': return this.hat(hit, 'open');
+      case 'pedalhat': return this.hat(hit, 'pedal');
+      case 'ride': return this.ride(hit);
+      case 'bell': return this.bell(hit);
+      case 'crash': return this.crash(hit);
+      case 'hightom': return this.tom(hit, hit.tuning.tom.high);
+      case 'midtom': return this.tom(hit, hit.tuning.tom.mid);
+      case 'lowtom': return this.tom(hit, hit.tuning.tom.low);
+    }
   }
 
   private get ctx() { return this.synth.context; }
 
-  private kick(when: number, level: number, out: AudioNode) {
-    const ctx = this.ctx, body = ctx.createOscillator(), bodyGain = ctx.createGain();
-    body.type = 'sine';
-    body.frequency.setValueAtTime(140 + 40 * level, when);
-    body.frequency.exponentialRampToValueAtTime(58, when + 0.045);
-    body.frequency.exponentialRampToValueAtTime(44, when + 0.35);
-    bodyGain.gain.setValueAtTime(0.0001, when);
-    bodyGain.gain.exponentialRampToValueAtTime(level, when + 0.003);
-    bodyGain.gain.setTargetAtTime(0, when + 0.06, 0.09);
-    body.connect(bodyGain); bodyGain.connect(out);
-    this.source(body, when, when + 0.55);
-
-    const click = this.noiseSource(), band = this.filter('bandpass', 3200, 0.9), clickGain = ctx.createGain();
-    clickGain.gain.setValueAtTime(level * 0.45, when);
-    clickGain.gain.setTargetAtTime(0, when, 0.004);
-    click.connect(band); band.connect(clickGain); clickGain.connect(out);
-    this.source(click, when, when + 0.03);
+  private kick(hit: Hit) {
+    const { when, velocity, level, out } = hit;
+    const tuning = hit.tuning.kick;
+    const body = this.oscillator('sine', tuning.endFrequency, when, endOf(when, KICK.attack, tuning.decay));
+    const accentedStart = tuning.startFrequency * (1 + KICK.accentPitchRise * velocity);
+    glide(body.frequency, accentedStart, tuning.endFrequency, when, tuning.pitchDrop);
+    connectInSeries(body, this.envelope(when, level, KICK.attack, tuning.decay), out);
+    this.noiseClick(hit, KICK.clickBand, KICK.clickQ, level * tuning.clickLevel, KICK.clickDecay);
   }
 
-  private snare(when: number, level: number, out: AudioNode) {
-    const ctx = this.ctx, toneGain = ctx.createGain();
-    toneGain.gain.setValueAtTime(level * 0.42, when);
-    toneGain.gain.setTargetAtTime(0, when, 0.035);
-    toneGain.connect(out);
-    for (const [from, to] of [[205, 180], [340, 330]]) {
-      const o = ctx.createOscillator();
-      o.type = 'triangle';
-      o.frequency.setValueAtTime(from, when);
-      o.frequency.exponentialRampToValueAtTime(to, when + 0.03);
-      o.connect(toneGain);
-      this.source(o, when, when + 0.2);
+  private snare(hit: Hit) {
+    this.snareBody(hit, hit.tuning.snare);
+    this.snareNoise(hit, hit.tuning.snare);
+  }
+
+  private snareBody(hit: Hit, tuning: SnareTuning) {
+    const { when, level, out } = hit;
+    const end = endOf(when, SNARE.attack, tuning.bodyDecay);
+    const body = this.envelope(when, level * SNARE.modeLevel, SNARE.attack, tuning.bodyDecay);
+    body.connect(out);
+    for (const frequency of [tuning.lowMode, tuning.highMode]) {
+      const mode = this.oscillator('triangle', frequency, when, end);
+      glide(mode.frequency, frequency, frequency * SNARE.modePitchDrop, when, SNARE.modePitchTime);
+      mode.connect(body);
     }
-
-    const noise = this.noiseSource(), band = this.filter('bandpass', 4200, 0.6), high = this.filter('highpass', 900), noiseGain = ctx.createGain();
-    noiseGain.gain.setValueAtTime(0.0001, when);
-    noiseGain.gain.exponentialRampToValueAtTime(level * 0.7, when + 0.001);
-    noiseGain.gain.setTargetAtTime(0, when + 0.012, 0.055);
-    noise.connect(high); high.connect(band); band.connect(noiseGain); noiseGain.connect(out);
-    this.source(noise, when, when + 0.35);
   }
 
-  private rim(when: number, level: number, out: AudioNode) {
-    for (const mode of RIM.modes) {
-      const tone = this.ctx.createOscillator();
-      tone.type = mode.type;
-      tone.frequency.value = mode.frequency;
-      const toneGain = this.decay(when, level * mode.level, mode.decay);
-      tone.connect(toneGain);
-      toneGain.connect(out);
-      this.source(tone, when, when + mode.decay * RING_DECAYS);
+  private snareNoise(hit: Hit, tuning: SnareTuning) {
+    const { when, velocity, level, out } = hit;
+    const noise = this.noise(when, endOf(when, SNARE.attack, tuning.wireDecay));
+    const snap = this.filter('bandpass', brightness(SNARE.snapBand, velocity), SNARE.snapQ);
+    const wires = this.filter('bandpass', brightness(SNARE.wireBand, velocity), SNARE.wireQ);
+    connectInSeries(noise, snap, this.envelope(when, level * tuning.snapLevel, SNARE.attack, SNARE.snapDecay), out);
+    connectInSeries(noise, wires, this.envelope(when, level * tuning.wireLevel, SNARE.attack, tuning.wireDecay), out);
+  }
+
+  private rim(hit: Hit) {
+    const { when, level, out } = hit;
+    const wood = this.oscillator('triangle', RIM.woodFrequency, when, endOf(when, RIM.attack, RIM.woodDecay));
+    connectInSeries(wood, this.envelope(when, level * RIM.woodLevel, RIM.attack, RIM.woodDecay), out);
+    const ring = this.oscillator('sine', RIM.ringFrequency, when, endOf(when, RIM.attack, RIM.ringDecay));
+    connectInSeries(ring, this.envelope(when, level * RIM.ringLevel, RIM.attack, RIM.ringDecay), out);
+    this.noiseClick(hit, RIM.clickBand, RIM.clickQ, level * RIM.clickLevel, RIM.clickDecay);
+  }
+
+  private hat(hit: Hit, state: HatState) {
+    this.metal(hit, this.hatTone(hit.tuning.hat, state));
+  }
+
+  private hatTone(tuning: HatTuning, state: HatState): MetalTone {
+    const voicing = { fundamental: tuning.fundamental, bandQ: HAT.bandQ, highpass: HAT.highpass };
+    if (state === 'pedal') return { ...voicing, band: HAT.pedalBand, level: HAT.pedalLevel, decay: HAT.pedalDecay };
+    const decays: Record<Exclude<HatState, 'pedal'>, number> = { closed: tuning.closedDecay, half: tuning.halfDecay, open: tuning.openDecay };
+    return { ...voicing, band: HAT.band, level: HAT.level, decay: decays[state] };
+  }
+
+  private ride(hit: Hit) {
+    this.metal(hit, { ...RIDE, decay: hit.tuning.cymbal.rideDecay });
+  }
+
+  private bell(hit: Hit) {
+    this.metal(hit, { ...BELL, decay: hit.tuning.cymbal.rideDecay * BELL_DECAY_RATIO });
+  }
+
+  private crash(hit: Hit) {
+    const tone = { ...CRASH, decay: hit.tuning.cymbal.crashDecay };
+    const metal = this.metal(hit, tone);
+    const wash = this.ctx.createGain();
+    wash.gain.value = CRASH_WASH_LEVEL;
+    const noise = this.noise(hit.when, endOf(hit.when, METAL_ATTACK, tone.decay));
+    connectInSeries(noise, wash, metal);
+  }
+
+  private tom(hit: Hit, frequency: number) {
+    const { when, level, out } = hit;
+    const decay = hit.tuning.tom.decay;
+    const body = this.oscillator('sine', frequency, when, endOf(when, TOM.attack, decay));
+    glide(body.frequency, frequency * TOM.pitchBend, frequency, when, TOM.pitchDrop);
+    connectInSeries(body, this.envelope(when, level * TOM.level, TOM.attack, decay), out);
+    this.noiseClick(hit, TOM.stickBand, TOM.stickQ, level * TOM.stickLevel, TOM.stickDecay);
+  }
+
+  private metal(hit: Hit, tone: MetalTone): AudioNode {
+    const { when, velocity, level, out } = hit;
+    const end = endOf(when, METAL_ATTACK, tone.decay);
+    const band = this.filter('bandpass', brightness(tone.band, velocity), tone.bandQ);
+    const high = this.filter('highpass', tone.highpass);
+    const gain = this.envelope(when, (level * tone.level) / METAL_RATIOS.length, METAL_ATTACK, tone.decay);
+    connectInSeries(band, high, gain, out);
+    for (const ratio of METAL_RATIOS) {
+      const square = this.oscillator('square', tone.fundamental * ratio, when, end);
+      square.detune.value = (this.random() - 0.5) * METAL_DETUNE_CENTS;
+      square.connect(band);
     }
-    const click = RIM.click;
-    const noise = this.noiseSource();
-    const band = this.filter('bandpass', click.frequency, click.q);
-    const clickGain = this.decay(when, level * click.level, click.decay);
-    noise.connect(band);
-    band.connect(clickGain);
-    clickGain.connect(out);
-    this.source(noise, when, when + click.length);
+    return band;
   }
 
-  private decay(when: number, peak: number, decay: number) {
+  private noiseClick(hit: Hit, band: ToneRange, q: number, peak: number, decay: number) {
+    const { when, velocity, out } = hit;
+    const noise = this.noise(when, endOf(when, CLICK_ATTACK, decay));
+    const filter = this.filter('bandpass', brightness(band, velocity), q);
+    connectInSeries(noise, filter, this.envelope(when, peak, CLICK_ATTACK, decay), out);
+  }
+
+  private release(voice: RingingVoice | undefined, when: number, time: number) {
+    if (!voice || when <= voice.start || when >= voice.end) return;
+    for (const envelope of voice.envelopes) envelope.gain.setTargetAtTime(0, when, time);
+    const silent = Math.min(voice.end, when + time * DECAYS_TO_SILENCE);
+    for (const source of voice.sources) source.stop(silent);
+  }
+
+  private envelope(when: number, peak: number, attack: number, decay: number) {
     const gain = this.ctx.createGain();
-    gain.gain.setValueAtTime(peak, when);
-    gain.gain.setTargetAtTime(0, when, decay);
+    gain.gain.setValueAtTime(SILENT, when);
+    gain.gain.exponentialRampToValueAtTime(Math.max(SILENT, peak), when + attack);
+    gain.gain.setTargetAtTime(0, when + attack, decay);
+    this.voice.envelopes.push(gain);
     return gain;
   }
 
-  private hat(when: number, level: number, tau: number, out: AudioNode, open = false) {
-    const ctx = this.ctx, noise = this.noiseSource(), high = this.filter('highpass', 7000), band = this.filter('bandpass', 10000, 0.8), gain = ctx.createGain();
-    gain.gain.setValueAtTime(0.0001, when);
-    gain.gain.exponentialRampToValueAtTime(level * 0.3, when + 0.001);
-    gain.gain.setTargetAtTime(0, when + 0.001, tau);
-    noise.connect(high); high.connect(band); band.connect(gain); gain.connect(out);
-    this.source(noise, when, when + tau * 7);
-    if (open) this.openHat = { gain, start: when };
-  }
-
-  private choke(when: number) {
-    if (!this.openHat || when <= this.openHat.start) return;
-    this.openHat.gain.gain.setTargetAtTime(0, when, 0.006);
-    this.openHat = null;
-  }
-
-  private cymbal(when: number, level: number, tau: number, cutoff: number, partials: number[], out: AudioNode) {
-    const ctx = this.ctx, gain = ctx.createGain(), high = this.filter('highpass', cutoff), end = when + tau * 4.5;
-    gain.gain.setValueAtTime(0.0001, when);
-    gain.gain.exponentialRampToValueAtTime(level, when + 0.002);
-    gain.gain.setTargetAtTime(0, when + 0.002, tau);
-    high.connect(gain); gain.connect(out);
-
-    const noise = this.noiseSource(), band = this.filter('bandpass', cutoff * 1.6, 0.5);
-    noise.connect(band); band.connect(high);
-    this.source(noise, when, end);
-
-    const metal = ctx.createGain();
-    metal.gain.value = 0.18;
-    metal.connect(high);
-    for (const f of partials) {
-      const o = ctx.createOscillator();
-      o.type = 'square'; o.frequency.value = f; o.detune.value = (this.random() - 0.5) * 30;
-      o.connect(metal);
-      this.source(o, when, end);
-    }
-  }
-
-  private noiseSource() {
-    const ctx = this.ctx, source = ctx.createBufferSource();
-    if (!this.noise) {
-      const length = Math.floor(ctx.sampleRate * NOISE_SECONDS);
-      this.noise = ctx.createBuffer(1, length, ctx.sampleRate);
-      const data = this.noise.getChannelData(0);
-      for (let i = 0; i < length; i++) data[i] = this.random() * 2 - 1;
-    }
-    source.buffer = this.noise;
-    source.loop = true;
-    return source;
-  }
-
   private filter(type: BiquadFilterType, frequency: number, q?: number) {
-    const f = this.ctx.createBiquadFilter();
-    f.type = type; f.frequency.value = frequency;
-    if (q !== undefined) f.Q.value = q;
-    return f;
+    const filter = this.ctx.createBiquadFilter();
+    filter.type = type;
+    filter.frequency.value = frequency;
+    if (q !== undefined) filter.Q.value = q;
+    return filter;
   }
 
-  private source(node: AudioScheduledSourceNode, when: number, end: number) {
-    if ('buffer' in node) (node as AudioBufferSourceNode).start(when, this.random() * NOISE_SECONDS);
-    else node.start(when);
-    node.stop(end);
-    // Rescheduling at a bar line cancels by grid time, so a humanized hit is tracked at its grid time.
-    this.synth.track(node, 'backing', this.nominal, end);
+  private oscillator(type: OscillatorType, frequency: number, when: number, end: number) {
+    const oscillator = this.ctx.createOscillator();
+    oscillator.type = type;
+    oscillator.frequency.value = frequency;
+    oscillator.start(when);
+    this.finish(oscillator, end);
+    return oscillator;
+  }
+
+  private noise(when: number, end: number) {
+    const noise = this.ctx.createBufferSource();
+    noise.buffer = this.sharedNoise();
+    noise.loop = true;
+    noise.start(when, this.random() * NOISE_SECONDS);
+    this.finish(noise, end);
+    return noise;
+  }
+
+  private finish(source: AudioScheduledSourceNode, end: number) {
+    source.stop(end);
+    this.voice.sources.push(source);
+    this.voice.end = Math.max(this.voice.end, end);
+    source.onended = () => source.disconnect();
+    // Rescheduling at a bar line cancels by grid time, so a humanized hit is tracked at its grid time
+    this.synth.track(source, 'backing', this.gridTime, end);
+  }
+
+  private sharedNoise() {
+    if (this.noiseBuffer) return this.noiseBuffer;
+    const length = Math.floor(this.ctx.sampleRate * NOISE_SECONDS);
+    this.noiseBuffer = this.ctx.createBuffer(1, length, this.ctx.sampleRate);
+    const samples = this.noiseBuffer.getChannelData(0);
+    for (let i = 0; i < length; i++) samples[i] = this.random() * 2 - 1;
+    return this.noiseBuffer;
   }
 
   private random() {
