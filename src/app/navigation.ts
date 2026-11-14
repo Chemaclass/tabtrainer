@@ -1,6 +1,7 @@
 import { isFamily, type Family } from '../core/instruments';
 import { isLibraryKind, type LibraryKind } from './catalogue';
 import { findBySlug, normalizeSongReference, songSlug } from './songLink';
+import { bundledPath, bundledRef } from './songRef';
 
 export type Route = { screen: 'library'; kind: LibraryKind; family: Family | null }
   | { screen: 'practice'; picked: string | null; version: string | null };
@@ -11,7 +12,7 @@ export function navigationState(value: unknown): NavigationState | null {
 }
 export function readRoute(search: string, paths: string[], picked: string | null = null): Route {
   const query = new URLSearchParams(search), path = findBySlug(paths, query.get('song') ?? '');
-  if (path || query.get('view') === 'practice') return { screen: 'practice', picked: path ? 'demo:' + path : picked ? normalizeSongReference(picked, paths) : null, version: query.get('version') };
+  if (path || query.get('view') === 'practice') return { screen: 'practice', picked: path ? bundledRef(path) : picked ? normalizeSongReference(picked, paths) : null, version: query.get('version') };
   const kind = query.get('kind'), family = query.get('instrument');
   return { screen: 'library', kind: isLibraryKind(kind) ? kind : 'exercises', family: family && isFamily(family) ? family : null };
 }
@@ -22,9 +23,10 @@ export function routeSearch(search: string, route: Route): string {
     if (route.family) query.set('instrument', route.family); else query.delete('instrument');
   } else {
     query.delete('kind'); query.delete('instrument');
-    if (route.picked?.startsWith('demo:')) { query.set('song', songSlug(route.picked.slice(5))); query.delete('view'); }
+    const path = route.picked ? bundledPath(route.picked) : null;
+    if (path !== null) { query.set('song', songSlug(path)); query.delete('view'); }
     else { query.delete('song'); query.set('view', 'practice'); }
-    if (route.picked?.startsWith('demo:') && route.version) query.set('version', route.version); else query.delete('version');
+    if (path !== null && route.version) query.set('version', route.version); else query.delete('version');
   }
   return query.toString().replace(/%2F/g, '/');
 }

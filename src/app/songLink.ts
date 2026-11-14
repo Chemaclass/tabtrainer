@@ -1,3 +1,5 @@
+import { bundledPath, bundledRef } from './songRef';
+
 // "./songs/bass/songs/07-a-dawning.txt" -> "bass/a-dawning". The number only orders the list, so links survive a renumbering.
 export const songSlug = (path: string) => {
   const parts = path.split('/');
@@ -8,11 +10,12 @@ export const findBySlug = (paths: string[], slug: string) => paths.find(p => son
 export const versionSlug = (name: string) => name.toLowerCase().normalize('NFD').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 
 export function normalizeSongReference(value: string, paths: string[]): string {
-  if (!value.startsWith('demo:')) return value;
+  const valuePath = bundledPath(value);
+  if (valuePath === null) return value;
   const withoutOrder = (path: string) => path.replace(/\/\d+-([^/]+\.txt)$/, '/$1');
-  const wanted = withoutOrder(value.slice(5));
+  const wanted = withoutOrder(valuePath);
   const path = paths.find(path => withoutOrder(path) === wanted);
-  return path ? 'demo:' + path : value;
+  return path ? bundledRef(path) : value;
 }
 // Points at the static page the build writes per song, so link previews show the song's own title.
 export const shareUrl = (root: string, path: string, version: string | null) =>

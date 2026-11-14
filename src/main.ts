@@ -24,6 +24,7 @@ import { Player } from './audio/player';
 import { library, removeSong, pref, setPref, recentPractice, recordPractice } from './app/storage';
 import { findBySlug, normalizeSongReference, shareUrl, songSlug, versionSlug } from './app/songLink';
 import { AutoScroller } from './app/scrolling';
+import { bundledPath, bundledRef, isSavedRef, savedRef } from './app/songRef';
 import { Passage } from './app/passage';
 import { playbackShortcut } from './app/playbackShortcut';
 import { Navigation, navigationState, type Route } from './app/navigation';
@@ -78,8 +79,8 @@ function entryFor(value: string, text: string, kind: LibraryKind, instrument: st
   return { value, title: parsed.meta.title, artist: artistOf(text), levels: parsed.versions.flatMap(v => v.level ?? parsed.meta.level ?? []), about: parsed.meta.about, family: instrument, kind, tempo: parsed.meta.tempo, versions: parsed.versions.length, practiceLevels: hasPracticeLevels(parsed.versions.map(v => v.name)) };
 }
 function fillSongList() {
-  bundledEntries ??= Object.keys(demos).sort().map(path => entryFor('demo:' + path, demos[path], demoKind(path) === 'exercises' ? 'exercises' : 'songs', demoFamily(path)));
-  catalogueEntries = [...bundledEntries, ...library().map(item => entryFor('lib:' + item.title, item.text, 'mine', familyOfText(item.text)))];
+  bundledEntries ??= Object.keys(demos).sort().map(path => entryFor(bundledRef(path), demos[path], demoKind(path) === 'exercises' ? 'exercises' : 'songs', demoFamily(path)));
+  catalogueEntries = [...bundledEntries, ...library().map(item => entryFor(savedRef(item.title), item.text, 'mine', familyOfText(item.text)))];
   catalogue.show(catalogueEntries, family, libraryKind, recentPractice().map(resolvePick));
   renderPracticeNavigation();
 }
@@ -97,10 +98,11 @@ function pickSong(v: string) {
   else replaceCurrent(() => loadPickedSong(v, true));
 }
 function loadPickedSong(v: string, push = false) {
-  const text = v.startsWith('demo:') ? demos[v.slice(5)] : library().find(x => 'lib:' + x.title === v)?.text;
+  const path = bundledPath(v);
+  const text = path !== null ? demos[path] : library().find(x => savedRef(x.title) === v)?.text;
   if (text === undefined) return;
   picked = v; setPref('picked', v); screen = 'practice';
-  libraryKind = v.startsWith('demo:') ? demoKind(v.slice(5)) === 'exercises' ? 'exercises' : 'songs' : 'mine';
+  libraryKind = path !== null ? demoKind(path) === 'exercises' ? 'exercises' : 'songs' : 'mine';
   setScreen('practice'); loadText(text); fillSongList(); showLink(push);
   if (push) { window.scrollTo(0, 0); $('title').focus({ preventScroll: true }); }
 }
@@ -152,7 +154,7 @@ $('familySelect', HTMLSelectElement).onchange = e => { const value = (e.target a
 function openRoute(route: Route) {
   if (route.screen === 'practice') {
     if (route.picked && route.picked !== picked) loadPickedSong(route.picked); else setScreen('practice');
-    if (route.picked?.startsWith('demo:')) chooseVersionNamed(route.version);
+    if (route.picked && bundledPath(route.picked) !== null) chooseVersionNamed(route.version);
     showLink();
     return;
   }
@@ -545,7 +547,7 @@ fileMenu.addEventListener('keydown', e => {
 });
 const hasChanges = () => draftSession.hasChanges();
 // The link opens the bundled song, so it would drop unsaved edits.
-function showShare() { $('shareBtn').hidden = !picked.startsWith('demo:') || draftSession.hasChanges(); }
+function showShare() { $('shareBtn').hidden = bundledPath(picked) === null || draftSession.hasChanges(); }
 function showDirtyState() {
   $('returnDraftBtn').hidden = screen !== 'library' || !hasChanges();
   one('.save-state').hidden = !hasChanges() && !$('saveFeedback').textContent;
@@ -575,7 +577,7 @@ function saveCurrent(): boolean {
   if (result.status === 'cancelled') return false;
   if (result.status === 'failed') { announceSave('Could not save in this browser. Your text is still here. Download a copy.', true); return false; }
   const { title } = result;
-  picked = 'lib:' + title; libraryKind = 'mine'; setPref('picked', picked); persistDraft(); fillSongList(); showLink();
+  picked = savedRef(title); libraryKind = 'mine'; setPref('picked', picked); persistDraft(); fillSongList(); showLink();
   announceSave(`Saved "${title}" in this browser`); return true;
 }
 $('newBtn').onclick = () => replaceCurrent(() => { const text = newSong(); unpick(); setScreen('practice'); loadText(text); showLink(true); showEditor(true); src.focus(); });
@@ -660,7 +662,7 @@ const link = new URLSearchParams(location.search);
 const linked = findBySlug(Object.keys(demos), link.get('song') ?? '');
 const storedDraft = pref('draft', null);
 const draft = storedDraft ? { ...storedDraft, picked: resolvePick(storedDraft.picked) } : null;
-const requested = linked ? 'demo:' + linked : initialQuery.get('view') === 'practice' && initialNavigation?.picked.startsWith('lib:') && library().some(s => 'lib:' + s.title === initialNavigation.picked) ? initialNavigation.picked : null;
+const requested = linked ? bundledRef(linked) : initialQuery.get('view') === 'practice' && initialNavigation && isSavedRef(initialNavigation.picked) && library().some(s => savedRef(s.title) === initialNavigation.picked) ? initialNavigation.picked : null;
 const recover = draft && (draft.text !== draft.base || !requested || draft.picked === requested);
 if (recover) {
   picked = draft.picked; src.value = draft.text; draftSession.recover(draft);
@@ -671,12 +673,14 @@ if (recover) {
   loadPickedSong(requested);
   chooseVersionNamed(link.get('version'));
 } else if (lastText) {
-  const pickedText = lastPick.startsWith('demo:') ? demos[lastPick.slice(5)] : library().find(x => 'lib:' + x.title === lastPick)?.text;
+  const lastPath = bundledPath(lastPick);
+  const pickedText = lastPath !== null ? demos[lastPath] : library().find(x => savedRef(x.title) === lastPick)?.text;
   picked = pickedText === undefined ? '' : lastPick;
   loadText(lastText); draftSession.accept(pickedText ?? lastText); persistDraft();
 } else {
-  picked = 'demo:' + songsFor(family).demos[0];
-  loadText(demos[picked.slice(5)]);
+  const firstPath = songsFor(family).demos[0];
+  picked = bundledRef(firstPath);
+  loadText(demos[firstPath]);
 }
 showFamily();
 setScreen(screen);
