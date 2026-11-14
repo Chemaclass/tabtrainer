@@ -40,7 +40,8 @@ export class Songbook {
     return path !== null ? folderKind(path) : 'mine';
   }
 
-  firstBundled(family: Family): string {
-    return bundledRef(this.paths.filter(path => folderFamily(path) === family).sort()[0]);
+  firstBundled(family: Family): string | null {
+    const path = this.paths.filter(path => folderFamily(path) === family).sort()[0];
+    return path === undefined ? null : bundledRef(path);
   }
 }

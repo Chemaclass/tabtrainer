@@ -21,11 +21,11 @@ describe('open song', () => {
     expect(open.versionIndex).toBe(0);
   });
 
-  it('shows the chosen version after the next read', () => {
+  it('shows the chosen version at once and keeps it on the next read', () => {
     const open = new OpenSong();
     open.read(threeVersions, true);
     expect(open.choose(2)).toBe(true);
-    expect(open.song?.bars).toHaveLength(1);
+    expect(open.song?.bars).toHaveLength(3);
     open.read(threeVersions, false);
     expect(open.versionIndex).toBe(2);
     expect(open.song?.bars).toHaveLength(3);

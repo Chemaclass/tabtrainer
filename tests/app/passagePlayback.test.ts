@@ -62,10 +62,11 @@ describe('passage playback', () => {
   });
 
   it('gives the player the bar range and its repeat', () => {
-    const { playback, passage, player } = setup();
+    const { playback, passage, player, calls } = setup();
     passage.setRange(2, 3, true);
     playback.apply();
     expect(player.range).toEqual([4, 12]);
+    expect(calls).toContain('range 4,12 true');
   });
 
   it('moves a stopped player into a new range and selects its first bar', () => {

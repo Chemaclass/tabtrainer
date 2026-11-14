@@ -633,7 +633,7 @@ switch (plan.kind) {
     loadText(plan.text); draftSession.accept(plan.base); persistDraft();
     break;
   case 'first':
-    workspace.restore(songbook.firstBundled(workspace.family));
+    workspace.restore(songbook.firstBundled(workspace.family) ?? '');
     loadText(songbook.text(workspace.picked) ?? '');
 }
 showFamily();

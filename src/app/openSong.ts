@@ -23,6 +23,7 @@ export class OpenSong {
   choose(index: number): boolean {
     if (!this.whole || index === this.index) return false;
     this.index = index;
+    this.shown = withVersion(this.whole, index);
     return true;
   }
 

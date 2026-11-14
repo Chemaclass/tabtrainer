@@ -70,6 +70,10 @@ describe('songbook', () => {
     expect(book.firstBundled('guitar')).toBe('demo:./songs/guitar/exercises/01-strum.txt');
   });
 
+  it('has no first song for a family without bundled songs', () => {
+    expect(new Songbook({}, () => []).firstBundled('bass')).toBeNull();
+  });
+
   it('keeps the bundled paths for links and history', () => {
     const { book } = songbook();
     expect(book.paths).toEqual(Object.keys(bundled));
