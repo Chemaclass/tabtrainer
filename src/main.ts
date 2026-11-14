@@ -34,6 +34,7 @@ import { helpDialogs } from './ui/shell/helpDialogs';
 import { publishLayoutHeights } from './ui/shell/layoutMetrics';
 import { screens } from './ui/shell/screens';
 import { theme } from './ui/shell/theme';
+import { tuner } from './ui/tuner/tuner';
 
 const songbook = new Songbook(import.meta.glob('./songs/*/*/*.txt', { query: '?raw', import: 'default', eager: true }) as Record<string, string>, library);
 const storedNavigation = navigationState(history.state);
@@ -85,6 +86,7 @@ const editor = editorPane(draw);
 editor.onEdit(() => { if (passagePlayback.selectedNote) player.stop(); drafts.persist(); }, () => update(false));
 playerPanel(draw);
 theme();
+tuner(() => ({ family: workspace.family, instrument: workspace.screen === 'practice' ? openSong.song?.meta.instrument ?? null : null }));
 Object.assign(window, { tabtrainer: { player, removeSong, onsetKey } });
 publishLayoutHeights();
 

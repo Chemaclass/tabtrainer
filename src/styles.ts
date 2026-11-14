@@ -13,3 +13,4 @@ import './ui/library/library.css';
 import './ui/practice/practice.css';
 import './ui/player/player.css';
 import './ui/shell/dropdown.css';
+import './ui/tuner/tuner.css';
