@@ -112,6 +112,16 @@ describe('song proposal', () => {
     expect(proposeSong(exercise + `#${'a'.repeat(MAX_PROPOSAL_URL - base + 1)}\n`, 'exercises', paths).carriesText).toBe(false);
   });
   it('sends Windows line endings as plain newlines', () => {
-    expect(new URL(proposeSong(exercise.replace(/\n/g, '\r\n'), 'exercises', paths).url).searchParams.get('value')).toBe(exercise);
+    const proposal = proposeSong(exercise.replace(/\n/g, '\r\n'), 'exercises', paths);
+    expect(new URL(proposal.url).searchParams.get('value')).toBe(exercise);
+    expect(proposal.text).toBe(exercise);
+  });
+  it('asks to paste a text the link cannot encode', () => {
+    const proposal = proposeSong(exercise + '# \uD800\n', 'exercises', paths);
+    expect(proposal.carriesText).toBe(false);
+    expect(proposal.url).toBe('https://github.com/Chemaclass/tabtrainer/new/main/src/songs/bass/exercises?filename=16-my-walking-line.txt');
+  });
+  it('names an empty title once', () => {
+    expect(problems(exercise.replace('title: My Walking Line', 'title:'))).toEqual(['Add a "title:" line at the top.']);
   });
 });

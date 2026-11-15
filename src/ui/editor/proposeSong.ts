@@ -32,16 +32,16 @@ export function proposeSongDialog(paths: readonly string[], editorText: () => st
   }
   for (const input of groups) input.addEventListener('change', show);
   rights.addEventListener('change', show);
-  pick.addEventListener('change', () => showSong(songs[pick.selectedIndex]?.text ?? ''));
+  pick.addEventListener('change', () => { rights.checked = false; showSong(songs[pick.selectedIndex]?.text ?? ''); });
   link.addEventListener('click', event => {
     if (!link.hasAttribute('href')) { event.preventDefault(); return; }
-    if (proposal?.carriesText !== false) return;
-    navigator.clipboard.writeText(text).then(
-      () => { status.textContent = COPIED; },
-      () => { status.textContent = COPY_FAILED; download.hidden = false; },
-    );
+    if (!proposal || proposal.carriesText) return;
+    const copyFailed = () => { status.textContent = COPY_FAILED; download.hidden = false; };
+    try {
+      navigator.clipboard.writeText(proposal.text).then(() => { status.textContent = COPIED; }, copyFailed);
+    } catch { copyFailed(); }
   });
-  download.onclick = () => downloadText(text);
+  download.onclick = () => { if (proposal) downloadText(proposal.text); };
   dismissHelpOnBackdrop(dialog);
   function open(songText?: string) {
     rights.checked = false;

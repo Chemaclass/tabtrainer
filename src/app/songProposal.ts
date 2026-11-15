@@ -8,6 +8,7 @@ export type ProposalGroup = 'exercises' | 'songs';
 export interface Proposal {
   folder: string;
   fileName: string;
+  text: string;
   problems: string[];
   url: string;
   carriesText: boolean;
@@ -47,6 +48,11 @@ function readsBack(song: Song) {
   return again.issues.length === 0 && sameEvents(song, again.song);
 }
 
+// An unpaired surrogate cannot be encoded, so such a text has to be pasted.
+function encoded(text: string): string | null {
+  try { return encodeURIComponent(text); } catch { return null; }
+}
+
 function songProblems(text: string, { song, issues }: ParseResult, group: ProposalGroup, paths: readonly string[], family: Family, name: string): string[] {
   const keys = headerKeys(text);
   const problems = CATALOGUE_HEADERS.filter(key => !keys.has(key)).map(key => `Add ${/^[aeiou]/.test(key) ? 'an' : 'a'} "${key}:" line at the top.`);
@@ -58,6 +64,7 @@ function songProblems(text: string, { song, issues }: ParseResult, group: Propos
   }
   if (issues.length === 0 && !readsBack(song)) problems.push('This song does not read back the same. Please report it with the song text.');
   if (group === 'songs' && !song.meta.artist?.includes('(public domain)')) problems.push('A song needs "artist: <Composer> (public domain)" or "artist: Traditional (public domain)".');
+  if (!keys.has('title')) return problems;
   if (!name) problems.push('The title needs letters or numbers.');
   else if (findBySlug(paths, `${family}/${name}`)) problems.push('A bundled song already has this name. Change the title.');
   return problems;
@@ -71,7 +78,8 @@ export function proposeSong(text: string, group: ProposalGroup, paths: readonly 
   const folder = `src/songs/${family}/${group}`;
   const fileName = name ? `${nextNumber(paths, family, group)}-${name}.txt` : '';
   const page = `${REPOSITORY}/new/${BRANCH}/${folder}?filename=${encodeURIComponent(fileName)}`;
-  const filled = `${page}&value=${encodeURIComponent(sent)}`;
-  const carriesText = filled.length <= MAX_PROPOSAL_URL;
-  return { folder, fileName, problems: songProblems(sent, parsed, group, paths, family, name), url: carriesText ? filled : page, carriesText };
+  const value = encoded(sent);
+  const filled = value === null ? '' : `${page}&value=${value}`;
+  const carriesText = filled !== '' && filled.length <= MAX_PROPOSAL_URL;
+  return { folder, fileName, text: sent, problems: songProblems(sent, parsed, group, paths, family, name), url: carriesText ? filled : page, carriesText };
 }
