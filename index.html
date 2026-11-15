@@ -35,6 +35,11 @@
     const query = new URLSearchParams(location.search);
     if (query.has('welcome') || !['song', 'view', 'kind', 'instrument', 'version'].some(key => query.has(key))) document.documentElement.classList.add('landing');
   </script>
+  <script async src="https://rum.cronitor.io/script.js"></script>
+  <script>
+    window.cronitor = window.cronitor || function () { (window.cronitor.q = window.cronitor.q || []).push(arguments); };
+    cronitor('config', { clientKey: 'a225bb1865119c485e9d4544392452de' });
+  </script>
 </head>
 <body class="library-view">
   <header class="top">
