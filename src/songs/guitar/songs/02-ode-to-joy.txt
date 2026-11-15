@@ -1,0 +1,17 @@
+title: Ode to Joy
+artist: Ludwig van Beethoven (public domain)
+about: Read Beethoven's Ode to Joy as a melody that moves step by step, with the long-short rhythm of a dotted quarter note and an eighth.
+level: easy
+instrument: guitar6
+tempo: 96
+key: G
+time: 4/4
+
+# Open position. Most notes sit on the G and B strings; the middle ends on the open D string.
+@Theme
+"G" :q 0.2 0.2 1.2 3.2 | "D" 3.2 1.2 0.2 2.3 | "G" 0.3 0.3 2.3 0.2 | "D" :q. 0.2 :8 2.3 :h 2.3 |
+"G" :q 0.2 0.2 1.2 3.2 | "D" 3.2 1.2 0.2 2.3 | "G" 0.3 0.3 2.3 0.2 | "D" :q. 2.3 :8 0.3 "G" :h 0.3 |
+@Middle
+"D" :q 2.3 2.3 0.2 0.3 | 2.3 :8 0.2 1.2 :q 0.2 0.3 | 2.3 :8 0.2 1.2 :q 0.2 2.3 | "G" 0.3 "D" 2.3 :h 0.4 |
+@Theme again
+"G" :q 0.2 0.2 1.2 3.2 | "D" 3.2 1.2 0.2 2.3 | "G" 0.3 0.3 2.3 0.2 | "D" :q. 2.3 :8 0.3 "G" :h 0.3 |
