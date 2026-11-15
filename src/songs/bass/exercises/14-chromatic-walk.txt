@@ -1,0 +1,44 @@
+title: Chromatic Walk in C
+artist: TabTrainer
+about: Walk up and down in C with chromatic passing notes, each leading a fret into the next scale note.
+level: medium
+instrument: bass4
+tempo: 80
+key: C
+time: 4/4
+
+# Keep one finger per fret from fret 2. Shift up one fret for the Ab (6.2), then back for the E (2.2).
+== Learn
+level: medium
+@Up from C
+:q 3.3 2.2 3.2 4.2 | 5.2 2.1 3.1 4.1 |
+@Back down to D
+:q 5.1 3.1 2.1 6.2 | 5.2 3.2 2.2 5.3 |
+@Home
+:w 3.3 |
+
+== Develop
+level: medium
+@Up from C
+:q 3.3 2.2 3.2 4.2 | 5.2 2.1 3.1 4.1 |
+@Back down to D
+:q 5.1 3.1 2.1 6.2 | 5.2 3.2 2.2 5.3 |
+@Push the passing notes
+:q 3.3 :8 2.2 3.2 :q 4.2 5.2 | :q 2.1 :8 3.1 4.1 :q 5.1 3.1 |
+:q 2.1 :8 6.2 5.2 :q 3.2 2.2 | :q 5.3 :8 2.2 1.2 :h 5.3 |
+:w 3.3 |
+
+== Challenge
+level: hard
+@Eighths up and down
+:8 3.3 2.2 3.2 4.2 5.2 2.1 3.1 4.1 | 5.1 3.1 2.1 6.2 5.2 3.2 2.2 5.3 |
+:8 3.3 2.2 3.2 4.2 5.2 2.1 3.1 4.1 | 5.1 3.1 2.1 6.2 5.2 3.2 2.2 5.3 |
+@Down first, then up
+:8 5.1 3.1 2.1 6.2 5.2 3.2 2.2 5.3 | 3.3 2.2 3.2 4.2 5.2 2.1 3.1 4.1 |
+:8 5.1 3.1 2.1 6.2 5.2 3.2 2.2 5.3 | 3.3 2.2 3.2 4.2 5.2 2.1 3.1 4.1 |
+@Push the passing notes
+:q 3.3 :8 2.2 3.2 :q 4.2 5.2 | :q 2.1 :8 3.1 4.1 :q 5.1 3.1 |
+:q 2.1 :8 6.2 5.2 :q 3.2 2.2 | :h 5.3 3.3 |
+@Chromatic finish
+:8 3.3 2.2 3.2 4.2 5.2 2.1 3.1 4.1 | 5.1 3.1 2.1 6.2 5.2 3.2 2.2 1.2 |
+:q 5.3 :8 2.2 1.2 :h 5.3 | :w 3.3 |
