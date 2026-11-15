@@ -3,6 +3,7 @@ import { categoryCounts, nextExercise, type CatalogueEntry, type LibraryKind } f
 import type { OpenSong } from '../../app/openSong';
 import { normalizeSongReference } from '../../app/songLink';
 import type { Songbook } from '../../app/songbook';
+import type { SongTemplateId, TemplateInstrument } from '../../app/songTemplates';
 import { recentPractice } from '../../app/storage';
 import type { Workspace } from '../../app/workspace';
 import { practiceNav } from '../practice/practiceNav';
@@ -14,6 +15,7 @@ interface SongListActions {
   pick: (ref: string) => void;
   showLibrary: (kind?: LibraryKind) => void;
   newSong: () => void;
+  startFrom: (template: SongTemplateId, instrument: TemplateInstrument) => void;
   openFile: () => void;
   shown: () => void;
   propose: () => void;
@@ -24,7 +26,7 @@ export function songList(songbook: Songbook, workspace: Workspace, openSong: Ope
   let playingSong: string | null = null, playedSong: string | null = null;
   const tabs = libraryNav(kind => actions.showLibrary(kind));
   const practice = practiceNav(kind => actions.showLibrary(kind), actions.pick);
-  const catalogue = libraryView(ref => actions.pick(ref), actions.newSong, () => actions.openFile(), () => actions.propose(), () => { actions.showLibrary('exercises'); byId('libraryTitle').focus({ preventScroll: true }); });
+  const catalogue = libraryView(ref => actions.pick(ref), actions.newSong, actions.startFrom, () => actions.openFile(), () => actions.propose(), () => { actions.showLibrary('exercises'); byId('libraryTitle').focus({ preventScroll: true }); });
   byId('writeSongBtn').onclick = actions.newSong;
   function showNavigation() {
     tabs.show(categoryCounts(entries, workspace.family), workspace.screen === 'jam' ? null : workspace.kind);
@@ -50,5 +52,6 @@ export function songList(songbook: Songbook, workspace: Workspace, openSong: Ope
     showNavigation,
     started() { playingSong = workspace.picked; },
     stopped() { if (playingSong === null) return; playedSong = playingSong; playingSong = null; showNavigation(); },
+    chooseTemplate: catalogue.chooseTemplate,
   };
 }

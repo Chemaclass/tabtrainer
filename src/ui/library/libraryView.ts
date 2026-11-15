@@ -1,12 +1,14 @@
 import { byId } from '../dom';
 import { setSelectValue } from '../shell/dropdown';
 import { catalogueMatches, categoryCounts, difficultyLabel, recentEntries, type CatalogueEntry, type LibraryKind } from '../../app/catalogue';
+import { DEFAULT_TEMPLATE, SONG_TEMPLATES, templateInstruments, type SongTemplate, type SongTemplateId, type TemplateInstrument } from '../../app/songTemplates';
+import { INSTRUMENTS, isFamily } from '../../core/instruments';
 
 const labels = { exercises: 'exercises', songs: 'songs', mine: 'My songs' };
 const intro = {
   exercises: ['Build a skill.', 'Choose an exercise. Pick a level. Practise a few bars.', 'Search exercises or skills'],
   songs: ['Learn a song.', 'Choose a song. Practise a few bars at a time.', 'Search songs or artists'],
-  mine: ['Your own music.', 'Songs you save stay in this browser. Open a file to bring one from another device.', 'Search your songs'],
+  mine: ['Write your own.', 'Pick a starting point. You hear it as you type, and it saves in this browser.', 'Search your songs'],
 };
 const closing = {
   exercises: ['Missing an exercise? Write it, and send it in for everyone.', 'Write an exercise'],
@@ -15,7 +17,7 @@ const closing = {
 const text = (tag: string, value: string, className = '') => { const node = document.createElement(tag); node.textContent = value; node.className = className; return node; };
 const levelLabel = (entry: CatalogueEntry) => difficultyLabel(entry.levels);
 
-export function libraryView(onPick: (value: string) => void, onNew: () => void, onOpen: () => void, onPropose: () => void, onExercises: () => void) {
+export function libraryView(onPick: (value: string) => void, onNew: () => void, onTemplate: (id: SongTemplateId, instrument: TemplateInstrument) => void, onOpen: () => void, onPropose: () => void, onExercises: () => void) {
   let entries: CatalogueEntry[] = [], family = 'bass', kind: LibraryKind = 'exercises', recent: string[] = [], expanded = false;
   const search = byId('songSearch', HTMLInputElement), level = byId('songLevel', HTMLSelectElement);
   const clear = byId('clearLevel', HTMLButtonElement), list = byId('catalogueList');
@@ -25,6 +27,29 @@ export function libraryView(onPick: (value: string) => void, onNew: () => void, 
   byId('emptyExercisesBtn').onclick = onExercises;
   byId('emptyWriteBtn').onclick = onNew; byId('emptyOpenBtn').onclick = onOpen;
   byId('closingWriteBtn').onclick = onNew; byId('libraryImportBtn').onclick = onOpen; byId('libraryProposeBtn').onclick = onPropose;
+  byId('shareGuideBtn').onclick = () => byId('songsGuide', HTMLDialogElement).showModal();
+  const templateInstrument = byId('templateInstrument', HTMLSelectElement);
+  const instrumentChoices = () => templateInstruments(isFamily(family) ? family : 'bass');
+  const chosenInstrument = () => instrumentChoices().find(id => id === templateInstrument.value) ?? instrumentChoices()[0];
+  function templateCard(template: SongTemplate) {
+    const li = document.createElement('li'), button = document.createElement('button');
+    button.type = 'button'; button.className = 'template-card'; button.dataset.template = template.id;
+    button.classList.toggle('default', template.id === DEFAULT_TEMPLATE);
+    button.append(text('strong', template.name), text('span', template.summary, 'template-summary'), text('code', template.sample(chosenInstrument()), 'template-sample'));
+    button.onclick = () => onTemplate(template.id, chosenInstrument());
+    li.append(button); return li;
+  }
+  const showTemplates = () => byId('templateList').replaceChildren(...SONG_TEMPLATES.map(templateCard));
+  templateInstrument.addEventListener('change', showTemplates);
+  function showTemplateInstruments() {
+    if (templateInstrument.dataset.family === family) return;
+    const choices = instrumentChoices();
+    templateInstrument.dataset.family = family;
+    templateInstrument.replaceChildren(...choices.map(id => { const option = document.createElement('option'); option.value = id; option.textContent = INSTRUMENTS[id].name; return option; }));
+    setSelectValue(templateInstrument, choices[0]);
+    byId('templateInstrumentField').hidden = choices.length < 2;
+    showTemplates();
+  }
   byId('exploreAllBtn').onclick = () => { expanded = true; render(); byId('catalogueHeading').focus(); };
   function row(entry: CatalogueEntry) {
     const li = document.createElement('li'), button = document.createElement('button'); button.className = 'catalogue-row'; button.type = 'button'; button.dataset.value = entry.value;
@@ -49,7 +74,12 @@ export function libraryView(onPick: (value: string) => void, onNew: () => void, 
     const counts = categoryCounts(entries, family);
     const emptyMine = kind === 'mine' && counts.mine === 0;
     const emptySongs = kind === 'songs' && counts.songs === 0;
-    byId('mySongActions').hidden = kind !== 'mine' || emptyMine;
+    byId('mySongActions').hidden = kind !== 'mine';
+    byId('libraryProposeBtn').hidden = emptyMine;
+    byId('songTemplates').hidden = kind !== 'mine';
+    byId('sharePanel').hidden = kind !== 'mine';
+    byId('readingGuide').hidden = kind === 'mine';
+    if (kind === 'mine') showTemplateInstruments();
     byId('libraryScreen').classList.toggle('empty-category', emptyMine || emptySongs);
     const [heading, description, placeholder] = intro[kind];
     byId('libraryContext').textContent = `${family} / ${labels[kind]}`;
@@ -65,11 +95,11 @@ export function libraryView(onPick: (value: string) => void, onNew: () => void, 
     clear.hidden = !search.value && !level.value;
     list.replaceChildren(...shown.map(row));
     const noMatch = matches.length === 0 && !emptyMine && !emptySongs;
-    byId('catalogueEmpty').hidden = matches.length > 0;
-    byId('emptyTitle').textContent = emptyMine ? 'Make room for your own songs.' : emptySongs ? `No bundled ${family} songs yet.` : `No ${kind === 'exercises' ? 'exercises' : 'songs'} match`;
-    byId('emptyDescription').textContent = emptyMine ? 'Write a song or open a song file. Save it here when you are ready.' : emptySongs ? 'Browse exercises or open a song file to practise.' : `Try another search, clear the filters, or choose another instrument.`;
+    byId('catalogueEmpty').hidden = matches.length > 0 || emptyMine;
+    byId('emptyTitle').textContent = emptySongs ? `No bundled ${family} songs yet.` : `No ${kind === 'exercises' ? 'exercises' : 'songs'} match`;
+    byId('emptyDescription').textContent = emptySongs ? 'Browse exercises or open a song file to practise.' : `Try another search, clear the filters, or choose another instrument.`;
     byId('emptyClearBtn').hidden = emptyMine || emptySongs || (!search.value && !level.value);
-    byId('emptyWriteBtn').hidden = !noMatch || kind === 'mine'; byId('emptyOpenBtn').hidden = !emptyMine && !emptySongs;
+    byId('emptyWriteBtn').hidden = !noMatch || kind === 'mine'; byId('emptyOpenBtn').hidden = !emptySongs;
     byId('emptyExercisesBtn').hidden = !emptySongs || counts.exercises === 0;
     byId('emptyExercisesBtn').textContent = `Browse ${counts.exercises} ${family} exercises`;
     byId('exploreAllBtn').hidden = !foundations;
@@ -87,6 +117,7 @@ export function libraryView(onPick: (value: string) => void, onNew: () => void, 
     }
   }
   return {
+    chooseTemplate() { byId('templateList').querySelector<HTMLButtonElement>('.template-card.default')?.focus(); },
     show(all: CatalogueEntry[], instrument: string, category: LibraryKind, history: string[]) {
       if (kind !== category || family !== instrument) { search.value = ''; setSelectValue(level, ''); expanded = false; }
       entries = all; family = instrument; kind = category; recent = history; render();

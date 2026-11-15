@@ -142,6 +142,10 @@ tempo: 90
   <main id="libraryScreen" class="library" aria-labelledby="libraryTitle">
     <div class="catalogue">
       <div class="library-intro"><div id="libraryContext" class="library-context">Bass / Exercises</div><h1 id="libraryTitle" tabindex="-1">Build a skill.</h1><p id="libraryDescription">Short exercises for your hands, timing, and fretboard knowledge.</p></div>
+      <section id="songTemplates" class="song-templates" aria-labelledby="templatesHeading" hidden>
+        <div class="templates-heading"><h2 id="templatesHeading" class="sr-only">Starting points</h2><label id="templateInstrumentField" class="template-instrument">For <select id="templateInstrument" aria-label="Instrument for the new song"></select></label></div>
+        <ul id="templateList" class="template-list"></ul>
+      </section>
       <div id="mySongActions" class="my-song-actions" hidden><button id="libraryImportBtn" class="toggle">Open a file</button><button id="libraryProposeBtn" class="toggle">Add a song to TabTrainer</button></div>
       <div class="library-filters">
         <label class="library-search"><svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><circle cx="7.5" cy="7.5" r="5" stroke="currentColor" stroke-width="1.5" fill="none"/><path d="m11.5 11.5 4 4" stroke="currentColor" stroke-width="1.5"/></svg><input id="songSearch" type="search" aria-label="Search exercises or skills" placeholder="Search exercises or skills" autocomplete="off" /></label>
@@ -157,7 +161,8 @@ tempo: 90
     </div>
     <aside class="library-aside" aria-label="Practice suggestions">
       <section id="recentPanel" class="recent-panel" hidden><h2>Recent practice</h2><h3 id="recentTitle"></h3><p id="recentAbout"></p><p id="recentMeta"></p><button id="resumeBtn" class="primary">Continue practising →</button><div id="otherRecent"></div></section>
-      <section class="reading-guide"><div class="guide-card"><h2>Make a little progress.</h2><p>Start slowly. A few comfortable bars are a good practice session.</p><button id="readTabBtn">How to read tab →</button></div><ol><li>Choose a comfortable level.</li><li>Try 50% or 75% speed.</li><li>Loop a few bars until they feel comfortable.</li></ol></section>
+      <section id="sharePanel" class="share-panel" aria-labelledby="shareTitle" hidden><p class="share-kicker">Open source</p><h2 id="shareTitle">Your song can be on this site.</h2><p>TabTrainer is built in the open. Send a song you wrote, or one in the public domain, and every player can practise it.</p><ol><li>Write it and clear the checklist</li><li>Press Add to TabTrainer</li><li>Confirm on GitHub. No Git needed</li></ol><p class="share-note">No copyrighted songs. Keep those here, in your browser. <button id="shareGuideBtn">Read the guide</button></p></section>
+      <section id="readingGuide" class="reading-guide"><div class="guide-card"><h2>Make a little progress.</h2><p>Start slowly. A few comfortable bars are a good practice session.</p><button id="readTabBtn">How to read tab →</button></div><ol><li>Choose a comfortable level.</li><li>Try 50% or 75% speed.</li><li>Loop a few bars until they feel comfortable.</li></ol></section>
     </aside>
   </main>
   <main id="jamScreen" class="jam" aria-labelledby="jamTitle" hidden>

@@ -9,8 +9,9 @@ import { PlayTime, PracticeLog } from './app/practiceLog';
 import { Backups } from './app/backup';
 import { songShareLink, songSource } from './app/songLink';
 import { bundledPath, savedRef } from './app/songRef';
-import { Songbook, newSongText } from './app/songbook';
+import { Songbook } from './app/songbook';
 import { withOpenDraft } from './app/songProposal';
+import { templateText, titleRange, type SongTemplateId, type TemplateInstrument } from './app/songTemplates';
 import { OpenSong } from './app/openSong';
 import { Workspace, type Screen } from './app/workspace';
 import { startupPlan } from './app/startup';
@@ -90,7 +91,7 @@ const score = scoreView({
   onPlayNote: (key, bar) => { const chosen = passages.selectNote(key, bar) ? passagePlayback.selectedNote : null; if (chosen) player.play(chosen.beat); },
 });
 const header = songHeader(index => { if (openSong.choose(index)) showVersion(); });
-const songs = songList(songbook, workspace, openSong, { pick: pickSong, showLibrary, newSong: startNewSong, openFile: () => files.open(), shown: saveView.showShare, propose: () => proposal.open() });
+const songs = songList(songbook, workspace, openSong, { pick: pickSong, showLibrary, newSong: () => startNewSong(), startFrom: startFromTemplate, openFile: () => files.open(), shown: saveView.showShare, propose: () => proposal.open() });
 window.addEventListener('popstate', event => navigation.visit(event.state, (route, accept, cancel) => {
   const open = () => { accept(); openRoute(route); };
   if (route.screen === 'practice' && route.picked && route.picked !== workspace.picked && draftSession.hasChanges()) drafts.replace(open, cancel);
@@ -129,7 +130,7 @@ addEventListener('pagehide', () => playTime.update(null, false, Date.now()));
 document.addEventListener('visibilitychange', () => { if (document.hidden) playTime.update(null, false, Date.now()); });
 const drafts = draftFlow(draftSession, workspace, saveView, { saved: () => { songs.fill(); showLink(); }, stayed: () => showLink() });
 const files = songFile(draftSession, new Backups(savedSongs, practiceLog), {
-  onNew: startNewSong,
+  onNew: () => startNewSong(),
   onOpen: text => drafts.replace(() => { unpick(); setScreen('practice'); loadText(text); showLink(true); }),
   onSave: () => { drafts.save(); },
   restored: () => songs.fill(),
@@ -225,8 +226,17 @@ function showSongLine(line: number, title: string | null) {
   else if (workspace.screen === 'practice') editor.goToLine(line);
   else { setScreen('practice'); showLink(true); editor.goToLine(line); }
 }
-function startNewSong() {
-  drafts.replace(() => { const text = newSongText(workspace.family); unpick(); setScreen('practice'); loadText(text); showLink(true); editor.show(true); editor.focus(); });
+function startNewSong(push = true) {
+  showLibrary('mine', push);
+  songs.chooseTemplate();
+}
+function startFromTemplate(template: SongTemplateId, instrument: TemplateInstrument) {
+  drafts.replace(() => {
+    const text = templateText(template, instrument);
+    unpick(); setScreen('practice'); loadText(text); showLink(true); editor.show(true);
+    const title = titleRange(text);
+    if (title) editor.select(title); else editor.focus();
+  });
 }
 function openRoute(route: Route) {
   if (route.screen === 'jam') { showJam(route.groove, false); return; }
@@ -294,6 +304,6 @@ switch (plan.kind) {
 showFamily();
 setScreen(workspace.screen);
 showLink();
-if (newSongAsked) startNewSong();
+if (newSongAsked) startNewSong(false);
 
 enhanceDropdowns();

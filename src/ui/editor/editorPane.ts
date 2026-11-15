@@ -31,5 +31,6 @@ export function editorPane(redraw: () => void) {
       status.textContent = errs ? `${errs} error${errs > 1 ? 's' : ''}` : `${song.bars.length} bar${song.bars.length === 1 ? '' : 's'} · ${song.meta.instrument.name}`;
       status.classList.toggle('bad', errs > 0); status.title = status.textContent ?? '';
     },
+    select(range: { start: number; end: number }) { source.focus(); source.setSelectionRange(range.start, range.end); source.scrollTop = 0; },
   };
 }
