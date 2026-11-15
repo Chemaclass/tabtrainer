@@ -91,7 +91,7 @@ const grooveEditing = grooveEditor(jam, { played: showJamGroove, saved: keepSave
 const saveView = saveState(draftSession, workspace, () => files.download(), () => { setScreen('practice', true); showLink(true); }, { state: () => shareState(editor.text(), songbook.paths), propose: proposal.openEditorSong });
 const score = scoreView({
   redraw: draw,
-  onBar: bar => passages.selectBar(bar),
+  onBar: bar => { passages.selectBar(bar); const problem = editor.open() ? openSong.problemBars().get(bar) : undefined; if (problem) editor.goTo(problem); },
   onBarNumber: bar => passages.loopTo(bar),
   onNote: (key, bar) => passages.selectNote(key, bar),
   onPlayNote: (key, bar) => { const chosen = passages.selectNote(key, bar) ? passagePlayback.selectedNote : null; if (chosen) player.play(chosen.beat); },
@@ -158,6 +158,7 @@ const files = songFile(draftSession, new Backups(savedSongs, practiceLog), {
 });
 const editor = editorPane(draw);
 editor.onEdit(() => { if (passagePlayback.selectedNote) player.stop(); drafts.persist(); }, () => update(false));
+editor.onCaret(at => score.showEditedBar(openSong.barAt(at)));
 playerPanel(draw);
 theme();
 fretboardSheet(() => workspace.family);
@@ -285,6 +286,7 @@ function update(resetLoop: boolean) {
   if (resetLoop) practiceSession.restart(Date.now());
   header.show(openSong, songSource(workspace.picked));
   editor.showIssues(issues, song);
+  score.showProblems(openSong.problemBars().keys());
   if (workspace.followSong(familyOf(song.meta.instrument))) showFamily();
   transportView.showBarTotal(song.bars.length);
   showTitle();

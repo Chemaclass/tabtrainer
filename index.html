@@ -254,9 +254,9 @@ tempo: 90
   <div id="practiceScreen" hidden>
   <main class="layout noedit">
     <section id="editorPane" class="editor">
-      <div class="pane-head"><span class="caps">Song text</span><span id="status" class="status"></span><button id="hideEditorBtn" class="pane-close" title="Hide editor" aria-label="Hide editor">Hide</button></div>
+      <div class="pane-head"><span class="caps">Song text</span><span id="status" class="status"></span><span id="nextProblemHint" class="next-problem-hint" hidden><kbd>F8</kbd> next problem</span><button id="hideEditorBtn" class="pane-close" title="Hide editor" aria-label="Hide editor">Hide</button></div>
       <textarea id="src" class="source-text" spellcheck="false" aria-label="Song source"></textarea>
-      <ul id="issues" class="issues"></ul>
+      <ul id="issues" class="issues" aria-label="Problems" aria-live="polite"></ul>
     </section>
     <div id="editorResize" title="Drag to resize, double-click to reset" role="separator" tabindex="0" aria-label="Editor width" aria-orientation="vertical" aria-controls="editorPane" aria-valuemin="240" aria-valuemax="720" aria-valuenow="400" aria-describedby="editorResizeHelp"><span id="editorResizeHelp" class="sr-only">Drag to resize. Use Left and Right arrows, Home or End. Double-click to reset the width.</span></div>
     <section class="viewer">
@@ -277,6 +277,17 @@ tempo: 90
         <p id="rangeSummary" role="status" aria-live="polite"></p>
       </div>
       <div id="sheet" class="sheet"></div>
+      <section class="format-strip" aria-labelledby="formatStripTitle">
+        <div class="format-strip-head"><h2 id="formatStripTitle">Format, at a glance</h2><button id="formatHelpBtn" class="tip-link" type="button" aria-haspopup="dialog">Full guide</button></div>
+        <dl>
+          <div><dt><code>3.4</code></dt><dd>fret 3 on string 4</dd></div>
+          <div><dt><code>:q :8 :16</code></dt><dd>length of the next notes</dd></div>
+          <div><dt><code>r</code></dt><dd>rest</dd></div>
+          <div><dt><code>~5.3</code></dt><dd>tie, let it ring</dd></div>
+          <div><dt><code>"Am7"</code></dt><dd>chord name</dd></div>
+          <div><dt><code>|</code></dt><dd>end of a bar</dd></div>
+        </dl>
+      </section>
       <p class="tip">Tap a note, then Play. Tap a bar number to loop it. <span class="keys">Press <kbd>?</kbd> for </span><button id="shortcutsBtn" class="tip-link" type="button" aria-haspopup="dialog"><span class="keys">shortcuts</span><span class="touch-label">Shortcuts</span></button><span class="keys">.</span></p>
     </section>
   </main>

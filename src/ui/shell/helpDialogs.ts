@@ -21,7 +21,7 @@ export function helpDialogs() {
   const syntax = byId('help', HTMLDialogElement), tab = byId('tabHelp', HTMLDialogElement), shortcuts = byId('shortcuts', HTMLDialogElement);
   [syntax, tab, shortcuts, byId('songsGuide', HTMLDialogElement)].forEach(dismissHelpOnBackdrop);
   byId('readTabBtn').onclick = byId('readTabMobileBtn').onclick = () => tab.showModal();
-  byId('syntaxHelpBtn').onclick = () => syntax.showModal();
+  byId('syntaxHelpBtn').onclick = byId('formatHelpBtn').onclick = () => syntax.showModal();
   byId('shortcutsBtn').onclick = () => shortcuts.showModal();
   return { showShortcuts: () => shortcuts.showModal() };
 }

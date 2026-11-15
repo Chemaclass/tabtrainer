@@ -42,6 +42,7 @@ export function scoreView({ redraw, onBar, onBarNumber, onNote, onPlayNote }: Sc
   let zoom = pref('zoom', 1);
   let lit: Element[] = [], litKey: string | null = null;
   let line: Element | null = null, bar: number | null = null;
+  let problems = new Set<number>(), edited: number | null = null;
 
   const notesOf = (key: string | null) => key ? [...sheet.querySelectorAll(`[data-key="${key}"]`)] : [];
   const systems = () => [...sheet.querySelectorAll<HTMLElement>('.system')];
@@ -50,6 +51,11 @@ export function scoreView({ redraw, onBar, onBarNumber, onNote, onPlayNote }: Sc
     let played = current !== null;
     systems().forEach(system => { if (system === current) played = false; system.classList.toggle('played', played); });
   };
+  const markEdits = () => sheet.querySelectorAll<SVGElement>('.bar-target').forEach(target => {
+    const at = Number(target.dataset.bar);
+    target.classList.toggle('problem', problems.has(at));
+    target.classList.toggle('edited', at === edited);
+  });
   const forgetLine = () => { line?.classList.remove('cur'); line = null; markPlayed(null); };
 
   const zoomBy = (step: ZoomStep) => { zoom = nextZoom(zoom, step); setPref('zoom', zoom); redraw(); };
@@ -91,7 +97,12 @@ export function scoreView({ redraw, onBar, onBarNumber, onNote, onPlayNote }: Sc
       renderSong(sheet, song, { barsPerLine: barsPerLine(width, zoom, phoneLayout.matches), width: width / zoom, touchSize: TOUCH_SIZE / zoom });
       lit = notesOf(litKey); lit.forEach(element => element.classList.add('on'));
       line = lineOf(bar); line?.classList.add('cur'); markPlayed(line);
+      markEdits();
     },
+    /** Marks the bars that hold a problem in the song text. */
+    showProblems(bars: Iterable<number>) { problems = new Set(bars); markEdits(); },
+    /** Marks the bar the caret is on in the song text. */
+    showEditedBar(at: number | null) { if (at === edited) return; edited = at; markEdits(); },
     highlight(key: string | null) {
       if (key === litKey) return;
       lit.forEach(e => e.classList.remove('on'));

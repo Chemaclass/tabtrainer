@@ -2,11 +2,13 @@ import { parseSong } from '../core/parser';
 import type { ParseIssue } from '../core/parseIssue';
 import { withVersion, type Song, type Version } from '../core/model';
 import { versionSlug } from './songLink';
+import { barAt, problemBars, type TextPosition } from './songProblems';
 
 export class OpenSong {
   private whole: Song | null = null;
   private shown: Song | null = null;
   private index = 0;
+  private issues: ParseIssue[] = [];
 
   get song() { return this.shown; }
   get versions(): Version[] { return this.whole?.versions ?? []; }
@@ -15,6 +17,7 @@ export class OpenSong {
   read(text: string, reset: boolean): { song: Song; issues: ParseIssue[] } {
     const { song, issues } = parseSong(text);
     this.whole = song;
+    this.issues = issues;
     if (reset) this.index = 0;
     this.index = Math.min(this.index, song.versions.length - 1);
     this.shown = withVersion(song, this.index);
@@ -36,6 +39,15 @@ export class OpenSong {
   /** Whether a saved version slug still names a version, where null stands for a song with one version. */
   hasVersion(slug: string | null): boolean {
     return slug === null ? this.versions.length <= 1 : this.versions.some(v => versionSlug(v.name) === slug);
+  }
+
+  barAt(at: TextPosition): number | null {
+    return barAt(this.versions, this.index, at);
+  }
+
+  /** The first problem in each bar of the shown version. */
+  problemBars(): Map<number, ParseIssue> {
+    return problemBars(this.versions, this.index, this.issues);
   }
 
   versionSlug(): string | null {

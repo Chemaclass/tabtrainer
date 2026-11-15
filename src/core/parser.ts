@@ -104,19 +104,21 @@ export function parseSong(src: string): ParseResult {
   let versionAt = NO_TOKEN;
   const versionLines = new Map<Version, IssueSpan>();
   const version = (): Version => {
-    const made = { name: versionName, bars, ...(versionLevel ? { level: versionLevel } : {}) };
+    const made = { name: versionName, bars, ...(versionLevel ? { level: versionLevel } : {}), ...(versionLine ? { line: versionLine } : {}) };
     versionLines.set(made, versionAt);
     return made;
   };
   let bars: Bar[] = [];
-  const st = { cur: null as Bar | null, notesAt: NO_TOKEN }; let t = 0;
+  const st = { cur: null as Bar | null, notesAt: NO_TOKEN, startAt: null as Tok | null }; let t = 0;
   let dur = parseDuration('q')!;
   let pendingTempo: number | undefined;
   let pendingChord: string | undefined; let pendingText: string | undefined; let pendingLyric: string | undefined; let pendingSection: string | undefined;
   const beatsOf = (ticks: number) => Number((ticks / PPQ).toFixed(2));
   const expectedBeats = (bar: Bar) => bar.beats * 4 / bar.beatValue;
   const newBar = (tok: Tok): Bar => {
-    const b: Bar = { index: bars.length + 1, beats: time[0], beatValue: time[1], events: [], line: tok.line, section: pendingSection };
+    const start = st.startAt ?? tok;
+    const b: Bar = { index: bars.length + 1, beats: time[0], beatValue: time[1], events: [], line: start.line, col: start.col, section: pendingSection };
+    st.startAt = null;
     st.notesAt = spanOf(tok);
     if (pendingTempo !== undefined) b.tempo = pendingTempo;
     pendingTempo = undefined; pendingSection = undefined; bars.push(b); t = 0; return b;
@@ -130,7 +132,7 @@ export function parseSong(src: string): ParseResult {
       st.cur.events.push({ start: t, dur: full - t, notes: [], value: 'q', dots: 0, triplet: false });
     }
     if (!st.cur.events.length) bars.pop();
-    st.cur = null;
+    st.cur = null; st.startAt = null;
   };
   const parseNote = (s: string, at: IssueSpan): Note | null => {
     const tie = s.startsWith('~'); const body = tie ? s.slice(1) : s;
@@ -160,13 +162,14 @@ export function parseSong(src: string): ParseResult {
   for (const tok of tokenize(lines.slice(bodyStart).join('\n'), bodyStart + 1)) {
     let s = tok.text;
     if (s.startsWith('@')) { if (st.cur && st.cur.events.length) closeBar(); pendingSection = s.slice(1).trim(); continue; }
+    if (!st.cur && !st.startAt && !s.startsWith('==') && !/^level\s*:/i.test(s) && s !== '|') st.startAt = tok;
     if (s.startsWith('==')) {
       // a new version of the song: finish the current one and start counting bars again
       closeBar();
       const name = s.replace(/^=+/, '').trim() || `Version ${versions.length + 1}`;
       if (bars.length || versionLine) versions.push(version());
       else if (versions.length === 0 && pendingSection) { /* section before the first version applies to it */ }
-      bars = []; versionName = name; versionLine = tok.line; versionAt = spanOf(tok); versionLevel = undefined;
+      bars = []; st.startAt = null; versionName = name; versionLine = tok.line; versionAt = spanOf(tok); versionLevel = undefined;
       pendingTempo = undefined;
       time = [headerTime[0], headerTime[1]]; dur = parseDuration('q')!; pendingChord = pendingText = pendingLyric = undefined;
       if (versions.some(v => v.name === name)) report('warning', 'version-duplicate', spanOf(tok), `There is already a version called "${name}"`);
