@@ -25,15 +25,18 @@ describe('offline cache list', () => {
     for (const file of publicFiles.filter(f => f !== 'og.png')) expect(urls).toContain(file);
     expect(urls).toEqual(expect.arrayContaining(['manifest.webmanifest', 'icon-192.png', 'icon-512.png', 'icon-maskable-512.png']));
   });
-  it('caches the page behind every bundled song and groove link', () => {
+  it('leaves out the song, groove and 404 pages, which are copies of the app page the worker falls back to', () => {
     expect(songPages.length).toBeGreaterThan(0);
-    for (const page of [...songPages, ...groovePages]) expect(urls).toContain(page.replace(/index\.html$/, ''));
+    for (const page of [...songPages, ...groovePages, '404.html']) {
+      expect(urls).not.toContain(page);
+      expect(urls).not.toContain(page.replace(/index\.html$/, ''));
+    }
   });
   it('leaves out what the app never asks for', () => {
     for (const file of ['assets/index-Dg53OQro.js.map', 'assets/inter-latin-400-normal-XyZ.woff', 'og.png', 'bass/orion/og.png', 'jam/blues-shuffle/og.png', 'sitemap.xml', 'robots.txt', 'sw.js', 'index.html']) expect(urls).not.toContain(file);
   });
   it('reads Windows paths', () => {
-    expect(offlineUrls(['bass\\ode-to-joy\\index.html', 'assets\\app.js'])).toEqual(['assets/app.js', 'bass/ode-to-joy/']);
+    expect(offlineUrls(['docs\\index.html', 'assets\\app.js'])).toEqual(['assets/app.js', 'docs/']);
   });
 });
 
@@ -41,16 +44,20 @@ describe('build output', () => {
   let outDir = '';
   afterEach(() => { if (outDir.startsWith(tmpdir())) rmSync(outDir, { recursive: true, force: true }); });
 
-  it('writes the worker after the share pages, so it caches them', () => {
+  it('writes each song and groove page as the app with its own head, and a 404 page', () => {
     outDir = mkdtempSync(join(tmpdir(), 'tabtrainer-build-'));
     mkdirSync(join(outDir, 'assets'));
-    writeFileSync(join(outDir, 'index.html'), '<html>');
+    writeFileSync(join(outDir, 'index.html'), '<head><!-- page meta --><title>App</title><!-- /page meta --></head><script src="/tabtrainer/assets/index-abc.js"></script>');
     writeFileSync(join(outDir, 'assets/index-abc.js'), 'run()');
     writeStaticFiles({ outDir, site: 'https://example.com/tabtrainer/', atHostRoot: false });
     const urls = listedUrls(readFileSync(join(outDir, 'sw.js'), 'utf8'));
     expect(urls).toEqual(expect.arrayContaining(['./', 'assets/index-abc.js']));
-    for (const page of [...songPages, ...groovePages]) expect(urls).toContain(page.replace(/index\.html$/, ''));
     expect(urls).not.toContain('sitemap.xml');
+    expect(readFileSync(join(outDir, '404.html'), 'utf8')).toBe(readFileSync(join(outDir, 'index.html'), 'utf8'));
+    const orion = readFileSync(join(outDir, 'bass/orion/index.html'), 'utf8');
+    expect(orion).toContain('<title>Orion (bass solo), bass tab with rhythm · TabTrainer</title>');
+    expect(orion).toContain('<script src="/tabtrainer/assets/index-abc.js"></script>');
+    expect(orion).not.toContain('<title>App</title>');
     for (const page of [...songPages, ...groovePages]) {
       const card = page.replace(/index\.html$/, 'og.png');
       expect(readFileSync(join(outDir, card)).subarray(1, 4).toString()).toBe('PNG');

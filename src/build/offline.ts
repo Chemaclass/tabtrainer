@@ -6,7 +6,8 @@ export const SERVICE_WORKER = 'sw.js';
 export const NETWORK_WAIT_MS = 3000;
 
 // The app never asks for these: source maps, .woff fonts (every browser that runs the app takes .woff2) and files only crawlers and link previews read.
-const notForTheApp = /(\.map|\.woff|(^|\/)og\.png|^sitemap\.xml|^robots\.txt)$/;
+// Song, groove and 404 pages are copies of the app page, which the worker serves for them when offline.
+const notForTheApp = /(\.map|\.woff|(^|\/)og\.png|^sitemap\.xml|^robots\.txt|^404\.html|^[^/]+\/[^/]+\/index\.html)$/;
 
 export function offlineUrls(files: readonly string[]): string[] {
   return files

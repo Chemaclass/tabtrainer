@@ -1,5 +1,6 @@
 import type { Family } from '../core/instruments';
 import { parseSong } from '../core/parser';
+import { addressOf } from './address';
 import { routeSearch } from './navigation';
 import { songAddress } from './songLink';
 
@@ -23,22 +24,22 @@ export interface LandingEntries { firstSteps: LandingEntry; rhythm: LandingEntry
 const folder = (path: string) => path.split('/').slice(2, 4).join('/');
 const shortTitle = (text: string) => parseSong(text).song.meta.title.split(':')[0].trim();
 
-function exerciseEntry(path: string, text: string): LandingEntry {
+function exerciseEntry(path: string, text: string, base: string): LandingEntry {
   const level = parseSong(text).song.meta.level;
-  return { href: songAddress('./', path), detail: [shortTitle(text), level].filter(Boolean).join(' · ') };
+  return { href: songAddress(base, path), detail: [shortTitle(text), level].filter(Boolean).join(' · ') };
 }
 
-export function landingEntries(bundled: Record<string, string>, family: Family): LandingEntries {
+export function landingEntries(bundled: Record<string, string>, family: Family, base: string): LandingEntries {
   const paths = Object.keys(bundled).sort();
   const exercises = paths.filter(path => folder(path) === `${family}/exercises`);
   const songs = paths.filter(path => folder(path) === `${family}/songs`);
   const rhythm = exercises.find(path => path.endsWith('-rhythm-ladder.txt')) ?? exercises[1] ?? exercises[0];
   const more = songs.length - 1;
   return {
-    firstSteps: exerciseEntry(exercises[0], bundled[exercises[0]]),
-    rhythm: exerciseEntry(rhythm, bundled[rhythm]),
+    firstSteps: exerciseEntry(exercises[0], bundled[exercises[0]], base),
+    rhythm: exerciseEntry(rhythm, bundled[rhythm], base),
     songs: {
-      href: './?' + routeSearch('', { screen: 'library', kind: 'songs', family }),
+      href: addressOf(routeSearch('', { screen: 'library', kind: 'songs', family }), base),
       detail: more > 0 ? `${shortTitle(bundled[songs[0]])} and ${more} more` : shortTitle(bundled[songs[0]]),
     },
   };

@@ -4,6 +4,7 @@ const SETUP_PARAMS = ['key', 'tempo', 'progression', 'swing'] as const;
 const MINE_PREFIX = 'mine:';
 
 export const mineGrooveSlug = (title: string) => MINE_PREFIX + title;
+export const isMineGroove = (slug: string) => slug.startsWith(MINE_PREFIX);
 export const mineGrooveTitle = (slug: string) => slug.slice(MINE_PREFIX.length);
 
 export function grooveSlug(path: string): string {
@@ -38,14 +39,11 @@ export function writeJamSetup(query: URLSearchParams, setup: JamSetup) {
   }
 }
 
-// Only the build writes the per-groove pages, so the dev server links to the query instead.
-export function jamShareLink(root: string, slug: string, setup: JamSetup, dev: boolean): string {
-  const query = new URLSearchParams(dev ? { view: 'jam', groove: slug } : {});
+export function jamShareLink(root: string, slug: string, setup: JamSetup): string {
+  const query = new URLSearchParams();
   writeJamSetup(query, setup);
   const search = query.toString();
-  const page = dev ? '' : `jam/${slug}/`;
-  const queryString = search ? `?${search}` : '';
-  return `${root}${page}${queryString}`;
+  return `${jamAddress(root, slug)}${search ? `?${search}` : ''}`;
 }
 
-export const jamAddress = (root: string, slug: string) => `${root}?${new URLSearchParams({ view: 'jam', groove: slug })}`;
+export const jamAddress = (root: string, slug: string) => `${root}jam/${encodeURIComponent(slug)}/`;

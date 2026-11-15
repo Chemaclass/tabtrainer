@@ -41,7 +41,7 @@ By sending a song, you share it under the [MIT licence](LICENSE) of TabTrainer.
 - `bass` or `guitar` is the instrument. The `instrument:` line decides it.
 - `exercises` or `songs` is the list the song appears in.
 - `NN` sets the place in the list, easiest first. The app picks the next free number. We may change it in review.
-- `name` comes from the title and gives the song its link, such as `?song=bass/first-steps`. Two songs for the same instrument can't share a name.
+- `name` comes from the title and gives the song its link, such as `bass/first-steps/`. Two songs for the same instrument can't share a name.
 
 ## What the file needs
 

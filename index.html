@@ -3,10 +3,11 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>TabTrainer: bass and guitar tab player and tab editor</title>
-  <meta name="description" content="Free bass and guitar tab player and tab editor. Slow a song down, loop the hard bars, and write your own songs in plain text. No account needed." />
   <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
   <meta name="theme-color" content="#0f0f0f" media="(prefers-color-scheme: dark)" />
+  <!-- page meta: the build writes each song and groove page with its own -->
+  <title>TabTrainer: bass and guitar tab player and tab editor</title>
+  <meta name="description" content="Free bass and guitar tab player and tab editor. Slow a song down, loop the hard bars, and write your own songs in plain text. No account needed." />
   <link rel="canonical" href="__SITE_URL__" />
   <meta property="og:type" content="website" />
   <meta property="og:site_name" content="TabTrainer" />
@@ -25,6 +26,7 @@
   <script type="application/ld+json">
     {"@context":"https://schema.org","@type":"WebApplication","name":"TabTrainer","url":"__SITE_URL__","description":"Free bass and guitar tab player and tab editor. Slow a song down, loop the hard bars, and write your own songs in plain text. No account needed.","applicationCategory":"MusicApplication","operatingSystem":"Any web browser","isAccessibleForFree":true,"offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"author":{"@type":"Person","name":"Chemaclass","url":"https://chemaclass.com"},"codeRepository":"https://github.com/Chemaclass/tabtrainer"}
   </script>
+  <!-- /page meta -->
   <link rel="icon" href="%BASE_URL%favicon.svg" type="image/svg+xml" />
   <link rel="apple-touch-icon" href="%BASE_URL%icon-192.png" />
   <link rel="manifest" href="%BASE_URL%manifest.webmanifest" />
@@ -33,12 +35,13 @@
     try { theme = JSON.parse(localStorage.getItem('tabtrainer:theme')); } catch { /* storage unavailable */ }
     document.documentElement.dataset.theme = theme === 'light' || theme === 'dark' ? theme : matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
     const query = new URLSearchParams(location.search);
-    if (query.has('welcome') || !['song', 'view', 'kind', 'instrument', 'version'].some(key => query.has(key))) document.documentElement.classList.add('landing');
+    const onRoot = location.pathname === '%BASE_URL%' || location.pathname === '%BASE_URL%index.html';
+    if (query.has('welcome') || (onRoot && !['song', 'view', 'kind', 'instrument', 'version'].some(key => query.has(key)))) document.documentElement.classList.add('landing');
   </script>
   <script async src="https://rum.cronitor.io/script.js"></script>
   <script>
     window.cronitor = window.cronitor || function () { (window.cronitor.q = window.cronitor.q || []).push(arguments); };
-    // Every screen is the same path with a different query, so keep the route keys. A groove of your own carries its title, which stays private:
+    // A song or bundled groove is in the path; other screens are the root with a query, so keep the route keys. A groove of your own carries its title, which stays private:
     // the title is sent unencoded and may hold & or #, so groove stays last and everything after its prefix is cut.
     cronitor('config', {
       clientKey: 'a225bb1865119c485e9d4544392452de',
@@ -51,7 +54,7 @@
 </head>
 <body class="library-view">
   <header class="top">
-    <a id="homeBtn" class="brand" href="./" title="About TabTrainer">
+    <a id="homeBtn" class="brand" href="%BASE_URL%" title="About TabTrainer">
       <svg class="logo" width="22" height="22" viewBox="0 0 22 22" aria-hidden="true"><path d="M1 5h20M1 11h20M1 17h20" stroke="currentColor" stroke-width="1.5"/><circle cx="14" cy="11" r="4" fill="var(--playing)"/></svg>
       TabTrainer
     </a>
@@ -100,9 +103,9 @@
       <nav class="landing-entries" aria-labelledby="entriesTitle">
         <h2 id="entriesTitle" class="landing-kicker">Where are you now?</h2>
         <ul>
-          <li><a class="landing-entry" data-entry="firstSteps" href="./?song=bass%2Ffirst-steps"><span><b>I have never read tab</b><span class="landing-entry-detail">First Steps · easy</span></span><svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><path d="M4 10h12M11 5l5 5-5 5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></a></li>
-          <li><a class="landing-entry" data-entry="rhythm" href="./?song=bass%2Frhythm-ladder"><span><b>I play a little</b><span class="landing-entry-detail">Rhythm Ladder · easy</span></span><svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><path d="M4 10h12M11 5l5 5-5 5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></a></li>
-          <li><a class="landing-entry" data-entry="songs" href="./?view=library&amp;kind=songs&amp;instrument=bass"><span><b>I want a song</b><span class="landing-entry-detail">Ode to Joy and 8 more</span></span><svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><path d="M4 10h12M11 5l5 5-5 5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></a></li>
+          <li><a class="landing-entry" data-entry="firstSteps" href="%BASE_URL%bass/first-steps/"><span><b>I have never read tab</b><span class="landing-entry-detail">First Steps · easy</span></span><svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><path d="M4 10h12M11 5l5 5-5 5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></a></li>
+          <li><a class="landing-entry" data-entry="rhythm" href="%BASE_URL%bass/rhythm-ladder/"><span><b>I play a little</b><span class="landing-entry-detail">Rhythm Ladder · easy</span></span><svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><path d="M4 10h12M11 5l5 5-5 5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></a></li>
+          <li><a class="landing-entry" data-entry="songs" href="%BASE_URL%?view=library&amp;kind=songs&amp;instrument=bass"><span><b>I want a song</b><span class="landing-entry-detail">Ode to Joy and 8 more</span></span><svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><path d="M4 10h12M11 5l5 5-5 5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></a></li>
         </ul>
         <p class="landing-free">Free, with no account. Your songs stay in your browser. <button class="landing-link" type="button" data-read-tab>How to read tab</button></p>
       </nav>
@@ -120,7 +123,7 @@
         <p class="landing-kicker">Open source · MIT</p>
         <h2 id="writeTitle">Write a song.<br />Put it on this site.</h2>
         <p class="landing-write-lede">A song is a few lines of plain text. Write yours here, see the score as you type, and send it in. Once we accept it, every player can practise it, with your name on it.</p>
-        <div class="landing-actions"><a class="landing-start" href="./?view=library&amp;kind=mine&amp;new=1">Write a song <span aria-hidden="true">→</span></a><button class="landing-link" type="button" data-songs-guide>How songs get added</button></div>
+        <div class="landing-actions"><a class="landing-start" href="%BASE_URL%?view=library&amp;kind=mine&amp;new=1">Write a song <span aria-hidden="true">→</span></a><button class="landing-link" type="button" data-songs-guide>How songs get added</button></div>
         <ul class="landing-facts"><li><b id="landingCount">32</b> songs and exercises</li><li><b>0</b> accounts needed to write</li><li><b>1</b> free GitHub account to send</li></ul>
       </div>
       <ol class="landing-write-steps">
@@ -256,7 +259,7 @@ tempo: 90
       </section>
     </aside>
   </main>
-  <footer class="site-footer"><a href="./">What is TabTrainer?</a> Free and open source. <a href="./?view=library&amp;kind=mine&amp;new=1">Write a song and send it in</a>. Made by <a href="https://chemaclass.com" target="_blank" rel="noopener">Chemaclass</a> · <a href="https://github.com/Chemaclass/tabtrainer" target="_blank" rel="noopener">Source code on GitHub</a><span id="offlineReady" class="offline-ready" role="status"></span></footer>
+  <footer class="site-footer"><a href="%BASE_URL%">What is TabTrainer?</a> Free and open source. <a href="%BASE_URL%?view=library&amp;kind=mine&amp;new=1">Write a song and send it in</a>. Made by <a href="https://chemaclass.com" target="_blank" rel="noopener">Chemaclass</a> · <a href="https://github.com/Chemaclass/tabtrainer" target="_blank" rel="noopener">Source code on GitHub</a><span id="offlineReady" class="offline-ready" role="status"></span></footer>
   <div id="practiceScreen" hidden>
   <main class="layout noedit">
     <div id="editorTabs" class="editor-tabs" role="tablist" aria-label="Editor view">
@@ -532,7 +535,7 @@ tempo: 90
       <li>Press "Commit changes", then "Propose changes".</li>
       <li>Press "Create pull request". We review it and write to you there.</li>
     </ol>
-    <div class="songs-guide-actions"><a class="primary" href="./?view=library&amp;kind=mine&amp;new=1">Write a song</a><a href="https://github.com/Chemaclass/tabtrainer/blob/main/CONTRIBUTING.md" target="_blank" rel="noopener">Read the full guide</a></div>
+    <div class="songs-guide-actions"><a class="primary" href="%BASE_URL%?view=library&amp;kind=mine&amp;new=1">Write a song</a><a href="https://github.com/Chemaclass/tabtrainer/blob/main/CONTRIBUTING.md" target="_blank" rel="noopener">Read the full guide</a></div>
   </dialog>
   <dialog id="tabHelp" aria-labelledby="tabHelpTitle">
     <form method="dialog"><button class="close round" aria-label="Close">✕</button></form><h2 id="tabHelpTitle">Reading your first tab</h2>

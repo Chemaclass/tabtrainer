@@ -1,3 +1,4 @@
+import { addressOf } from '../../app/address';
 import type { Jam, JamGroove } from '../../app/jam';
 import { byId, textSpan } from '../dom';
 
@@ -11,8 +12,7 @@ function isPlainClick(event: MouseEvent): boolean {
 }
 
 function grooveHref(slug: string): string {
-  const query = new URLSearchParams({ view: 'jam', groove: slug });
-  return `?${query}`;
+  return addressOf(new URLSearchParams({ view: 'jam', groove: slug }).toString(), import.meta.env.BASE_URL);
 }
 
 function grooveLink({ slug, groove }: JamGroove): HTMLAnchorElement {

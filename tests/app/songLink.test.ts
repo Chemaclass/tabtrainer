@@ -37,15 +37,11 @@ describe('exercise reordering', () => {
 describe('share links', () => {
   const root = 'https://example.org/tabtrainer/', ref = 'demo:./songs/bass/songs/07-a-dawning.txt';
   it('links to the page the build writes for a bundled song', () => {
-    expect(songShareLink(root, ref, null, false)).toBe(`${root}bass/a-dawning/`);
-    expect(songShareLink(root, ref, 'easy', false)).toBe(`${root}bass/a-dawning/?version=easy`);
-  });
-  it('links to the query on the dev server', () => {
-    expect(songShareLink(root, ref, 'easy', true)).toBe(`${root}?song=bass%2Fa-dawning&version=easy`);
-    expect(songShareLink(root, ref, null, true)).toBe(`${root}?song=bass%2Fa-dawning`);
+    expect(songShareLink(root, ref, null)).toBe(`${root}bass/a-dawning/`);
+    expect(songShareLink(root, ref, 'easy')).toBe(`${root}bass/a-dawning/?version=easy`);
   });
   it('has no link for a saved song', () => {
-    expect(songShareLink(root, 'lib:Mine', null, false)).toBeNull();
+    expect(songShareLink(root, 'lib:Mine', null)).toBeNull();
   });
 });
 

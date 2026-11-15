@@ -9,7 +9,7 @@ const bundled = Object.fromEntries(Object.entries(import.meta.glob('../../songs/
   .map(([path, text]) => [path.replace(/^(\.\.\/)+/, './'), text]));
 byId('landingCount').textContent = String(Object.keys(bundled).length);
 
-if (onLanding()) history.replaceState(history.state, '', location.pathname);
+if (onLanding()) history.replaceState(history.state, '', import.meta.env.BASE_URL);
 
 one('.top').addEventListener('click', event => {
   if (event.target instanceof Element && event.target.closest('.library-nav button, #writeSongBtn')) leaveLanding();
@@ -30,9 +30,9 @@ const chosenFamily = (): Family => {
   const family = familySwitch.querySelector<HTMLElement>('[aria-pressed="true"]')?.dataset.family ?? '';
   return isFamily(family) ? family : 'bass';
 };
-let entries: LandingEntries = landingEntries(bundled, chosenFamily());
+let entries: LandingEntries = landingEntries(bundled, chosenFamily(), import.meta.env.BASE_URL);
 const showEntries = () => {
-  entries = landingEntries(bundled, chosenFamily());
+  entries = landingEntries(bundled, chosenFamily(), import.meta.env.BASE_URL);
   landing.querySelectorAll<HTMLAnchorElement>('[data-entry]').forEach(row => {
     const entry = entries[row.dataset.entry as keyof LandingEntries];
     row.href = entry.href;

@@ -9,7 +9,7 @@ import { PlayTime, PracticeLog } from './app/practiceLog';
 import type { PickUp } from './app/practiceProgress';
 import { PracticeSession } from './app/practiceSession';
 import { Backups } from './app/backup';
-import { songShareLink, songSource } from './app/songLink';
+import { songAddress, songShareLink, songSource } from './app/songLink';
 import { bundledPath, savedRef } from './app/songRef';
 import { Songbook } from './app/songbook';
 import { shareState, withOpenDraft } from './app/songProposal';
@@ -23,7 +23,7 @@ import { Navigation, asksForNewSong, navigationState, readRoute, type Route } fr
 import { DraftSession } from './app/draftSession';
 import { Jam, Mixer, bundledGrooves } from './app/jam';
 import { JamFretboardSettings } from './app/jamFretboard';
-import { jamShareLink, type JamSetup } from './app/jamLink';
+import { isMineGroove, jamAddress, jamShareLink, type JamSetup } from './app/jamLink';
 import { draftFlow } from './ui/editor/draftFlow';
 import { editorPane } from './ui/editor/editorPane';
 import { proposeSongDialog } from './ui/editor/proposeSong';
@@ -59,15 +59,15 @@ import { tuner } from './ui/tuner/tuner';
 
 const songbook = new Songbook(import.meta.glob('./songs/*/*/*.txt', { query: '?raw', import: 'default', eager: true }) as Record<string, string>, library);
 const storedNavigation = navigationState(history.state);
-const navigation = new Navigation(history, location, songbook.paths);
-const workspace = Workspace.fromQuery(location.search);
+const navigation = new Navigation(history, location, songbook.paths, import.meta.env.BASE_URL);
+const workspace = Workspace.fromQuery(navigation.search());
 const player = new Player();
 const openSong = new OpenSong();
 const passage = new Passage();
 const passagePlayback = new PassagePlayback(player, passage);
 const draftSession = new DraftSession(() => editor.text());
 const jam = new Jam(bundledGrooves(import.meta.glob('./grooves/*.txt', { query: '?raw', import: 'default', eager: true }) as Record<string, string>), () => savedGrooves.list());
-const linkedRoute = readRoute(location.search, songbook.paths);
+const linkedRoute = readRoute(navigation.search(), songbook.paths);
 if (linkedRoute.screen === 'jam') jam.open(linkedRoute.groove, linkedRoute.setup);
 const loop = new LoopEngine();
 const practiceLog = new PracticeLog(practiceStore);
@@ -77,6 +77,7 @@ const practiceSession = new PracticeSession();
 const help = helpDialogs();
 const sharedSongs = () => withOpenDraft(library(), workspace.picked, draftSession.hasChanges() ? editor.text() : null);
 const proposal = proposeSongDialog(songbook.paths, () => editor.text(), sharedSongs, { goToLine: showSongLine });
+const site = new URL(import.meta.env.BASE_URL, location.origin).href;
 const view = screens(chooseFamily, () => showJam(jam.slug));
 const mixer = new Mixer(workspace.family);
 const jamFretboard = jamFretboardView(jam, mixer, new JamFretboardSettings(), loop);
@@ -85,7 +86,7 @@ const jamming = jamView(jam, loop, {
   choose: chooseGroove,
   changed: () => showLink(),
   chordsChanged: bars => jamFretboard.show(bars),
-  shareLink: () => jamShareLink(new URL(import.meta.env.BASE_URL, location.origin).href, jam.slug, jam.setup, import.meta.env.DEV),
+  shareLink: () => jamShareLink(site, jam.slug, jam.setup),
 });
 const mixing = mixerView(mixer, loop, chooseFamily);
 const grooveEditing = grooveEditor(jam, { played: showJamGroove, saved: keepSavedGroove, deleted: showAfterDelete });
@@ -101,7 +102,7 @@ const header = songHeader(index => { if (openSong.choose(index)) showVersion(); 
 const songs = songList(songbook, workspace, openSong, practiceLog, { pick: pickSong, continue: continuePractice, showLibrary, newSong: () => startNewSong(), startFrom: startFromTemplate, openFile: () => files.open(), shown: saveView.showShare, propose: () => proposal.open(), shared: sharedSongs, proposeSaved: proposal.openSaved, backup: () => files.backup() });
 window.addEventListener('popstate', event => navigation.visit(event.state, (route, accept, cancel) => {
   draftSession.beginNavigation();
-  if (followLanding(location.search)) { accept(); setScreen('library'); return; }
+  if (followLanding(navigation.search())) { accept(); setScreen('library'); return; }
   const open = () => accept(() => openRoute(route));
   if (route.screen === 'practice' && route.picked && route.picked !== workspace.picked && draftSession.hasChanges()) drafts.replace(open, cancel);
   else if (route.screen === 'jam') void grooveEditing.mayChoose(route.groove).then(chosen => (chosen ? open() : cancel()));
@@ -156,7 +157,7 @@ const files = songFile(draftSession, new Backups(savedSongs, practiceLog), {
   onOpen: text => drafts.replace(() => { unpick(); setScreen('practice'); loadText(text); showLink(true); }),
   onSave: () => { void drafts.save(); },
   restored: () => songs.fill(),
-  shareLink: () => songShareLink(new URL(import.meta.env.BASE_URL, location.origin).href, workspace.picked, openSong.versionSlug(), import.meta.env.DEV),
+  shareLink: () => songShareLink(site, workspace.picked, openSong.versionSlug()),
   announce: saveView.announce,
 });
 const editor = editorPane(draw);
@@ -182,8 +183,10 @@ function playAlongAs(family: Family) {
 function unpick() { workspace.unpick(); songs.fill(); }
 function showLink(push = false) { if (!onLanding()) navigation.show(workspace.route(openSong.versionSlug(), jam.slug, jam.setup), workspace.picked, push); }
 function showTitle() {
-  const practising = workspace.screen === 'practice';
-  view.showTitle(practising ? openSong.song : null, practising ? bundledPath(workspace.picked) : null, workspace.screen === 'jam' ? jam.groove.title : null);
+  const practising = workspace.screen === 'practice', jamming = workspace.screen === 'jam';
+  const path = practising ? bundledPath(workspace.picked) : null;
+  const address = path ? songAddress(site, path) : jamming && !isMineGroove(jam.slug) ? jamAddress(site, jam.slug) : site;
+  view.showTitle(practising ? openSong.song : null, address, jamming ? jam.groove.title : null);
 }
 function setScreen(next: Screen, focus = false) {
   if (next !== 'practice') { player.stop(); scrolling.stopContinuous(); }
@@ -314,9 +317,10 @@ function draw() {
 
 transportView.showPlayButton();
 editor.show(pref('editor', false));
-const plan = startupPlan({ search: location.search, historyPick: storedNavigation?.picked ?? null, draft: pref('draft', null), last: pref('last', null), lastPick: pref('picked', '') }, songbook);
-const linkedVersion = new URLSearchParams(location.search).get('version');
-const newSongAsked = asksForNewSong(location.search);
+const linkedSearch = navigation.search();
+const plan = startupPlan({ search: linkedSearch, historyPick: storedNavigation?.picked ?? null, draft: pref('draft', null), last: pref('last', null), lastPick: pref('picked', '') }, songbook);
+const linkedVersion = new URLSearchParams(linkedSearch).get('version');
+const newSongAsked = asksForNewSong(linkedSearch);
 switch (plan.kind) {
   case 'recover': {
     const { draft, offer } = plan;
