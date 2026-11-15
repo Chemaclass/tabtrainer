@@ -20,25 +20,25 @@ function pieces(e: NoteEvent): [string, number, boolean][] {
 type TabTickable = TabNote | StaveNote | GhostNote;
 const STRING_SPACE = 13, RHYTHM_GLYPH_SCALE = 26;
 
-function tabNote(positions: TabNotePosition[], duration: string, rhythm: boolean): TabNote {
+function tabNote(positions: TabNotePosition[], duration: string, dots: number, rhythm: boolean): TabNote {
   if (!rhythm) return new TabNote({ positions, duration });
-  const note = new TabNote({ positions, duration }, true);
+  const note = new TabNote({ positions, duration, dots }, true);
   note.render_options.glyph_font_scale = RHYTHM_GLYPH_SCALE;
-  note.setStemDirection(Stem.DOWN);
   if (duration !== 'w') note.setStemLength(duration === 'h' ? STRING_SPACE : 2 * STRING_SPACE);
+  note.setStemDirection(Stem.DOWN);
   return note;
 }
 
-function tabRest(duration: string, rhythm: boolean, nStr: number): StaveNote | GhostNote {
+const centreRest = (rest: StaveNote, nStr: number) => rest.setKeyLine(0, 5 - (nStr - 1) / 2);
+
+function tabRest(duration: string, dots: number, rhythm: boolean, nStr: number): StaveNote | GhostNote {
   if (!rhythm) return new GhostNote({ duration });
-  const rest = new StaveNote({ keys: ['b/4'], duration: duration + 'r' });
-  rest.setKeyLine(0, 5 - (nStr - 1) / 2);
-  return rest;
+  return centreRest(new StaveNote({ keys: ['b/4'], duration: duration + 'r', dots }), nStr);
 }
 
 function beamsFor(notes: StemmableNote[], triplets: StemmableNote[][], stem_direction?: number): Beam[] {
   const inTrip = new Set(triplets.flat());
-  const beams = Beam.generateBeams(notes.filter(n => !n.isRest() && !inTrip.has(n)), { stem_direction });
+  const beams = Beam.generateBeams(notes.filter(n => !inTrip.has(n)), { stem_direction });
   triplets.forEach(grp => { const beamable = grp.filter(n => !n.isRest() && ['8', '16', '32'].includes(n.getDuration())); if (beamable.length >= 2) beams.push(new Beam(beamable)); });
   return beams;
 }
@@ -109,10 +109,10 @@ function drawSystem(div: HTMLDivElement, bars: Bar[], prev: Bar | undefined, c: 
         const sorted = [...ev.notes].sort((a, b) => (c.tuning[a.string - 1] + a.fret) - (c.tuning[b.string - 1] + b.fret));
         if (!sorted.length) {
           s = new StaveNote({ clef: c.clef, keys: [c.clef === 'bass' ? 'd/3' : 'b/4'], duration: val + 'r' });
-          t = tabRest(val, rhythm, c.nStr);
+          t = tabRest(val, dots, rhythm, c.nStr);
         } else {
           s = new StaveNote({ clef: c.clef, keys: sorted.map(n => vexKey(c.tuning[n.string - 1] + n.fret, c.key)), duration: val, auto_stem: true });
-          t = tabNote(sorted.map(n => ({ str: n.string, fret: (pi > 0 || n.tie) ? `(${n.fret})` : String(n.fret) })), val, rhythm);
+          t = tabNote(sorted.map(n => ({ str: n.string, fret: (pi > 0 || n.tie) ? `(${n.fret})` : String(n.fret) })), val, dots, rhythm);
           if (prevS) ties.push([prevS, s]);
         }
         if (dots) Dot.buildAndAttach([s], { all: true });
@@ -131,6 +131,7 @@ function drawSystem(div: HTMLDivElement, bars: Bar[], prev: Bar | undefined, c: 
     const below = (grp: TabTickable[]) => rhythm ? { location: Tuplet.LOCATION_BOTTOM, bracketed: grp.some(n => !n.hasBeam()) } : {};
     const ttups = ttrip.map(grp => new Tuplet(grp as never, { num_notes: 3, notes_occupied: 2, ...below(grp) }));
     let sv: Voice | null = null; let tups = rhythm ? ttups : [];
+    if (rhythm) tn.forEach(n => { if (n instanceof StaveNote) centreRest(n, c.nStr); });
     if (st) {
       sv = new Voice({ num_beats: ticks, beat_value: bv }).setMode(Voice.Mode.SOFT).addTickables(sn);
       Accidental.applyAccidentals([sv], c.key);
