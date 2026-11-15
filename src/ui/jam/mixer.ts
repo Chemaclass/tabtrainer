@@ -1,6 +1,6 @@
 import { MIXER_PARTS, type Mixer, type MixerPart } from '../../app/jam';
 import { mixSummary } from '../../app/jamSummary';
-import { isFamily } from '../../core/instruments';
+import { isFamily, type Family } from '../../core/instruments';
 import type { LoopEngine } from '../../audio/loopEngine';
 import { byId, fillRange, textSpan } from '../dom';
 
@@ -26,7 +26,7 @@ function muteButton(part: MixerPart): HTMLButtonElement {
   return mute;
 }
 
-export function mixerView(mixer: Mixer, engine: Pick<LoopEngine, 'setPartGain' | 'setRoom'>, playsChanged: () => void) {
+export function mixerView(mixer: Mixer, engine: Pick<LoopEngine, 'setPartGain' | 'setRoom'>, choosePlays: (family: Family) => void) {
   const plays = [...document.querySelectorAll<HTMLInputElement>('input[name="jamPlays"]')];
   const room = byId('jamRoom', HTMLButtonElement);
   const summary = byId('jamMixSummary');
@@ -41,9 +41,7 @@ export function mixerView(mixer: Mixer, engine: Pick<LoopEngine, 'setPartGain' |
   engine.setRoom(mixer.room);
   for (const input of plays) {
     input.onchange = () => {
-      if (!input.checked || !isFamily(input.value) || !mixer.setPlays(input.value)) return;
-      show();
-      playsChanged();
+      if (input.checked && isFamily(input.value)) choosePlays(input.value);
     };
   }
 

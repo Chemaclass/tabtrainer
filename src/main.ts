@@ -70,7 +70,7 @@ const jamming = jamView(jam, loop, {
   chordsChanged: bars => jamFretboard.show(bars),
   shareLink: () => jamShareLink(new URL(import.meta.env.BASE_URL, location.origin).href, jam.slug, jam.setup, import.meta.env.DEV),
 });
-const mixing = mixerView(mixer, loop, () => jamFretboard.show());
+const mixing = mixerView(mixer, loop, chooseFamily);
 const grooveEditing = grooveEditor(jam, { played: showJamGroove, saved: keepSavedGroove, deleted: showAfterDelete });
 const saveView = saveState(draftSession, workspace, () => files.download(), () => { setScreen('practice', true); showLink(true); });
 const score = scoreView({
@@ -120,6 +120,12 @@ publishLayoutHeights();
 function showFamily() { view.showFamily(workspace.family); songs.fill(); }
 function chooseFamily(family: Family) {
   if (workspace.chooseFamily(family)) { showFamily(); showLink(); }
+  playAlongAs(family);
+}
+function playAlongAs(family: Family) {
+  if (!mixer.setPlays(family)) return;
+  mixing.show();
+  jamFretboard.show();
 }
 function unpick() { workspace.unpick(); songs.fill(); }
 function showLink(push = false) { navigation.show(workspace.route(openSong.versionSlug(), jam.slug, jam.setup), workspace.picked, push); }
@@ -148,10 +154,7 @@ function showJam(slug: string, push = true, setup: JamSetup = {}) {
     grooveEditing.follow();
     jamming.show();
   }
-  if (mixer.followLibrary(workspace.family)) {
-    mixing.show();
-    jamFretboard.show();
-  }
+  playAlongAs(workspace.family);
   setScreen('jam', arriving); showLink(push);
 }
 function chooseGroove(slug: string) {

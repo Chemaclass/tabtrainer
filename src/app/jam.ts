@@ -1,7 +1,7 @@
 import { BACKING_PARTS, parseGroove, type BackingPart, type Groove } from '../core/groove';
 import { buildGrooveTimeline, type GrooveTimeline } from '../core/grooveTimeline';
 import { OWN_PROGRESSION, isMinorProgression, keyTonic, presetProgression, type Numeral } from '../core/harmony';
-import { isFamily, type Family } from '../core/instruments';
+import type { Family } from '../core/instruments';
 import { fittingScales, isScaleId, type ScaleId } from '../core/scales';
 import { isMinorKey } from '../core/theory';
 import { grooveSlug, mineGrooveSlug, type JamSetup } from './jamLink';
@@ -297,18 +297,16 @@ function savedLevel(parts: Partial<Record<string, unknown>>, part: MixerPart, pl
 
 export class Mixer {
   private player: Family;
-  private chosen: boolean;
   private parts: Record<MixerPart, PartLevel>;
   private roomOn: boolean;
 
-  constructor(library: Family = pref('family', 'bass')) {
+  constructor(family: Family = pref('family', 'bass')) {
     const saved = pref('jamMixer', {});
-    const plays = typeof saved.plays === 'string' && isFamily(saved.plays) ? saved.plays : null;
-    this.chosen = plays !== null;
-    this.player = plays ?? library;
+    this.player = family;
     const parts: Partial<Record<string, unknown>> = saved.parts && typeof saved.parts === 'object' ? saved.parts : {};
     const level = (part: MixerPart) => savedLevel(parts, part, this.player);
     this.parts = { drums: level('drums'), bass: level('bass'), keys: level('keys') };
+    if (saved.plays !== family) this.parts.bass.muted = mutedByDefault('bass', family);
     this.roomOn = typeof saved.room === 'boolean' ? saved.room : true;
   }
 
@@ -325,14 +323,9 @@ export class Mixer {
 
   setPlays(family: Family): boolean {
     if (family === this.player) return false;
-    this.playAs(family);
+    this.player = family;
+    this.parts.bass.muted = mutedByDefault('bass', family);
     this.save();
-    return true;
-  }
-
-  followLibrary(family: Family): boolean {
-    if (this.chosen || family === this.player) return false;
-    this.playAs(family);
     return true;
   }
 
@@ -359,13 +352,7 @@ export class Mixer {
     return true;
   }
 
-  private playAs(family: Family) {
-    this.player = family;
-    this.parts.bass.muted = family === 'bass';
-  }
-
   private save() {
-    this.chosen = true;
     setPref('jamMixer', { plays: this.player, parts: this.parts, room: this.roomOn });
   }
 }
