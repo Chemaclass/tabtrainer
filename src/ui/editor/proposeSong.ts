@@ -109,6 +109,12 @@ export function proposeSongDialog(paths: readonly string[], editorText: () => st
     showSong(songText ?? chosen?.text ?? '');
     dialog.showModal();
   }
+  function firstToFix() {
+    const checks = byId('proposeChecks');
+    const todo = checks.querySelector<HTMLElement>('.propose-check.todo');
+    if (todo) todo.tabIndex = -1;
+    return checks.querySelector<HTMLElement>('.propose-goto') ?? todo;
+  }
   const openWithEditorText = () => open(editorText());
   byId('proposeBtn').onclick = openWithEditorText;
   return {
@@ -116,7 +122,7 @@ export function proposeSongDialog(paths: readonly string[], editorText: () => st
     openEditorSong: openWithEditorText,
     openSaved(title: string, onChecklist = false) {
       open(undefined, title);
-      if (onChecklist) byId('proposeChecks').querySelector<HTMLElement>('.propose-goto')?.focus();
+      if (onChecklist) firstToFix()?.focus();
     },
   };
 }

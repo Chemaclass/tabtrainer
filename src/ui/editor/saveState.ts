@@ -43,6 +43,10 @@ export function saveState(draftSession: DraftSession, workspace: Workspace, onDo
   byId('returnDraftBtn').onclick = onReturn;
   byId('headProposeBtn').onclick = sharing.propose;
   byId('shareNoticeBtn').onclick = sharing.propose;
-  byId('shareNoticeClose').onclick = () => { setPref('shareNoticeDismissed', true); showShare(); byId('headProposeBtn').focus(); };
+  function focusAfterNotice() {
+    const head = byId('headProposeBtn');
+    (head.offsetParent ? head : byId('editBtn')).focus();
+  }
+  byId('shareNoticeClose').onclick = () => { setPref('shareNoticeDismissed', true); showShare(); focusAfterNotice(); };
   return { show, showShare, announce };
 }
