@@ -26,3 +26,21 @@ jobs:
       - run: npm run lint
       - run: npm test
       - run: npm run build
+      - id: playwright
+        run: echo "version=$(npx playwright --version)" >> "$GITHUB_OUTPUT"
+      - id: browser-cache
+        uses: actions/cache@v6
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.playwright.outputs.version }}
+      - if: steps.browser-cache.outputs.cache-hit != 'true'
+        run: npx playwright install --with-deps --only-shell chromium
+      - if: steps.browser-cache.outputs.cache-hit == 'true'
+        run: npx playwright install-deps chromium-headless-shell
+      - run: npm run e2e
+      - if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: e2e-screenshots
+          path: test-results/
+          retention-days: 7

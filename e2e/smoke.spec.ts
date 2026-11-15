@@ -1,0 +1,61 @@
+import { readdirSync } from 'node:fs';
+import { expect, test, type Page } from '@playwright/test';
+import { stubAudioContext } from './audioStub';
+
+const bundledCount = (instrument: string, kind: string) => readdirSync(`src/songs/${instrument}/${kind}`).filter(file => file.endsWith('.txt')).length;
+
+async function openFirstExercise(page: Page) {
+  await page.goto('./?view=library&kind=exercises');
+  await page.locator('#catalogueList .catalogue-row').first().click();
+  await expect(page.locator('.note').first()).toBeAttached();
+}
+
+test.beforeEach(async ({ page }) => {
+  await page.addInitScript(stubAudioContext);
+});
+
+test('the landing page loads with no console error', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('console', message => { if (message.type() === 'error') errors.push(message.text()); });
+  page.on('pageerror', error => errors.push(error.message));
+  await page.goto('./');
+  await expect(page.locator('#landing h1')).toBeVisible();
+  await page.waitForLoadState('networkidle');
+  expect(errors).toEqual([]);
+});
+
+test('the library lists every bundled exercise and song', async ({ page }) => {
+  const nav = page.locator('.library-nav');
+  for (const instrument of ['bass', 'guitar']) {
+    await page.goto(`./?view=library&kind=exercises&instrument=${instrument}`);
+    await expect(nav.locator('[data-kind="exercises"] .nav-count')).toHaveText(String(bundledCount(instrument, 'exercises')));
+    await expect(nav.locator('[data-kind="songs"] .nav-count')).toHaveText(String(bundledCount(instrument, 'songs')));
+    await expect(page.locator('#catalogueList .catalogue-row').first()).toBeVisible();
+  }
+});
+
+test('a song opens and renders its notes', async ({ page }) => {
+  await openFirstExercise(page);
+  expect(await page.locator('.note').count()).toBeGreaterThan(0);
+  await expect(page.locator('.note').first()).toBeVisible();
+});
+
+test('the editor shows a problem for a bad line and clears it once fixed', async ({ page }) => {
+  await openFirstExercise(page);
+  await page.locator('#editBtn').click();
+  const source = page.locator('#src');
+  const text = await source.inputValue();
+  await source.fill(`${text}\n:q 9.9 |\n`);
+  await expect(page.locator('#issues li').first()).toBeVisible();
+  await expect(page.locator('#status')).toHaveClass(/\bbad\b/);
+  await source.fill(text);
+  await expect(page.locator('#status')).not.toHaveClass(/\bbad\b/);
+  await expect(page.locator('#issues li')).toHaveCount(0);
+});
+
+test('the player reaches the playing state and lights the current note', async ({ page }) => {
+  await openFirstExercise(page);
+  await page.locator('#playBtn').click();
+  await expect(page.locator('#playbackStatus')).toHaveText('Playing', { timeout: 10_000 });
+  await expect(page.locator('#playBtn')).toHaveAttribute('aria-label', 'Pause');
+  await expect(page.locator('.note.on').first()).toBeAttached();});
