@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
-import { MAX_PROPOSAL_URL, guessGroup, nextNumber, proposalName, proposeSong } from '../../src/app/songProposal';
+import { MAX_PROPOSAL_URL, guessGroup, nextNumber, proposalName, proposeSong, withOpenDraft } from '../../src/app/songProposal';
 import { newSongText } from '../../src/app/songbook';
 
 const paths = [
@@ -15,6 +15,17 @@ const header = (title = 'My Walking Line', artist = 'TabTrainer', extra = '') =>
   `title: ${title}\nartist: ${artist}\nabout: Roots on every beat.\nlevel: easy\ninstrument: bass4\ntempo: 90\nkey: C\ntime: 4/4\n${extra}`;
 const exercise = header() + '\n' + bars;
 const problems = (text: string, group: 'exercises' | 'songs' = 'exercises') => proposeSong(text, group, paths).problems.map(problem => problem.message);
+
+describe('songs to propose', () => {
+  const songs = [{ title: 'A', text: 'saved a', updated: 1 }, { title: 'B', text: 'saved b', updated: 2 }];
+  it('checks the open draft instead of the saved text of the same song', () => {
+    expect(withOpenDraft(songs, 'lib:B', 'draft b').map(song => song.text)).toEqual(['saved a', 'draft b']);
+  });
+  it('keeps the saved texts without a draft or when another song is open', () => {
+    expect(withOpenDraft(songs, 'lib:B', null)).toEqual(songs);
+    expect(withOpenDraft(songs, 'demo:./songs/bass/exercises/01-first-steps.txt', 'draft')).toEqual(songs);
+  });
+});
 
 describe('proposal name', () => {
   it('turns the title into a plain file name', () => {

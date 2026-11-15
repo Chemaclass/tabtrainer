@@ -3,6 +3,8 @@ import { serializeSong } from '../core/serialize';
 import { familyOf, type Family } from '../core/instruments';
 import type { Song } from '../core/model';
 import { findBySlug } from './songLink';
+import { savedRef } from './songRef';
+import type { Saved } from './storage';
 
 export type ProposalGroup = 'exercises' | 'songs';
 export type ProposalCheck = 'header' | 'lines' | 'bars' | 'title' | 'composer';
@@ -94,6 +96,9 @@ function checklist(problems: readonly ProposalProblem[], group: ProposalGroup): 
   const checks: ProposalCheck[] = group === 'songs' ? ['header', 'lines', 'bars', 'title', 'composer'] : ['header', 'lines', 'bars', 'title'];
   return checks.map(check => ({ check, label: CHECK_LABELS[check], problems: problems.filter(problem => problem.check === check) }));
 }
+
+export const withOpenDraft = (songs: readonly Saved[], picked: string, draft: string | null): Saved[] =>
+  songs.map(song => draft !== null && savedRef(song.title) === picked ? { ...song, text: draft } : song);
 
 export function proposeSong(text: string, group: ProposalGroup, paths: readonly string[]): Proposal {
   const sent = text.replace(/\r\n?/g, '\n').replace(/\n*$/, '\n');

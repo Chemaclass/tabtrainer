@@ -10,6 +10,7 @@ import { Backups } from './app/backup';
 import { songShareLink, songSource } from './app/songLink';
 import { bundledPath, savedRef } from './app/songRef';
 import { Songbook, newSongText } from './app/songbook';
+import { withOpenDraft } from './app/songProposal';
 import { OpenSong } from './app/openSong';
 import { Workspace, type Screen } from './app/workspace';
 import { startupPlan } from './app/startup';
@@ -66,7 +67,7 @@ const practiceLog = new PracticeLog(practiceStore);
 const playTime = new PlayTime(practiceLog);
 
 const help = helpDialogs();
-const proposal = proposeSongDialog(songbook.paths, () => editor.text(), library, { goToLine: showSongLine });
+const proposal = proposeSongDialog(songbook.paths, () => editor.text(), () => withOpenDraft(library(), workspace.picked, draftSession.hasChanges() ? editor.text() : null), { goToLine: showSongLine });
 const view = screens(chooseFamily, () => showJam(jam.slug));
 const mixer = new Mixer(workspace.family);
 const jamFretboard = jamFretboardView(jam, mixer, new JamFretboardSettings(), loop);

@@ -83,7 +83,7 @@ export function proposeSongDialog(paths: readonly string[], editorText: () => st
   });
   link.addEventListener('click', event => {
     if (!link.hasAttribute('href')) { event.preventDefault(); return; }
-    showForm(false);
+    showForm(false); byId('proposeBack').focus();
     if (!proposal || proposal.carriesText) return;
     const copyFailed = () => { status.textContent = COPY_FAILED; download.hidden = false; };
     try {
@@ -91,7 +91,7 @@ export function proposeSongDialog(paths: readonly string[], editorText: () => st
     } catch { copyFailed(); }
   });
   download.onclick = () => { if (proposal) downloadText(proposal.text); };
-  byId('proposeBack').onclick = () => showForm(true);
+  byId('proposeBack').onclick = () => { showForm(true); link.focus(); };
   dismissHelpOnBackdrop(dialog);
   function open(songText?: string) {
     rights.checked = false;
