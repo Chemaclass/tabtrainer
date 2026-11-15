@@ -3,6 +3,7 @@ import { isFamily, type Family } from '../core/instruments';
 import { isLibraryKind, type LibraryKind } from './catalogue';
 import { isTunings, type Tunings } from './tuning';
 import { isPracticeRecord, type PracticeRecord, type PracticeStore } from './practiceLog';
+import { isTemplateInstrumentChoice, type TemplateInstrumentChoice } from './songTemplates';
 import { isFretboardChoice, isFretboardInstruments, withFretboardDefaults, type FretboardChoice, type FretboardInstruments } from './fretboardSheet';
 
 export interface Saved { title: string; text: string; updated: number }
@@ -106,6 +107,7 @@ interface Preferences {
   draft: DraftSnapshot | null;
   recent: string[];
   tunings: Tunings;
+  templateInstruments: TemplateInstrumentChoice;
   fretboardSheet: FretboardChoice;
   fretboardInstruments: FretboardInstruments;
   jam: Record<string, JamChoice>;
@@ -137,6 +139,7 @@ const validators: { [K in keyof Preferences]: (value: unknown) => value is Prefe
   draft: (value): value is DraftSnapshot | null => value === null || !!value && typeof value === 'object' && 'text' in value && isString(value.text) && 'base' in value && isString(value.base) && 'picked' in value && isString(value.picked),
   recent: (value): value is string[] => Array.isArray(value) && value.every(isString),
   tunings: isTunings,
+  templateInstruments: isTemplateInstrumentChoice,
   fretboardSheet: isFretboardChoice,
   fretboardInstruments: isFretboardInstruments,
   jam: (value): value is Record<string, JamChoice> => !!value && typeof value === 'object' && !Array.isArray(value),

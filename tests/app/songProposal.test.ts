@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { MAX_PROPOSAL_URL, guessGroup, nextNumber, proposeSong, withOpenDraft } from '../../src/app/songProposal';
-import { newSongText } from '../../src/app/songbook';
+import { templateText } from '../../src/app/songTemplates';
 
 const paths = [
   './songs/bass/exercises/01-first-steps.txt',
@@ -62,14 +62,8 @@ describe('song proposal', () => {
     expect(proposeSong(exercise.replace('bass4', 'guitar6'), 'exercises', paths).folder).toBe('src/songs/guitar/exercises');
     expect(proposeSong(exercise.replace('bass4', 'bass5'), 'exercises', paths).folder).toBe('src/songs/bass/exercises');
   });
-  it('lists what a new song from the editor still needs', () => {
-    expect(problems(newSongText('bass'))).toEqual([
-      'Add an "artist:" line at the top.',
-      'Add an "about:" line at the top.',
-      'Add a "level:" line at the top.',
-      'Give the song its own title.',
-      'The song needs at least 4 bars.',
-    ]);
+  it('lists what a new song from a template still needs', () => {
+    expect(problems(templateText('groove', 'bass4'))).toEqual(['Give the song its own title.']);
   });
   it('names each missing header line, but not the optional listen line', () => {
     expect(problems(exercise.replace('key: C\n', '').replace('tempo: 90\n', ''))).toEqual(['Add a "tempo:" line at the top.', 'Add a "key:" line at the top.']);

@@ -3,6 +3,7 @@ import { setSelectValue } from '../shell/dropdown';
 import { catalogueMatches, categoryCounts, difficultyLabel, recentEntries, type CatalogueEntry, type LibraryKind } from '../../app/catalogue';
 import { DEFAULT_TEMPLATE, SONG_TEMPLATES, templateInstruments, type SongTemplate, type SongTemplateId, type TemplateInstrument } from '../../app/songTemplates';
 import { INSTRUMENTS, isFamily } from '../../core/instruments';
+import { pref, setPref } from '../../app/storage';
 
 const labels = { exercises: 'exercises', songs: 'songs', mine: 'My songs' };
 const intro = {
@@ -40,13 +41,17 @@ export function libraryView(onPick: (value: string) => void, onNew: () => void, 
     li.append(button); return li;
   }
   const showTemplates = () => byId('templateList').replaceChildren(...SONG_TEMPLATES.map(templateCard));
-  templateInstrument.addEventListener('change', showTemplates);
+  templateInstrument.addEventListener('change', () => {
+    if (isFamily(family)) setPref('templateInstruments', { ...pref('templateInstruments', {}), [family]: chosenInstrument() });
+    showTemplates();
+  });
   function showTemplateInstruments() {
     if (templateInstrument.dataset.family === family) return;
     const choices = instrumentChoices();
     templateInstrument.dataset.family = family;
     templateInstrument.replaceChildren(...choices.map(id => { const option = document.createElement('option'); option.value = id; option.textContent = INSTRUMENTS[id].name; return option; }));
-    setSelectValue(templateInstrument, choices[0]);
+    const saved = isFamily(family) ? pref('templateInstruments', {})[family] : undefined;
+    setSelectValue(templateInstrument, saved ?? choices[0]);
     byId('templateInstrumentField').hidden = choices.length < 2;
     showTemplates();
   }

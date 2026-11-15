@@ -1,4 +1,4 @@
-import { INSTRUMENTS, familyOf, noteToMidi, type Family } from '../core/instruments';
+import { INSTRUMENTS, familyOf, isFamily, noteToMidi, type Family } from '../core/instruments';
 
 export type SongTemplateId = 'groove' | 'blues' | 'levels' | 'blank';
 export interface SongTemplate { id: SongTemplateId; name: string; summary: string; sample: (instrument: TemplateInstrument) => string }
@@ -23,6 +23,11 @@ export const SONG_TEMPLATES: readonly SongTemplate[] = [
 export const DEFAULT_TEMPLATE: SongTemplateId = 'groove';
 
 export const templateInstruments = (family: Family) => TEMPLATE_INSTRUMENTS.filter(id => familyOf(INSTRUMENTS[id]) === family);
+
+export type TemplateInstrumentChoice = Partial<Record<Family, TemplateInstrument>>;
+export const isTemplateInstrumentChoice = (value: unknown): value is TemplateInstrumentChoice =>
+  !!value && typeof value === 'object' && !Array.isArray(value)
+  && Object.entries(value).every(([family, id]) => isFamily(family) && templateInstruments(family).some(choice => choice === id));
 
 const header = (instrument: TemplateInstrument, about: string, tempo: number, key: string) =>
   [`title: ${PLACEHOLDER_TITLE}`, 'artist: TabTrainer', `about: ${about}`, 'level: easy', `instrument: ${instrument}`, `tempo: ${tempo}`, `key: ${key}`, 'time: 4/4', ''];
