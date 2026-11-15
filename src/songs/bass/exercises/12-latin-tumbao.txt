@@ -8,9 +8,38 @@ key: Am
 time: 4/4
 
 # Don't play on beat 1: you are still holding the note from the bar before.
+== Learn
+level: medium
 @Montuno
 "Am" :q r :8 r 7.3 :q ~7.3 5.3 | "D7" :q ~5.3 :8 r 7.2 :q ~7.2 5.4 |
 "Am" :q ~5.4 :8 r 7.3 :q ~7.3 5.3 | "D7" :q ~5.3 :8 r 7.2 :q ~7.2 5.4 |
 "Am" :q ~5.4 :8 r 7.3 :q ~7.3 5.3 | "D7" :q ~5.3 :8 r 7.2 :q ~7.2 5.4 |
+@Ending
+"Am" :q ~5.4 r :h r |
+
+== Develop
+level: medium
+# A third chord, E7. Its root is the same E you play in the Am bar, so stay at frets 5 to 7. The last two bars add the root an octave up on the "and" of beat 3.
+@Montuno with E7
+"Am" :q r :8 r 7.3 :q ~7.3 5.3 | "D7" :q ~5.3 :8 r 7.2 :q ~7.2 7.3 |
+"E7" :q ~7.3 :8 r 7.4 :q ~7.4 5.4 | "Am" :q ~5.4 :8 r 7.3 :q ~7.3 5.3 |
+"D7" :q ~5.3 :8 r 7.2 :q ~7.2 7.3 | "E7" :q ~7.3 :8 r 7.4 :q ~7.4 5.4 |
+"Am" :q ~5.4 :8 r 7.3 :8 ~7.3 7.2 :q 5.3 | "D7" :q ~5.3 :8 r 7.2 :8 ~7.2 7.1 :q 5.4 |
+@Ending
+"Am" :q ~5.4 r :h r |
+
+== Challenge
+level: hard
+# Each bar adds the root an octave up on the "and" of beat 3. Then every note comes a sixteenth earlier, so the next root lands before beat 4.
+@Add the and of 3
+"Am" :q r :8 r 7.3 :8 ~7.3 7.2 :q 5.3 | "D7" :q ~5.3 :8 r 7.2 :8 ~7.2 7.1 :q 7.3 |
+"E7" :q ~7.3 :8 r 7.4 :8 ~7.4 7.3 :q 5.4 | "Am" :q ~5.4 :8 r 7.3 :8 ~7.3 7.2 :q 5.3 |
+"D7" :q ~5.3 :8 r 7.2 :8 ~7.2 7.1 :q 7.3 | "E7" :q ~7.3 :8 r 7.4 :8 ~7.4 7.3 :q 5.4 |
+"Am" :q ~5.4 :8 r 7.3 :8 ~7.3 7.2 :q 5.3 | "D7" :q ~5.3 :8 r 7.2 :8 ~7.2 7.1 :q 5.4 |
+@Sixteenth anticipations
+"Am" :q ~5.4 :16 r :q 7.3 :8 7.2 :16 5.3 :q ~5.3 | "D7" :q ~5.3 :16 r :q 7.2 :8 7.1 :16 7.3 :q ~7.3 |
+"E7" :q ~7.3 :16 r :q 7.4 :8 7.3 :16 5.4 :q ~5.4 | "Am" :q ~5.4 :16 r :q 7.3 :8 7.2 :16 5.3 :q ~5.3 |
+"D7" :q ~5.3 :16 r :q 7.2 :8 7.1 :16 7.3 :q ~7.3 | "E7" :q ~7.3 :16 r :q 7.4 :8 7.3 :16 5.4 :q ~5.4 |
+"Am" :q ~5.4 :16 r :q 7.3 :8 7.2 :16 5.4 :q ~5.4 | :q ~5.4 :16 r 8.4 5.3 7.3 5.2 7.2 5.1 7.1 :8 7.2 5.4 |
 @Ending
 "Am" :q ~5.4 r :h r |
