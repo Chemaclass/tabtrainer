@@ -8,7 +8,8 @@ test('once cached, a song, groove and library page open offline', async ({ page,
     const registration = await navigator.serviceWorker.getRegistration();
     return registration?.active?.state === 'activated' && (await caches.keys()).length > 0;
   });
-  await context.setOffline(true);
+  // The server is gone: the worker's own requests fail, and only what it cached can answer. context.setOffline cuts navigations before the worker on Linux.
+  await context.route('**/*', route => route.abort('internetdisconnected'));
   await page.goto('./bass/first-steps/');
   await expect(page.locator('.note').first()).toBeAttached();
   await expect(page).toHaveTitle(/^First Steps/);
