@@ -21,7 +21,7 @@ You don't need to know Git. You need a free GitHub account.
 ## Add a song by hand
 
 1. Fork the repository and add your file where [Where the file goes](#where-the-file-goes) says, with the lines in [What the file needs](#what-the-file-needs).
-2. Run `npm test` to check it. See [Checks](#checks).
+2. Run `npm run song -- src/songs/bass/songs/10-my-song.txt` with your file's path to check it. See [Checks](#checks).
 3. Open a pull request with the file.
 
 ## What we accept
@@ -89,7 +89,22 @@ The notes, durations and other symbols are in the [Song format](README.md#song-f
 
 ## Checks
 
-`npm test` runs `tests/songs.test.ts` on every bundled file. It fails on any reading problem, a missing `about:` or `level:`, a version with fewer than 4 bars, or a song that doesn't read back the same. On each pull request, CI runs lint, the typecheck and the tests.
+Check one file from the terminal:
+
+```bash
+npm run song -- src/songs/bass/songs/10-my-song.txt
+```
+
+It prints one line per problem, with the line and column your editor can open, then a summary:
+
+```text
+src/songs/bass/songs/10-my-song.txt:13:17 error Can't read "0.9x". Notes are fret.string, e.g. 3.4 (fret 3 on string 4)
+src/songs/bass/songs/10-my-song.txt: 1 version, 24 bars, 1 problem
+```
+
+It fails on any reading problem, a missing or misplaced header line, a version with fewer than 4 bars, a song that doesn't read back the same, a file name that doesn't come from the title, or a name or number another song already has. With no file, `npm run song` checks every bundled song and groove. It exits with 1 when it finds a problem and 0 when it finds none.
+
+`npm test` and the **Add to TabTrainer** dialog run the same checks, so they agree with it. On each pull request, CI runs lint, the typecheck and the tests.
 
 ## After the merge
 

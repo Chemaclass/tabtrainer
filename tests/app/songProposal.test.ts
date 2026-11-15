@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
-import { MAX_PROPOSAL_URL, guessGroup, nextNumber, proposalName, proposeSong, withOpenDraft } from '../../src/app/songProposal';
+import { MAX_PROPOSAL_URL, guessGroup, nextNumber, proposeSong, withOpenDraft } from '../../src/app/songProposal';
 import { newSongText } from '../../src/app/songbook';
 
 const paths = [
@@ -24,14 +24,6 @@ describe('songs to propose', () => {
   it('keeps the saved texts without a draft or when another song is open', () => {
     expect(withOpenDraft(songs, 'lib:B', null)).toEqual(songs);
     expect(withOpenDraft(songs, 'demo:./songs/bass/exercises/01-first-steps.txt', 'draft')).toEqual(songs);
-  });
-});
-
-describe('proposal name', () => {
-  it('turns the title into a plain file name', () => {
-    expect(proposalName('My Walking Line')).toBe('my-walking-line');
-    expect(proposalName("Ólafur's  Tune!")).toBe('olafur-s-tune');
-    expect(proposalName('???')).toBe('');
   });
 });
 

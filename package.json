@@ -10,6 +10,7 @@
     "build": "tsc --noEmit && vite build",
     "check": "npm run lint && npm test && npm run build",
     "preview": "vite preview",
+    "song": "vite-node scripts/song.ts",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "lint": "eslint ."

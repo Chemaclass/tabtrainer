@@ -31,6 +31,6 @@ export default defineConfig(
   layer('src/core/**/*.ts', ['app', 'ui', 'render', 'audio', 'build'], ['document', 'window']),
   layer('src/app/**/*.ts', ['ui', 'render', 'build'], ['document', 'window']),
   layer(['src/audio/**/*.ts', 'src/render/**/*.ts', 'src/build/**/*.ts'], ['ui'], []),
-  layer(['src/ui/**/*.ts', 'src/*.ts', 'tests/**/*.ts'], [], []),
-  { files: ['tests/**/*.ts', '*.config.{js,ts}'], languageOptions: { globals: globals.node } },
+  layer(['src/ui/**/*.ts', 'src/*.ts', 'tests/**/*.ts', 'scripts/**/*.ts'], [], []),
+  { files: ['tests/**/*.ts', 'scripts/**/*.ts', '*.config.{js,ts}'], languageOptions: { globals: globals.node } },
 );
