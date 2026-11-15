@@ -67,7 +67,7 @@ kbd{font:600 12px var(--mono);padding:1px 5px;border:1px solid var(--rule);borde
 .seg.small{font-size:12px}
 .seg.big{font-size:15px}
 .sheet{--sheet-ink:#111;--sheet-mut:#5c5c5c;--sheet-line:#c4c4c4;background:#fff;color:#000;overflow-x:auto}
-.sheet :is(.bar-no,.time-sig,.tempo-mark,.chord-label,.section-label,.lyric){font-family:var(--ui);fill:var(--sheet-ink)}
+.sheet :is(.bar-no,.time-sig,.tempo-mark,.chord-label,.section-label,.lyric){font-family:var(--ui);fill:var(--sheet-ink);stroke:none}
 .chord-label{font-size:12px;font-weight:700}
 .section-label,.tempo-mark{font-size:11px;font-weight:700}
 .sheet .bar-no{font-size:9px;fill:var(--sheet-mut)}

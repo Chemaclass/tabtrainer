@@ -86,14 +86,15 @@ function tabLineTop(bars: Bar[], firstSystem: boolean): number {
   return Math.round(row + size * DIGIT_CAP_HEIGHT + STRING_SPACE / 2);
 }
 
-function drawTimeSignature(svg: SVGSVGElement, tab: TabStave, bar: Bar, nStr: number): number {
-  const height = timeSignatureDigitHeight(nStr, STRING_SPACE); const size = height / DIGIT_CAP_HEIGHT;
-  const width = Math.max(String(bar.beats).length, String(bar.beatValue).length) * size * DIGIT_WIDTH;
-  const x = tab.getNoteStartX() + width / 2; const middle = (tab.getYForLine(0) + tab.getYForLine(nStr - 1)) / 2;
+const timeSignatureFontSize = (nStr: number) => 0.85 * timeSignatureDigitHeight(nStr, STRING_SPACE) / DIGIT_CAP_HEIGHT;
+const timeSignatureWidth = (bar: Bar, nStr: number) => Math.max(String(bar.beats).length, String(bar.beatValue).length) * timeSignatureFontSize(nStr) * DIGIT_WIDTH;
+
+function drawTimeSignature(svg: SVGSVGElement, tab: TabStave, left: number, bar: Bar, nStr: number) {
+  const height = timeSignatureDigitHeight(nStr, STRING_SPACE); const x = left + timeSignatureWidth(bar, nStr) / 2;
+  const middle = (tab.getYForLine(0) + tab.getYForLine(nStr - 1)) / 2;
   [[bar.beats, middle], [bar.beatValue, middle + height]].forEach(([digits, y]) => {
-    svgText(svg, 'time-sig', x, y, String(digits)).style.fontSize = `${size}px`;
+    svgText(svg, 'time-sig', x, y, String(digits)).style.fontSize = `${timeSignatureFontSize(nStr)}px`;
   });
-  return width + STRING_SPACE / 2;
 }
 
 function drawTempo(svg: SVGSVGElement, section: SVGTextElement | null, x: number, y: number, tempo: number) {
@@ -131,10 +132,12 @@ function drawSystem(div: HTMLDivElement, bars: Bar[], prev: Bar | undefined, c: 
     st?.setMeasure(bar.index);
     if (tabOnly) tab.getModifiers().forEach(m => { if (m instanceof Barline) m.setStyle({ fillStyle: SHEET_MUT }); });
     st?.setContext(ctx); tab.setContext(ctx);
-    let nsx = Math.max(st ? st.getNoteStartX() : 0, tab.getNoteStartX());
-    if (tabOnly && tsChange) nsx += drawTimeSignature(svg, tab, bar, c.nStr);
+    const timeSigLeft = tab.getNoteStartX(); const showTimeSig = tabOnly && tsChange;
+    let nsx = Math.max(st ? st.getNoteStartX() : 0, timeSigLeft);
+    if (showTimeSig) nsx += timeSignatureWidth(bar, c.nStr) + STRING_SPACE / 2;
     st?.setNoteStartX(nsx); tab.setNoteStartX(nsx);
     st?.draw(); tab.draw(); bottom = Math.max(bottom, tab.getYForLine(c.nStr - 1));
+    if (showTimeSig) drawTimeSignature(svg, tab, timeSigLeft, bar, c.nStr);
     if (st) {
       if (bi === 0) new StaveConnector(st, tab).setType('singleLeft').setContext(ctx).draw();
       new StaveConnector(st, tab).setType('singleRight').setContext(ctx).draw();
