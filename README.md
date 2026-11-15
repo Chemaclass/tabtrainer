@@ -2,40 +2,32 @@
 
 Practise electric bass and guitar from tab with rhythm. Slow a song down, loop the bars you miss, and follow each note as it plays.
 
-Wrote a song? Add it to the site from the app. You don't need Git: see [Contributing](#contributing).
-
-TabTrainer is a free, open source web app. It needs no account and no server, and your songs stay in your browser.
+It's a free web app with no account. Your songs stay in your browser, and it works offline once you've opened it.
 
 **Try it:** https://chemaclass.github.io/tabtrainer/
 
 ![TabTrainer showing the tab with rhythm for a bass exercise](docs/screenshot.png)
 
-## Features
+## What you can do
 
-- **Library:** exercises and songs for bass (4, 5 or 6 strings) and guitar. Search them, filter by level, and pick up where you left off.
-- **Tab with rhythm:** stems, beams and rests under the frets, note for note, with ties, triplets and chord names.
-- **Playback:** set the speed from 30 to 130%, loop a range of bars, and raise the speed after a set number of loops. Add a metronome or a one-bar count-in.
-- **Start anywhere:** select a note or bar, then press Play. `Space` pauses and resumes. Stop goes back to your selection.
-- **Follow along:** the playing note turns red, and the page scrolls with it. Press `S` for continuous scrolling at your own speed.
-- **Keyboard and pedal:** `Space` plays or pauses, `Enter` or `Page Down` restarts from the loop start or your selection, `Page Up` goes back a bar, and `Left` and `Right` step through bars while stopped. `L` turns the loop on or off, `[` and `]` set its start and end at the current bar, `-` and `=` change the speed by 5 points, and `1`, `2`, `3` jump to 50, 75 and 100%. `M` toggles the metronome, `S` continuous scrolling, and `Up` and `Down` change its speed. `?` lists them all. A two-button page turner pedal works as a foot switch.
-- **Editor:** write songs in plain text and see the score update as you type. Errors name their line.
-- **Jam:** improvise over a looping groove of drums, bass and keys in blues, rock, funk, reggae, jazz, bossa or metal. Pick the key, tempo, chord progression and swing, and mute the part you play. Count in one bar before the loop starts, and share a link that opens the groove with your setup.
-- **Your grooves:** write a groove in the text format below and hear it as you type. Save it in your browser under Mine.
-- **Fretboard:** see where the notes of any key and scale sit on your bass or guitar, as note names or degrees. Pick a mood, such as sad or dreamy, to get a scale and progressions that carry it.
-- **Send your song in:** propose your exercise or public domain song from the editor. Once we accept it, every player can practise it.
-- **Your files:** download a song or groove as `.txt` to share it or move it to another device, and open it again.
+- **Practise:** exercises and songs for bass (4, 5 or 6 strings) and guitar, with stems, beams, ties and triplets under the frets.
+- **Slow down and loop:** play from 30 to 130% speed, loop any bars, and raise the speed after a set number of loops.
+- **Follow along:** the playing note turns red and the page scrolls with it. Add a metronome or a count-in.
+- **Keep your place:** the library shows how far you got on each song and takes you back to it.
+- **Play hands free:** every control has a key, and `?` lists them. A two-button page turner pedal works as a foot switch.
+- **Jam:** improvise over a looping groove in blues, rock, funk, reggae, jazz, bossa or metal, in any key.
+- **Fretboard:** see where the notes of any key and scale sit on your instrument.
+- **Write your own:** write a song or groove in plain text and hear it as you type.
 
-## Contributing
+## Add your song
 
-TabTrainer is open source under the MIT licence. Anyone can add an exercise or a public domain song to the site, and you don't need to know Git:
+Anyone can add an exercise or a public domain song to the site, without Git:
 
 1. Open your song in TabTrainer, or [write a new one](https://chemaclass.github.io/tabtrainer/?view=library&kind=mine&new=1).
-2. In the editor, open **File** and choose **Add to TabTrainer**.
-3. Fix anything the dialog lists, choose **Exercise** or **Song**, and tick the box that says you wrote the music or that it is in the public domain.
-4. Press **Open GitHub**. Your song file opens there, ready to send.
-5. Sign in, then press **Commit changes**, **Propose changes** and **Create pull request**.
+2. Open **File** and choose **Add to TabTrainer**.
+3. Fix anything the checklist shows, then press **Open GitHub** and send it.
 
-Once we accept your song, it appears on the site for everyone. [CONTRIBUTING.md](CONTRIBUTING.md) has the full steps, the rules on what we accept, and how to send code changes.
+Once we accept it, everyone can practise it. [CONTRIBUTING.md](CONTRIBUTING.md) has the full steps, what we accept, and how to send code.
 
 ## Song format
 
@@ -74,67 +66,18 @@ time: 4/4
 | `== Bass line` | starts another version of the song, such as a solo arrangement |
 | `# ...` | comment |
 
-## Groove format
-
-A groove is a backing loop to improvise over. Bundled grooves live in `src/grooves/`. The headers work like the song format; then each part gets one line of steps.
-
-In Jam, My grooves has Edit text, New and Open file. The groove text opens above the chords. When every line reads cleanly, the loop plays what you type from the next bar. When a line has a problem, the list names that line and the last working version keeps playing.
-
-Save keeps the groove in this browser under Mine in the groove list. Download saves it as a `.txt` file. Delete removes a saved groove after asking.
-
-```text
-title: My shuffle
-genre: blues
-about: A twelve bar shuffle to practise blues lines.
-tempo: 80
-key: A                 # the chords follow any key
-time: 4/4
-swing: 66              # 50 is straight, 66 is a triplet shuffle, up to 75
-progression: I7 IV7 I7 I7 | IV7 IV7 I7 I7 | V7 IV7 I7 V7
-voice: keys            # keys, organ or drive
-kit: blues             # rock, blues, funk, reggae, jazz, metal or electronic
-fill: on               # a tom fill at the end of the progression, off by default
-
-hat:   xoXoxoXo        # one bar of 8 steps, repeated every bar
-snare: ..X...X. | ..X..oX.
-kick:  X...x... | X...x..o
-keys:  ..X-..X-
-bass:  1 - 3 - 5 - 6 - | b7 - 6 - 5 - >b1 -
-```
-
-| Syntax | Meaning |
-| --- | --- |
-| `genre:` | the style shown in the groove list, such as `blues`, `rock`, `reggae` or `funk` |
-| `about:` | one line on what the groove practises, shown under the title |
-| `swing:` | how late the off beat notes land: `50` is straight, `66` is a triplet, up to `75`. The Jam screen starts from this value, and its swing slider stops at the triplet |
-| `progression:` | the chords the groove plays by default. The Jam screen can swap them for another progression |
-| `voice:` | the sound of the keys part: `keys` (electric piano, the default), `organ`, or `drive`, a distorted voice for power chords |
-| `kit:` | the drum sound and feel: `rock` (the default), `blues`, `funk`, `reggae`, `jazz`, `metal` or `electronic`. Each kit tunes the drums and how loosely they sit on the beat |
-| `fill:` | `on` plays a tom fill over the last two beats of the progression, in place of the drum lines there. `off` is the default |
-| `I7 iv bVII` | one chord per bar as a roman numeral: upper case is major, lower case is minor, `b` or `#` shifts it. Numerals count from the major scale of the key's root, so a minor key uses `i iv v bIII bVI bVII` |
-| `7 maj7 m7 m7b5 dim sus4 5` | chord qualities after the numeral |
-| `kick snare rim hat halfhat openhat pedalhat ride bell crash hightom midtom lowtom` | drum lines (`rim` is a cross stick, `pedalhat` the hi-hat closed by the foot, `bell` the bell of the ride): `X` accent, `x` hit, `o` soft hit, `.` silence. A closed or pedal hi-hat stops an open or half open one |
-| `keys` | chord stabs: `X` accent, `x` stab, `-` hold the stab, `.` silence |
-| `bass` | chord degrees separated by spaces: `1 2 3 5 6 b7 8`, `-` hold, `.` silence. `3` and `5` follow the chord, so `3` is the minor third of a minor chord and the root of a power chord. `b7` is the major seventh of a maj7 chord. Each bar moves by whole octaves to stay between E1 and G3, the range of a 4 string bass |
-| `>5 >b1` | approach notes in the bass: `>` plays a degree of the next chord, in the octave nearest its root, so a walking line leads into the chord change. `>b1` is a half step below the next root, or a half step above when that falls below the bass range |
-| `\|` | starts the next bar of a part; a part shorter than the progression repeats |
-| `# ...` | comment, on its own line or after a space (`#IV` is a numeral) |
-
-The steps in a bar set its grid. In 4/4 that is 8 for eighths, 12 for triplets or 16 for sixteenths. Swing moves the off beat eighths, or the off beat sixteenths when no part plays eighths. With another progression, each part repeats its bars over the new chords.
+Grooves for Jam use their own format: see [docs/grooves.md](docs/grooves.md).
 
 ## Development
 
 ```bash
 npm install
 npm run dev        # http://localhost:5173/tabtrainer/
-npm run check      # lint, tests and production build in dist/
-npm run e2e        # browser smoke test of the built site (first run: npx playwright install chromium)
-npm run render-song -- <file>...  # PNG of each song or groove in song-preview/ (build first)
+npm run check      # lint, tests and production build
+npm run e2e        # browser test of the built site (first run: npx playwright install chromium)
 ```
 
-The app uses TypeScript, Vite and [VexFlow](https://www.vexflow.com/). CI lints, typechecks and tests each pull request and each push to `main`, then opens the built site in a browser. When it passes on `main`, GitHub Pages publishes the site. A pull request that changes a song or groove also gets one comment with the `npm run song` output and a link to the rendered tab, updated on each push.
-
-[How the code fits together](docs/architecture.md) shows where new code goes and how to test it.
+It's TypeScript, Vite and [VexFlow](https://www.vexflow.com/), with no server. CI checks every pull request, and GitHub Pages publishes `main`. [How the code fits together](docs/architecture.md) shows where new code goes.
 
 ## License
 

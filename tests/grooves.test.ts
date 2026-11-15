@@ -128,10 +128,10 @@ describe('jazz, bossa and metal grooves', () => {
 });
 
 describe('groove format docs', () => {
-  it('shows the same groove example in the README and the help dialog', () => {
-    const readme = /## Groove format[\s\S]*?```text\n([\s\S]*?)```/.exec(readFileSync('README.md', 'utf8'))?.[1];
+  it('shows the same groove example in the groove docs and the help dialog', () => {
+    const docs = /## Groove format[\s\S]*?```text\n([\s\S]*?)```/.exec(readFileSync('docs/grooves.md', 'utf8'))?.[1];
     const help = /<h2>Writing a groove<\/h2>[\s\S]*?<pre>([\s\S]*?)<\/pre>/.exec(readFileSync('index.html', 'utf8'))?.[1];
-    expect(readme).toBeTruthy();
-    expect(help?.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&').trimEnd()).toBe(readme?.trimEnd());
+    expect(docs).toBeTruthy();
+    expect(help?.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&').trimEnd()).toBe(docs?.trimEnd());
   });
 });
