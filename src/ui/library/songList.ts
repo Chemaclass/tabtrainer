@@ -5,7 +5,8 @@ import type { PracticeLog } from '../../app/practiceLog';
 import type { PickUp } from '../../app/practiceProgress';
 import type { Songbook } from '../../app/songbook';
 import type { SongTemplateId, TemplateInstrument } from '../../app/songTemplates';
-import type { Saved } from '../../app/storage';
+import { pref, type Saved } from '../../app/storage';
+import { defaultSpeedPractice } from '../../core/speedPractice';
 import { shareState, type ShareState } from '../../app/songProposal';
 import { savedRef } from '../../app/songRef';
 import type { Workspace } from '../../app/workspace';
@@ -56,7 +57,7 @@ export function songList(songbook: Songbook, workspace: Workspace, openSong: Ope
     fill() {
       entries = songbook.entries();
       const shares = new Map<string, ShareState>(workspace.screen === 'library' && workspace.kind === 'mine' ? actions.shared().map(song => [savedRef(song.title), shareState(song.text, songbook.paths)]) : []);
-      catalogue.show(entries, workspace.family, workspace.kind, practiceLog.record.songs, Date.now(), shares);
+      catalogue.show(entries, workspace.family, workspace.kind, practiceLog.record.songs, Date.now(), shares, pref('speedPractice', defaultSpeedPractice).increase);
       showNavigation();
     },
     showNavigation,

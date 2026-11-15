@@ -73,4 +73,15 @@ describe('open song', () => {
     open.read(`${header}:q 3.3 |\n`, true);
     expect(open.versionSlug()).toBeNull();
   });
+
+  it('tells whether a saved version slug still names a version', () => {
+    const open = new OpenSong();
+    open.read(threeVersions, true);
+    expect(open.hasVersion('challenge')).toBe(true);
+    expect(open.hasVersion('gone')).toBe(false);
+    expect(open.hasVersion(null)).toBe(false);
+    open.read(`${header}:q 3.3 |\n`, true);
+    expect(open.hasVersion(null)).toBe(true);
+    expect(open.hasVersion('challenge')).toBe(false);
+  });
 });

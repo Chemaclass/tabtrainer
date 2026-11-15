@@ -235,7 +235,8 @@ function continuePractice({ entry, version, loop, nextSpeed }: PickUp) {
   const resume = () => {
     if (entry.value === workspace.picked) { setScreen('practice', true); showLink(true); } else loadPickedSong(entry.value, true);
     chooseVersionNamed(version);
-    if (loop) passage.setRange(loop[0], loop[1], true); else passage.clear();
+    const bars = openSong.song?.bars.length ?? 0;
+    if (loop && openSong.hasVersion(version) && loop[1] <= bars) passage.setRange(loop[0], loop[1], true); else passage.clear();
     passages.apply();
     if (nextSpeed !== null) speed.set(nextSpeed);
   };

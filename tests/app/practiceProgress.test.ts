@@ -18,12 +18,16 @@ describe('days ago', () => {
 });
 
 describe('next speed', () => {
-  it('climbs one five percent step and stops at full speed', () => {
+  it('climbs one default step and stops at full speed', () => {
     expect(nextSpeed(75)).toBe(80);
-    expect(nextSpeed(73)).toBe(75);
+    expect(nextSpeed(73)).toBe(78);
     expect(nextSpeed(98)).toBe(100);
     expect(nextSpeed(100)).toBe(100);
     expect(nextSpeed(110)).toBe(110);
+  });
+  it('follows the saved climb increase', () => {
+    expect(nextSpeed(75, 10)).toBe(85);
+    expect(nextSpeed(95, 10)).toBe(100);
   });
 });
 
@@ -41,6 +45,22 @@ describe('pick up where you left off', () => {
     expect(pickUpState(plan, at(15))).toBe('Played through at 75% yesterday. Next step is 80%.');
     expect(pickUpAction(plan)).toBe('Continue at 80%');
     expect(speedLadder(plan)).toEqual(['done', 'done', 'done', 'done', 'done', 'current', 'todo', 'todo', 'todo', 'todo']);
+  });
+  it('climbs by the saved increase', () => {
+    const plan = pickUp({ ladder: song() }, entries, 'bass', 10)!;
+    expect(plan.nextSpeed).toBe(85);
+    expect(pickUpAction(plan)).toBe('Continue at 85%');
+    expect(speedLadder(plan)).toEqual(['done', 'done', 'done', 'done', 'done', 'current', 'todo', 'todo', 'todo', 'todo']);
+  });
+  it('marks the first step next when the speed is below the ladder', () => {
+    const plan = pickUp({ ladder: song({ bestSpeed: 40, lastSpeed: 40 }) }, entries, 'bass')!;
+    expect(plan.nextSpeed).toBe(45);
+    expect(speedLadder(plan)).toEqual(['current', 'todo', 'todo', 'todo', 'todo', 'todo', 'todo', 'todo', 'todo', 'todo']);
+  });
+  it('never claims a pass faster than the best one', () => {
+    const plan = pickUp({ ladder: song({ bestSpeed: 70, lastSpeed: 100 }) }, entries, 'bass')!;
+    expect(plan.passSpeed).toBe(70);
+    expect(pickUpState(plan, at(15))).toBe('Played through at 70% yesterday. Next step is 75%.');
   });
   it('names one bar or the whole song', () => {
     const one = pickUp({ ladder: song({ lastLoop: [3, 3] }) }, entries, 'bass')!;

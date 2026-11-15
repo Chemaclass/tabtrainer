@@ -5,6 +5,7 @@ import { songProgress, type SongProgress, type SongRecord } from '../../app/prac
 import { pickUp, pickUpAction, pickUpState, pickUpTitle, progressSummary, rowProgress, speedLadder, type PickUp, type RowProgress } from '../../app/practiceProgress';
 import { DEFAULT_TEMPLATE, SONG_TEMPLATES, templateInstruments, type SongTemplate, type SongTemplateId, type TemplateInstrument } from '../../app/songTemplates';
 import { INSTRUMENTS, isFamily } from '../../core/instruments';
+import { defaultSpeedPractice } from '../../core/speedPractice';
 import { pref, setPref } from '../../app/storage';
 import { shareLabel, type ShareState } from '../../app/songProposal';
 
@@ -32,7 +33,7 @@ function checkMark() {
 export function libraryView(onPick: (value: string) => void, onContinue: (plan: PickUp) => void, onNew: () => void, onTemplate: (id: SongTemplateId, instrument: TemplateInstrument) => void, onOpen: () => void, onPropose: () => void, onExercises: () => void, onShare: (value: string, ready: boolean) => void) {
   let shares = new Map<string, ShareState>();
   let entries: CatalogueEntry[] = [], family = 'bass', kind: LibraryKind = 'exercises', expanded = false;
-  let practice: Record<string, SongRecord> = {}, now = 0, progressFilter: ProgressFilter = 'all';
+  let practice: Record<string, SongRecord> = {}, now = 0, increase = defaultSpeedPractice.increase, progressFilter: ProgressFilter = 'all';
   const search = byId('songSearch', HTMLInputElement), level = byId('songLevel', HTMLSelectElement);
   const clear = byId('clearLevel', HTMLButtonElement), list = byId('catalogueList');
   const progressChips = [...byId('progressFilters').querySelectorAll<HTMLButtonElement>('[data-progress]')];
@@ -128,12 +129,12 @@ export function libraryView(onPick: (value: string) => void, onContinue: (plan: 
     byId('libraryContext').textContent = `${family} / ${labels[kind]}`;
     byId('libraryTitle').textContent = heading; byId('libraryDescription').textContent = description;
     search.placeholder = placeholder; search.setAttribute('aria-label', placeholder);
-    const plan = kind === 'mine' ? null : pickUp(practice, entries, family);
+    const plan = kind === 'mine' ? null : pickUp(practice, entries, family, increase);
     showPickUp(plan);
-    const progress = progressCounts(catalogueMatches(entries, kind, family, '', ''), progressOf);
-    const started = progress['in-progress'] + progress.done > 0;
+    const everything = progressCounts(catalogueMatches(entries, kind, family, '', ''), progressOf);
+    const started = everything['in-progress'] + everything.done > 0;
     if (!started) progressFilter = 'all';
-    showProgressChips(started, progress);
+    showProgressChips(started, progressCounts(catalogueMatches(entries, kind, family, search.value, level.value), progressOf));
     const matches = catalogueMatches(entries, kind, family, search.value, level.value, progressFilter, progressOf);
     const filtered = !!search.value || !!level.value || progressFilter !== 'all';
     const foundations = kind === 'exercises' && !search.value.trim() && !level.value && progressFilter === 'all' && !plan && !expanded && matches.length > 4;
@@ -178,9 +179,9 @@ export function libraryView(onPick: (value: string) => void, onContinue: (plan: 
   }
   return {
     chooseTemplate() { byId('templateList').querySelector<HTMLButtonElement>('.template-card.default')?.focus(); },
-    show(all: CatalogueEntry[], instrument: string, category: LibraryKind, songs: Record<string, SongRecord>, time: number, shareStates: Map<string, ShareState>) {
+    show(all: CatalogueEntry[], instrument: string, category: LibraryKind, songs: Record<string, SongRecord>, time: number, shareStates: Map<string, ShareState>, climbIncrease: number) {
       if (kind !== category || family !== instrument) { search.value = ''; setSelectValue(level, ''); progressFilter = 'all'; expanded = false; }
-      entries = all; family = instrument; kind = category; practice = songs; now = time; shares = shareStates; render();
+      entries = all; family = instrument; kind = category; practice = songs; now = time; shares = shareStates; increase = climbIncrease; render();
     },
   };
 }
