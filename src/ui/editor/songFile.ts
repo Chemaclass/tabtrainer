@@ -24,6 +24,7 @@ export function songFile(draftSession: DraftSession, backups: Backups, handlers:
       const text = await file.text();
       const restored = backups.restore(text);
       if (restored === 'restored') { handlers.announce('Backup restored. Your saved songs and practice record are back.'); handlers.restored(); }
+      else if (restored === 'songs-only') { handlers.announce('Restored your saved songs, but not the practice record.', true, false); handlers.restored(); }
       else if (restored === 'failed') handlers.announce('Could not restore that backup in this browser.', true, false);
       else if (draftSession.isCurrent(generation)) handlers.onOpen(text);
     } catch { handlers.announce('Could not open that file. Your current text is still here.', true); }

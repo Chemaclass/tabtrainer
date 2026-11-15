@@ -95,9 +95,28 @@ describe('practice log time', () => {
     time.update(null, true, at(2) + 80_000);
     expect(log.song('demo:c')?.seconds).toBe(8);
   });
+  it('counts nothing for a gap longer than twice the interval, as when the computer sleeps', () => {
+    const { log } = memory();
+    const time = new PlayTime(log, 15_000);
+    time.update('demo:a', true, at(2));
+    time.update('demo:a', true, at(2) + 8 * 3600_000);
+    expect(log.song('demo:a')).toBeNull();
+    time.update('demo:a', false, at(2) + 8 * 3600_000 + 10_000);
+    expect(log.song('demo:a')?.seconds).toBe(10);
+  });
 });
 
 describe('practice log storage', () => {
+  it('keeps a song named __proto__ as an ordinary entry', () => {
+    const { log, stored } = memory();
+    const other = JSON.parse('{"songs":{"__proto__":{"bestSpeed":1,"cleanAt":null,"lastPlayed":1,"seconds":1,"lastLoop":null,"lastSpeed":1,"version":null}},"days":{},"wins":[]}');
+    expect(log.merge(other)).toBe(true);
+    expect(log.passEnded('__proto__', null, whole(90), at(2))).toEqual({ best: true, clean: false });
+    const saved = JSON.parse(JSON.stringify(stored()));
+    expect(Object.keys(saved.songs)).toEqual(['__proto__']);
+    expect(isPracticeRecord(saved)).toBe(true);
+    expect(log.song('__proto__')?.bestSpeed).toBe(90);
+  });
   it('falls back to empty and never overwrites a record it could not read', () => {
     const write = vi.fn(() => true);
     const log = new PracticeLog({ read: () => { throw Error('corrupt'); }, write });

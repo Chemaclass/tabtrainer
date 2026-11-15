@@ -13,7 +13,7 @@ export const CLEAN_SPEED = 100;
 const KEPT_WINS = 10;
 const DAY_KEY = /^\d{4}-\d{2}-\d{2}$/;
 
-const emptyRecord = (): PracticeRecord => ({ songs: {}, days: {}, wins: [] });
+const emptyRecord = (): PracticeRecord => ({ songs: Object.create(null), days: Object.create(null), wins: [] });
 const isObject = (value: unknown): value is Record<string, unknown> => !!value && typeof value === 'object' && !Array.isArray(value);
 const isAmount = (value: unknown): value is number => typeof value === 'number' && Number.isFinite(value) && value >= 0;
 const isBarLoop = (value: unknown): value is BarLoop => Array.isArray(value) && value.length === 2 && value.every(Number.isInteger) && value[0] <= value[1];
@@ -145,11 +145,11 @@ export class PracticeLog {
   private read(): PracticeRecord {
     const stored = this.store.read();
     if (!stored) return emptyRecord();
-    return { songs: { ...stored.songs }, days: { ...stored.days }, wins: [...stored.wins] };
+    return { songs: Object.assign(Object.create(null), stored.songs), days: Object.assign(Object.create(null), stored.days), wins: [...stored.wins] };
   }
 }
 
-/** Adds up the seconds audio plays for a song, saving at least every interval so a closed tab loses little. */
+/** Adds up the seconds audio plays for a song, saving at least every interval so a closed tab loses little. A longer gap means the page was asleep, so it counts nothing. */
 export class PlayTime {
   private song: string | null = null;
   private since: number | null = null;
@@ -158,7 +158,7 @@ export class PlayTime {
 
   update(song: string | null, playing: boolean, now: number) {
     if (this.since !== null && this.song !== null && (!playing || song !== this.song || now - this.since >= this.interval)) {
-      this.log.played(this.song, (now - this.since) / 1000, now);
+      if (now - this.since <= this.interval * 2) this.log.played(this.song, (now - this.since) / 1000, now);
       this.since = null;
     }
     if (playing && song && this.since === null) { this.song = song; this.since = now; }

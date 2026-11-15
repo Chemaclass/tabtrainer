@@ -2,7 +2,7 @@ import { dayKey, isPracticeRecord, type PracticeLog, type PracticeRecord } from 
 import { isSaved, type Saved, type SavedTexts } from './storage';
 
 export interface Backup { app: 'tabtrainer'; version: 1; songs: Saved[]; practice: PracticeRecord }
-export type Restore = 'restored' | 'not-a-backup' | 'failed';
+export type Restore = 'restored' | 'songs-only' | 'not-a-backup' | 'failed';
 
 export function readBackup(text: string): Backup | null {
   let value: unknown;
@@ -27,6 +27,7 @@ export class Backups {
   restore(text: string): Restore {
     const backup = readBackup(text);
     if (!backup) return 'not-a-backup';
-    return this.log.merge(backup.practice) && this.songs.merge(backup.songs) ? 'restored' : 'failed';
+    if (!this.songs.merge(backup.songs)) return 'failed';
+    return this.log.merge(backup.practice) ? 'restored' : 'songs-only';
   }
 }

@@ -118,9 +118,10 @@ const playback = playbackView(player, { transport: transportView, score, follows
 });
 player.on(playback.show);
 player.on(state => { if (state.playing) jamming.stop(); });
-player.on(state => playTime.update(workspace.picked || null, state.playing, Date.now()));
+player.on(state => playTime.update(workspace.picked || null, state.phase === 'playing', Date.now()));
 player.onPassEnd(pass => { if (workspace.picked) practiceLog.passEnded(workspace.picked, openSong.versionSlug(), pass, Date.now()); });
 addEventListener('pagehide', () => playTime.update(null, false, Date.now()));
+document.addEventListener('visibilitychange', () => { if (document.hidden) playTime.update(null, false, Date.now()); });
 const drafts = draftFlow(draftSession, workspace, saveView, { saved: () => { songs.fill(); showLink(); }, stayed: () => showLink() });
 const files = songFile(draftSession, new Backups(savedSongs, practiceLog), {
   onNew: startNewSong,

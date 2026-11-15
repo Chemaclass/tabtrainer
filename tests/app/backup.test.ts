@@ -39,11 +39,19 @@ describe('backups', () => {
     memoryStorage();
     expect(new Backups(savedSongs, new PracticeLog(practiceStore)).restore('title: Song')).toBe('not-a-backup');
   });
-  it('does not restore over a practice record it could not read', () => {
+  it('restores the songs but not over a practice record it could not read', () => {
     const values = memoryStorage({ 'tabtrainer:practice': '{bad' });
+    const backups = new Backups(savedSongs, new PracticeLog(practiceStore));
+    const backup = { app: 'tabtrainer', version: 1, songs: [{ title: 'Mine', text: 'mine', updated: 1 }], practice: { songs: {}, days: { '2026-11-15': 10 }, wins: [] } };
+    expect(backups.restore(JSON.stringify(backup))).toBe('songs-only');
+    expect(savedSongs.list().map(s => s.title)).toEqual(['Mine']);
+    expect(values.get('tabtrainer:practice')).toBe('{bad');
+  });
+  it('changes nothing when the saved songs cannot be read', () => {
+    const values = memoryStorage({ 'tabtrainer:library': '{bad' });
     const backups = new Backups(savedSongs, new PracticeLog(practiceStore));
     const backup = { app: 'tabtrainer', version: 1, songs: [], practice: { songs: {}, days: { '2026-11-15': 10 }, wins: [] } };
     expect(backups.restore(JSON.stringify(backup))).toBe('failed');
-    expect(values.get('tabtrainer:practice')).toBe('{bad');
+    expect(values.has('tabtrainer:practice')).toBe(false);
   });
 });

@@ -478,7 +478,7 @@ describe('pass ends', () => {
     const p = loaded(), ends: unknown[] = [];
     p.onPassEnd(pass => ends.push(pass));
     const jump = (time: number) => { now = time; vi.advanceTimersByTime(25); };
-    return { p, ends, jump };
+    return { p, ends, jump, setNow: (time: number) => { now = time; } };
   }
   const bar = 60 / 90 * 4;
   it('reports a whole song pass that played from the start', () => {
@@ -509,5 +509,37 @@ describe('pass ends', () => {
     jump(changed + 0.08 + 3 * bar + 0.02);
     expect(ends).toHaveLength(2);
     expect(ends[1]).toMatchObject({ speed: 50 });
+  });
+  it('drops a paused pass when the speed changes before it resumes', () => {
+    const { p, ends, jump } = setup();
+    p.setSpeed(0.5); p.play();
+    const paused = 0.08 + 1.9 * bar / 0.5;
+    jump(paused); p.pause(); p.setSpeed(1.3); p.play();
+    jump(paused + 0.08 + bar);
+    expect(p.playing).toBe(false);
+    expect(ends).toEqual([]);
+  });
+  it('keeps a paused pass whole when the speed is set to the same value', () => {
+    const { p, ends, jump } = setup();
+    p.play();
+    jump(0.08 + bar); p.pause(); p.setSpeed(1); p.play();
+    jump(0.08 + bar + 0.08 + bar + 0.1);
+    expect(ends).toHaveLength(1);
+  });
+  it('drops a paused pass when the passage changes before it resumes', () => {
+    const { p, ends, jump } = setup();
+    p.setRange([4, 8], true); p.play();
+    const paused = 0.08 + bar / 2;
+    jump(paused); p.pause(); p.setRange(null, false); p.play();
+    jump(paused + 0.08 + bar);
+    expect(p.playing).toBe(false);
+    expect(ends).toEqual([]);
+  });
+  it('reports a pass that ended just before a speed change', () => {
+    const { p, ends, jump, setNow } = setup();
+    p.setRange([4, 8], true); p.play();
+    jump(0.08 + bar - 0.01);
+    setNow(0.08 + bar + 0.005); p.setSpeed(0.5);
+    expect(ends).toEqual([{ firstBar: 2, lastBar: 2, whole: false, speed: 100 }]);
   });
 });

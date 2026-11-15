@@ -233,6 +233,7 @@ export class Player {
     else if (this.practice) return;
     const beat = this.playing && this.synth.started ? this.position(this.synth.now) : this.paused;
     this.range = range; this.loop = loop;
+    if (!unchanged && !this.playing) this.resumeEligible = this.paused !== null && this.atPassageStart(this.paused);
     const [a, z] = range ?? [0, this.total]; this.to = z;
     if (this.state === 'counting-in' && this.synth.started) {
       if (this.from < a || this.from >= z) {
@@ -283,8 +284,10 @@ export class Player {
   toggle() { if (this.playing) this.pause(); else this.play(); }
   stop() { this.reconcile(); this.halt(); this.state = 'stopped'; this.paused = null; this.resumeMusic = false; this.passes.clear(); if (this.practice && this.baseline !== null) { this.speed = this.baseline / 100; this.progress = { speed: this.baseline, completed: 0 }; this.practiceActive = false; this.emitPractice('reset'); } this.emit(null); }
   setSpeed(s: number) {
+    this.reconcile();
     if (Math.round(s * 100) === Math.round(this.speed * 100)) return;
     this.endPractice('speed');
+    if (this.state === 'paused') this.resumeEligible = this.paused !== null && this.atPassageStart(this.paused);
     const now = this.synth.now, beat = this.state === 'playing' ? this.position(now) : null;
     if (this.state === 'counting-in') {
       const oldSpb = this.spb(), elapsed = Math.max(0, (now - this.countStart) / oldSpb), lead = Math.max(0, this.countStart - now);
