@@ -7,7 +7,7 @@ A static web app for practising bass and guitar from tab with rhythm. TypeScript
 - `npm run dev` serves http://localhost:5173/tabtrainer/
 - `npm test` runs the Vitest suite in `tests/`: one folder per tested `src/` folder (`app`, `audio`, `build`, `core`), plus `tests/songs.test.ts`
 - `npm run lint` runs ESLint
-- `npm run typecheck`, then `npm run build` for the production build in `dist/`
+- `npm run typecheck` runs TypeScript; `npm run build` runs it too, then writes the production build to `dist/`
 
 ## Layout
 
@@ -24,4 +24,4 @@ A static web app for practising bass and guitar from tab with rhythm. TypeScript
 
 ## Before you finish
 
-Run `npm run lint`, `npm test`, `npm run typecheck` and `npm run build`. For UI or playback changes, also check the page in a browser. Audio starts only after a real click, not a scripted one.
+Run `npm run check`: lint, tests, then the build, which typechecks. It stops at the first failure. For UI or playback changes, also check the page in a browser. Audio starts only after a real click, not a scripted one.

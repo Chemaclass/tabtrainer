@@ -96,8 +96,7 @@ When CI passes on `main`, `deploy.yml` publishes it to the website. Your song ap
 Pull requests with practice features are welcome too. [Development](README.md#development) in the README shows how to run the app. Before you send a pull request, run:
 
 ```bash
-npm run lint
-npm test
-npm run typecheck
-npm run build
+npm run check
 ```
+
+It runs lint, the tests and the build, which typechecks, and stops at the first failure.
