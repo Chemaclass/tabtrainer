@@ -132,6 +132,8 @@ npm run check      # lint, tests and production build in dist/
 
 The app uses TypeScript, Vite and [VexFlow](https://www.vexflow.com/). CI lints, typechecks and tests each pull request and each push to `main`. When it passes on `main`, GitHub Pages publishes the site.
 
+[How the code fits together](docs/architecture.md) shows where new code goes and how to test it.
+
 ## License
 
 [MIT](LICENSE)
