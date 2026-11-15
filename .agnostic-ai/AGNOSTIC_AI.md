@@ -6,7 +6,7 @@ A static web app for practising bass and guitar from tab with rhythm. TypeScript
 
 - `npm run dev` serves http://localhost:5173/tabtrainer/
 - `npm test` runs the Vitest suite in `tests/`: one folder per tested `src/` folder (`app`, `audio`, `build`, `core`), plus `tests/songs.test.ts`
-- `npm run lint` runs ESLint
+- `npm run lint` runs ESLint and checks the CSS format with Prettier; `npm run format:css` fixes it
 - `npm run e2e` builds the site and runs the Playwright smoke tests in `e2e/` at phone and desktop widths, with a stand-in for Web Audio. Run `npx playwright install chromium` once first
 - `npm run typecheck` runs TypeScript; `npm run build` runs it too, then writes the production build to `dist/`
 
