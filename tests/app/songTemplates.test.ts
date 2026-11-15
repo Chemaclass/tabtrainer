@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { parseSong } from '../../src/core/parser';
 import { serializeSong } from '../../src/core/serialize';
 import { proposeSong } from '../../src/app/songProposal';
+import { songFileAt, songProblems } from '../../src/core/songRules';
+import { INSTRUMENTS, familyOf } from '../../src/core/instruments';
 import { hasPracticeLevels } from '../../src/app/practiceLevels';
 import { PLACEHOLDER_TITLE, SONG_TEMPLATES, TEMPLATE_INSTRUMENTS, templateInstruments, templateText, titleRange } from '../../src/app/songTemplates';
 
@@ -22,7 +24,10 @@ describe('song templates', () => {
       });
 
       it(`${template.id} on ${instrument} only needs its own title before it can be added`, () => {
-        expect(proposeSong(templateText(template.id, instrument), 'exercises', []).problems).toEqual(['Give the song its own title.']);
+        const text = templateText(template.id, instrument);
+        expect(proposeSong(text, 'exercises', []).problems.map(problem => problem.message)).toEqual(['Give the song its own title.']);
+        const file = songFileAt(`src/songs/${familyOf(INSTRUMENTS[instrument])}/exercises/99-new-song.txt`)!;
+        expect(songProblems(text, file, []).map(problem => problem.message)).toEqual(['Give the song its own title.']);
       });
     }
   }
