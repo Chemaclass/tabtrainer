@@ -90,6 +90,7 @@ body:not(.library-view) .library-nav,body:not(.library-view) .dropdown:has([data
 .site-footer{max-width:1600px;margin:0 auto;padding:0 64px 40px;font-size:13px;color:var(--mut)}
 .site-footer a{color:var(--ink)}
 body:not(.library-view) .site-footer{display:none}
+.footer-theme{display:none}
 @media(min-width:900px){
   .top{position:sticky;top:0}
 }
@@ -147,14 +148,16 @@ body:not(.library-view) .site-footer{display:none}
   .file-menu summary{font-size:13px;padding:0 10px}
   .write-song{width:44px;padding:0}
   .write-song span{display:none}
-  .library{padding-inline:24px}
-  .explore{flex-wrap:wrap}
+  .library{padding:28px 24px 12px}
+  .explore{flex-wrap:wrap;row-gap:4px;padding-top:20px}
+  .mobile-tab-help{margin-top:0}
   .site-footer{padding:0 24px 24px}
+  .library-view #themeBtn{display:none}
+  .footer-theme{display:grid;margin-top:16px}
 }
 @media(max-width:459px){
   .brand{gap:0;font-size:0}
-  #homeBtn{position:relative}
-  #homeBtn::before{content:'';position:absolute;inset:0 -11px}
+  #homeBtn{justify-content:center;width:44px;margin-left:-11px}
 }
 @media(max-width:419px){
   .library-nav button{flex:auto;font-size:13px}

@@ -10,6 +10,7 @@ export interface PracticeNavState {
   instrument: string;
   kind: LibraryKind;
   next: CatalogueEntry | undefined;
+  played: boolean;
   practising: boolean;
 }
 
@@ -19,11 +20,11 @@ export function practiceNav(onBack: (kind: LibraryKind) => void, onNext: (value:
   allButton.onclick = () => onBack('exercises');
   byId('closeContinuationBtn').onclick = () => { dismissed = true; byId('playBtn').focus(); continuation.hidden = true; };
   return {
-    show({ title, instrument, kind, next, practising }: PracticeNavState) {
+    show({ title, instrument, kind, next, practising, played }: PracticeNavState) {
       byId('backLibraryBtn').textContent = backLabels[kind];
       byId('practiceName').textContent = title ?? 'Your song';
       byId('practiceContext').textContent = `${instrument} / ${kindNames[kind]}`;
-      continuation.hidden = !practising || kind !== 'exercises' || dismissed;
+      continuation.hidden = !practising || kind !== 'exercises' || !played || dismissed;
       nextButton.hidden = !next; allButton.hidden = !!next;
       if (next) { byId('nextExerciseTitle').textContent = next.title; nextButton.onclick = () => onNext(next.value); }
       byId('backLibraryBtn').onclick = () => onBack(kind);

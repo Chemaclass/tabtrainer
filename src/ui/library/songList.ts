@@ -21,6 +21,7 @@ interface SongListActions {
 
 export function songList(songbook: Songbook, workspace: Workspace, openSong: OpenSong, actions: SongListActions) {
   let entries: CatalogueEntry[] = [];
+  let playingSong: string | null = null, playedSong: string | null = null;
   const tabs = libraryNav(kind => actions.showLibrary(kind));
   const practice = practiceNav(kind => actions.showLibrary(kind), actions.pick);
   const catalogue = libraryView(ref => actions.pick(ref), actions.newSong, () => actions.openFile(), () => actions.propose(), () => { actions.showLibrary('exercises'); byId('libraryTitle').focus({ preventScroll: true }); });
@@ -35,6 +36,7 @@ export function songList(songbook: Songbook, workspace: Workspace, openSong: Ope
       kind,
       next: nextExercise(entries, workspace.picked),
       practising: workspace.screen === 'practice',
+      played: playedSong !== null && playedSong === workspace.picked,
     });
     actions.shown();
   }
@@ -45,5 +47,7 @@ export function songList(songbook: Songbook, workspace: Workspace, openSong: Ope
       showNavigation();
     },
     showNavigation,
+    started() { playingSong = workspace.picked; },
+    stopped() { if (playingSong === null) return; playedSong = playingSong; playingSong = null; showNavigation(); },
   };
 }

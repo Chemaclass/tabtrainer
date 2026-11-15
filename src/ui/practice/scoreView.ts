@@ -44,8 +44,13 @@ export function scoreView({ redraw, onBar, onBarNumber, onNote, onPlayNote }: Sc
   let line: Element | null = null, bar: number | null = null;
 
   const notesOf = (key: string | null) => key ? [...sheet.querySelectorAll(`[data-key="${key}"]`)] : [];
-  const lineOf = (at: number | null) => at === null ? null : [...sheet.querySelectorAll<HTMLElement>('.system')].find(system => at >= Number(system.dataset.first) && at <= Number(system.dataset.last)) ?? null;
-  const forgetLine = () => { line?.classList.remove('cur'); line = null; };
+  const systems = () => [...sheet.querySelectorAll<HTMLElement>('.system')];
+  const lineOf = (at: number | null) => at === null ? null : systems().find(system => at >= Number(system.dataset.first) && at <= Number(system.dataset.last)) ?? null;
+  const markPlayed = (current: Element | null) => {
+    let played = current !== null;
+    systems().forEach(system => { if (system === current) played = false; system.classList.toggle('played', played); });
+  };
+  const forgetLine = () => { line?.classList.remove('cur'); line = null; markPlayed(null); };
 
   const zoomBy = (step: ZoomStep) => { zoom = nextZoom(zoom, step); setPref('zoom', zoom); redraw(); };
   byId('zoomIn').onclick = () => zoomBy('in');
@@ -85,7 +90,7 @@ export function scoreView({ redraw, onBar, onBarNumber, onNote, onPlayNote }: Sc
       sheet.style.setProperty('zoom', String(zoom));
       renderSong(sheet, song, { barsPerLine: barsPerLine(width, zoom, phoneLayout.matches), width: width / zoom, touchSize: TOUCH_SIZE / zoom });
       lit = notesOf(litKey); lit.forEach(element => element.classList.add('on'));
-      line = lineOf(bar); line?.classList.add('cur');
+      line = lineOf(bar); line?.classList.add('cur'); markPlayed(line);
     },
     highlight(key: string | null) {
       if (key === litKey) return;
@@ -96,7 +101,7 @@ export function scoreView({ redraw, onBar, onBarNumber, onNote, onPlayNote }: Sc
       bar = at;
       const found = lineOf(at);
       if (!found || found === line) return false;
-      line?.classList.remove('cur'); found.classList.add('cur'); line = found;
+      line?.classList.remove('cur'); found.classList.add('cur'); line = found; markPlayed(found);
       return true;
     },
     followLine(behavior: ScrollBehavior) {

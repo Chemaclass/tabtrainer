@@ -51,10 +51,10 @@ input[type=range]::-moz-range-thumb{width:var(--thumb);height:var(--thumb);borde
 .scroll select{background-color:var(--deck-raise);color:var(--deck-hi);min-height:44px;max-width:100%}
 #scrollHelp{flex-basis:100%;font-size:12px;line-height:16px;color:var(--deck-text)}
 #scrollRate:not([hidden]){display:flex;align-items:center;gap:10px;width:100%;font-size:12px}
-.text-size{display:flex;align-items:center;gap:6px}
-.text-size .lbl{margin-right:4px}
-.text-size button{width:44px;min-height:44px;padding:0;border-color:var(--control-border);background:var(--deck-raise);color:var(--deck-hi);font-weight:600}
-.text-size button:hover{border-color:var(--control-hover)}
+.tab-size{display:flex;align-items:center;gap:6px}
+.tab-size .lbl{margin-right:4px}
+.tab-size button{width:44px;min-height:44px;padding:0;border-color:var(--control-border);background:var(--deck-raise);color:var(--deck-hi);font-weight:600}
+.tab-size button:hover{border-color:var(--control-hover)}
 #zoomOut{font-size:12px}
 #zoomIn{font-size:15px}
 .player{border-top:1px solid var(--deck-line)}

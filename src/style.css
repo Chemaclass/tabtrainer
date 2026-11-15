@@ -71,8 +71,9 @@ kbd{font:600 12px var(--mono);padding:1px 5px;border:1px solid var(--rule);borde
 .time-sig{font-weight:800;text-anchor:middle}
 .sheet .lyric{font-size:13px;font-style:italic;fill:var(--sheet-mut)}
 [data-theme=dark] .sheet{filter:invert(.94) hue-rotate(180deg);--sheet-loop:#c65700;--sheet-loop-text:#c65700}
-.system{border-radius:6px;transition:background .2s;margin-bottom:12px}
+.system{border-radius:6px;transition:background .2s,opacity .2s;margin-bottom:12px}
 .system.cur{background:var(--cur)}
+.is-playing .system.played{opacity:.45}
 [data-theme=dark] .system.cur{background:#e8ecf8}
 .system.error{color:#8a1c12;padding:10px}
 .system svg{display:block}
