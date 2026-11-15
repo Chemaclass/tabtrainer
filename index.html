@@ -38,11 +38,12 @@
   <script async src="https://rum.cronitor.io/script.js"></script>
   <script>
     window.cronitor = window.cronitor || function () { (window.cronitor.q = window.cronitor.q || []).push(arguments); };
-    // Every screen is the same path with a different query, so keep the route keys. A groove of your own carries its title, which stays private.
+    // Every screen is the same path with a different query, so keep the route keys. A groove of your own carries its title, which stays private:
+    // the title is sent unencoded and may hold & or #, so groove stays last and everything after its prefix is cut.
     cronitor('config', {
       clientKey: 'a225bb1865119c485e9d4544392452de',
-      includeURLQueryParams: ['song', 'version', 'view', 'kind', 'instrument', 'groove'],
-      beforeSend: event => ({ ...event, url: event.url.replace(/([?&]groove=mine:)[^&#]*/, '$1') }),
+      includeURLQueryParams: ['song', 'view', 'kind', 'instrument', 'groove'],
+      beforeSend: event => ({ ...event, url: event.url.replace(/([?&]groove=mine:).*$/s, '$1') }),
       filterLocalhost: true,
       honorDNT: true,
     });
