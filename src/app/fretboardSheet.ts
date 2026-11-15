@@ -1,7 +1,7 @@
 import { MOVE_IDS, hasFlatFifth, hasSharpFifth, isMoveId, isWalk, moveShapes, placeMove, type MoveId, type MoveNote, type Walk } from '../core/bassMoves';
 import { positionWindows, type FretMark, type FretPosition, type FretWindow, type MarkRole } from '../core/fretboard';
 import { QUALITIES } from '../core/harmony';
-import { INSTRUMENTS, type Instrument } from '../core/instruments';
+import { FAMILIES, INSTRUMENTS, familyOf, isFamily, type Family, type Instrument } from '../core/instruments';
 import { isMoodId, moodById, type Mood, type MoodId } from '../core/moods';
 import { harmonyScaleId, isScaleId, scaleById, scaleChords, scaleNotes, scaleTitle, usesFlats, type ScaleChord, type ScaleId, type ScaleNote } from '../core/scales';
 import { MOST_BARS, isProgressionSlug, nextChange, progressions, type Progression, type ProgressionChord } from '../core/progressions';
@@ -51,6 +51,25 @@ export const isFretboardChoice = (value: unknown): value is FretboardChoice =>
   && 'bar' in value && (value.bar === null || isIntegerBetween(value.bar, 0, MOST_BARS - 1))
   && 'move' in value && (value.move === null || isMoveId(value.move))
   && 'mood' in value && (value.mood === null || isMoodOnScale(value.mood, value.scale));
+
+/** The instrument last picked on the sheet for each family in the top bar. */
+export type FretboardInstruments = Partial<Record<Family, string>>;
+
+const isOfFamily = (id: unknown, family: Family): id is string =>
+  typeof id === 'string' && Object.hasOwn(INSTRUMENTS, id) && familyOf(INSTRUMENTS[id]) === family;
+
+export const isFretboardInstruments = (value: unknown): value is FretboardInstruments =>
+  !!value && typeof value === 'object' && !Array.isArray(value)
+  && Object.entries(value).every(([family, id]) => isFamily(family) && isOfFamily(id, family));
+
+/** Opens on the family chosen in the top bar, with the instrument last picked for it, such as a 5 string bass. */
+export function forFamily(choice: FretboardChoice, family: Family, picked: FretboardInstruments = {}): FretboardChoice {
+  const instrument = [picked[family], choice.instrument].find(id => isOfFamily(id, family)) ?? FAMILIES[family];
+  return { ...choice, instrument };
+}
+
+export const rememberInstrument = (picked: FretboardInstruments, id: string): FretboardInstruments =>
+  Object.hasOwn(INSTRUMENTS, id) ? { ...picked, [familyOf(INSTRUMENTS[id])]: id } : picked;
 
 export const withFretboardDefaults = (value: unknown): unknown =>
   value && typeof value === 'object' && !Array.isArray(value) ? { ...LATER_CHOICE_DEFAULTS, ...value } : value;

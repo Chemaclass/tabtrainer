@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { DEFAULT_FRETBOARD_CHOICE, ROOT_OPTIONS, chooseMood, chooseScale, fretboardSheet, isFretboardChoice, stepPosition, toggleMood, withOfferedMove, type FretboardChoice } from '../../src/app/fretboardSheet';
+import { DEFAULT_FRETBOARD_CHOICE, ROOT_OPTIONS, chooseMood, chooseScale, forFamily, fretboardSheet, isFretboardChoice, isFretboardInstruments, rememberInstrument, stepPosition, toggleMood, withOfferedMove, type FretboardChoice } from '../../src/app/fretboardSheet';
 import { pref, setPref } from '../../src/app/storage';
 import { MOODS, type MoodId } from '../../src/core/moods';
 
@@ -300,5 +300,31 @@ describe('moods on the cheat sheet', () => {
     expect(isFretboardChoice(moodOn(4, 'dark'))).toBe(true);
     expect(isFretboardChoice({ ...moodOn(4, 'dark'), scale: 'major' })).toBe(false);
     expect(isFretboardChoice(choice({ mood: 'angry' as MoodId }))).toBe(false);
+  });
+});
+
+describe('opening on the chosen instrument family', () => {
+  it('opens on the standard instrument of the family chosen in the top bar', () => {
+    expect(forFamily(choice({ root: 4 }), 'guitar')).toEqual(choice({ root: 4, instrument: 'guitar6' }));
+    expect(forFamily(choice({ instrument: 'ukulele' }), 'bass').instrument).toBe('bass4');
+  });
+  it('keeps the saved instrument when it belongs to that family', () => {
+    expect(forFamily(choice({ instrument: 'bass5' }), 'bass').instrument).toBe('bass5');
+    expect(forFamily(choice({ instrument: 'ukulele' }), 'guitar').instrument).toBe('ukulele');
+  });
+  it('remembers one instrument per family, so a visit to the other family keeps it', () => {
+    let picked = rememberInstrument({}, 'bass5');
+    picked = rememberInstrument(picked, 'ukulele');
+    expect(picked).toEqual({ bass: 'bass5', guitar: 'ukulele' });
+    const onGuitar = forFamily(choice({ instrument: 'bass5' }), 'guitar', picked);
+    expect(onGuitar.instrument).toBe('ukulele');
+    expect(forFamily(onGuitar, 'bass', picked).instrument).toBe('bass5');
+    expect(rememberInstrument(picked, 'banjo')).toBe(picked);
+  });
+  it('accepts only known instruments filed under their own family', () => {
+    expect(isFretboardInstruments({ bass: 'bass6', guitar: 'guitar6' })).toBe(true);
+    expect(isFretboardInstruments({ bass: 'guitar6' })).toBe(false);
+    expect(isFretboardInstruments({ drums: 'bass4' })).toBe(false);
+    expect(isFretboardInstruments(['bass4'])).toBe(false);
   });
 });

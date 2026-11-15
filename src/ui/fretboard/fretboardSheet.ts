@@ -1,8 +1,8 @@
-import { INSTRUMENTS } from '../../core/instruments';
+import { INSTRUMENTS, type Family } from '../../core/instruments';
 import { MOODS, type Mood } from '../../core/moods';
 import { SCALES, isScaleId } from '../../core/scales';
 import { FIRST_FRET, LAST_FRET } from '../../app/fretboardMarks';
-import { DEFAULT_FRETBOARD_CHOICE, ROOT_OPTIONS, chooseScale, fretboardSheet as sheetFor, isFretboardChoice, stepPosition, toggleMood, windowLabel, withOfferedMove, type FretboardChoice, type FretboardSheet, type SheetMove } from '../../app/fretboardSheet';
+import { DEFAULT_FRETBOARD_CHOICE, ROOT_OPTIONS, chooseScale, forFamily, fretboardSheet as sheetFor, isFretboardChoice, rememberInstrument, stepPosition, toggleMood, windowLabel, withOfferedMove, type FretboardChoice, type FretboardSheet, type SheetMove } from '../../app/fretboardSheet';
 import type { Progression, ProgressionChord } from '../../core/progressions';
 import { pref, setPref } from '../../app/storage';
 import { byId } from '../dom';
@@ -48,7 +48,7 @@ function replaceKeepingFocus(container: HTMLElement, nodes: HTMLElement[]) {
 const options = (select: HTMLSelectElement, entries: { value: string | number; label: string }[]) =>
   select.replaceChildren(...entries.map(({ value, label }) => new Option(label, String(value))));
 
-export function fretboardSheet() {
+export function fretboardSheet(family: () => Family) {
   const dialog = byId('fretboard', HTMLDialogElement);
   const root = byId('fretboardRoot', HTMLSelectElement), scale = byId('fretboardScale', HTMLSelectElement), instrument = byId('fretboardInstrument', HTMLSelectElement);
   const degrees = byId('fretboardDegrees', HTMLButtonElement), board = byId('fretboardBoard'), strings = byId('fretboardStrings', HTMLUListElement);
@@ -79,14 +79,17 @@ export function fretboardSheet() {
   options(scale, SCALES.map(s => ({ value: s.id, label: s.name })));
   options(instrument, Object.values(INSTRUMENTS).map(i => ({ value: i.id, label: i.name })));
 
-  byId('fretboardBtn').onclick = () => { choice = pref('fretboardSheet', DEFAULT_FRETBOARD_CHOICE); scrolledTo = null; dialog.showModal(); show(); };
+  byId('fretboardBtn').onclick = () => { choice = forFamily(pref('fretboardSheet', DEFAULT_FRETBOARD_CHOICE), family(), pref('fretboardInstruments', {})); scrolledTo = null; dialog.showModal(); show(); };
   dismissHelpOnBackdrop(dialog);
   keepFocusClearOf(byId('fretboardView'), dialog);
   root.onchange = () => choose({ root: Number(root.value) });
   scale.onchange = () => {
     if (isScaleId(scale.value)) commit(chooseScale(choice, scale.value));
   };
-  instrument.onchange = () => choose({ instrument: instrument.value });
+  instrument.onchange = () => {
+    setPref('fretboardInstruments', rememberInstrument(pref('fretboardInstruments', {}), instrument.value));
+    choose({ instrument: instrument.value });
+  };
   degrees.onclick = () => choose({ labels: choice.labels === 'degrees' ? 'names' : 'degrees' });
   sevenths.onclick = () => choose({ sevenths: !choice.sevenths });
   position.onchange = () => choose({ position: position.value === '' ? null : Number(position.value) });

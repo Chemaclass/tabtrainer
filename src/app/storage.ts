@@ -2,7 +2,7 @@ import { isSpeedPracticeConfig, type SpeedPracticeConfig } from '../core/speedPr
 import { isFamily, type Family } from '../core/instruments';
 import { isLibraryKind, type LibraryKind } from './catalogue';
 import { isTunings, type Tunings } from './tuning';
-import { isFretboardChoice, withFretboardDefaults, type FretboardChoice } from './fretboardSheet';
+import { isFretboardChoice, isFretboardInstruments, withFretboardDefaults, type FretboardChoice, type FretboardInstruments } from './fretboardSheet';
 
 export interface Saved { title: string; text: string; updated: number }
 
@@ -95,6 +95,7 @@ interface Preferences {
   recent: string[];
   tunings: Tunings;
   fretboardSheet: FretboardChoice;
+  fretboardInstruments: FretboardInstruments;
   jam: Record<string, JamChoice>;
   jamMixer: MixerChoice;
   jamCountIn: boolean;
@@ -125,6 +126,7 @@ const validators: { [K in keyof Preferences]: (value: unknown) => value is Prefe
   recent: (value): value is string[] => Array.isArray(value) && value.every(isString),
   tunings: isTunings,
   fretboardSheet: isFretboardChoice,
+  fretboardInstruments: isFretboardInstruments,
   jam: (value): value is Record<string, JamChoice> => !!value && typeof value === 'object' && !Array.isArray(value),
   jamMixer: (value): value is MixerChoice => !!value && typeof value === 'object' && !Array.isArray(value),
   jamCountIn: isBoolean,
