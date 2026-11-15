@@ -25,7 +25,7 @@ const BRANCH = 'main';
 // Measured against GitHub: a longer link fails for a signed-out player, whose sign-in redirect carries it.
 export const MAX_PROPOSAL_URL = 6000;
 const CHECK_LABELS: Record<ProposalCheck, string> = {
-  header: 'The header lines are filled in',
+  header: 'The header lines are filled in and in order',
   lines: 'Every line reads',
   bars: 'Enough bars to practise',
   title: 'A title of its own',

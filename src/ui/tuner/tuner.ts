@@ -134,13 +134,13 @@ export function tuner(current: () => TunerContext, beforeOpen: () => void) {
   function showReading() {
     const reading = shown ? readTuning(shown.frequency, tuning.strings, locked) : null;
     const target = reading?.target ?? locked;
-    byId('tunerNote').textContent = target === null ? '–' : tuning.name(target);
+    byId('tunerNote').textContent = target === null ? '-' : tuning.name(target);
     byId('tunerHz').textContent = target === null ? 'Choose a string' : hz(tuning.frequency(target));
     const state = reading?.direction ?? 'idle';
     deck.dataset.direction = state; direction.dataset.direction = state;
     deck.style.setProperty('--offset', String(reading ? Math.max(-1, Math.min(1, reading.cents / 50)) : 0));
     byId('tunerAdvice').textContent = { idle: listener.listening ? 'Play a string' : 'Waiting for a note', up: 'Tune up', down: 'Tune down', 'in-tune': 'In tune' }[state];
-    byId('tunerCents').textContent = reading ? `${signed(reading.cents)} cents` : '– cents';
+    byId('tunerCents').textContent = reading ? `${signed(reading.cents)} cents` : '- cents';
     byId('tunerHeard').textContent = reading ? `Heard ${hz(reading.frequency)}, ${reading.heard}` : 'Heard nothing yet';
     announce(reading);
   }

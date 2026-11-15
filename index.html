@@ -304,7 +304,7 @@ tempo: 90
     </div>
     <span id="speedPracticeStatus" class="playback-status" role="status" aria-live="polite"></span>
     <span id="playbackStatus" class="playback-status" role="status" aria-live="polite"></span>
-    <div class="readout"><span class="lbl">Bar</span><span class="led"><b id="barNo">–</b><small> / <span id="barTotal">–</span></small></span></div>
+    <div class="readout"><span class="lbl">Bar</span><span class="led"><b id="barNo">-</b><small> / <span id="barTotal">-</span></small></span></div>
     <button id="minimizeBtn" class="minimize" aria-expanded="true" title="Hide the controls" aria-label="Hide the controls"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M5 3l4 4-4 4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
     <div class="speed">
       <button id="speedDown" class="deck-key speed-step" title="Slower by 5 points (−)">−5</button>
@@ -363,7 +363,7 @@ tempo: 90
     <h2 id="clearedTitle"></h2>
     <p id="clearedSummary" class="cleared-summary"></p>
     <div id="clearedChart" class="cleared-chart" aria-hidden="true"><div id="clearedSteps" class="cleared-steps"></div><p class="cleared-scale"><span id="clearedFrom"></span><span id="clearedTo"></span></p></div>
-    <dl class="cleared-stats"><div><dt id="clearedPassesLabel">passes</dt><dd id="clearedPasses"></dd></div><div><dt>minutes</dt><dd id="clearedTime"></dd></div><div><dt>in a row</dt><dd id="clearedDays"></dd></div></dl>
+    <dl class="cleared-stats"><div><dt id="clearedPassesLabel">passes</dt><dd id="clearedPasses"></dd></div><div><dt>time</dt><dd id="clearedTime"></dd></div><div><dt>in a row</dt><dd id="clearedDays"></dd></div></dl>
     <div class="cleared-actions">
       <button id="clearedNextBtn" class="cleared-action" type="button"><span id="clearedNextLabel"></span><span aria-hidden="true">→</span></button>
       <button id="clearedExerciseBtn" class="cleared-action" type="button" hidden><span>Next exercise: <strong id="clearedExerciseTitle"></strong></span><span aria-hidden="true">→</span></button>
@@ -375,10 +375,10 @@ tempo: 90
     <h2 id="tunerTitle">Tuner</h2>
     <p id="tunerSetup" class="tuner-setup"></p>
     <section class="tuner-deck" aria-label="Reading">
-      <div class="tuner-target"><span class="lbl">Target</span><b id="tunerNote">–</b><span id="tunerHz">Choose a string</span></div>
+      <div class="tuner-target"><span class="lbl">Target</span><b id="tunerNote">-</b><span id="tunerHz">Choose a string</span></div>
       <div class="tuner-meter" aria-hidden="true"><span class="tuner-zone"></span><span class="tuner-scale"><i>−50</i><i>−25</i><i>0</i><i>+25</i><i>+50</i></span><span id="tunerNeedle" class="tuner-needle"></span></div>
       <p id="tunerDirection" class="tuner-direction" data-direction="idle"><span class="tuner-arrow tuner-arrow-up" aria-hidden="true">→</span><span id="tunerAdvice">Waiting for a note</span><span class="tuner-arrow tuner-arrow-down" aria-hidden="true">←</span></p>
-      <p class="tuner-heard"><span id="tunerCents">– cents</span><span id="tunerHeard">Heard nothing yet</span></p>
+      <p class="tuner-heard"><span id="tunerCents">- cents</span><span id="tunerHeard">Heard nothing yet</span></p>
     </section>
     <p id="tunerLive" class="sr-only" aria-live="polite"></p>
     <div class="tuner-strings-head">
