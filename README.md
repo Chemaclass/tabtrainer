@@ -31,7 +31,7 @@ TabTrainer is open source under the MIT licence. Anyone can add an exercise or a
 
 1. Open your song in TabTrainer, or [write a new one](https://chemaclass.github.io/tabtrainer/?view=library&kind=mine&new=1).
 2. In the editor, open **File** and choose **Add to TabTrainer**.
-3. Fix anything the dialog lists, then choose **Exercise** or **Song**.
+3. Fix anything the dialog lists, choose **Exercise** or **Song**, and tick the box that says you wrote the music or that it is in the public domain.
 4. Press **Open GitHub**. Your song file opens there, ready to send.
 5. Sign in, then press **Commit changes**, **Propose changes** and **Create pull request**.
 
