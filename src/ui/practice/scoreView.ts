@@ -89,9 +89,9 @@ export function scoreView({ redraw, onBar, onNote, onPlayNote }: ScoreActions) {
       line?.classList.remove('cur'); found.classList.add('cur'); line = found;
       return true;
     },
-    followLine() {
+    followLine(behavior: ScrollBehavior) {
       const found = lineOf(bar);
-      if (found) { const r = found.getBoundingClientRect(); window.scrollTo({ top: window.scrollY + r.top - window.innerHeight * 0.28, behavior: 'smooth' }); }
+      if (found) { const r = found.getBoundingClientRect(); window.scrollTo({ top: window.scrollY + r.top - window.innerHeight * 0.28, behavior }); }
     },
     forgetLine,
     clear() { lit.forEach(e => e.classList.remove('on')); lit = []; litKey = null; forgetLine(); bar = null; },

@@ -153,3 +153,6 @@ fieldset.propose-group{display:flex;flex-wrap:wrap;align-items:center;gap:12px;m
 body.library-view{padding-bottom:0}
 [hidden]{display:none!important}
 @media(max-width:599px){select{font-size:16px}}
+@media (prefers-reduced-motion:reduce){
+  *,::before,::after{transition:none!important;animation:none!important;scroll-behavior:auto!important}
+}
