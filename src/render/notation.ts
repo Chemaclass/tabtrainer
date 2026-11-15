@@ -1,6 +1,7 @@
-import { Accidental, Beam, Dot, Formatter, GhostNote, Renderer, Stave, StaveConnector, StaveNote, StaveTie, Stem, TabNote, TabStave, Tuplet, Voice, type StemmableNote, type TabNotePosition } from 'vexflow';
+import { Accidental, Barline, Beam, Dot, Formatter, GhostNote, Renderer, Stave, StaveConnector, StaveNote, StaveTie, Stem, TabNote, TabStave, Tuplet, Voice, type StemmableNote, type TabNotePosition } from 'vexflow';
 import { PPQ, type Bar, type NoteEvent, type Song } from '../core/model';
 import { onsetKey } from '../core/timeline';
+import { timeSignatureDigitHeight } from '../app/sheetLayout';
 import { safeKey, vexKey } from '../core/theory';
 
 export interface RenderOptions { barsPerLine: number; showNotation: boolean; width: number }
@@ -60,42 +61,87 @@ export function renderSong(host: HTMLElement, song: Song, opt: RenderOptions): v
     const sys = document.createElement('div');
     sys.className = 'system'; sys.dataset.first = String(group[0].index); sys.dataset.last = String(group[group.length - 1].index);
     host.appendChild(sys);
-    try { drawSystem(sys, group, song.bars[i - 1], { key, clef: inst.clef, tuning: inst.tuning, nStr, opt, barStart }); }
+    try { drawSystem(sys, group, song.bars[i - 1], { key, clef: inst.clef, tuning: inst.tuning, nStr, tempo: song.meta.tempo, opt, barStart }); }
     catch (e) { sys.textContent = `Bars ${group[0].index} to ${group[group.length - 1].index} could not be drawn: ${(e as Error).message}`; sys.classList.add('error'); }
   }
 }
 
-interface Ctx { key: string; clef: 'bass' | 'treble'; tuning: number[]; nStr: number; opt: RenderOptions; barStart: Record<number, number> }
+interface Ctx { key: string; clef: 'bass' | 'treble'; tuning: number[]; nStr: number; tempo: number; opt: RenderOptions; barStart: Record<number, number> }
+
+const SHEET_MUT = '#5c5c5c', SHEET_LINE = '#c4c4c4';
+const SVG_NS = 'http://www.w3.org/2000/svg';
+const DIGIT_CAP_HEIGHT = 0.73, DIGIT_WIDTH = 0.62;
+const ROW = { barNo: 0.4 * STRING_SPACE, label: 1.4 * STRING_SPACE, section: 2.8 * STRING_SPACE };
+
+function svgText(svg: SVGSVGElement, className: string, x: number, y: number, text: string): SVGTextElement {
+  const el = document.createElementNS(SVG_NS, 'text');
+  el.setAttribute('class', className); el.setAttribute('x', String(x)); el.setAttribute('y', String(y));
+  el.textContent = text; svg.append(el);
+  return el;
+}
+
+function tabLineTop(bars: Bar[], firstSystem: boolean): number {
+  const [row, size] = firstSystem || bars.some(b => b.section) ? [ROW.section, 11]
+    : bars.some(b => b.events.some(e => e.chord || e.text)) ? [ROW.label, 12] : [ROW.barNo, 9];
+  return Math.round(row + size * DIGIT_CAP_HEIGHT + STRING_SPACE / 2);
+}
+
+const timeSignatureFontSize = (nStr: number) => 0.85 * timeSignatureDigitHeight(nStr, STRING_SPACE) / DIGIT_CAP_HEIGHT;
+const timeSignatureWidth = (bar: Bar, nStr: number) => Math.max(String(bar.beats).length, String(bar.beatValue).length) * timeSignatureFontSize(nStr) * DIGIT_WIDTH;
+
+function drawTimeSignature(svg: SVGSVGElement, tab: TabStave, left: number, bar: Bar, nStr: number) {
+  const height = timeSignatureDigitHeight(nStr, STRING_SPACE); const x = left + timeSignatureWidth(bar, nStr) / 2;
+  const middle = (tab.getYForLine(0) + tab.getYForLine(nStr - 1)) / 2;
+  [[bar.beats, middle], [bar.beatValue, middle + height]].forEach(([digits, y]) => {
+    svgText(svg, 'time-sig', x, y, String(digits)).style.fontSize = `${timeSignatureFontSize(nStr)}px`;
+  });
+}
+
+function drawTempo(svg: SVGSVGElement, section: SVGTextElement | null, x: number, y: number, tempo: number) {
+  const text = `\u2669 = ${tempo}`;
+  if (!section) { svgText(svg, 'tempo-mark', x, y, text); return; }
+  const mark = document.createElementNS(SVG_NS, 'tspan');
+  mark.setAttribute('class', 'tempo-mark'); mark.setAttribute('dx', '8'); mark.textContent = text;
+  section.append(mark);
+}
 
 function drawSystem(div: HTMLDivElement, bars: Bar[], prev: Bar | undefined, c: Ctx) {
   const W = Math.max(240, c.opt.width);
-  const top = c.opt.showNotation ? 66 : 46;
-  const staffH = c.opt.showNotation ? 92 : 0;
+  const tabOnly = !c.opt.showNotation;
+  const top = tabOnly ? tabLineTop(bars, !prev) : 66;
+  const staffH = tabOnly ? 0 : 92;
   const H = top + staffH + 40 + c.nStr * 13 + 30; // provisional; resized to the real tab bottom below
   const r = new Renderer(div, Renderer.Backends.SVG); r.resize(W, H); const ctx = r.getContext();
-  const lead = c.opt.showNotation ? 80 : 0;
+  const svg = div.querySelector('svg')!;
+  const lead = tabOnly ? 0 : 80;
   const weight = bars.map(b => 3 + b.events.length);
   const tw = weight.reduce((a, b) => a + b, 0);
   let x = 6; const avail = W - 12 - lead; let bottom = 0;
   const lyrics: [number, string][] = [];
+  const hits: SVGRectElement[] = [];
+  const targetTop = tabOnly ? 0 : top - 18;
+  const tabOptions = tabOnly ? { num_lines: c.nStr, space_above_staff_ln: 0, fill_style: SHEET_LINE } : { num_lines: c.nStr };
   bars.forEach((bar, bi) => {
     const prevBar = bi === 0 ? prev : bars[bi - 1];
     const bw = (bi === 0 ? lead : 0) + (avail * weight[bi]) / tw;
-    const st = c.opt.showNotation ? new Stave(x, top, bw) : null;
-    const tab = new TabStave(x, top + staffH, bw, { num_lines: c.nStr });
+    const st = tabOnly ? null : new Stave(x, top, bw);
+    const tab = new TabStave(x, top + staffH, bw, tabOptions);
     const tsChange = !prevBar || prevBar.beats !== bar.beats || prevBar.beatValue !== bar.beatValue;
     if (bi === 0) st?.addClef(c.clef).addKeySignature(c.key);
     if (tsChange || bi === 0) st?.addTimeSignature(`${bar.beats}/${bar.beatValue}`);
-    st?.setMeasure(bar.index); if (!st) tab.setMeasure(bar.index);
+    st?.setMeasure(bar.index);
+    if (tabOnly) tab.getModifiers().forEach(m => { if (m instanceof Barline) m.setStyle({ fillStyle: SHEET_MUT }); });
     st?.setContext(ctx); tab.setContext(ctx);
-    const nsx = Math.max(st ? st.getNoteStartX() : 0, tab.getNoteStartX());
+    const timeSigLeft = tab.getNoteStartX(); const showTimeSig = tabOnly && tsChange;
+    let nsx = Math.max(st ? st.getNoteStartX() : 0, timeSigLeft);
+    if (showTimeSig) nsx += timeSignatureWidth(bar, c.nStr) + STRING_SPACE / 2;
     st?.setNoteStartX(nsx); tab.setNoteStartX(nsx);
     st?.draw(); tab.draw(); bottom = Math.max(bottom, tab.getYForLine(c.nStr - 1));
+    if (showTimeSig) drawTimeSignature(svg, tab, timeSigLeft, bar, c.nStr);
     if (st) {
       if (bi === 0) new StaveConnector(st, tab).setType('singleLeft').setContext(ctx).draw();
       new StaveConnector(st, tab).setType('singleRight').setContext(ctx).draw();
     }
-    const rhythm = !st;
     const sn: StaveNote[] = [], tn: TabTickable[] = [];
     const targets: { notation: StaveNote | null; tab: TabTickable; event: NoteEvent }[] = [];
     const ties: [StaveNote, StaveNote][] = []; const trip: StaveNote[][] = [], ttrip: TabTickable[][] = [];
@@ -109,14 +155,14 @@ function drawSystem(div: HTMLDivElement, bars: Bar[], prev: Bar | undefined, c: 
         const sorted = [...ev.notes].sort((a, b) => (c.tuning[a.string - 1] + a.fret) - (c.tuning[b.string - 1] + b.fret));
         if (!sorted.length) {
           s = new StaveNote({ clef: c.clef, keys: [c.clef === 'bass' ? 'd/3' : 'b/4'], duration: val + 'r' });
-          t = tabRest(val, dots, rhythm, c.nStr);
+          t = tabRest(val, dots, tabOnly, c.nStr);
         } else {
           s = new StaveNote({ clef: c.clef, keys: sorted.map(n => vexKey(c.tuning[n.string - 1] + n.fret, c.key)), duration: val, auto_stem: true });
-          t = tabNote(sorted.map(n => ({ str: n.string, fret: (pi > 0 || n.tie) ? `(${n.fret})` : String(n.fret) })), val, dots, rhythm);
+          t = tabNote(sorted.map(n => ({ str: n.string, fret: (pi > 0 || n.tie) ? `(${n.fret})` : String(n.fret) })), val, dots, tabOnly);
           if (prevS) ties.push([prevS, s]);
         }
         if (dots) Dot.buildAndAttach([s], { all: true });
-        if (dots && rhythm) Dot.buildAndAttach([t]);
+        if (dots && tabOnly) Dot.buildAndAttach([t]);
         if (isT) { g.push(s); tg.push(t); if (g.length === 3) { trip.push(g); ttrip.push(tg); g = []; tg = []; } }
         else if (g.length) { trip.push(g); ttrip.push(tg); g = []; tg = []; }
         if (pi === 0 && (ev.chord || ev.text)) labels.push([st ? s : t, ev]);
@@ -127,11 +173,11 @@ function drawSystem(div: HTMLDivElement, bars: Bar[], prev: Bar | undefined, c: 
     if (g.length) { trip.push(g); ttrip.push(tg); }
     const ticks = bar.beats; const bv = bar.beatValue;
     const tv = new Voice({ num_beats: ticks, beat_value: bv }).setMode(Voice.Mode.SOFT).addTickables(tn);
-    let beams = rhythm ? beamsFor(tn, ttrip, Stem.DOWN) : [];
-    const below = (grp: TabTickable[]) => rhythm ? { location: Tuplet.LOCATION_BOTTOM, bracketed: grp.some(n => !n.hasBeam()) } : {};
+    let beams = tabOnly ? beamsFor(tn, ttrip, Stem.DOWN) : [];
+    const below = (grp: TabTickable[]) => tabOnly ? { location: Tuplet.LOCATION_BOTTOM, bracketed: grp.some(n => !n.hasBeam()) } : {};
     const ttups = ttrip.map(grp => new Tuplet(grp as never, { num_notes: 3, notes_occupied: 2, ...below(grp) }));
-    let sv: Voice | null = null; let tups = rhythm ? ttups : [];
-    if (rhythm) tn.forEach(n => { if (n instanceof StaveNote) centreRest(n, c.nStr); });
+    let sv: Voice | null = null; let tups = tabOnly ? ttups : [];
+    if (tabOnly) tn.forEach(n => { if (n instanceof StaveNote) centreRest(n, c.nStr); });
     if (st) {
       sv = new Voice({ num_beats: ticks, beat_value: bv }).setMode(Voice.Mode.SOFT).addTickables(sn);
       Accidental.applyAccidentals([sv], c.key);
@@ -144,22 +190,23 @@ function drawSystem(div: HTMLDivElement, bars: Bar[], prev: Bar | undefined, c: 
     if (sv && st) sv.draw(ctx, st);
     tv.draw(ctx, tab);
     beams.forEach(b => b.setContext(ctx).draw()); tups.forEach(t => t.setContext(ctx).draw());
-    if (rhythm) bottom = Math.max(bottom, rhythmBottom(tn, tups));
+    if (tabOnly) bottom = Math.max(bottom, rhythmBottom(tn, tups));
     if (st) ties.forEach(([a, b]) => { try { new StaveTie({ first_note: a, last_note: b, first_indices: a.getKeys().map((_, i) => i), last_indices: b.getKeys().map((_, i) => i) }).setContext(ctx).draw(); } catch { /* skip */ } });
-    // labels
-    ctx.save(); ctx.setFont('Inter, Arial, sans-serif', 12, 'bold');
-    labels.forEach(([n, ev]) => { const px = n.getAbsoluteX(); ctx.fillText([ev.chord, ev.text].filter(Boolean).join('  '), px - 2, top - 6); });
-    if (bar.section) { ctx.setFont('Inter, Arial, sans-serif', 11, 'bold'); ctx.fillText(bar.section.toUpperCase(), x + 4, top - 28); }
-    ctx.restore();
+    labels.forEach(([n, ev]) => svgText(svg, 'chord-label', n.getAbsoluteX() - 2, top - (tabOnly ? ROW.label : 6), [ev.chord, ev.text].filter(Boolean).join('  ')));
+    const sectionY = top - (tabOnly ? ROW.section : 28);
+    const section = bar.section ? svgText(svg, 'section-label', x + 4, sectionY, bar.section.toUpperCase()) : null;
+    if (tabOnly) {
+      svgText(svg, 'bar-no', x + 2, top - ROW.barNo, String(bar.index));
+      if (!prev && bi === 0) drawTempo(svg, section, x + 4, sectionY, c.tempo);
+    }
     lyricAt.forEach(([n, words]) => lyrics.push([n.getAbsoluteX() - 2, words]));
-    const target = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-    target.setAttribute('x', String(x)); target.setAttribute('y', String(top - 18));
+    const target = document.createElementNS(SVG_NS, 'rect');
+    target.setAttribute('x', String(x)); target.setAttribute('y', String(targetTop));
     target.setAttribute('width', String(bw));
     target.setAttribute('tabindex', '0'); target.setAttribute('role', 'button');
     target.setAttribute('aria-label', `Select bar ${bar.index}`);
     target.classList.add('bar-target'); target.dataset.bar = String(bar.index);
-    const svg = div.querySelector('svg')!;
-    svg.append(target);
+    hits.push(target);
     targets.forEach(({ notation, tab: note, event }, index) => {
       if (!event.notes.length) return;
       const key = onsetKey(c.barStart[bar.index] + event.start / PPQ);
@@ -171,7 +218,7 @@ function drawSystem(div: HTMLDivElement, bars: Bar[], prev: Bar | undefined, c: 
         const id = item.getAttribute('id'); const el = div.querySelector<SVGElement>('#vf-' + CSS.escape(String(id)));
         if (el) { el.classList.add('note'); el.dataset.key = key; }
         const ys = item.getYs();
-        const hit = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+        const hit = document.createElementNS(SVG_NS, 'rect');
         const hitLeft = Math.max(left, center - 12); const hitRight = Math.min(right, center + 12);
         hit.setAttribute('x', String(hitLeft)); hit.setAttribute('y', String(Math.min(...ys) - 12));
         hit.setAttribute('width', String(Math.max(0, hitRight - hitLeft)));
@@ -180,16 +227,15 @@ function drawSystem(div: HTMLDivElement, bars: Bar[], prev: Bar | undefined, c: 
         hit.setAttribute('aria-label', `Select note in bar ${bar.index}, beat ${Number((event.start / PPQ * bar.beatValue / 4 + 1).toFixed(3))}`);
         hit.setAttribute('aria-pressed', 'false');
         hit.classList.add('note-target'); hit.dataset.key = key; hit.dataset.bar = String(bar.index);
-        svg.append(hit);
+        hits.push(hit);
       }
     });
     x += bw;
   });
-  div.querySelectorAll('.bar-target').forEach(target => target.setAttribute('height', String(bottom - top + 42)));
-  if (lyrics.length) {
-    ctx.save(); ctx.setFont('Inter, Arial, sans-serif', 13, 'italic'); ctx.setFillStyle('#6b6b6b');
-    lyrics.forEach(([px, words]) => ctx.fillText(words, px, bottom + 30));
-    ctx.restore();
-  }
-  r.resize(W, Math.ceil(bottom + (lyrics.length ? 44 : 34)));
+  const pad = tabOnly ? { lyric: STRING_SPACE + 11, lyricEnd: STRING_SPACE + 18, end: 14 } : { lyric: 30, lyricEnd: 44, end: 34 };
+  lyrics.forEach(([px, words]) => svgText(svg, 'lyric', px, bottom + pad.lyric, words));
+  const end = Math.ceil(bottom + (lyrics.length ? pad.lyricEnd : pad.end));
+  hits.forEach(hit => { if (hit.classList.contains('bar-target')) hit.setAttribute('height', String(Math.min(bottom + 24, end) - targetTop)); });
+  svg.append(...hits);
+  r.resize(W, end);
 }
