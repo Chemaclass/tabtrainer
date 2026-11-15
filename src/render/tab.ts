@@ -34,9 +34,10 @@ function tabRest(duration: string, dots: number, nStr: number): StaveNote {
   return centreRest(new StaveNote({ keys: ['b/4'], duration: duration + 'r', dots }), nStr);
 }
 
-function beamsFor(notes: StemmableNote[], triplets: StemmableNote[][]): Beam[] {
+function beamsFor(notes: StemmableNote[], triplets: StemmableNote[][], bar: Bar): Beam[] {
   const inTrip = new Set(triplets.flat());
-  const beams = Beam.generateBeams(notes.filter(n => !inTrip.has(n)), { stem_direction: Stem.DOWN });
+  const groups = Beam.getDefaultBeamGroups(`${bar.beats}/${bar.beatValue}`);
+  const beams = Beam.generateBeams(notes.filter(n => !inTrip.has(n)), { stem_direction: Stem.DOWN, groups });
   triplets.forEach(grp => { const beamable = grp.filter(n => !n.isRest() && ['8', '16', '32'].includes(n.getDuration())); if (beamable.length >= 2) beams.push(new Beam(beamable)); });
   return beams;
 }
@@ -148,7 +149,7 @@ function drawSystem(div: HTMLDivElement, bars: Bar[], prev: Bar | undefined, c: 
     }
     if (g.length) trip.push(g);
     const tv = new Voice({ num_beats: bar.beats, beat_value: bar.beatValue }).setMode(Voice.Mode.SOFT).addTickables(tn);
-    const beams = beamsFor(tn, trip);
+    const beams = beamsFor(tn, trip, bar);
     const tups = trip.map(grp => new Tuplet(grp, { num_notes: 3, notes_occupied: 2, location: Tuplet.LOCATION_BOTTOM, bracketed: grp.some(n => !n.hasBeam()) }));
     tn.forEach(n => { if (n instanceof StaveNote) centreRest(n, c.nStr); });
     new Formatter().joinVoices([tv]).format([tv], bw - (nsx - x) - 12);
