@@ -86,7 +86,7 @@ export function weekSummary(week: readonly PracticeDay[], now: number): WeekSumm
   const total = week.reduce((sum, d) => sum + d.seconds, 0), todaySeconds = week.find(d => d.day === today)?.seconds ?? 0;
   const bars = week.map((d, i) => ({ letter: DAY_NAMES[i][0], name: DAY_NAMES[i], share: most > 0 ? d.seconds / most : 0, today: d.day === today }));
   return {
-    minutes: Math.round(total / 60),
+    minutes: total > 0 ? Math.max(1, Math.round(total / 60)) : 0,
     days: week.filter(d => d.seconds > 0).length,
     bars,
     spoken: week.map((d, i) => `${DAY_NAMES[i]} ${minutesLabel(d.seconds)}`).join(', '),
@@ -103,10 +103,15 @@ function winDay(time: number, now: number): string {
   return days < 7 ? DAY_NAMES[(date.getDay() + 6) % 7].slice(0, 3) : `${date.getDate()} ${MONTHS[date.getMonth()]}`;
 }
 
-/** The latest wins of songs still in the catalogue, with the day they happened. */
-export function recentWins(wins: readonly Win[], entries: readonly CatalogueEntry[], now: number): RecentWin[] {
-  const titles = new Map(entries.map(e => [e.value, e.title]));
-  return wins.filter(win => titles.has(win.song)).slice(0, RECENT_WINS).map(win => {
+/** The latest win per song and loop in the instrument, with the day it happened. */
+export function recentWins(wins: readonly Win[], entries: readonly CatalogueEntry[], family: string, now: number): RecentWin[] {
+  const titles = new Map(entries.filter(e => e.family === family).map(e => [e.value, e.title]));
+  const latest = new Map<string, Win>();
+  for (const win of [...wins].sort((a, b) => b.at - a.at)) {
+    const key = `${win.song} ${win.loop?.join('-') ?? 'whole'}`;
+    if (titles.has(win.song) && !latest.has(key)) latest.set(key, win);
+  }
+  return [...latest.values()].slice(0, RECENT_WINS).map(win => {
     const title = loopTitle(titles.get(win.song)!, win.loop), clean = !win.loop && win.speed >= CLEAN_SPEED;
     return { when: winDay(win.at, now), text: clean ? `${title} clean at ${win.speed}%` : `${title} played through at ${win.speed}%` };
   });

@@ -1,7 +1,7 @@
 import { familyOf } from '../../core/instruments';
 import { categoryCounts, nextExercise, type CatalogueEntry, type LibraryKind } from '../../app/catalogue';
 import type { OpenSong } from '../../app/openSong';
-import type { PracticeLog } from '../../app/practiceLog';
+import { hasPractice, practiceWeek, type PracticeLog } from '../../app/practiceLog';
 import type { PickUp } from '../../app/practiceProgress';
 import type { Songbook } from '../../app/songbook';
 import type { SongTemplateId, TemplateInstrument } from '../../app/songTemplates';
@@ -58,8 +58,9 @@ export function songList(songbook: Songbook, workspace: Workspace, openSong: Ope
     fill() {
       entries = songbook.entries();
       const shares = new Map<string, ShareState>(workspace.screen === 'library' && workspace.kind === 'mine' ? actions.shared().map(song => [savedRef(song.title), shareState(song.text, songbook.paths)]) : []);
-      const now = Date.now(), history = practiceLog.practised() ? { week: practiceLog.week(now), wins: practiceLog.wins() } : null;
-      catalogue.show(entries, workspace.family, workspace.kind, practiceLog.record.songs, now, shares, pref('speedPractice', defaultSpeedPractice).increase, history);
+      const now = Date.now(), record = practiceLog.record;
+      const history = hasPractice(record) ? { week: practiceWeek(record.days, now), wins: record.wins } : null;
+      catalogue.show(entries, workspace.family, workspace.kind, record.songs, now, shares, pref('speedPractice', defaultSpeedPractice).increase, history);
       showNavigation();
     },
     showNavigation,

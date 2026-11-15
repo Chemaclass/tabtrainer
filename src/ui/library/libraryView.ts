@@ -174,7 +174,7 @@ export function libraryView(onPick: (value: string) => void, onContinue: (plan: 
   function showWeek(shown: PracticeHistory | null) {
     byId('practiceWeek').hidden = !shown;
     if (!shown) return;
-    const summary = weekSummary(shown.week, now), [unit, days] = weekUnit(summary), wins = recentWins(shown.wins, entries, now);
+    const summary = weekSummary(shown.week, now), [unit, days] = weekUnit(summary), wins = recentWins(shown.wins, entries, family, now);
     byId('weekMinutes').textContent = String(summary.minutes);
     byId('weekUnit').textContent = unit; byId('weekDays').textContent = days;
     const bars = byId('weekBars');

@@ -124,6 +124,10 @@ describe('week summary', () => {
     expect(weekUnit(summary)).toEqual(['minutes on', '0 days']);
     expect(weekUnit(weekSummary(week([60, 0, 0, 0, 0, 0, 0]), at(9)))).toEqual(['minute on', '1 day']);
   });
+  it('counts any practice this week as at least one minute', () => {
+    expect(weekSummary(week([20, 0, 0, 0, 0, 0, 0]), at(9)).minutes).toBe(1);
+    expect(weekSummary(week([0, 0, 0, 0, 0, 0, 0]), at(9)).minutes).toBe(0);
+  });
 });
 
 describe('recent wins', () => {
@@ -131,13 +135,26 @@ describe('recent wins', () => {
 
   it('words the last three wins of songs still in the catalogue', () => {
     const wins = [win('ladder', 75, [5, 8], 14), win('gone', 80, null, 13), win('steps', 100, null, 12), win('riff', 85, null, 11), win('ladder', 70, [5, 5], 10)];
-    expect(recentWins(wins, entries, at(14, 20))).toEqual([
+    expect(recentWins(wins, [...entries, entry('riff')], 'bass', at(14, 20))).toEqual([
       { when: 'Today', text: 'ladder title, bars 5 to 8 played through at 75%' },
       { when: 'Thu', text: 'steps title clean at 100%' },
       { when: 'Wed', text: 'riff title played through at 85%' },
     ]);
   });
+  it('keeps only the latest win per song and loop', () => {
+    const wins = [win('ladder', 80, [5, 8], 14), win('ladder', 75, [5, 8], 13), win('ladder', 90, null, 12), win('ladder', 70, [5, 8], 11), win('steps', 100, null, 10)];
+    expect(recentWins(wins, entries, 'bass', at(14, 20)).map(w => w.text)).toEqual([
+      'ladder title, bars 5 to 8 played through at 80%',
+      'ladder title played through at 90%',
+      'steps title clean at 100%',
+    ]);
+  });
+  it('shows wins of the current instrument only', () => {
+    const wins = [win('riff', 85, null, 14), win('steps', 100, null, 13)];
+    expect(recentWins(wins, entries, 'bass', at(14)).map(w => w.text)).toEqual(['steps title clean at 100%']);
+    expect(recentWins(wins, entries, 'guitar', at(14)).map(w => w.text)).toEqual(['riff title played through at 85%']);
+  });
   it('dates wins older than a week', () => {
-    expect(recentWins([win('steps', 90, [3, 3], 2)], entries, at(14))).toEqual([{ when: '2 Nov', text: 'steps title, bar 3 played through at 90%' }]);
+    expect(recentWins([win('steps', 90, [3, 3], 2)], entries, 'bass', at(14))).toEqual([{ when: '2 Nov', text: 'steps title, bar 3 played through at 90%' }]);
   });
 });

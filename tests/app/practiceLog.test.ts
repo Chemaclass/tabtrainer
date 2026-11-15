@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { PlayTime, PracticeLog, dayKey, isPracticeRecord, type PracticeRecord, type PracticeStore } from '../../src/app/practiceLog';
+import { PlayTime, PracticeLog, dayKey, hasPractice, isPracticeRecord, type PracticeRecord, type PracticeStore } from '../../src/app/practiceLog';
 
 const at = (day: number, hour = 12, minute = 0) => new Date(2026, 10, day, hour, minute).getTime();
 const whole = (speed: number) => ({ firstBar: 1, lastBar: 8, whole: true, speed });
@@ -62,10 +62,10 @@ describe('practice log time', () => {
   });
   it('knows whether there is any practice record', () => {
     const { log } = memory();
-    expect(log.practised()).toBe(false);
+    expect(hasPractice(log.record)).toBe(false);
     log.played('demo:a', 30, at(2));
-    expect(log.practised()).toBe(true);
-    expect(memory({ songs: {}, days: { '2026-11-02': 30 }, wins: [] }).log.practised()).toBe(true);
+    expect(hasPractice(log.record)).toBe(true);
+    expect(hasPractice({ songs: {}, days: { '2026-11-02': 30 }, wins: [] })).toBe(true);
   });
   it('starts a new day at local midnight', () => {
     const { log } = memory();

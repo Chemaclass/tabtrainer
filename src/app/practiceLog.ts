@@ -49,6 +49,17 @@ const dayOffset = (time: number, days: number) => {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate() + days).getTime();
 };
 
+/** Seven local days, Monday first, of the week that holds the time. */
+export function practiceWeek(days: Record<string, number>, now: number): PracticeDay[] {
+  const monday = dayOffset(now, -((new Date(now).getDay() + 6) % 7));
+  return Array.from({ length: 7 }, (_, i) => {
+    const day = dayKey(dayOffset(monday, i));
+    return { day, seconds: days[day] ?? 0 };
+  });
+}
+
+export const hasPractice = ({ songs, days }: PracticeRecord): boolean => Object.keys(songs).length > 0 || Object.keys(days).length > 0;
+
 export const songProgress = (song: SongRecord | null): SongProgress => !song ? 'not-started' : song.cleanAt !== null ? 'done' : 'in-progress';
 
 const newSong = (now: number): SongRecord => ({ bestSpeed: 0, cleanAt: null, lastPlayed: now, seconds: 0, lastLoop: null, lastSpeed: CLEAN_SPEED, version: null });
@@ -81,22 +92,12 @@ export class PracticeLog {
     return entry ? { ref: entry[0], song: entry[1] } : null;
   }
 
-  practised(): boolean {
-    const { songs, days } = this.record;
-    return Object.keys(songs).length > 0 || Object.keys(days).length > 0;
-  }
-
   wins(): Win[] {
     return this.record.wins;
   }
 
-  /** Seven local days, Monday first, of the week that holds the time. */
   week(now: number): PracticeDay[] {
-    const days = this.record.days, monday = dayOffset(now, -((new Date(now).getDay() + 6) % 7));
-    return Array.from({ length: 7 }, (_, i) => {
-      const day = dayKey(dayOffset(monday, i));
-      return { day, seconds: days[day] ?? 0 };
-    });
+    return practiceWeek(this.record.days, now);
   }
 
   daysInARow(now: number): number {
