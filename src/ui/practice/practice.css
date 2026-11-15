@@ -161,7 +161,7 @@
 .head-back,.head-bar{display:none}
 @media(max-width:599px){
   .is-playing .top,.is-playing :is(.practice-context,.credit,.about,.version-details,.passage,.tip){display:none!important}
-  .is-playing .song-head{position:sticky;top:var(--save-state-h,0px);z-index:3;flex-wrap:nowrap;align-items:center;gap:8px;margin:-20px -16px 12px;padding:4px 16px 8px 4px;background:var(--page);border-bottom:1px solid var(--rule)}
+  .is-playing .song-head{position:sticky;top:calc(var(--save-state-h,0px) + var(--editor-tabs-h,0px));z-index:3;flex-wrap:nowrap;align-items:center;gap:8px;margin:-20px -16px 12px;padding:4px 16px 8px 4px;background:var(--page);border-bottom:1px solid var(--rule)}
   .is-playing .head-back{display:grid;place-items:center;flex:none;width:44px;height:44px;padding:0;color:var(--ink)}
   .is-playing .song-id{flex:1;min-width:0}
   .is-playing .song-head h1{margin:0 0 2px;font-size:18px;line-height:22px;letter-spacing:-.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -175,4 +175,21 @@
   .head-bar .lbl{font:400 12px/16px var(--mono);letter-spacing:.08em;color:var(--mut)}
   .head-bar b{font:600 22px/24px var(--mono);color:var(--led-text)}
   .head-bar small{font:400 14px/18px var(--mono);color:var(--mut)}
+}
+
+.editor-tabs{display:none}
+@media(max-width:599px){
+  .layout:not(.noedit){--editor-tabs-h:57px}
+  .layout:not(.noedit) .editor-tabs{position:sticky;top:var(--save-state-h,0px);z-index:4;display:flex;gap:4px;height:var(--editor-tabs-h);padding:6px 16px;background:var(--page);border-bottom:1px solid var(--rule)}
+  .editor-tab{display:flex;align-items:center;justify-content:center;gap:8px;flex:1;min-height:44px;padding:0 12px;border-color:var(--rule);border-radius:5px;font-weight:600;font-size:14px;color:var(--mut)}
+  .editor-tab:hover{background:var(--wash)}
+  .editor-tab[aria-selected=true]{background:var(--ink);border-color:var(--ink);color:var(--page)}
+  .tab-dot{width:8px;height:8px;border-radius:4px;background:var(--playing)}
+  .tab-dot.warn{background:var(--led)}
+  .tab-dot.changed{background:#2766bb}
+  .tab-dot[hidden]{display:none}
+  .layout:not(.noedit):not(.score-tab) .viewer,.layout.score-tab .editor{display:none}
+  .layout:not(.noedit):not(.score-tab) .editor{height:calc(100dvh - var(--top-h,64px) - var(--save-state-h,0px) - var(--editor-tabs-h));border-bottom:0}
+  .layout:not(.noedit):not(.score-tab) .source-frame{min-height:0}
+  body:has(#practiceScreen:not([hidden]) .layout:not(.noedit):not(.score-tab)) :is(.player,.exercise-continuation){display:none}
 }
