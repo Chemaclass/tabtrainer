@@ -93,12 +93,14 @@ The design tokens live in `:root` in `src/style.css`, and `[data-theme="dark"]` 
 
 The neutral colours carry the page: `--page` for the background, `--ink` for text, `--mut` and `--faint` for quieter text, `--rule` for lines, `--wash` and `--hover` for filled areas. The player bar at the bottom has its own set starting with `--deck`.
 
-Three colours carry meaning. Use each one only for that meaning, so a player can read the page at a glance.
+Three colours carry meaning. Keep to these meanings, so a player can read the page at a glance.
 
 | Colour | Tokens | Means | Examples |
 | --- | --- | --- | --- |
-| Amber | `--led`, `--led-text`, `--track-fill`, `--cur` | Where you are and how far you got | The current line of the score, the filled part of a slider or progress bar, an exercise in progress, the target string in the tuner |
+| Amber | `--led`, `--led-text`, `--track-fill`, `--cur` | Where you are and how far you got, the main action, the selected option, focus and warnings | The current line of the score, the filled part of a slider or progress bar, an exercise in progress, the target string in the tuner, a focus ring, a warning in the song text |
 | Red | `--playing`, `--error`, `--problem-wash`, `--problem-text` | The note sounding now, or something to fix | The note that plays, a line the parser cannot read, a missing step in a song proposal |
 | Green | `--ok`, `--ok-text` | Done or right | A finished exercise, a string in tune, a passed check |
 
-Use the `-text` token for words and the plain one for fills and borders: the `-text` value is darker in light mode, so the words stay readable.
+On a light background use the `-text` token for words and thin borders; the plain one is for fills and for text on dark panels.
+
+`src/ui/tuner/tuner.css` sets its own `--ok-text` for light and dark. It loads after `src/style.css`, so its values win across the page.
