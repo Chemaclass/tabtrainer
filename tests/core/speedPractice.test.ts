@@ -1,7 +1,19 @@
 import { describe, expect, it } from 'vitest';
-import { advanceSpeedPractice, isSpeedPracticeConfig } from '../../src/core/speedPractice';
+import { advanceSpeedPractice, defaultSpeedPractice, defaultSpeedPracticeFrom, isSpeedPracticeConfig, nextSpeedPracticeSpeed } from '../../src/core/speedPractice';
 
 describe('speed practice rules', () => {
+  it('climbs to 100% in steps of 5 points after 4 passes by default', () => {
+    expect(defaultSpeedPractice).toEqual({ repetitions: 4, increase: 5, target: 100 });
+    expect(isSpeedPracticeConfig(defaultSpeedPractice)).toBe(true);
+  });
+  it('never defaults the target below the current speed', () => {
+    expect(defaultSpeedPracticeFrom(75)).toEqual({ repetitions: 4, increase: 5, target: 100 });
+    expect(defaultSpeedPracticeFrom(115)).toEqual({ repetitions: 4, increase: 5, target: 115 });
+  });
+  it('names the next speed without passing the target', () => {
+    expect(nextSpeedPracticeSpeed(75, { increase: 5, target: 100 })).toBe(80);
+    expect(nextSpeedPracticeSpeed(98, { increase: 5, target: 100 })).toBe(100);
+  });
   it('advances only after the configured repetitions and clamps at the target', () => {
     const config = { repetitions: 4, increase: 5, target: 80 };
     let state = { speed: 60, completed: 0 };
