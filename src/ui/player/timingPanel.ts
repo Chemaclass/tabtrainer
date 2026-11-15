@@ -17,4 +17,7 @@ export function timingPanel(player: Player) {
   metronome.onchange = () => { player.setMetronome(metronome.checked); setPref('metronome', metronome.checked); };
   countIn.onchange = () => { const enabled = countIn.value === 'bar'; player.setCountIn(enabled); setPref('countIn', enabled); };
   clickVolume.oninput = () => { player.setClickVolume(+clickVolume.value / 100); setPref('clickVolume', +clickVolume.value); showClickVolume(); };
+  return {
+    toggleMetronome() { metronome.checked = !metronome.checked; metronome.dispatchEvent(new Event('change')); },
+  };
 }

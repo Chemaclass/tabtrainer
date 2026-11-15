@@ -15,11 +15,15 @@ interface ShortcutEvent {
   stopPropagation(): void;
 }
 
-const nativeControls = 'button, input, select, textarea, [contenteditable], dialog, summary, .file-menu, [role="menu"], [role="menuitem"], [role="menuitemcheckbox"], [role="menuitemradio"], [role="checkbox"], [role="radio"], [role="switch"], [role="slider"], [role="combobox"], [role="listbox"], [role="option"], [role="separator"]';
+export const nativeControls = 'button, input, select, textarea, [contenteditable], dialog, summary, .file-menu, [role="menu"], [role="menuitem"], [role="menuitemcheckbox"], [role="menuitemradio"], [role="checkbox"], [role="radio"], [role="switch"], [role="slider"], [role="combobox"], [role="listbox"], [role="option"], [role="separator"]';
 
-function hasNativeSpace(target: EventTarget | null): boolean {
-  if (!target || !('closest' in target) || typeof target.closest !== 'function') return false;
-  return Boolean((target as ShortcutTarget).closest(nativeControls));
+export function closestOf(target: EventTarget | null, selectors: string): unknown {
+  if (!target || !('closest' in target) || typeof target.closest !== 'function') return null;
+  return (target as ShortcutTarget).closest(selectors);
+}
+
+export function insideAny(target: EventTarget | null, selectors: string): boolean {
+  return Boolean(closestOf(target, selectors));
 }
 
 export function playbackShortcut(active: () => boolean, playing: () => boolean, play: () => void, pause: () => void) {
@@ -29,7 +33,7 @@ export function playbackShortcut(active: () => boolean, playing: () => boolean, 
     keydown(event: ShortcutEvent) {
       if (event.code !== 'Space') return;
       if (claimed) { consume(event); return; }
-      if (!active() || event.repeat || event.isComposing || event.shiftKey || event.ctrlKey || event.altKey || event.metaKey || hasNativeSpace(event.target)) return;
+      if (!active() || event.repeat || event.isComposing || event.shiftKey || event.ctrlKey || event.altKey || event.metaKey || insideAny(event.target, nativeControls)) return;
       claimed = true;
       consume(event);
       if (playing()) pause(); else play();

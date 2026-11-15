@@ -252,7 +252,7 @@
         <p id="rangeSummary" role="status" aria-live="polite"></p>
       </div>
       <div id="sheet" class="sheet"></div>
-      <p class="tip">Select a note with a click, tap, or Enter, then press Play. Double-click a note to start there. Select unused bar space to choose a loop boundary. Stop returns to the selected note or bar, or to the passage start.<span class="keys"> <kbd>Space</kbd> plays or pauses, <kbd>S</kbd> toggles continuous scrolling; <kbd>↑</kbd>/<kbd>↓</kbd> change its speed.</span></p>
+      <p class="tip">Select a note with a click, tap, or Enter, then press Play. Double-click a note to start there. Select unused bar space to choose a loop boundary. Stop returns to the selected note or bar, or to the passage start. <button id="shortcutsBtn" class="tip-link" type="button" aria-haspopup="dialog">Keyboard shortcuts</button><span class="keys">: press <kbd>?</kbd></span></p>
     </section>
   </main>
 
@@ -417,6 +417,24 @@
       <li>Press "Create pull request". We review it and write to you there.</li>
     </ol>
     <p><a href="https://github.com/Chemaclass/tabtrainer/blob/main/CONTRIBUTING.md" target="_blank" rel="noopener">Read the full guide</a></p>
+  </dialog>
+  <dialog id="shortcuts" class="shortcuts" aria-labelledby="shortcutsTitle" aria-describedby="shortcutsHelp">
+    <form method="dialog"><button class="close round" aria-label="Close">✕</button></form><h2 id="shortcutsTitle">Keyboard shortcuts</h2>
+    <p id="shortcutsHelp">These keys work on the practice screen while you are not typing in a field. A page turner pedal sends Page Down and Page Up, so one pedal restarts and the other goes back a bar.</p>
+    <table>
+      <tr><td><kbd>Space</kbd></td><td>Play or pause</td></tr>
+      <tr><td><kbd>Enter</kbd> or <kbd>Page Down</kbd></td><td>Restart from the loop start, or from the selected note or bar</td></tr>
+      <tr><td><kbd>Page Up</kbd></td><td>Go back one bar</td></tr>
+      <tr><td><kbd>←</kbd> <kbd>→</kbd></td><td>Previous or next bar, while stopped or paused</td></tr>
+      <tr><td><kbd>L</kbd></td><td>Loop on or off</td></tr>
+      <tr><td><kbd>[</kbd> <kbd>]</kbd></td><td>Start or end the loop at the current bar</td></tr>
+      <tr><td><kbd>-</kbd> <kbd>=</kbd></td><td>Slower or faster by 5 points</td></tr>
+      <tr><td><kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd></td><td>Speed 50%, 75% or 100%</td></tr>
+      <tr><td><kbd>M</kbd></td><td>Metronome on or off</td></tr>
+      <tr><td><kbd>S</kbd></td><td>Continuous scrolling on or off</td></tr>
+      <tr><td><kbd>↑</kbd> <kbd>↓</kbd></td><td>Scroll faster or slower, while scrolling continuously</td></tr>
+      <tr><td><kbd>?</kbd></td><td>Show this list</td></tr>
+    </table>
   </dialog>
   <dialog id="tabHelp" aria-labelledby="tabHelpTitle">
     <form method="dialog"><button class="close round" aria-label="Close">✕</button></form><h2 id="tabHelpTitle">Reading your first tab</h2>

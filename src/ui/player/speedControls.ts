@@ -12,8 +12,9 @@ export function speedControls(player: Player) {
   };
   speed.value = String(pref('speed', 100)); player.speed = +speed.value / 100;
   speed.oninput = () => { const value = +speed.value; player.setSpeed(value / 100); setPref('speed', value); show(); };
-  document.querySelectorAll<HTMLButtonElement>('[data-speed]').forEach(b => { b.onclick = () => { speed.value = b.dataset.speed!; speed.dispatchEvent(new Event('input')); }; });
+  const set = (percent: number) => { speed.value = String(percent); speed.dispatchEvent(new Event('input')); };
+  document.querySelectorAll<HTMLButtonElement>('[data-speed]').forEach(b => { b.onclick = () => set(+b.dataset.speed!); });
   let lastTempo = player.currentTempo;
   player.on(() => { const tempo = player.currentTempo; if (tempo !== lastTempo) { lastTempo = tempo; show(); } });
-  return { show };
+  return { show, set, nudge: (by: number) => set(+speed.value + by) };
 }

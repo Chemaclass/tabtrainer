@@ -24,8 +24,11 @@ export class Passage {
     if (this.range() && !this.includes(bar)) this.clear();
     this.selected = bar; return true;
   }
-  startAtSelection() { if (this.selected) this.setRange(this.selected, this.last, this.repeat); }
-  endAtSelection() { if (this.selected) this.setRange(Math.min(this.first, this.selected), this.selected, this.repeat); }
+  startAt(bar: number) { this.setRange(bar, this.last, this.repeat); }
+  endAt(bar: number) { this.setRange(Math.min(this.first, bar), bar, this.repeat); }
+  toggleRepeat() { this.setRange(this.first, this.last, !this.repeat); }
+  startAtSelection() { if (this.selected) this.startAt(this.selected); }
+  endAtSelection() { if (this.selected) this.endAt(this.selected); }
   selectStart() { this.selected = this.first; }
   includes(bar: number) { return bar >= this.first && bar <= this.last; }
   range(): [number, number] | null { return this.repeat || this.first > 1 || this.last < this.count ? [this.first, this.last] : null; }

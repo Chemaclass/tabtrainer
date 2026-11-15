@@ -77,6 +77,7 @@ kbd{font:600 12px var(--mono);padding:1px 5px;border:1px solid var(--rule);borde
 .note.on path,.note.on text{fill:var(--playing)!important}
 .note.on .vf-stem path{stroke:var(--playing)!important}
 .tip{margin:16px 0 0;font-size:13px;color:var(--mut)}
+.tip-link{min-height:0;padding:0;border:0;background:none;color:inherit;font:inherit;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
 @media (hover:none){
   .tip .keys{display:none}
 }
@@ -89,6 +90,8 @@ dialog table{border-collapse:collapse;width:100%}
 dialog td{padding:7px 8px;border-bottom:1px solid var(--rule);vertical-align:top}
 dialog td:first-child{white-space:nowrap}
 dialog .groove-syntax td:first-child{white-space:normal;min-width:9ch}
+dialog.shortcuts td:first-child{white-space:normal;width:35%}
+dialog.shortcuts kbd{display:inline-block;white-space:nowrap}
 dialog .close{float:right}
 dialog .muted{color:var(--mut)}
 .propose h3{margin:20px 0 6px;font-size:16px;line-height:22px}
