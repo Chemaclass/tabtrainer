@@ -1,12 +1,12 @@
-import { mkdirSync, readFileSync } from 'node:fs';
-import { chromium, type Locator, type Page } from '@playwright/test';
+import { existsSync, mkdirSync, readFileSync } from 'node:fs';
+import { chromium, type Page } from '@playwright/test';
 import { preview } from 'vite';
 import { grooveSlug } from '../src/app/jamLink';
 import { songSlug, versionSlug } from '../src/app/songLink';
 import { parseSong } from '../src/core/parser';
 import { stubAudioContext } from './audioStub';
 
-interface Shot { address: string; area: (page: Page) => Locator; drawn: string; image: string }
+interface Shot { query: Record<string, string>; opened: [name: string, slug: string]; area: string; drawn: string; image: string }
 
 const OUT = 'song-preview';
 const SONG = /^src\/songs\/[^/]+\/[^/]+\/[^/]+\.txt$/;
@@ -15,24 +15,41 @@ const GROOVE = /^src\/grooves\/[^/]+\.txt$/;
 const imageName = (path: string, version = '') => `${OUT}/${path.replace(/^src\//, '').replace(/\.txt$/, '').replace(/\//g, '-')}${version && `--${version}`}.png`;
 
 function songShots(path: string): Shot[] {
-  const song = `?${new URLSearchParams({ song: songSlug(path) })}`;
+  const song = songSlug(path);
+  const shot = { query: { song }, opened: ['song', song] as Shot['opened'], area: '#sheet', drawn: '.note', image: imageName(path) };
   const versions = parseSong(readFileSync(path, 'utf8')).song.versions.map(version => versionSlug(version.name));
-  const area = (page: Page) => page.locator('#sheet');
-  if (versions.length < 2) return [{ address: song, area, drawn: '.note', image: imageName(path) }];
-  return versions.map(version => ({ address: `${song}&${new URLSearchParams({ version })}`, area, drawn: '.note', image: imageName(path, version) }));
+  if (versions.length < 2) return [shot];
+  return versions.map(version => ({ ...shot, query: { song, version }, image: imageName(path, version) }));
 }
 
 function shots(path: string): Shot[] {
+  if (!existsSync(path)) throw new Error('No such file.');
   if (SONG.test(path)) return songShots(path);
-  if (GROOVE.test(path)) return [{ address: `?${new URLSearchParams({ view: 'jam', groove: grooveSlug(path) })}`, area: page => page.locator('#jamScreen'), drawn: '#jamBars li', image: imageName(path) }];
+  const groove = grooveSlug(path);
+  if (GROOVE.test(path)) return [{ query: { view: 'jam', groove }, opened: ['groove', groove], area: '#jamScreen', drawn: '#jamBars li', image: imageName(path) }];
   throw new Error('Not a song or groove file.');
 }
 
+// The top bar, save bar and player float over the page, so an element screenshot would show them on top of the sheet.
+function hideOverlays(area: string) {
+  const shown = document.querySelector(area);
+  for (const element of document.querySelectorAll<HTMLElement>('body *')) {
+    const { position } = getComputedStyle(element);
+    if ((position !== 'fixed' && position !== 'sticky') || shown?.contains(element)) continue;
+    if (element.contains(shown)) element.style.position = 'static';
+    else element.style.visibility = 'hidden';
+  }
+}
+
 async function render(page: Page, base: string, shot: Shot) {
-  await page.goto(`${base}${shot.address}`);
-  const area = shot.area(page);
+  await page.goto(`${base}?${new URLSearchParams(shot.query)}`);
+  const area = page.locator(shot.area);
   await area.locator(shot.drawn).first().waitFor({ state: 'attached', timeout: 10_000 }).catch(() => { throw new Error('nothing was drawn within 10 seconds.'); });
+  const [name, slug] = shot.opened;
+  const opened = await page.evaluate(name => new URLSearchParams(location.search).get(name), name);
+  if (opened !== slug) throw new Error(`the app opened ${opened ?? 'something else'} instead of ${slug}; is the file in the build?`);
   await page.evaluate(() => document.fonts.ready);
+  await page.evaluate(hideOverlays, shot.area);
   await area.screenshot({ path: shot.image, animations: 'disabled' });
 }
 

@@ -51,7 +51,7 @@ jobs:
           mapfile -d '' files < "$RUNNER_TEMP/changed"
           report=song-preview-report/report.txt
           if [ "${#files[@]}" -eq 0 ]; then
-            echo "This pull request only removes songs or grooves; nothing to render." > "$report"
+            echo "No added or changed song or groove files to render." > "$report"
             exit 0
           fi
           status=0
