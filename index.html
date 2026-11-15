@@ -123,10 +123,11 @@ tempo: 90
   </div>
 
   <div class="save-state" hidden><span id="dirtyState">No unsaved changes</span><button id="returnDraftBtn" class="ghost" hidden>Return to draft</button><span id="saveFeedback" role="status" aria-live="polite"></span><button id="recoverDownload" class="ghost" hidden>Download a copy</button><span id="shareNotice" class="share-notice" hidden>This song is ready to share with everyone. <button id="shareNoticeBtn" class="ghost">Add to TabTrainer</button><button id="shareNoticeClose" class="ghost" aria-label="Dismiss the share notice" title="Dismiss">✕</button></span></div>
-  <dialog id="replaceDialog" aria-labelledby="replaceTitle" aria-describedby="replaceHelp">
-    <h2 id="replaceTitle">Keep your changes?</h2>
-    <p id="replaceHelp">Save this song in this browser before opening another, or discard your changes.</p>
-    <form method="dialog" class="replace-actions"><button value="cancel" autofocus>Cancel</button><button value="discard">Discard</button><button value="save">Save</button></form>
+  <dialog id="askDialog" class="ask" aria-labelledby="askTitle" aria-describedby="askHelp">
+    <form method="dialog"><button id="askClose" class="close round" aria-label="Close">✕</button></form>
+    <h2 id="askTitle"></h2>
+    <p id="askHelp" class="muted"></p>
+    <form id="askChoices" method="dialog" class="ask-choices"></form>
   </dialog>
   <main id="libraryScreen" class="library" aria-labelledby="libraryTitle">
     <div class="catalogue">

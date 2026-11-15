@@ -82,6 +82,32 @@ test('the phone editor switches between text and score and keeps the caret', asy
   expect(await source.evaluate((area: HTMLTextAreaElement) => [area.selectionStart, area.selectionEnd])).toEqual([12, 18]);
 });
 
+test('saving over a saved song asks in the app, and Escape keeps the saved one', async ({ page }) => {
+  await openFirstExercise(page);
+  await page.locator('#editBtn').click();
+  const source = page.locator('#src');
+  const feedback = page.locator('#saveFeedback');
+  const ask = page.locator('#askDialog');
+  const menu = page.locator('.file-menu summary');
+  const save = async () => { await menu.click(); await page.locator('#saveBtn').click(); };
+  await save();
+  await expect(feedback).toHaveText(/^Saved "/);
+  await source.fill(`${await source.inputValue()}\n# changed`);
+  await save();
+  await expect(ask).toBeVisible();
+  await expect(page.locator('#askTitle')).toHaveText(/^Replace "/);
+  await expect(ask.getByRole('button', { name: 'Cancel' })).toBeFocused();
+  await page.keyboard.press('Escape');
+  await expect(ask).toBeHidden();
+  await expect(menu).toBeFocused();
+  await expect(page.locator('#dirtyState')).toHaveText('Unsaved changes');
+  await save();
+  await ask.getByRole('button', { name: 'Replace' }).click();
+  await expect(ask).toBeHidden();
+  await expect(feedback).toHaveText(/^Saved "/);
+  await expect(page.locator('#dirtyState')).toHaveText('No unsaved changes');
+});
+
 test('the landing demo plays two bars in one click and lights the playing note', async ({ page }) => {
   await page.addInitScript(() => {
     const Stub = window.AudioContext;

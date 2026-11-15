@@ -103,7 +103,7 @@ window.addEventListener('popstate', event => navigation.visit(event.state, (rout
   if (followLanding(location.search)) { accept(); setScreen('library'); return; }
   const open = () => { accept(); openRoute(route); };
   if (route.screen === 'practice' && route.picked && route.picked !== workspace.picked && draftSession.hasChanges()) drafts.replace(open, cancel);
-  else if (route.screen === 'jam' && !grooveEditing.mayChoose(route.groove)) cancel();
+  else if (route.screen === 'jam') void grooveEditing.mayChoose(route.groove).then(chosen => (chosen ? open() : cancel()));
   else open();
 }));
 const transportView = transport(player, () => { scrolling.stopContinuous(); passagePlayback.stop(); passages.show(); });
@@ -149,11 +149,11 @@ player.onPassEnd(pass => {
 });
 addEventListener('pagehide', () => playTime.update(null, false, Date.now()));
 document.addEventListener('visibilitychange', () => { if (document.hidden) playTime.update(null, false, Date.now()); });
-const drafts = draftFlow(draftSession, workspace, saveView, { saved: () => { songs.fill(); showLink(); }, stayed: () => showLink() });
+const drafts = draftFlow(draftSession, workspace, saveView, { saved: () => { songs.fill(); showLink(); }, stayed: () => showLink(), retitled: text => { editor.setText(text); update(false); } });
 const files = songFile(draftSession, new Backups(savedSongs, practiceLog), {
   onNew: () => startNewSong(),
   onOpen: text => drafts.replace(() => { unpick(); setScreen('practice'); loadText(text); showLink(true); }),
-  onSave: () => { drafts.save(); },
+  onSave: () => { void drafts.save(); },
   restored: () => songs.fill(),
   shareLink: () => songShareLink(new URL(import.meta.env.BASE_URL, location.origin).href, workspace.picked, openSong.versionSlug(), import.meta.env.DEV),
   announce: saveView.announce,
@@ -209,7 +209,7 @@ function showJam(slug: string, push = true, setup: JamSetup = {}) {
   setScreen('jam', arriving); showLink(push);
 }
 function chooseGroove(slug: string) {
-  if (grooveEditing.mayChoose(slug)) showJam(slug);
+  void grooveEditing.mayChoose(slug).then(chosen => { if (chosen) showJam(slug); });
 }
 function showJamGroove() {
   jamming.show();

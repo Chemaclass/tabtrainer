@@ -433,27 +433,6 @@
   padding: 0;
   color: var(--mut);
 }
-.replace-actions {
-  display: flex;
-  justify-content: flex-end;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-.replace-actions button {
-  min-height: 44px;
-  border-color: var(--control-border);
-}
-.replace-actions button:hover {
-  background: var(--wash);
-}
-.replace-actions button[value="save"] {
-  background: var(--ink);
-  color: var(--page);
-  border-color: var(--ink);
-}
-#replaceDialog {
-  width: min(480px, calc(100% - 24px));
-}
 .source-text:focus-visible {
   outline: 2px solid var(--ink);
   outline-offset: -2px;

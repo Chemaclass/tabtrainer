@@ -1,27 +1,42 @@
 import type { DraftSession } from '../../app/draftSession';
 import { savedRef } from '../../app/songRef';
 import type { Workspace } from '../../app/workspace';
-import { byId } from '../dom';
+import { askChoice, askSaveConflict } from '../shell/askDialog';
 import type { saveState } from './saveState';
 
-export function draftFlow(draftSession: DraftSession, workspace: Workspace, saveView: ReturnType<typeof saveState>, on: { saved: () => void; stayed: () => void }) {
-  const dialog = byId('replaceDialog', HTMLDialogElement);
+interface DraftFlowHandlers {
+  saved: () => void;
+  stayed: () => void;
+  retitled: (text: string) => void;
+}
+
+export function draftFlow(draftSession: DraftSession, workspace: Workspace, saveView: ReturnType<typeof saveState>, on: DraftFlowHandlers) {
   function persist() {
     draftSession.persist(workspace.picked);
     saveView.show();
     if (!draftSession.stored && draftSession.hasChanges()) saveView.announce('Could not keep this draft in the browser. Download a copy.', true);
   }
-  function replace(action: () => void, cancel: (() => void) | null = null) {
-    draftSession.replace(action, cancel, () => { dialog.returnValue = 'cancel'; dialog.showModal(); });
+  async function askToKeep() {
+    const choice = await askChoice({
+      title: 'Keep your changes?',
+      message: 'Save this song in this browser before opening another, or discard your changes.',
+      choices: [{ value: 'cancel', label: 'Cancel' }, { value: 'discard', label: 'Discard' }, { value: 'save', label: 'Save', main: true }],
+      safe: 'cancel',
+    });
+    await draftSession.resolve(choice, save, on.stayed);
   }
-  function save(): boolean {
-    const result = draftSession.save(title => window.confirm(`Replace "${title}" in your library?`));
+  function replace(action: () => void, cancel: (() => void) | null = null) {
+    draftSession.replace(action, cancel, () => { void askToKeep(); });
+  }
+  async function save(): Promise<boolean> {
+    const result = await draftSession.save(conflict => askSaveConflict(conflict, 'your library'));
     if (result.status === 'cancelled') return false;
     if (result.status === 'failed') { saveView.announce('Could not save in this browser. Your text is still here. Download a copy.', true); return false; }
-    const { title } = result;
-    workspace.pick(savedRef(title), 'mine'); persist(); on.saved();
+    const { title, text } = result;
+    workspace.pick(savedRef(title), 'mine');
+    if (draftSession.hasChanges()) on.retitled(text);
+    persist(); on.saved();
     saveView.announce(`Saved "${title}" in this browser`); return true;
   }
-  dialog.addEventListener('close', () => draftSession.resolve(dialog.returnValue, save, on.stayed));
   return { persist, replace, save };
 }
