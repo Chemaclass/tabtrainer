@@ -1,0 +1,22 @@
+title: Bourrée in E Minor
+artist: Johann Sebastian Bach (public domain)
+about: Play a melody and a moving bass line together in open position, in the first eight bars of Bach's Bourrée in E minor (BWV 996).
+level: hard
+instrument: guitar6
+tempo: 80
+key: Em
+time: 4/4
+
+# Bach's notes from his lute suite. The tune starts on the last beat; a tie (~) holds a note while the other voice moves.
+# Bach drops the bass to a low D in bar 7, below the guitar's range, so the D on the A string is held instead.
+@First phrase
+:h. r :8 (3.6 0.1) (2.6 2.1) |
+:q (0.6 3.1) :8 (0.5 2.1) (~0.5 0.1) :q (2.5 4.2) :8 (0.5 0.1) (~0.5 2.1) |
+:q (3.6 0.2) :8 (2.6 2.2) (~2.6 4.2) :q (0.6 0.1) :8 (2.6 3.2) (~2.6 1.2) |
+:q (3.6 0.2) :8 (0.5 2.3) (~0.5 0.3) :q (2.5 4.4) :8 (0.5 0.3) (~0.5 2.3) |
+:8 (3.6 0.2) (~3.6 2.3) (2.5 0.3) (~2.5 4.4) (0.6 2.4) (2.6 ~2.4) (3.6 0.1) (2.6 2.1) |
+@Second phrase
+:q (0.6 3.1) :8 (0.5 2.1) (~0.5 0.1) :q (2.5 4.2) :8 (0.5 0.1) (~0.5 2.1) |
+:q (3.6 0.2) :8 (2.6 2.2) (~2.6 4.2) :q (0.6 0.1) :8 (2.6 3.2) (~2.6 1.2) |
+:q (3.6 0.2) :8 (3.5 2.3) (~3.5 0.3) :q (5.5 4.4) :8 (~5.5 ~4.4) (~5.5 0.3) |
+:h. (3.6 2.5 0.4 0.3) :q r |

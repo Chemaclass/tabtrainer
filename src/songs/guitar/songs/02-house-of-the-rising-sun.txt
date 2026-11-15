@@ -1,0 +1,21 @@
+title: House of the Rising Sun
+artist: Traditional (public domain)
+about: Change open chords while your picking hand keeps a steady six-note pattern in 6/8, counted as two groups of three.
+level: medium
+instrument: guitar6
+tempo: 108
+key: Am
+time: 6/8
+
+# Thumb on the bass note, then up to the top string and back down. Hold each chord shape for the whole bar.
+@Verse
+"Am" :8 0.5 2.3 1.2 0.1 1.2 2.3 | "C" 3.5 0.3 1.2 0.1 1.2 0.3 |
+"D" 0.4 2.3 3.2 2.1 3.2 2.3 | "F" 3.4 2.3 1.2 1.1 1.2 2.3 |
+"Am" 0.5 2.3 1.2 0.1 1.2 2.3 | "C" 3.5 0.3 1.2 0.1 1.2 0.3 |
+"E" 0.6 1.3 0.2 0.1 0.2 1.3 | 0.6 1.3 0.2 0.1 0.2 1.3 |
+"Am" 0.5 2.3 1.2 0.1 1.2 2.3 | "C" 3.5 0.3 1.2 0.1 1.2 0.3 |
+"D" 0.4 2.3 3.2 2.1 3.2 2.3 | "F" 3.4 2.3 1.2 1.1 1.2 2.3 |
+"Am" 0.5 2.3 1.2 0.1 1.2 2.3 | "E" 0.6 1.3 0.2 0.1 0.2 1.3 |
+"Am" 0.5 2.3 1.2 0.1 1.2 2.3 | "E" 0.6 1.3 0.2 0.1 0.2 1.3 |
+@Ending
+"Am" :h. (0.5 2.4 2.3 1.2 0.1) |
