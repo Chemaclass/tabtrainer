@@ -106,5 +106,5 @@ export function grooveProblems(text: string): SongProblem[] {
 }
 
 // "src/songs/bass/songs/10-my-song.txt:13:17 error Can't read ..."
-export const formatProblem = (path: string, { line, col, message }: SongProblem) =>
+export const formatProblem = (path: string, { line, col, message }: Omit<SongProblem, 'rule'>) =>
   `${line ? `${path}:${line}:${col ?? 1}` : `${path}:`} error ${message}`;

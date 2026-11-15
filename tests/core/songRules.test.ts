@@ -89,7 +89,7 @@ describe('groove rules', () => {
 
 describe('problem lines', () => {
   it('formats a problem the way editors open it', () => {
-    expect(formatProblem('src/songs/bass/songs/10-a.txt', { rule: 'lines', line: 13, col: 17, message: 'Bad note' })).toBe('src/songs/bass/songs/10-a.txt:13:17 error Bad note');
-    expect(formatProblem('src/songs/bass/songs/10-a.txt', { rule: 'header', message: 'Add a "key:" line at the top.' })).toBe('src/songs/bass/songs/10-a.txt: error Add a "key:" line at the top.');
+    expect(formatProblem('src/songs/bass/songs/10-a.txt', { line: 13, col: 17, message: 'Bad note' })).toBe('src/songs/bass/songs/10-a.txt:13:17 error Bad note');
+    expect(formatProblem('src/songs/bass/songs/10-a.txt', { message: 'The song needs at least 4 bars.' })).toBe('src/songs/bass/songs/10-a.txt: error The song needs at least 4 bars.');
   });
 });

@@ -5,7 +5,7 @@ import { parseSong } from '../src/core/parser';
 import { parseGroove } from '../src/core/groove';
 import { formatProblem, grooveProblems, songFileAt, songProblems, type SongProblem } from '../src/core/songRules';
 
-interface Check { problems: SongProblem[]; summary: string }
+interface Check { problems: Omit<SongProblem, 'rule'>[]; summary: string }
 
 const SONGS = 'src/songs';
 const GROOVES = 'src/grooves';
