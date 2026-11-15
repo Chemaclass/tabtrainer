@@ -1,44 +1,101 @@
 import type { IssueSpan, ParseIssue } from '../../core/parseIssue';
+import { beatMeter, offsetOf, spanRange } from '../../app/songProblems';
+import { songFixes, type SongFix } from '../../app/songFixes';
+import { textSpan } from '../dom';
 
 const SETTLE_MS = 300;
 const nothing = () => undefined;
 
-const LINE_BREAK_LENGTH = 1;
-
-function lineStart(lines: readonly string[], line: number): number {
-  const before = lines.slice(0, line - 1);
-  return before.reduce((start, text) => start + text.length + LINE_BREAK_LENGTH, 0);
+/** Selects the span, or its whole line when the span has no length. */
+export function selectSpan(source: HTMLTextAreaElement, span: IssueSpan) {
+  const { start, end } = spanRange(source.value, span);
+  source.focus();
+  source.setSelectionRange(start, end);
+  // Chrome keeps the old scroll position when the selection moves. Lines never wrap, so a line is one row.
+  const lineHeight = parseFloat(getComputedStyle(source).lineHeight) || 0;
+  source.scrollTop = Math.max(0, (span.line - 1) * lineHeight - source.clientHeight / 3);
+  const column = (span.col - 1) * characterWidth(source);
+  source.scrollLeft = column < source.clientWidth * 0.6 ? 0 : column - source.clientWidth / 3;
 }
 
-/** Selects the span, or its whole line when the span has no length. */
-function selectSpan(source: HTMLTextAreaElement, { line, col, length: spanLength }: IssueSpan) {
-  const lines = source.value.split('\n');
-  const lineFrom = lineStart(lines, line);
-  const [start, length] = spanLength ? [lineFrom + col - 1, spanLength] : [lineFrom, lines[line - 1]?.length ?? 0];
-  source.focus();
-  source.setSelectionRange(start, start + length);
-  // Chrome keeps the old scroll position when the selection moves; wrapped lines make this approximate.
-  const lineHeight = parseFloat(getComputedStyle(source).lineHeight) || 0;
-  source.scrollTop = Math.max(0, (line - 1) * lineHeight - source.clientHeight / 3);
+function characterWidth(source: HTMLTextAreaElement): number {
+  const context = document.createElement('canvas').getContext('2d');
+  if (!context) return 0;
+  context.font = getComputedStyle(source).font;
+  return context.measureText('0').width;
 }
 
 export const selectLine = (source: HTMLTextAreaElement, line: number) => selectSpan(source, { line, col: 1, length: 0 });
 
-function issueItem(issue: ParseIssue, source: HTMLTextAreaElement): HTMLLIElement {
+/** Replaces text the way typing would, so undo takes the fix back and the editor hears an input event. */
+function applyFix(source: HTMLTextAreaElement, { edit }: SongFix) {
+  const start = offsetOf(source.value, edit);
+  source.focus();
+  source.setSelectionRange(start, start + edit.length);
+  // execCommand keeps the browser's undo history; setRangeText is the fallback where it is gone.
+  if (!document.execCommand('insertText', false, edit.text)) {
+    source.setRangeText(edit.text, start, start + edit.length, 'end');
+    source.dispatchEvent(new Event('input', { bubbles: true }));
+  }
+}
+
+function meterOf(issue: ParseIssue): HTMLElement | null {
+  const meter = beatMeter(issue);
+  if (!meter) return null;
+  const row = document.createElement('span'), segments = document.createElement('span');
+  row.className = 'beat-meter';
+  segments.className = 'beat-segments';
+  segments.setAttribute('aria-hidden', 'true');
+  segments.append(...meter.segments.map(segment => textSpan(segment, '')));
+  row.append(textSpan('beat-summary', meter.summary), segments);
+  return row;
+}
+
+function issueItem(issue: ParseIssue, source: HTMLTextAreaElement, fixes: readonly SongFix[]): HTMLLIElement {
   const item = document.createElement('li');
+  const body = document.createElement('div');
   const button = document.createElement('button');
   item.className = issue.severity;
+  body.className = 'issue-body';
   button.type = 'button';
   button.className = 'issue-link';
   button.textContent = `Line ${issue.line}: ${issue.message}`;
   button.addEventListener('click', () => selectSpan(source, issue));
-  item.append(button);
+  body.append(button);
+  const meter = meterOf(issue);
+  if (meter) body.append(meter);
+  item.append(body);
+  if (!fixes.length) return item;
+  const actions = document.createElement('div');
+  actions.className = 'issue-fixes';
+  body.append(actions);
+  for (const fix of fixes) {
+    const action = document.createElement('button');
+    action.type = 'button';
+    action.className = 'issue-fix';
+    action.textContent = fix.label;
+    action.setAttribute('aria-label', `${fix.label} on line ${issue.line}`);
+    action.addEventListener('click', () => applyFix(source, fix));
+    actions.append(action);
+  }
   return item;
 }
 
-/** Lists the issues, each one a button that selects its line in the source. */
+/** Lists the issues, each one a button that selects its span in the source. */
 export function showIssueList(list: HTMLElement, issues: readonly ParseIssue[], source: HTMLTextAreaElement) {
-  list.replaceChildren(...issues.map(issue => issueItem(issue, source)));
+  list.replaceChildren(...issues.map(issue => issueItem(issue, source, [])));
+}
+
+/** Lists a song's issues with their quick fixes, and leaves the list alone when nothing changed so screen readers hear only news. */
+export function songIssueList(list: HTMLElement, source: HTMLTextAreaElement) {
+  let shown = '';
+  return (issues: readonly ParseIssue[]) => {
+    const fixes = issues.map(issue => songFixes(source.value, issue));
+    const key = JSON.stringify([issues, fixes]);
+    if (key === shown) return;
+    shown = key;
+    list.replaceChildren(...issues.map((issue, at) => issueItem(issue, source, fixes[at])));
+  };
 }
 
 /** Runs settled once typing pauses, and immediately on every keystroke. */
