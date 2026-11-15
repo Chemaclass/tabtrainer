@@ -3,6 +3,7 @@ import { byId, one } from '../dom';
 import { leaveLanding, onLanding } from '../shell/landingMode';
 import { isFamily, type Family } from '../../core/instruments';
 import { DEMO_START_SPEED, landingEntries, type LandingEntries } from '../../app/landingDemo';
+import { landingDemo } from './landingDemo';
 
 const bundled = Object.fromEntries(Object.entries(import.meta.glob('../../songs/*/*/*.txt', { query: '?raw', import: 'default', eager: true }) as Record<string, string>)
   .map(([path, text]) => [path.replace(/^(\.\.\/)+/, './'), text]));
@@ -42,8 +43,7 @@ const showEntries = () => {
 showEntries();
 
 const play = byId('demoPlay', HTMLButtonElement), playLabel = one('#demoPlay span');
-const sheet = byId('demoSheet');
-const speedButtons = [...landing.querySelectorAll<HTMLButtonElement>('[data-speed]')];
+const speedButtons = [...landing.querySelectorAll<HTMLButtonElement>('[data-demo-speed]')];
 const showPlaying = (on: boolean) => {
   if (play.classList.contains('silent')) return;
   play.classList.toggle('playing', on);
@@ -57,35 +57,35 @@ const offerFirstSteps = () => {
 };
 const audioAvailable = () => typeof (window.AudioContext ?? (window as { webkitAudioContext?: unknown }).webkitAudioContext) === 'function';
 let speed: number = DEMO_START_SPEED;
-const showSpeed = () => speedButtons.forEach(button => button.setAttribute('aria-pressed', String(Number(button.dataset.speed) === speed)));
+const showSpeed = () => speedButtons.forEach(button => button.setAttribute('aria-pressed', String(Number(button.dataset.demoSpeed) === speed)));
 showSpeed();
 
-type Demo = ReturnType<typeof import('./landingDemo').landingDemo>;
-let demo: Promise<Demo> | null = null, ready: Demo | null = null;
-const loadDemo = () => demo ??= import('./landingDemo').then(({ landingDemo }) => {
-  ready = landingDemo(sheet, showPlaying);
-  ready.setSpeed(speed);
-  ready.show(chosenFamily());
-  return ready;
-});
+const demo = landingDemo(byId('demoSheet'), showPlaying);
+demo.setSpeed(speed);
 
 if (!audioAvailable()) offerFirstSteps();
 play.addEventListener('click', () => {
+  if (!onLanding()) return;
   if (play.classList.contains('silent')) { location.assign(entries.firstSteps.href); return; }
-  const start = (loaded: Demo) => { if (!loaded.toggle()) offerFirstSteps(); };
-  if (ready) start(ready); else void loadDemo().then(start);
+  if (!demo.toggle()) offerFirstSteps();
 });
 speedButtons.forEach(button => button.addEventListener('click', () => {
-  speed = Number(button.dataset.speed);
+  speed = Number(button.dataset.demoSpeed);
   showSpeed();
-  ready?.setSpeed(speed);
+  demo.setSpeed(speed);
 }));
 familySwitch.addEventListener('click', () => {
   showEntries();
-  ready?.show(chosenFamily());
+  demo.show(chosenFamily());
 });
+byId('tunerBtn').addEventListener('click', () => demo.stop());
+document.addEventListener('visibilitychange', () => { if (document.hidden) demo.stop(); });
 
 const whenIdle = (task: () => void) => 'requestIdleCallback' in window ? requestIdleCallback(task, { timeout: 1500 }) : setTimeout(task, 200);
-const prepare = () => whenIdle(() => { if (onLanding()) void loadDemo(); });
-new MutationObserver(() => { if (onLanding()) prepare(); else ready?.stop(); }).observe(document.documentElement, { attributeFilter: ['class'] });
-if (document.readyState === 'complete') prepare(); else addEventListener('load', prepare, { once: true });
+const showDemo = () => whenIdle(() => { if (onLanding()) demo.show(chosenFamily()); });
+new MutationObserver(() => {
+  if (!onLanding()) { demo.stop(); return; }
+  showEntries();
+  showDemo();
+}).observe(document.documentElement, { attributeFilter: ['class'] });
+if (document.readyState === 'complete') showDemo(); else addEventListener('load', showDemo, { once: true });

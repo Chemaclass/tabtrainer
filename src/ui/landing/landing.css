@@ -520,11 +520,14 @@ pre.landing-artefact b {
   .landing-hero {
     grid-template-columns: minmax(0, 640px);
     grid-template-areas: "copy" "demo" "entries";
-    row-gap: 40px;
-    padding: 64px 32px 72px;
+    row-gap: 28px;
+    padding: 32px 32px 64px;
+  }
+  .landing-copy {
+    gap: 16px;
   }
   .landing-copy h1 {
-    font-size: clamp(48px, 10vw, 80px);
+    font-size: clamp(48px, 7vw, 72px);
   }
   .landing-entries {
     max-width: none;
