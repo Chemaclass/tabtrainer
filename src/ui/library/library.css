@@ -128,6 +128,7 @@ body:not(.library-view) .library-nav,body:not(.library-view) .dropdown:has([data
 .site-footer a{color:var(--ink)}
 body:not(.library-view) .site-footer{display:none}
 .footer-theme{display:none}
+.offline-ready:not(:empty)::before{content:" · "}
 @media(min-width:900px){
   .top{position:sticky;top:0}
 }

@@ -50,6 +50,7 @@ import { grooveEditor } from './ui/jam/grooveEditor';
 import { jamView } from './ui/jam/jamView';
 import { mixerView } from './ui/jam/mixer';
 import { publishLayoutHeights } from './ui/shell/layoutMetrics';
+import { offlineCache } from './ui/shell/offline';
 import { screens } from './ui/shell/screens';
 import { theme } from './ui/shell/theme';
 import { tuner } from './ui/tuner/tuner';
@@ -326,3 +327,4 @@ showLink();
 if (newSongAsked) startNewSong(false);
 
 enhanceDropdowns();
+if (import.meta.env.PROD) offlineCache(import.meta.env.BASE_URL);

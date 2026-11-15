@@ -1,10 +1,6 @@
 import { defineConfig, type Plugin } from 'vite';
 import { configDefaults } from 'vitest/config';
-import { mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
-import { groovePage, grooveMeta, robotsTxt, sharePage, sitemap, songMeta } from './src/build/sharePages';
-import { songSlug } from './src/app/songLink';
-import { grooveSlug } from './src/app/jamLink';
+import { writeStaticFiles } from './src/build/staticFiles';
 
 // GitHub Pages serves the app from /<repo>/. For a custom domain, set BASE=/ and SITE_URL to its address.
 const base = process.env.BASE ?? '/tabtrainer/';
@@ -22,22 +18,7 @@ function sharePages(): Plugin {
     },
     transformIndexHtml: { order: 'pre', handler: html => html.replaceAll('__SITE_URL__', site) },
     closeBundle() {
-      if (!building) return;
-      const paths = readdirSync('src/songs', { recursive: true, encoding: 'utf8' }).filter(f => f.endsWith('.txt')).sort().map(f => `./songs/${f}`);
-      for (const path of paths) {
-        const file = join(outDir, songSlug(path), 'index.html');
-        mkdirSync(dirname(file), { recursive: true });
-        writeFileSync(file, sharePage(site, path, songMeta(path, readFileSync(join('src', path), 'utf8'))));
-      }
-      const grooves = readdirSync('src/grooves').filter(f => f.endsWith('.txt')).sort();
-      for (const file of grooves) {
-        const page = join(outDir, 'jam', grooveSlug(file), 'index.html');
-        mkdirSync(dirname(page), { recursive: true });
-        writeFileSync(page, groovePage(site, grooveSlug(file), grooveMeta(readFileSync(join('src/grooves', file), 'utf8'))));
-      }
-      writeFileSync(join(outDir, 'sitemap.xml'), sitemap(site, paths, grooves.map(grooveSlug)));
-      // Crawlers read robots.txt only at the host root, so a project site under /<repo>/ gets none.
-      if (base === '/') writeFileSync(join(outDir, 'robots.txt'), robotsTxt(site));
+      if (building) writeStaticFiles({ outDir, site, atHostRoot: base === '/' });
     },
   };
 }
