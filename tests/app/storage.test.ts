@@ -75,6 +75,11 @@ describe('preferences', () => {
     store(100); expect(pref('zoom', 1)).toBe(1);
     store('piano'); expect(pref('family', 'bass')).toBe('bass');
   });
+  it('keeps the template instrument chosen for each family and drops a mismatched one', async () => {
+    const { pref } = await import('../../src/app/storage');
+    store({ bass: 'bass5', guitar: 'guitar6' }); expect(pref('templateInstruments', {})).toEqual({ bass: 'bass5', guitar: 'guitar6' });
+    for (const value of [{ bass: 'guitar6' }, { piano: 'bass4' }, { bass: 'bass7' }, ['bass4'], 'bass4']) { store(value); expect(pref('templateInstruments', {})).toEqual({}); }
+  });
   it('validates practice timing preferences and falls back when storage is blocked', async () => {
     const { pref } = await import('../../src/app/storage');
     store(true); expect(pref('metronome', false)).toBe(true); expect(pref('countIn', false)).toBe(true);
