@@ -81,3 +81,28 @@ test('the phone editor switches between text and score and keeps the caret', asy
   await expect(source).toBeVisible();
   expect(await source.evaluate((area: HTMLTextAreaElement) => [area.selectionStart, area.selectionEnd])).toEqual([12, 18]);
 });
+
+test('the landing demo plays two bars in one click and lights the playing note', async ({ page }) => {
+  await page.goto('./');
+  const play = page.locator('#demoPlay');
+  await expect(play).toHaveText('Play these two bars');
+  const box = await play.boundingBox();
+  expect(box && box.y + box.height).toBeLessThanOrEqual(page.viewportSize()?.height ?? 0);
+  await play.click();
+  await expect(play).toHaveText('Stop');
+  await expect(page.locator('#demoSheet .note.on').first()).toBeAttached();
+  await play.click();
+  await expect(play).toHaveText('Play these two bars');
+});
+
+test('without audio the landing demo opens First Steps', async ({ page }) => {
+  await page.addInitScript(() => Object.defineProperty(window, 'AudioContext', { value: undefined, configurable: true }));
+  const errors: string[] = [];
+  page.on('pageerror', error => errors.push(error.message));
+  await page.goto('./');
+  const play = page.locator('#demoPlay');
+  await expect(play).toHaveText('Open First Steps');
+  await play.click();
+  await expect(page).toHaveURL(/song=bass\/first-steps/);
+  expect(errors).toEqual([]);
+});
