@@ -30,6 +30,7 @@ export function writeOfflineCache(outDir: string) {
 }
 
 // Pages come from the network first so an online visit gets the latest songs; a slow network falls back to the cached page. The rest comes from the cache.
+// Files are matched ignoring Vary: the page asks for its scripts with an Origin header the install never sent, and a host that varies on Origin would miss every one.
 export function serviceWorker(version: string, urls: readonly string[]): string {
   return `const CACHE = ${JSON.stringify(`tabtrainer-${version}`)};
 const URLS = ${JSON.stringify(urls)};
@@ -59,7 +60,7 @@ self.addEventListener('fetch', event => {
   const request = event.request;
   if (request.method !== 'GET' || !request.url.startsWith(self.registration.scope)) return;
   if (request.mode === 'navigate') event.respondWith(page(request));
-  else event.respondWith(caches.match(request).then(cached => cached ?? fetch(request)));
+  else event.respondWith(caches.match(request, { ignoreVary: true }).then(cached => cached ?? fetch(request)));
 });
 `;
 }
