@@ -3,7 +3,20 @@ import { readFileSync } from 'node:fs';
 import { parseSong } from '../../src/core/parser';
 import { buildTimeline, onsetAt, onsetsOf } from '../../src/core/timeline';
 
-const onsetsFor = (file: string) => onsetsOf(buildTimeline(parseSong(readFileSync(file, 'utf8')).song).notes);
+const onsetsOfText = (text: string) => onsetsOf(buildTimeline(parseSong(text).song).notes);
+const onsetsFor = (file: string) => onsetsOfText(readFileSync(file, 'utf8'));
+const SCALE = `instrument: bass4
+tempo: 70
+key: C
+time: 4/4
+@Up
+"C" :q 3.3 5.3 2.2 3.2 | 5.2 2.1 4.1 5.1 |
+@Down
+5.1 4.1 2.1 5.2 | 3.2 2.2 5.3 3.3 |
+@In eighth notes
+:8 3.3 5.3 2.2 3.2 5.2 2.1 4.1 5.1 | 5.1 4.1 2.1 5.2 3.2 2.2 5.3 3.3 |
+@Ending
+:w 3.3 |`;
 
 describe('onsetAt', () => {
   it('keeps a note lit for its whole length', () => {
@@ -18,7 +31,7 @@ describe('onsetAt', () => {
     expect(onsetAt([0, 333, 667, 1000], 2 / 3)).toBe('667');
   });
   it('gives different songs with the same number of onsets their own lookups', () => {
-    const scale = onsetsFor('src/songs/bass/exercises/03-c-major-scale.txt');
+    const scale = onsetsOfText(SCALE);
     const canon = onsetsFor('src/songs/bass/songs/02-canon-in-d.txt');
     expect(scale).toHaveLength(canon.length);
     expect(onsetAt(scale, 1)).toBe('1000');
