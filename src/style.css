@@ -97,15 +97,15 @@ dialog.shortcuts td:first-child{white-space:normal;width:35%}
 dialog.shortcuts kbd{display:inline-block;white-space:nowrap}
 dialog .close{float:right}
 dialog .muted{color:var(--mut)}
-.propose h3{margin:20px 0 6px;font-size:16px;line-height:22px}
+.propose h3{display:flex;align-items:baseline;gap:10px;margin:0 0 8px;font-size:16px;line-height:22px}
 .propose :is(p,li){line-height:22px}
-.propose :is(ul,ol){margin:0;padding-left:22px}
+.propose :where(p){margin:0}
 .propose a:not(.primary){color:var(--ink)}
-.propose-file code{overflow-wrap:anywhere;font-weight:600}
+.propose-step{margin-top:12px;padding-top:12px;border-top:1px solid var(--rule)}
+.propose-no{font:600 12px var(--mono);color:var(--led-text)}
+.propose-name{font-weight:600}
 .propose-pick{display:flex;align-items:center;gap:12px}
-.propose-problems{margin:16px 0;padding:4px 16px 12px;border-left:3px solid var(--error);background:var(--wash);border-radius:4px}
-.propose-problems h3{margin-top:10px;color:var(--error)}
-fieldset.propose-group{display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin:12px 0 0;padding:0;border:0}
+fieldset.propose-group{display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin:8px 0 0;padding:0;border:0}
 .propose-group legend{float:left;padding:0}
 .propose-group-options{display:flex}
 .propose-group label{position:relative;display:flex;cursor:pointer}
@@ -117,11 +117,31 @@ fieldset.propose-group{display:flex;flex-wrap:wrap;align-items:center;gap:12px;m
 .propose-group label:hover span{background:var(--wash)}
 .propose-group input:checked+span{position:relative;background:var(--ink);color:var(--page);border-color:var(--ink)}
 .propose-group input:focus-visible+span{position:relative;outline:2px solid var(--ink);outline-offset:2px}
-.propose-rights{display:flex;align-items:flex-start;gap:10px;margin:16px 0;line-height:22px;cursor:pointer}
+.propose-checks{margin:10px 0 0;padding:0;list-style:none}
+.propose-check{display:grid;grid-template-columns:18px minmax(0,1fr);column-gap:8px;padding:2px 0}
+.propose-mark{font-weight:700;text-align:center}
+.propose-check.done .propose-mark{color:var(--ok)}
+.propose-check.todo .propose-mark{color:var(--error)}
+.propose-check.todo .propose-check-name{font-weight:600}
+.propose-problems{grid-column:2;margin:2px 0 6px;padding:0;list-style:none;color:var(--mut)}
+.propose-problems li{overflow-wrap:anywhere}
+.propose-problems li+li{margin-top:4px}
+.propose-goto{padding:0;border:0;border-radius:0;font:inherit;font-weight:600;color:var(--ink);text-decoration:underline;text-underline-offset:2px;white-space:nowrap}
+.propose-rules{margin:0;padding-left:20px}
+.propose-rights{display:flex;align-items:flex-start;gap:10px;margin-top:10px;line-height:22px;cursor:pointer}
 .propose-rights input{flex-shrink:0;width:18px;height:18px;margin:2px 0 0}
-.propose-actions{display:flex;flex-wrap:wrap;gap:12px}
-.propose-actions .primary{border-radius:6px;text-decoration:none}
-.propose-actions .primary[aria-disabled=true]{opacity:.45;cursor:not-allowed}
+.propose-long{margin-top:8px}
+.propose .primary{display:inline-flex;min-height:44px;border-radius:6px;text-decoration:none}
+.propose .primary[aria-disabled=true]{background:var(--wash);color:var(--mut);box-shadow:inset 0 0 0 1px var(--rule);filter:none;cursor:not-allowed}
+.propose-reason{margin-top:6px;font-weight:600}
+.propose-reason:empty{display:none}
+.propose-clicks{margin:10px 0 0;padding-left:20px;color:var(--mut)}
+.propose-file{margin-top:8px;font-size:12px;line-height:18px;color:var(--mut)}
+.propose-file code{font-size:12px;overflow-wrap:anywhere;color:var(--ink)}
+.propose-sent{margin-top:12px}
+.propose-sent>*+*{margin-top:12px}
+.propose-status:empty{display:none}
+.propose-sent-actions{display:flex;flex-wrap:wrap;gap:12px}
 @media (min-width:600px){
   .song-head h1{font-size:34px;line-height:38px}
   dialog{padding:28px 32px}

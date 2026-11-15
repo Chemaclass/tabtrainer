@@ -8,7 +8,7 @@ import { library, removeSong, pref, practiceStore, recordPractice, savedGrooves,
 import { PlayTime, PracticeLog } from './app/practiceLog';
 import { Backups } from './app/backup';
 import { songShareLink, songSource } from './app/songLink';
-import { bundledPath } from './app/songRef';
+import { bundledPath, savedRef } from './app/songRef';
 import { Songbook, newSongText } from './app/songbook';
 import { OpenSong } from './app/openSong';
 import { Workspace, type Screen } from './app/workspace';
@@ -66,7 +66,7 @@ const practiceLog = new PracticeLog(practiceStore);
 const playTime = new PlayTime(practiceLog);
 
 const help = helpDialogs();
-const proposal = proposeSongDialog(songbook.paths, () => editor.text(), library);
+const proposal = proposeSongDialog(songbook.paths, () => editor.text(), library, { goToLine: showSongLine });
 const view = screens(chooseFamily, () => showJam(jam.slug));
 const mixer = new Mixer(workspace.family);
 const jamFretboard = jamFretboardView(jam, mixer, new JamFretboardSettings(), loop);
@@ -214,6 +214,12 @@ function loadPickedSong(ref: string, push = false) {
   if (push) view.focus('practice');
 }
 function loadText(text: string) { scrolling.stopContinuous(); editor.setText(text); draftSession.accept(text); saveView.announce(''); update(true); drafts.persist(); }
+function showSongLine(line: number, title: string | null) {
+  const ref = title === null ? workspace.picked : savedRef(title);
+  if (ref !== workspace.picked) drafts.replace(() => { loadPickedSong(ref, true); editor.goToLine(line); });
+  else if (workspace.screen === 'practice') editor.goToLine(line);
+  else { setScreen('practice'); showLink(true); editor.goToLine(line); }
+}
 function startNewSong() {
   drafts.replace(() => { const text = newSongText(workspace.family); unpick(); setScreen('practice'); loadText(text); showLink(true); editor.show(true); editor.focus(); });
 }

@@ -14,7 +14,7 @@ const bars = ':q 3.3 3.3 3.3 3.3 |\n'.repeat(4);
 const header = (title = 'My Walking Line', artist = 'TabTrainer', extra = '') =>
   `title: ${title}\nartist: ${artist}\nabout: Roots on every beat.\nlevel: easy\ninstrument: bass4\ntempo: 90\nkey: C\ntime: 4/4\n${extra}`;
 const exercise = header() + '\n' + bars;
-const problems = (text: string, group: 'exercises' | 'songs' = 'exercises') => proposeSong(text, group, paths).problems;
+const problems = (text: string, group: 'exercises' | 'songs' = 'exercises') => proposeSong(text, group, paths).problems.map(problem => problem.message);
 
 describe('proposal name', () => {
   it('turns the title into a plain file name', () => {
@@ -73,8 +73,8 @@ describe('song proposal', () => {
     expect(problems(exercise)).toEqual([]);
   });
   it('passes on parser issues with their line numbers', () => {
-    expect(problems(exercise.replace('level: easy', 'level: expert'))).toEqual([expect.stringMatching(/^Line 4: .*expert/)]);
-    expect(problems(exercise + ':q 3.3 3.3 3.3 |\n')).toEqual(['Line 14: Bar 5 has 3 of 4 beats; filled with a rest']);
+    expect(proposeSong(exercise.replace('level: easy', 'level: expert'), 'exercises', paths).problems).toEqual([{ check: 'lines', message: expect.stringMatching(/expert/), line: 4 }]);
+    expect(proposeSong(exercise + ':q 3.3 3.3 3.3 |\n', 'exercises', paths).problems).toEqual([{ check: 'lines', message: 'Bar 5 has 3 of 4 beats; filled with a rest', line: 14 }]);
   });
   it('asks for 16 bars in the Challenge version of an exercise only', () => {
     const text = header('A', 'Traditional (public domain)') + '\n' + bars + '== Challenge\n' + bars.repeat(2) + bars.slice(0, 42);
@@ -95,7 +95,7 @@ describe('song proposal', () => {
   it('refuses a title without letters or numbers', () => {
     const proposal = proposeSong(exercise.replace('My Walking Line', '???'), 'exercises', paths);
     expect(proposal.fileName).toBe('');
-    expect(proposal.problems).toEqual(['The title needs letters or numbers.']);
+    expect(proposal.problems).toEqual([{ check: 'title', message: 'The title needs letters or numbers.', line: 1 }]);
   });
   it('leaves the text out of a link that would be too long', () => {
     const proposal = proposeSong(readFileSync('src/songs/bass/songs/07-a-dawning.txt', 'utf8'), 'songs', paths);
@@ -120,6 +120,19 @@ describe('song proposal', () => {
     const proposal = proposeSong(exercise + '# \uD800\n', 'exercises', paths);
     expect(proposal.carriesText).toBe(false);
     expect(proposal.url).toBe('https://github.com/Chemaclass/tabtrainer/new/main/src/songs/bass/exercises?filename=16-my-walking-line.txt');
+  });
+  it('points each problem at the line to fix', () => {
+    const lines = (text: string, group: 'exercises' | 'songs' = 'exercises') => proposeSong(text, group, paths).problems.map(problem => problem.line);
+    expect(lines(exercise.replace('level: easy', 'level: expert'))).toEqual([4]);
+    expect(lines(exercise.replace('about: Roots on every beat.\n', ''))).toEqual([1]);
+    expect(lines(exercise.replace('TabTrainer', 'Me'), 'songs')).toEqual([2]);
+    expect(lines(exercise.replace('My Walking Line', 'Orion'))).toEqual([1]);
+    expect(lines(header() + '\n' + bars.slice(0, 21))).toEqual([null]);
+  });
+  it('groups the problems into a checklist, with the composer for songs only', () => {
+    const checks = (text: string, group: 'exercises' | 'songs') => proposeSong(text, group, paths).checks.map(({ check, problems }) => [check, problems.length]);
+    expect(checks(exercise, 'exercises')).toEqual([['header', 0], ['lines', 0], ['bars', 0], ['title', 0]]);
+    expect(checks(exercise.replace('key: C\n', '').replace('TabTrainer', 'Me'), 'songs')).toEqual([['header', 1], ['lines', 0], ['bars', 0], ['title', 0], ['composer', 1]]);
   });
   it('names an empty title once', () => {
     expect(problems(exercise.replace('title: My Walking Line', 'title:'))).toEqual(['Add a "title:" line at the top.']);
