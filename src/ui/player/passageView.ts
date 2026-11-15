@@ -12,8 +12,8 @@ export function passageView(player: Player, passage: Passage, playback: PassageP
   function show() {
     const state = passage.snapshot();
     onShow();
-    score.markPassage({ selectedNote: playback.selectedNote?.key, selectedBar: state.selected, inPassage: bar => state.active && passage.includes(bar) });
-    controls.show(state, playback.summary(openSong.song?.bars ?? []));
+    score.markPassage({ selectedNote: playback.selectedNote?.key, selectedBar: state.selected, inPassage: bar => state.active && passage.includes(bar), isLoopEnd: bar => passage.isLoopEnd(bar) });
+    controls.show({ ...state, loopsSelection: passage.loopsSelection() }, playback.summary(openSong.song?.bars ?? []));
   }
   function apply() {
     if (!openSong.song?.bars.length) return;
@@ -24,6 +24,7 @@ export function passageView(player: Player, passage: Passage, playback: PassageP
     onRange: (first, last, repeat) => { passage.setRange(first, last, repeat); apply(); },
     onStart: () => { passage.startAtSelection(); apply(); },
     onEnd: () => { passage.endAtSelection(); apply(); },
+    onLoopBar: () => { passage.loopSelection(); apply(); },
     onReset: () => {
       passage.clear(); apply(); player.stop(); passage.deselect(); show();
       if (!score.focusFirstBar()) byId('title').focus();
@@ -32,6 +33,7 @@ export function passageView(player: Player, passage: Passage, playback: PassageP
   return {
     show,
     apply,
+    loopTo(bar: number) { passage.loopTo(bar); apply(); },
     selectBar(bar: number) { if (playback.selectBar(bar)) show(); },
     selectNote(key: string, bar: number) {
       if (!playback.selectNote(key, bar)) return false;

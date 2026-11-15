@@ -259,6 +259,7 @@ tempo: 90
       <div class="passage" aria-label="Practice passage">
         <p id="passageHelp">Select a note or bar to choose where to start, or set a passage to repeat.</p>
         <div class="passage-actions">
+          <button id="loopBar" class="toggle loop-chip" hidden>Loop this bar</button>
           <button id="rangeStart" class="toggle" disabled>Loop start</button>
           <button id="rangeEnd" class="toggle" disabled>Loop end</button>
           <button id="rangeReset" class="toggle">Clear</button>
@@ -266,7 +267,7 @@ tempo: 90
         <p id="rangeSummary" role="status" aria-live="polite"></p>
       </div>
       <div id="sheet" class="sheet"></div>
-      <p class="tip">Select a note with a click, tap, or Enter, then press Play. Double-click a note to start there. Select unused bar space to choose a loop boundary. Stop returns to the selected note or bar, or to the passage start. <button id="shortcutsBtn" class="tip-link" type="button" aria-haspopup="dialog">Keyboard shortcuts</button><span class="keys">: press <kbd>?</kbd></span></p>
+      <p class="tip">Select a note with a click, tap, or Enter, then press Play. Double-click a note to start there. Tap a bar number to start a loop there, and another to extend it. Tap either end of the loop to clear it. Stop returns to the selected note or bar, or to the passage start. <button id="shortcutsBtn" class="tip-link" type="button" aria-haspopup="dialog">Keyboard shortcuts</button><span class="keys">: press <kbd>?</kbd></span></p>
     </section>
   </main>
 

@@ -1,13 +1,15 @@
 import { byId } from '../dom';
 
-interface PassageControlState { first: number; last: number; count: number; repeat: boolean; selected: number; active: boolean }
+interface PassageControlState { first: number; last: number; count: number; repeat: boolean; selected: number; active: boolean; loopsSelection: boolean }
 
-export function passageControls(handlers: { onRange: (first: number, last: number, repeat: boolean) => void; onStart: () => void; onEnd: () => void; onReset: () => void }) {
+export function passageControls(handlers: { onRange: (first: number, last: number, repeat: boolean) => void; onStart: () => void; onEnd: () => void; onLoopBar: () => void; onReset: () => void }) {
   const first = byId('loopA', HTMLInputElement), last = byId('loopB', HTMLInputElement), repeat = byId('loopChk', HTMLInputElement);
+  const loopBar = byId('loopBar', HTMLButtonElement);
   const start = byId('rangeStart', HTMLButtonElement), end = byId('rangeEnd', HTMLButtonElement), reset = byId('rangeReset', HTMLButtonElement);
   start.onclick = handlers.onStart;
   end.onclick = handlers.onEnd;
   reset.onclick = handlers.onReset;
+  loopBar.onclick = handlers.onLoopBar;
   [repeat, first, last].forEach(input => input.addEventListener('change', () => handlers.onRange(first.valueAsNumber, last.valueAsNumber, repeat.checked)));
   return {
     show(state: PassageControlState, summary: string) {
@@ -16,6 +18,7 @@ export function passageControls(handlers: { onRange: (first: number, last: numbe
       first.max = last.max = String(state.count);
       repeat.checked = state.repeat;
       start.disabled = end.disabled = !state.selected;
+      loopBar.hidden = !state.selected || state.loopsSelection;
       reset.disabled = !state.selected && !state.active;
       byId('rangeSummary').textContent = summary;
     },
