@@ -275,7 +275,10 @@ tempo: 90
     <section id="exerciseContinuation" class="exercise-continuation" aria-label="Continue practising" hidden><p>Finished with this one? Move on when you are ready.</p><button id="nextExerciseBtn"><span>Next exercise</span><strong id="nextExerciseTitle"></strong><span class="next-arrow" aria-hidden="true">→</span></button><button id="allExercisesBtn" hidden>Explore all exercises →</button><button id="closeContinuationBtn" class="continuation-close" title="Hide this bar" aria-label="Hide next exercise bar">✕</button></section>
   </div>
   <footer class="player" hidden>
+    <div id="deckStatus" class="deck-status" hidden><span id="deckLoop" class="deck-loop"></span><span id="deckPass" class="deck-pass"></span><span id="deckPassMarks" class="pass-marks" aria-hidden="true"></span></div>
     <div class="transport">
+      <button id="loopToggle" class="deck-key loop-toggle" aria-pressed="false" title="Loop the chosen bars (L)"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M17 2l4 4-4 4M3 11V9a3 3 0 0 1 3-3h15M7 22l-4-4 4-4M21 13v2a3 3 0 0 1-3 3H3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Loop</button>
+      <button id="restartBtn" class="deck-key restart" title="Play again from the start of the passage"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 5h2.5v14H6zM20 5v14L9.5 12z" fill="currentColor"/></svg>Restart</button>
       <button id="playBtn" class="play" title="Play / pause (Space)" aria-label="Play"></button>
       <button id="stopBtn" class="stop" title="Stop and go back to the start" aria-label="Stop"><span></span></button>
     </div>
@@ -288,13 +291,16 @@ tempo: 90
     <div class="readout"><span class="lbl">Bar</span><span class="led"><b id="barNo">–</b><small> / <span id="barTotal">–</span></small></span></div>
     <button id="minimizeBtn" class="minimize" aria-expanded="true" title="Hide the controls" aria-label="Hide the controls"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M5 3l4 4-4 4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
     <div class="speed">
+      <button id="speedDown" class="deck-key speed-step" title="Slower by 5 points (−)">−5</button>
       <div class="speed-head"><label class="lbl" for="speed">Speed</label><output id="speedOut">100%</output></div>
       <input id="speed" type="range" min="30" max="130" value="100" />
+      <span id="speedTrack" class="speed-track" aria-hidden="true"></span>
+      <button id="speedUp" class="deck-key speed-step" title="Faster by 5 points (+)">+5</button>
       <div class="speed-presets" role="group" aria-label="Speed presets">
         <button data-speed="50" aria-pressed="false">50%</button><button data-speed="75" aria-pressed="false">75%</button><button data-speed="100" aria-pressed="true">100%</button>
       </div>
     </div>
-    <button id="moreBtn" class="more" aria-expanded="false" aria-controls="extras" title="Loop, timing, scrolling and text size"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M3 9l4-4 4 4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>Loop / more</button>
+    <button id="moreBtn" class="more" aria-expanded="false" aria-controls="extras" title="Loop, timing, scrolling and text size"><svg class="more-chevron" width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M3 9l4-4 4 4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg><svg class="more-icon" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h2M10 17h10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="16" cy="7" r="2" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="8" cy="17" r="2" fill="none" stroke="currentColor" stroke-width="2"/></svg><span class="more-wide">Loop / more</span><span class="more-narrow">More</span></button>
     <div id="extras" class="extras">
     <div class="loop">
       <label class="pill"><input id="loopChk" type="checkbox" /><svg width="16" height="14" viewBox="0 0 16 14" aria-hidden="true"><path d="M2 7a4 4 0 0 1 4-4h6M14 7a4 4 0 0 1-4 4H4M10 1l2 2-2 2M6 9l-2 2 2 2" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Loop bars</label>

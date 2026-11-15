@@ -176,3 +176,48 @@ input[type=range]::-moz-range-thumb{width:var(--thumb);height:var(--thumb);borde
   :root{--player-w:300px}
   .player-min{--player-w:64px}
 }
+
+.deck-status,.deck-key,.speed-track,.more-icon,.more-narrow{display:none}
+@media(max-width:599px){
+  .player{gap:12px 10px;padding:12px max(16px,env(safe-area-inset-right)) calc(12px + env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left))}
+  .deck-status:not([hidden]){order:-2;display:flex;align-items:center;gap:8px;flex-basis:100%;min-width:0;font:400 12px/16px var(--mono);color:var(--deck-text)}
+  .deck-loop{flex:none;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--led-text)}
+  .deck-pass{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .pass-marks{display:flex;gap:5px;flex:none}
+  .pass-marks i{width:8px;height:8px;border-radius:4px;background:var(--led)}
+  .pass-marks .current{opacity:.45}
+  .pass-marks .todo{background:none;border:1.5px solid var(--control-border)}
+  .speed-practice-progress{display:none}
+  .deck-key{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;flex:none;width:64px;height:64px;padding:0;border-color:var(--deck-line);border-radius:12px;background:var(--deck-raise);color:var(--deck-hi);font:600 11px/12px var(--ui);-webkit-touch-callout:none;user-select:none}
+  .deck-key:hover{background:var(--deck-hover)}
+  .restart{color:var(--deck-text)}
+  .restart svg{color:var(--deck-hi)}
+  .loop-toggle[aria-pressed=true]{border-color:var(--led-text);background:var(--cur);color:var(--led-text)}
+  .speed{order:-1;display:grid;grid-template-columns:64px minmax(0,1fr) 64px;grid-template-rows:auto auto;align-items:center;gap:6px 10px;flex-basis:100%}
+  .speed>input[type=range],.speed-presets,.speed-head .lbl{display:none}
+  .speed-step{grid-row:1 / 3;height:56px;font:600 18px/22px var(--mono)}
+  #speedDown{grid-column:1}
+  #speedUp{grid-column:3}
+  .speed-head{grid-column:2;grid-row:1;justify-content:center;align-self:end}
+  #speedOut{font:600 30px/32px var(--mono);color:var(--led-text);white-space:nowrap}
+  #speedOut span{margin-left:8px;font-size:13px;line-height:16px;color:var(--deck-dim)}
+  .speed-track{grid-column:2;grid-row:2;align-self:start;display:block;position:relative;height:4px;border-radius:2px;background:linear-gradient(to right,var(--track-fill) var(--fill,50%),var(--track-rest) var(--fill,50%))}
+  .speed-track::after{content:"";position:absolute;top:-3px;left:var(--unity,70%);width:2px;height:10px;margin-left:-1px;background:var(--deck-dim)}
+  .transport{flex:1;min-width:0;gap:10px}
+  .stop{display:none}
+  .play{flex:1;min-width:56px;width:auto;height:72px;border-radius:36px;gap:10px;display:flex;align-items:center;justify-content:center;font:800 20px/24px var(--display);letter-spacing:-.01em;color:#111}
+  .play::after{content:"Play"}
+  .play.pause::after{content:"Pause"}
+  .more{flex:none;width:64px;height:64px;padding:0;border-radius:12px;border-color:var(--deck-line);background:var(--deck-raise);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font:600 11px/12px var(--ui);color:var(--deck-text)}
+  .more-chevron,.more-wide{display:none}
+  .more-icon{display:block;color:var(--deck-hi)}
+  .more-narrow{display:inline}
+  .player.open .more{border-color:var(--deck-hi)}
+  .player.open .more svg{transform:none}
+  .player.open .extras{position:fixed;left:0;right:0;bottom:calc(var(--deck-h) + var(--continuation-h,0px));max-height:calc(100dvh - var(--top-h,0px) - var(--deck-h) - var(--continuation-h,0px) - 16px);overflow-y:auto;padding:16px max(16px,env(safe-area-inset-right)) 16px max(16px,env(safe-area-inset-left));background:var(--deck);border:1px solid var(--deck-line);border-bottom:0;border-radius:16px 16px 0 0;box-shadow:0 -8px 24px #0004}
+  .extras>details{flex-basis:100%}
+  .extras .timing-controls,.extras .speed-practice-controls{position:static;width:auto;max-height:none;margin-top:8px;box-shadow:none;background:var(--deck-raise)}
+}
+@media(max-width:359px){
+  .play::after{display:none}
+}

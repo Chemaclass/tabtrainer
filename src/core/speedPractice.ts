@@ -25,3 +25,13 @@ export function advanceSpeedPractice(state: SpeedPracticeProgress, config: Speed
 export function nextSpeedPracticeSpeed(speed: number, config: Pick<SpeedPracticeConfig, 'increase' | 'target'>): number {
   return Math.min(config.target, speed + config.increase);
 }
+
+export type PassMark = 'done' | 'current' | 'todo';
+
+export function speedPracticeProgressText(state: SpeedPracticeProgress & SpeedPracticeConfig): string {
+  return state.speed >= state.target ? `Target reached: ${state.speed}%` : `pass ${state.completed + 1} of ${state.repetitions}, then ${nextSpeedPracticeSpeed(state.speed, state)}%`;
+}
+
+export function passMarks({ completed, repetitions }: Pick<SpeedPracticeProgress, 'completed'> & Pick<SpeedPracticeConfig, 'repetitions'>): PassMark[] {
+  return Array.from({ length: repetitions }, (_, pass) => pass < completed ? 'done' : pass === completed ? 'current' : 'todo');
+}

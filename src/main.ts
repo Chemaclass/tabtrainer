@@ -37,6 +37,7 @@ import { scrollControls } from './ui/player/scrollControls';
 import { speedControls } from './ui/player/speedControls';
 import { speedPracticePanel } from './ui/player/speedPracticePanel';
 import { timingPanel } from './ui/player/timingPanel';
+import { thumbDeck } from './ui/player/thumbDeck';
 import { transport } from './ui/player/transport';
 import { scoreView } from './ui/practice/scoreView';
 import { songHeader } from './ui/practice/songHeader';
@@ -100,7 +101,10 @@ const transportView = transport(player, () => { scrolling.stopContinuous(); pass
 const speed = speedControls(player);
 const speedPractice = speedPracticePanel(player, () => passage.snapshot().repeat, speed.show);
 const timing = timingPanel(player);
-const passages = passageView(player, passage, passagePlayback, openSong, score, speedPractice.show);
+const restart = () => { passagePlayback.stop(); passages.show(); player.play(); };
+const deck = thumbDeck(player, () => passage.snapshot(), { nudgeSpeed: speed.nudge, toggleLoop: () => { passage.toggleRepeat(); passages.apply(); }, restart });
+player.onSpeedPractice(deck.show);
+const passages = passageView(player, passage, passagePlayback, openSong, score, () => { speedPractice.show(); deck.show(); });
 const awake = screenWakeLock();
 player.on(state => awake.keep('player', state.playing));
 loop.on(state => awake.keep('jam', state.playing));
@@ -109,7 +113,7 @@ playShortcut(player, () => workspace.screen === 'practice');
 practiceShortcuts(player, {
   active: () => workspace.screen === 'practice',
   passage, passages, speed, scrolling,
-  restart: () => { passagePlayback.stop(); passages.show(); player.play(); },
+  restart,
   toggleMetronome: timing.toggleMetronome,
   showShortcuts: help.showShortcuts,
 });
