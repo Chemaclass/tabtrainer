@@ -24,7 +24,8 @@ export function clearedTitle({ loop, speed }: ClearedLoop): string {
 }
 
 export function clearedSummary({ startSpeed, speed, passes, seconds }: ClearedLoop): string {
-  const effort = `${counted(passes, 'pass', 'passes')} and ${counted(Math.max(1, Math.round(seconds / 60)), 'minute', 'minutes')}`;
+  const time = seconds < 60 ? counted(Math.max(1, Math.round(seconds)), 'second', 'seconds') : counted(Math.round(seconds / 60), 'minute', 'minutes');
+  const effort = `${counted(passes, 'pass', 'passes')} and ${time}`;
   return startSpeed < speed ? `You started at ${startSpeed}%. ${capitalized(effort)} later, it sits at ${speed}%.` : `${capitalized(effort)} in, it sits at ${speed}%.`;
 }
 

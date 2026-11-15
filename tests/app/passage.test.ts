@@ -71,5 +71,6 @@ describe('practice passage', () => {
     const passage = song(); passage.loopSelection(); expect(passage.range()).toBeNull();
     passage.select(3); expect(passage.loopsSelection()).toBe(false);
     passage.loopSelection(); expect(passage.range()).toEqual([3, 3]); expect(passage.loopsSelection()).toBe(true);
+    expect(passage.summary()).toBe('Selected bar 3. Bar 3, repeating.');
   });
 });
