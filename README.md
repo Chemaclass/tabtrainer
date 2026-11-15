@@ -117,10 +117,7 @@ The steps in a bar set its grid. In 4/4 that is 8 for eighths, 12 for triplets o
 ```bash
 npm install
 npm run dev        # http://localhost:5173/tabtrainer/
-npm test
-npm run lint
-npm run typecheck
-npm run build      # production build in dist/
+npm run check      # lint, tests and production build in dist/
 ```
 
 The app uses TypeScript, Vite and [VexFlow](https://www.vexflow.com/). CI lints, typechecks and tests each pull request and each push to `main`. When it passes on `main`, GitHub Pages publishes the site.
