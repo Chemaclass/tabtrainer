@@ -33,6 +33,11 @@ export class OpenSong {
     return index >= 0 && this.choose(index);
   }
 
+  /** Whether a saved version slug still names a version, where null stands for a song with one version. */
+  hasVersion(slug: string | null): boolean {
+    return slug === null ? this.versions.length <= 1 : this.versions.some(v => versionSlug(v.name) === slug);
+  }
+
   versionSlug(): string | null {
     return this.whole && this.whole.versions.length > 1 ? versionSlug(this.whole.versions[this.index].name) : null;
   }

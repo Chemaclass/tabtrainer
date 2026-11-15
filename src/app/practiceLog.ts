@@ -49,6 +49,8 @@ const dayOffset = (time: number, days: number) => {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate() + days).getTime();
 };
 
+export const songProgress = (song: SongRecord | null): SongProgress => !song ? 'not-started' : song.cleanAt !== null ? 'done' : 'in-progress';
+
 const newSong = (now: number): SongRecord => ({ bestSpeed: 0, cleanAt: null, lastPlayed: now, seconds: 0, lastLoop: null, lastSpeed: CLEAN_SPEED, version: null });
 
 function mergeSong(mine: SongRecord | undefined, theirs: SongRecord): SongRecord {
@@ -71,8 +73,7 @@ export class PracticeLog {
   }
 
   progress(ref: string): SongProgress {
-    const song = this.song(ref);
-    return !song ? 'not-started' : song.cleanAt !== null ? 'done' : 'in-progress';
+    return songProgress(this.song(ref));
   }
 
   latest(): { ref: string; song: SongRecord } | null {

@@ -1,10 +1,12 @@
 import { familyOf } from '../../core/instruments';
 import { categoryCounts, nextExercise, type CatalogueEntry, type LibraryKind } from '../../app/catalogue';
 import type { OpenSong } from '../../app/openSong';
-import { normalizeSongReference } from '../../app/songLink';
+import type { PracticeLog } from '../../app/practiceLog';
+import type { PickUp } from '../../app/practiceProgress';
 import type { Songbook } from '../../app/songbook';
 import type { SongTemplateId, TemplateInstrument } from '../../app/songTemplates';
-import { recentPractice, type Saved } from '../../app/storage';
+import { pref, type Saved } from '../../app/storage';
+import { defaultSpeedPractice } from '../../core/speedPractice';
 import { shareState, type ShareState } from '../../app/songProposal';
 import { savedRef } from '../../app/songRef';
 import type { Workspace } from '../../app/workspace';
@@ -15,6 +17,7 @@ import { libraryView } from './libraryView';
 
 interface SongListActions {
   pick: (ref: string) => void;
+  continue: (plan: PickUp) => void;
   showLibrary: (kind?: LibraryKind) => void;
   newSong: () => void;
   startFrom: (template: SongTemplateId, instrument: TemplateInstrument) => void;
@@ -25,12 +28,12 @@ interface SongListActions {
   proposeSaved: (title: string, onChecklist: boolean) => void;
 }
 
-export function songList(songbook: Songbook, workspace: Workspace, openSong: OpenSong, actions: SongListActions) {
+export function songList(songbook: Songbook, workspace: Workspace, openSong: OpenSong, practiceLog: PracticeLog, actions: SongListActions) {
   let entries: CatalogueEntry[] = [];
   let playingSong: string | null = null, playedSong: string | null = null;
   const tabs = libraryNav(kind => actions.showLibrary(kind));
   const practice = practiceNav(kind => actions.showLibrary(kind), actions.pick);
-  const catalogue = libraryView(ref => actions.pick(ref), actions.newSong, actions.startFrom, () => actions.openFile(), () => actions.propose(), () => { actions.showLibrary('exercises'); byId('libraryTitle').focus({ preventScroll: true }); }, (ref, ready) => {
+  const catalogue = libraryView(ref => actions.pick(ref), actions.continue, actions.newSong, actions.startFrom, () => actions.openFile(), () => actions.propose(), () => { actions.showLibrary('exercises'); byId('libraryTitle').focus({ preventScroll: true }); }, (ref, ready) => {
     const saved = actions.shared().find(song => savedRef(song.title) === ref);
     if (saved) actions.proposeSaved(saved.title, !ready);
   });
@@ -54,7 +57,7 @@ export function songList(songbook: Songbook, workspace: Workspace, openSong: Ope
     fill() {
       entries = songbook.entries();
       const shares = new Map<string, ShareState>(workspace.screen === 'library' && workspace.kind === 'mine' ? actions.shared().map(song => [savedRef(song.title), shareState(song.text, songbook.paths)]) : []);
-      catalogue.show(entries, workspace.family, workspace.kind, recentPractice().map(ref => normalizeSongReference(ref, songbook.paths)), shares);
+      catalogue.show(entries, workspace.family, workspace.kind, practiceLog.record.songs, Date.now(), shares, pref('speedPractice', defaultSpeedPractice).increase);
       showNavigation();
     },
     showNavigation,
