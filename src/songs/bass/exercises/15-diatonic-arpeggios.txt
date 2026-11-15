@@ -1,0 +1,39 @@
+title: Diatonic Arpeggios in C
+artist: BassBuzz
+about: Play the root, third and fifth of each chord in C major in one hand position, from a BassBuzz lesson.
+level: medium
+listen: https://www.youtube.com/watch?v=QYJu2sEiNYQ
+instrument: bass4
+tempo: 80
+key: C
+time: 4/4
+
+# Stay around frets 7 to 10 with one finger per fret. Each bar is one chord of the C major scale.
+== Learn
+level: medium
+@Up the scale
+:q "C" 8.4 7.3 10.3 8.4 | :q "Dm" 10.4 8.3 7.2 10.4 |
+:q "Em" 7.3 10.3 9.2 7.3 | :q "F" 8.3 7.2 10.2 8.3 |
+:q "G" 10.3 9.2 7.1 10.3 | :q "Am" 7.2 10.2 9.1 7.2 |
+:q "Bdim" 9.2 7.1 10.1 9.2 | :q "C" 10.2 10.3 7.3 10.3 |
+
+== Develop
+level: medium
+@Doubled eighths
+:8 "C" 8.4 8.4 7.3 7.3 10.3 10.3 8.4 8.4 | :8 "Dm" 10.4 10.4 8.3 8.3 7.2 7.2 10.4 10.4 |
+:8 "Em" 7.3 7.3 10.3 10.3 9.2 9.2 7.3 7.3 | :8 "F" 8.3 8.3 7.2 7.2 10.2 10.2 8.3 8.3 |
+:8 "G" 10.3 10.3 9.2 9.2 7.1 7.1 10.3 10.3 | :8 "Am" 7.2 7.2 10.2 10.2 9.1 9.1 7.2 7.2 |
+:8 "Bdim" 9.2 9.2 7.1 7.1 10.1 10.1 9.2 9.2 | :8 "C" 10.2 10.2 10.3 10.3 7.3 7.3 10.3 10.3 |
+
+== Challenge
+level: hard
+@Doubled eighths up
+:8 "C" 8.4 8.4 7.3 7.3 10.3 10.3 8.4 8.4 | :8 "Dm" 10.4 10.4 8.3 8.3 7.2 7.2 10.4 10.4 |
+:8 "Em" 7.3 7.3 10.3 10.3 9.2 9.2 7.3 7.3 | :8 "F" 8.3 8.3 7.2 7.2 10.2 10.2 8.3 8.3 |
+:8 "G" 10.3 10.3 9.2 9.2 7.1 7.1 10.3 10.3 | :8 "Am" 7.2 7.2 10.2 10.2 9.1 9.1 7.2 7.2 |
+:8 "Bdim" 9.2 9.2 7.1 7.1 10.1 10.1 9.2 9.2 | :8 "C" 10.2 10.2 10.3 10.3 7.3 7.3 10.3 10.3 |
+@Back down
+:8 "C" 10.2 10.2 10.3 10.3 7.3 7.3 10.3 10.3 | :8 "Bdim" 9.2 9.2 7.1 7.1 10.1 10.1 9.2 9.2 |
+:8 "Am" 7.2 7.2 10.2 10.2 9.1 9.1 7.2 7.2 | :8 "G" 10.3 10.3 9.2 9.2 7.1 7.1 10.3 10.3 |
+:8 "F" 8.3 8.3 7.2 7.2 10.2 10.2 8.3 8.3 | :8 "Em" 7.3 7.3 10.3 10.3 9.2 9.2 7.3 7.3 |
+:8 "Dm" 10.4 10.4 8.3 8.3 7.2 7.2 10.4 10.4 | :8 "C" 8.4 8.4 7.3 7.3 10.3 10.3 8.4 8.4 |
