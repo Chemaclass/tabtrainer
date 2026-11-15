@@ -76,7 +76,7 @@
   display: flex;
   gap: 8px;
   padding: 6px 10px;
-  border-radius: 6px;
+  border-radius: var(--radius-s);
   cursor: pointer;
 }
 .issue-link {
@@ -89,7 +89,11 @@
   color: inherit;
   text-align: left;
 }
-.issues li:hover,
+@media (hover: hover) {
+  .issues li:hover {
+    background: var(--hover);
+  }
+}
 .issues li:has(.issue-link:focus-visible) {
   background: var(--hover);
 }
@@ -141,7 +145,7 @@
   min-height: 32px;
   padding: 4px 10px;
   border-color: var(--error);
-  border-radius: 5px;
+  border-radius: var(--radius-s);
   background: var(--page);
   color: var(--error);
   font: 600 13px/18px var(--ui);
@@ -194,7 +198,7 @@
   width: calc(var(--gutter-digits) * 1ch + 22px);
   font: 400 var(--source-size)/var(--source-line) var(--mono);
   font-variant-ligatures: none;
-  color: var(--faint);
+  color: var(--mut);
   overflow: hidden;
   user-select: none;
 }
@@ -351,6 +355,27 @@
     display: none;
   }
 }
+@media (max-width: 599px) {
+  .issue-fix,
+  .issue-link {
+    min-height: 44px;
+  }
+  .save-state :is(button, #returnDraftBtn) {
+    min-height: 44px;
+  }
+  .save-state #shareNoticeClose {
+    width: 44px;
+  }
+}
+@media (max-width: 399px) {
+  .sheet
+    :is(
+      .section-label:has(~ .bar-no[data-bar="1"]) > .tempo-mark,
+      .bar-no[data-bar="1"] + .tempo-mark
+    ) {
+    display: none;
+  }
+}
 .viewer {
   padding: 20px max(16px, env(safe-area-inset-right)) 24px
     max(16px, env(safe-area-inset-left));
@@ -368,10 +393,13 @@
   flex-wrap: wrap;
   align-items: center;
   gap: 4px 12px;
-  padding: 8px 16px;
+  padding: var(--space-2) var(--space-4);
   border-bottom: 1px solid var(--rule);
   font-size: 12px;
   color: var(--mut);
+}
+.library-view .save-state:has(#returnDraftBtn[hidden]) #dirtyState {
+  display: none;
 }
 #saveFeedback.bad {
   color: var(--error);
@@ -476,7 +504,7 @@
   height: 44px;
   background: var(--ink);
   color: var(--page);
-  border-radius: 6px;
+  border-radius: var(--radius-s);
   font-size: 20px;
 }
 #allExercisesBtn {
@@ -538,6 +566,9 @@
   .viewer {
     padding: 28px 32px;
   }
+  .save-state {
+    padding-inline: var(--space-6);
+  }
 }
 @media (min-width: 900px) {
   .editor {
@@ -572,9 +603,6 @@
         var(--continuation-h, 0px)
     );
     min-height: var(--editor-height);
-  }
-  .viewer {
-    padding: 28px 64px 32px;
   }
   .layout:not(.noedit) .viewer {
     padding: 28px 32px;
@@ -624,6 +652,14 @@
   }
   .layout.noedit #editorResize {
     display: none;
+  }
+}
+@media (min-width: 1200px) {
+  .layout.noedit .viewer {
+    padding: 28px 64px 32px;
+  }
+  .save-state {
+    padding-inline: 64px;
   }
 }
 @media (min-width: 1600px) {
@@ -784,9 +820,106 @@
   display: none;
 }
 @media (max-width: 599px) {
+  body:not(.is-playing) .viewer {
+    display: flex;
+    flex-direction: column;
+  }
+  body:not(.is-playing) :is(.song-head, .song-id) {
+    display: contents;
+  }
+  body:not(.is-playing) .viewer :is(.version-details, .passage, .sheet) {
+    margin: var(--space-3) 0 0;
+  }
+  body:not(.is-playing) .version-details {
+    padding-block: var(--space-3);
+    gap: var(--space-1) var(--space-3);
+  }
+  body:not(.is-playing) .version-help {
+    font-size: 13px;
+  }
+  body:not(.is-playing) .song-source {
+    order: 2;
+    margin-top: var(--space-4);
+  }
+  body:not(.is-playing) .viewer > .tip {
+    order: 3;
+  }
+  @media (max-height: 599px) {
+    body:not(.is-playing) .viewer {
+      padding-top: var(--space-2);
+    }
+    body:not(.is-playing) .viewer .sheet {
+      margin-top: var(--space-2);
+    }
+    body:not(.is-playing) .version-details {
+      padding-block: 0;
+      border-block: 0;
+    }
+    body:not(.is-playing) .practice-context {
+      margin-bottom: var(--space-2);
+    }
+    body:not(.is-playing) .song-head h1 {
+      margin-bottom: var(--space-1);
+      font-size: 24px;
+      line-height: 28px;
+    }
+    body:not(.is-playing) .about {
+      margin-top: var(--space-1);
+      font-size: var(--text-s);
+      line-height: 20px;
+    }
+    body:not(.is-playing) :is(.version-label, .version-help) {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      margin: -1px;
+      overflow: hidden;
+      clip-path: inset(50%);
+      white-space: nowrap;
+    }
+  }
+  #passageHelp {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  .passage {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-1) var(--space-3);
+  }
+  #rangeSummary {
+    flex: 1 1 140px;
+    min-height: 0;
+    margin: 0;
+    font-size: var(--text-xs);
+    line-height: 16px;
+  }
+  .passage:has(#rangeReset:disabled) {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
   .is-playing .top,
   .is-playing
-    :is(.practice-context, .credit, .about, .version-details, .passage, .tip) {
+    :is(
+      .practice-context,
+      .credit,
+      .about,
+      .song-source,
+      .version-details,
+      .passage,
+      .tip
+    ) {
     display: none !important;
   }
   .is-playing .song-head {
@@ -901,7 +1034,7 @@
     min-height: 44px;
     padding: 0 12px;
     border-color: var(--rule);
-    border-radius: 5px;
+    border-radius: var(--radius-s);
     font-weight: 600;
     font-size: 14px;
     color: var(--mut);

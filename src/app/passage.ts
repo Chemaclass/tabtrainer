@@ -50,7 +50,7 @@ export class Passage {
   }
   range(): [number, number] | null { return this.repeat || this.first > 1 || this.last < this.count ? [this.first, this.last] : null; }
   summary() {
-    return `${this.selected ? `Selected bar ${this.selected}. ` : ''}${this.range() ? `Bars ${this.first}-${this.last}, ${this.repeat ? 'repeating' : 'play once'}.` : 'Whole song, play once.'}`;
+    return `${this.selected ? `Selected bar ${this.selected}. ` : ''}${this.range() ? `${this.first === this.last ? `Bar ${this.first}` : `Bars ${this.first}-${this.last}`}, ${this.repeat ? 'repeating' : 'play once'}.` : 'Whole song, play once.'}`;
   }
   snapshot() { return { count: this.count, first: this.first, last: this.last, repeat: this.repeat, selected: this.selected, active: this.range() !== null }; }
 }

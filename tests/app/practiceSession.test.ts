@@ -65,7 +65,11 @@ describe('cleared loop text', () => {
     expect(clearedTitle(cleared({ loop: [3, 3], speed: 90 }))).toBe('Bar 3 at 90%.');
     expect(clearedTitle(cleared({ loop: null }))).toBe('The whole song at full speed.');
     expect(clearedSummary(cleared({}))).toBe('You started at 60%. Twelve passes and six minutes later, it sits at 100%.');
-    expect(clearedSummary(cleared({ startSpeed: 100, passes: 1, seconds: 20 }))).toBe('One pass and one minute in, it sits at 100%.');
+    expect(clearedSummary(cleared({ startSpeed: 100, passes: 1, seconds: 20 }))).toBe('One pass and 20 seconds in, it sits at 100%.');
+    expect(clearedSummary(cleared({ passes: 2, seconds: 8 }))).toBe('You started at 60%. Two passes and eight seconds later, it sits at 100%.');
+    expect(clearedSummary(cleared({ passes: 2, seconds: 0.2 }))).toBe('You started at 60%. Two passes and one second later, it sits at 100%.');
+    expect(clearedSummary(cleared({ passes: 2, seconds: 60 }))).toBe('You started at 60%. Two passes and one minute later, it sits at 100%.');
+    expect(clearedSummary(cleared({ passes: 2, seconds: 59.6 }))).toBe('You started at 60%. Two passes and one minute later, it sits at 100%.');
     expect(clearedSummary(cleared({ passes: 14 }))).toBe('You started at 60%. 14 passes and six minutes later, it sits at 100%.');
     expect(clockTime(370)).toBe('6:10');
     expect(clockTime(5)).toBe('0:05');
