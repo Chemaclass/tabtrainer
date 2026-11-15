@@ -141,7 +141,7 @@ tempo: 90
   <main id="libraryScreen" class="library" aria-labelledby="libraryTitle">
     <div class="catalogue">
       <div class="library-intro"><div id="libraryContext" class="library-context">Bass / Exercises</div><h1 id="libraryTitle" tabindex="-1">Build a skill.</h1><p id="libraryDescription">Short exercises for your hands, timing, and fretboard knowledge.</p></div>
-      <div id="mySongActions" class="my-song-actions" hidden><button id="libraryNewBtn" class="toggle">Write a song</button><button id="libraryImportBtn" class="toggle">Open a file</button><button id="libraryProposeBtn" class="toggle">Add a song to TabTrainer</button></div>
+      <div id="mySongActions" class="my-song-actions" hidden><button id="libraryImportBtn" class="toggle">Open a file</button><button id="libraryProposeBtn" class="toggle">Add a song to TabTrainer</button></div>
       <div class="library-filters">
         <label class="library-search"><svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><circle cx="7.5" cy="7.5" r="5" stroke="currentColor" stroke-width="1.5" fill="none"/><path d="m11.5 11.5 4 4" stroke="currentColor" stroke-width="1.5"/></svg><input id="songSearch" type="search" aria-label="Search exercises or skills" placeholder="Search exercises or skills" autocomplete="off" /></label>
         <label for="songLevel" class="sr-only">Difficulty</label><select id="songLevel"><option value="">All levels</option><option value="easy">Easy</option><option value="medium">Medium</option><option value="hard">Hard</option><option value="unrated">Unrated</option></select>
@@ -150,7 +150,7 @@ tempo: 90
       <div class="catalogue-heading"><h2 id="catalogueHeading">Start here</h2><span id="catalogueHint">A suggested order. Start anywhere.</span></div>
       <p id="songResults" class="sr-only" role="status" aria-live="polite"></p>
       <ul id="catalogueList" class="catalogue-list"></ul>
-      <div id="catalogueEmpty" class="catalogue-empty" hidden><h2 id="emptyTitle">No exercises match</h2><p id="emptyDescription">Try another search or clear the filters.</p><div><button id="emptyClearBtn" class="toggle">Clear filters</button><button id="emptyExercisesBtn" class="toggle" hidden>Browse exercises</button><button id="emptyNewBtn" class="primary" hidden>Write a song</button><button id="emptyOpenBtn" class="toggle" hidden>Open a file</button></div></div>
+      <div id="catalogueEmpty" class="catalogue-empty" hidden><h2 id="emptyTitle">No exercises match</h2><p id="emptyDescription">Try another search or clear the filters.</p><div><button id="emptyClearBtn" class="toggle">Clear filters</button><button id="emptyExercisesBtn" class="toggle" hidden>Browse exercises</button><button id="emptyWriteBtn" class="toggle" hidden>Write it yourself</button><button id="emptyOpenBtn" class="toggle" hidden>Open a file</button></div></div>
       <div id="closingRow" class="explore"><p><span id="closingText">Missing a song? Write it, and send it in for everyone.</span> <button id="closingWriteBtn">Write a song</button></p><button id="exploreAllBtn">Explore all exercises →</button></div>
       <button id="readTabMobileBtn" class="mobile-tab-help">How to read tab →</button>
     </div>
