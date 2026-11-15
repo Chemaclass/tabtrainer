@@ -2,7 +2,7 @@
 
 Practise electric bass and guitar from tab with rhythm. Slow a song down, loop the bars you miss, and follow each note as it plays.
 
-TabTrainer is a free web app with no account and no server. Your songs stay in your browser.
+TabTrainer is a free, open source web app. It needs no account and no server, and your songs stay in your browser. Anyone can add a song to the site with a pull request: see [Contributing](#contributing).
 
 **Try it:** https://chemaclass.github.io/tabtrainer/
 
@@ -16,9 +16,16 @@ TabTrainer is a free web app with no account and no server. Your songs stay in y
 - **Start anywhere:** select a note or bar, then press Play. `Space` pauses and resumes. Stop goes back to your selection.
 - **Follow along:** the playing note turns red, and the page scrolls with it. Press `S` for continuous scrolling at your own speed.
 - **Editor:** write songs in plain text and see the score update as you type. Errors name their line.
-- **Jam:** improvise over a looping groove of drums, bass and keys in blues, rock, reggae or funk. Pick the key, tempo, chord progression and swing, and mute the part you play. Count in one bar before the loop starts, and share a link that opens the groove with your setup. Write your own grooves in the text format below, hear them as you type, and save them in your browser under Mine.
+- **Jam:** improvise over a looping groove of drums, bass and keys in blues, rock, funk, reggae, jazz, bossa or metal. Pick the key, tempo, chord progression and swing, and mute the part you play. Count in one bar before the loop starts, and share a link that opens the groove with your setup.
+- **Your grooves:** write a groove in the text format below and hear it as you type. Save it in your browser under Mine.
 - **Fretboard:** see where the notes of any key and scale sit on your bass or guitar, as note names or degrees. Pick a mood, such as sad or dreamy, to get a scale and progressions that carry it.
 - **Your files:** download a song or groove as `.txt` to share it or move it to another device, and open it again.
+
+## Contributing
+
+TabTrainer is open source under the MIT licence, and anyone can add an exercise or a public domain song to the site. In the editor, open **File** and choose **Add to TabTrainer**. The app opens GitHub with your song file ready, and you send it as a pull request in a few clicks. You don't need to know Git. You can also write the file by hand.
+
+Once we accept your song, it appears on the site for everyone. [CONTRIBUTING.md](CONTRIBUTING.md) has the steps, the rules on what we accept, and how to send code changes.
 
 ## Song format
 
@@ -61,7 +68,9 @@ time: 4/4
 
 A groove is a backing loop to improvise over. Bundled grooves live in `src/grooves/`. The headers work like the song format; then each part gets one line of steps.
 
-In Jam, My grooves has Edit text, New and Open file. The groove text opens above the chords. While every line reads cleanly, the loop plays what you type from the next bar; while a line has a problem, the list names its line and the last working version keeps playing. Save keeps the groove in this browser under Mine in the groove list. Download saves it as a `.txt` file, and Delete removes a saved groove after asking.
+In Jam, My grooves has Edit text, New and Open file. The groove text opens above the chords. When every line reads cleanly, the loop plays what you type from the next bar. When a line has a problem, the list names that line and the last working version keeps playing.
+
+Save keeps the groove in this browser under Mine in the groove list. Download saves it as a `.txt` file. Delete removes a saved groove after asking.
 
 ```text
 title: My shuffle
@@ -114,11 +123,7 @@ npm run typecheck
 npm run build      # production build in dist/
 ```
 
-The app uses TypeScript, Vite and [VexFlow](https://www.vexflow.com/). CI lints, typechecks and tests each push. When it passes on `main`, GitHub Pages publishes the site.
-
-## Contributing
-
-To add a song or change the code, read [CONTRIBUTING.md](CONTRIBUTING.md).
+The app uses TypeScript, Vite and [VexFlow](https://www.vexflow.com/). CI lints, typechecks and tests each pull request and each push to `main`. When it passes on `main`, GitHub Pages publishes the site.
 
 ## License
 

@@ -1,6 +1,8 @@
 # Contributing to TabTrainer
 
-Wrote an exercise or arranged a public domain song? Send it in. Once we accept it, it shows up on the website for everyone, with a link of its own.
+TabTrainer is open source. Anyone can add an exercise or a public domain song to the site with a pull request on GitHub. Once we accept it, it shows up on the website for everyone, with a link of its own.
+
+You can send a song from the app, which prepares the file on GitHub for you, or add the file by hand.
 
 ## Add a song from the app
 
@@ -11,6 +13,12 @@ You don't need to know Git. You need a free GitHub account.
 3. Choose **Exercise** or **Song**, and tick the box that says you wrote the music or that it is in the public domain.
 4. Press **Open GitHub**. A new tab opens with your file named, in the right folder, and filled in. If your song is too long for the link, the app copies it for you: paste it into the empty box.
 5. On GitHub, sign in, press **Commit changes**, then **Propose changes**, then **Create pull request**. We review it and reply there.
+
+## Add a song by hand
+
+1. Fork the repository and add your file where [Where the file goes](#where-the-file-goes) says, with the lines in [What the file needs](#what-the-file-needs).
+2. Run `npm test` to check it. See [Checks](#checks).
+3. Open a pull request with the file.
 
 ## What we accept
 
@@ -81,11 +89,11 @@ The notes, durations and other symbols are in the [Song format](README.md#song-f
 
 ## After the merge
 
-`deploy.yml` publishes `main` to the website. Your song appears in the list with its own page.
+When CI passes on `main`, `deploy.yml` publishes it to the website. Your song appears in the list with its own page.
 
 ## Code changes
 
-Pull requests with practice features are welcome too. Before you send one, run:
+Pull requests with practice features are welcome too. [Development](README.md#development) in the README shows how to run the app. Before you send a pull request, run:
 
 ```bash
 npm run lint
