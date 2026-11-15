@@ -11,6 +11,8 @@
   background: var(--page) var(--select-arrow) no-repeat right 12px center;
   background-size: 14px;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .dropdown-button:hover {
   border-color: var(--control-hover);
