@@ -19,6 +19,7 @@ A static web app for practising bass and guitar from tab with rhythm. TypeScript
 - `src/main.ts` is the composition root. It builds the objects and wires them to the page; it holds no logic of its own. `src/styles.ts` imports the CSS in order.
 - `tests/` mirrors `src/`: `tests/app`, `tests/audio`, `tests/build`, `tests/core`.
 - ESLint enforces the layers: `core` imports no other layer, `app` imports no `ui`, `render` or `build`, `audio`, `render` and `build` import no `ui`, and nothing imports `main.ts`.
+- `docs/architecture.md` is the contributor guide: where a player control, preference, header line, dialog or instrument goes, how to test it, and a worked example. Update it when a layer or one of those paths changes.
 - `src/songs/<instrument>/<exercises|songs>/NN-name.txt` are the bundled songs. Add one with the `new-song` skill.
 - `src/grooves/NN-name.txt` are the bundled Jam grooves. Add one with the `new-groove` skill.
 
