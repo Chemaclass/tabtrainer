@@ -1,3 +1,4 @@
+import type { CatalogueEntry } from '../../app/catalogue';
 import type { BarLoop } from '../../app/practiceLog';
 import { barsLabel, clearedSummary, clearedTitle, clockTime, type ClearedLoop } from '../../app/practiceSession';
 import type { Player } from '../../audio/player';
@@ -6,14 +7,15 @@ import { byId } from '../dom';
 interface ClearedActions {
   next: (loop: BarLoop, speed: number) => void;
   wholeSong: () => void;
-  offersNextExercise: () => boolean;
+  nextExercise: () => CatalogueEntry | undefined;
+  pick: (ref: string) => void;
   daysInARow: () => number;
 }
 
 export function clearedSheet(player: Pick<Player, 'playing' | 'pause'>, actions: ClearedActions) {
   const sheet = byId('clearedSheet', HTMLDialogElement), steps = byId('clearedSteps');
   const nextButton = byId('clearedNextBtn', HTMLButtonElement), wholeButton = byId('clearedWholeBtn', HTMLButtonElement);
-  const continuation = byId('exerciseContinuation'), nextExercise = byId('nextExerciseBtn', HTMLButtonElement), allExercises = byId('allExercisesBtn', HTMLButtonElement);
+  const exerciseButton = byId('clearedExerciseBtn', HTMLButtonElement);
   let shown: ClearedLoop | null = null;
   sheet.addEventListener('click', event => { if (event.target instanceof Element && event.target.closest('.cleared-action')) sheet.close(); });
   nextButton.onclick = () => { if (shown?.next) actions.next(shown.next, shown.startSpeed); };
@@ -48,9 +50,12 @@ export function clearedSheet(player: Pick<Player, 'playing' | 'pause'>, actions:
     byId('clearedDays').textContent = `${days} ${days === 1 ? 'day' : 'days'}`;
     nextButton.hidden = !cleared.next;
     byId('clearedNextLabel').textContent = cleared.next ? `Next: ${barsLabel(cleared.next)}` : '';
-    continuation.hidden = cleared.loop !== null || !actions.offersNextExercise();
-    const primary = [nextButton, nextExercise, allExercises, wholeButton].find(button => !button.closest('[hidden]')) ?? wholeButton;
-    for (const button of [nextButton, nextExercise, allExercises, wholeButton]) button.classList.toggle('primary', button === primary);
+    const exercise = cleared.loop ? undefined : actions.nextExercise();
+    exerciseButton.hidden = !exercise;
+    byId('clearedExerciseTitle').textContent = exercise?.title ?? '';
+    exerciseButton.onclick = () => { if (exercise) actions.pick(exercise.value); };
+    const primary = [nextButton, exerciseButton, wholeButton].find(button => !button.hidden) ?? wholeButton;
+    for (const button of [nextButton, exerciseButton, wholeButton]) button.classList.toggle('primary', button === primary);
     sheet.showModal();
     primary.focus();
   }

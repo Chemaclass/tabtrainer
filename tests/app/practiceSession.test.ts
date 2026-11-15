@@ -29,6 +29,22 @@ describe('practice session', () => {
     session.restart(0);
     expect(session.passEnded(whole(100), noClimb, 16, 0)).toMatchObject({ passes: 1 });
   });
+  it('times a new loop from the pass that changed it', () => {
+    const session = new PracticeSession();
+    session.playing(true, 0);
+    session.passEnded(whole(80), noClimb, 16, 60_000);
+    session.passEnded(loop(80), climb, 16, 100_000);
+    expect(session.passEnded(loop(100), climb, 16, 130_000)).toMatchObject({ passes: 2, seconds: 30 });
+  });
+  it('keeps the time of the first pass after a restart, as when a climb starts, resets or the version changes', () => {
+    const session = new PracticeSession();
+    session.passEnded(loop(60), climb, 16, 0);
+    session.playing(true, 10_000); session.restart(20_000);
+    session.passEnded(loop(60), climb, 16, 50_000);
+    expect(session.passEnded(loop(100), climb, 16, 80_000)).toMatchObject({ passes: 2, seconds: 60, steps: [60, 100] });
+    session.restart(90_000);
+    expect(session.passEnded(loop(100), climb, 16, 100_000)).toMatchObject({ passes: 1, seconds: 10 });
+  });
   it('counts only the time audio plays', () => {
     const session = new PracticeSession();
     session.playing(true, 0); session.playing(false, 30_000); session.playing(true, 100_000);

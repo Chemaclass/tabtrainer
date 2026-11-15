@@ -8,6 +8,7 @@ function publishHeight(element: HTMLElement, variable: string) {
 export function publishLayoutHeights() {
   publishHeight(one('.player'), '--deck-h');
   publishHeight(one('.top'), '--top-h');
+  publishHeight(byId('exerciseContinuation'), '--continuation-h');
   publishHeight(one('.save-state'), '--save-state-h');
   publishHeight(byId('extras'), '--sheet-h');
 }

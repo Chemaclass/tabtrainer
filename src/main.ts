@@ -113,10 +113,11 @@ const passages = passageView(player, passage, passagePlayback, openSong, score, 
 const cleared = clearedSheet(player, {
   next: ([first, last], startSpeed) => { passage.setRange(first, last, true); passages.apply(); speed.set(startSpeed); speedPractice.start(); practiceSession.restart(Date.now()); player.play(); },
   wholeSong: () => { passage.clear(); passages.apply(); practiceSession.restart(Date.now()); player.play(0); },
-  offersNextExercise: songs.offersNextExercise,
+  nextExercise: songs.nextExercise,
+  pick: pickSong,
   daysInARow: () => practiceLog.daysInARow(Date.now()),
 });
-player.onSpeedPractice((_, reason) => { if (reason === 'enabled') practiceSession.restart(Date.now()); });
+player.onSpeedPractice((_, reason) => { if (reason === 'enabled' || reason === 'reset') practiceSession.restart(Date.now()); });
 const awake = screenWakeLock();
 player.on(state => awake.keep('player', state.playing));
 loop.on(state => awake.keep('jam', state.playing));
@@ -284,6 +285,7 @@ function showVersion() {
   update(false); showLink();
   const song = openSong.song;
   if (song) { passage.setSong(song.bars.length, true); player.stop(); passages.apply(); }
+  practiceSession.restart(Date.now());
 }
 function draw() {
   const song = openSong.song;

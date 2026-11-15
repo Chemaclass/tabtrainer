@@ -42,7 +42,11 @@ export class PracticeSession {
   private cleared = false;
 
   restart(now: number) {
-    this.loopKey = null; this.speeds = []; this.seconds = 0; this.cleared = false;
+    this.startLoop(null, now);
+  }
+
+  private startLoop(key: string | null, now: number) {
+    this.loopKey = key; this.speeds = []; this.seconds = 0; this.cleared = false;
     if (this.since !== null) this.since = now;
   }
 
@@ -53,7 +57,8 @@ export class PracticeSession {
 
   passEnded(pass: PassEnd, climb: Climb, barCount: number, now: number): ClearedLoop | null {
     const loop: BarLoop | null = pass.whole ? null : [pass.firstBar, pass.lastBar], key = loop?.join('-') ?? 'whole';
-    if (key !== this.loopKey) { this.loopKey = key; this.speeds = []; this.cleared = false; }
+    if (this.loopKey === null) this.loopKey = key;
+    else if (key !== this.loopKey) this.startLoop(key, now);
     this.speeds.push(pass.speed);
     const done = climb.enabled ? pass.speed >= climb.target : pass.whole && pass.speed >= CLEAN_SPEED;
     if (!done || this.cleared) return null;

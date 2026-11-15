@@ -61,6 +61,6 @@ export function songList(songbook: Songbook, workspace: Workspace, openSong: Ope
     started() { playingSong = workspace.picked; },
     stopped() { if (playingSong === null) return; playedSong = playingSong; playingSong = null; showNavigation(); },
     chooseTemplate: catalogue.chooseTemplate,
-    offersNextExercise: practice.offersNext,
+    nextExercise: practice.nextExercise,
   };
 }
