@@ -1,10 +1,6 @@
 import { isFamily, type Family } from '../../core/instruments';
-import type { Song } from '../../core/model';
 import type { Screen } from '../../app/workspace';
 import { byId, one } from '../dom';
-
-// The same title as the root page in index.html: a song or groove page starts with its own.
-const SITE_TITLE = 'TabTrainer: bass and guitar tab player and tab editor';
 
 export function screens(onFamily: (family: Family) => void, onJam: () => void) {
   const canonical = one('link[rel=canonical]', HTMLLinkElement);
@@ -21,8 +17,8 @@ export function screens(onFamily: (family: Family) => void, onJam: () => void) {
       if (screen === 'jam') jamNav.setAttribute('aria-current', 'page'); else jamNav.removeAttribute('aria-current');
       one('.player').hidden = screen !== 'practice';
     },
-    showTitle(song: Song | null, address: string, jamTitle: string | null = null) {
-      document.title = song ? `${song.meta.title} · TabTrainer` : jamTitle ? `${jamTitle} · Jam · TabTrainer` : SITE_TITLE;
+    showTitle(title: string, address: string) {
+      document.title = title;
       canonical.href = address;
     },
     focus(screen: Screen) { window.scrollTo(0, 0); byId({ library: 'libraryTitle', practice: 'title', jam: 'jamTitle' }[screen]).focus({ preventScroll: true }); },

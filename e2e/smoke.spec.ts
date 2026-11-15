@@ -109,7 +109,7 @@ test('saving over a saved song asks in the app, and Escape keeps the saved one',
 });
 
 test('a second Back while asking to discard groove changes keeps the address and the screen together', async ({ page }) => {
-  await page.goto('./?view=library&kind=exercises');
+  await page.goto('./library/bass/exercises/');
   await page.locator('#jamNavBtn').click();
   await page.locator('#jamPickerButton').click();
   await page.locator('#jamGrooveList li').nth(2).locator('button, a').first().click();
@@ -120,10 +120,10 @@ test('a second Back while asking to discard groove changes keeps the address and
   await page.goBack();
   await expect(ask).toBeVisible();
   await page.goBack();
-  await expect(page).toHaveURL(/view=library/);
+  await expect(page).toHaveURL(/\/library\/bass\/exercises\/$/);
   await ask.getByRole('button', { name: 'Discard' }).click();
   await expect(ask).toBeHidden();
-  await expect(page).toHaveURL(/view=library/);
+  await expect(page).toHaveURL(/\/library\/bass\/exercises\/$/);
   await expect(page.locator('#libraryScreen')).toBeVisible();
   await expect(page.locator('#jamScreen')).toBeHidden();
 });
