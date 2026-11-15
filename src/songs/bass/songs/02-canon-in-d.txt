@@ -3,14 +3,14 @@ artist: Johann Pachelbel (public domain)
 about: One of the most famous bass lines ever written. Eight notes that repeat while the music on top changes. It trains steady half and quarter notes and string crossing.
 level: easy
 instrument: bass4
-tempo: 60
+tempo: 96
 key: D
 time: 4/4
 
 @Half notes
-"D" :h 0.2 "A" 0.3 | "Bm" 2.3 "F#m" 2.4 | "G" 3.4 "D" 5.3 | "G" 5.2 "A" 7.2 |
-"D" 0.2 "A" 0.3 | "Bm" 2.3 "F#m" 2.4 | "G" 3.4 "D" 5.3 | "G" 5.2 "A" 7.2 |
+"D" :h 0.2 "A" 0.3 | "Bm" 2.3 "F#m" 2.4 | "G" 3.4 "D" 0.2 | "G" 3.4 "A" 0.3 |
+"D" 0.2 "A" 0.3 | "Bm" 2.3 "F#m" 2.4 | "G" 3.4 "D" 0.2 | "G" 3.4 "A" 0.3 |
 @Quarter notes
-"D" :q 0.2 0.2 "A" 0.3 0.3 | "Bm" 2.3 2.3 "F#m" 2.4 2.4 | "G" 3.4 3.4 "D" 5.3 5.3 | "G" 5.2 5.2 "A" 7.2 7.2 |
+"D" :q 0.2 0.2 "A" 0.3 0.3 | "Bm" 2.3 2.3 "F#m" 2.4 2.4 | "G" 3.4 3.4 "D" 0.2 0.2 | "G" 3.4 3.4 "A" 0.3 0.3 |
 @Ending
 "D" :w 0.2 |
