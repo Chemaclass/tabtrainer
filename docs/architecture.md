@@ -80,3 +80,25 @@ Before you send a pull request, run the checks in [Code changes](../CONTRIBUTING
    ```
 
 The rule lives in `src/app/` with a test, the browser call lives in `src/ui/`, and `src/main.ts` only connects them. Most features follow the same path.
+
+## Colours, spacing and type
+
+The design tokens live in `:root` in `src/style.css`, and `[data-theme="dark"]` sets the dark values of the colours. Use a token instead of a number in new CSS. When you touch an older rule, swap a literal for a token only when the values match exactly, so nothing on the page moves.
+
+| Tokens | Values | Use them for |
+| --- | --- | --- |
+| `--space-1` to `--space-6` | 4, 8, 12, 16, 24, 32 px | `padding`, `margin` and `gap` |
+| `--radius-s`, `--radius-m`, `--radius-pill` | 6, 12, 999 px | `border-radius`: buttons, cards, round pills |
+| `--text-xs` to `--text-xl` | 12, 14, 16, 20, 28 px | `font-size`, or the size in a `font` shorthand |
+
+The neutral colours carry the page: `--page` for the background, `--ink` for text, `--mut` and `--faint` for quieter text, `--rule` for lines, `--wash` and `--hover` for filled areas. The player bar at the bottom has its own set starting with `--deck`.
+
+Three colours carry meaning. Use each one only for that meaning, so a player can read the page at a glance.
+
+| Colour | Tokens | Means | Examples |
+| --- | --- | --- | --- |
+| Amber | `--led`, `--led-text`, `--track-fill`, `--cur` | Where you are and how far you got | The current line of the score, the filled part of a slider or progress bar, an exercise in progress, the target string in the tuner |
+| Red | `--playing`, `--error`, `--problem-wash`, `--problem-text` | The note sounding now, or something to fix | The note that plays, a line the parser cannot read, a missing step in a song proposal |
+| Green | `--ok`, `--ok-text` | Done or right | A finished exercise, a string in tune, a passed check |
+
+Use the `-text` token for words and the plain one for fills and borders: the `-text` value is darker in light mode, so the words stay readable.

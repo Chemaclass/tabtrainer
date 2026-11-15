@@ -112,7 +112,7 @@ When CI passes on `main`, `deploy.yml` publishes it to the website. Your song ap
 
 ## Code changes
 
-Pull requests with practice features are welcome too. [Development](README.md#development) in the README shows how to run the app. [How the code fits together](docs/architecture.md) shows where new code goes, such as a player control or a preference, how to test it, and one feature from start to end. Before you send a pull request, run:
+Pull requests with practice features are welcome too. [Development](README.md#development) in the README shows how to run the app. [How the code fits together](docs/architecture.md) shows where new code goes, such as a player control or a preference, how to test it, and one feature from start to end. For CSS, use the tokens in [Colours, spacing and type](docs/architecture.md#colours-spacing-and-type). Before you send a pull request, run:
 
 ```bash
 npm run check
