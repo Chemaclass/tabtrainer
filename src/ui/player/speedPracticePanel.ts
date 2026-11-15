@@ -1,4 +1,4 @@
-import { defaultSpeedPracticeFrom, isSpeedPracticeConfig, nextSpeedPracticeSpeed } from '../../core/speedPractice';
+import { defaultSpeedPracticeFrom, isSpeedPracticeConfig, speedPracticeProgressText } from '../../core/speedPractice';
 import { pref, setPref } from '../../app/storage';
 import type { Player } from '../../audio/player';
 import { closeOnOutside } from '../shell/disclosure';
@@ -31,7 +31,7 @@ export function speedPracticePanel(player: Player, canLoop: () => boolean, onSpe
     climb.textContent = `Climb to ${climbTarget}%`;
     const progress = byId('speedPracticeProgress');
     progress.hidden = !state.enabled;
-    progress.textContent = state.reached ? `Target reached: ${state.speed}%` : `pass ${state.completed + 1} of ${state.repetitions}, then ${nextSpeedPracticeSpeed(state.speed, state)}%`;
+    progress.textContent = speedPracticeProgressText(state);
   }
   player.onSpeedPractice((state, reason) => {
     onSpeedChange(); show();

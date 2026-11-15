@@ -38,7 +38,7 @@ interface Binding { action: PracticeAction; native?: boolean; repeats?: boolean;
 const practiceNativeControls = `${nativeControls}, a[href]`;
 const nonTextInputs = new Set(['range', 'checkbox', 'radio', 'button', 'submit', 'reset', 'color', 'file', 'image', 'hidden']);
 const typingControls = 'select, textarea, [contenteditable], dialog, .file-menu, [role="menu"], [role="menuitem"], [role="menuitemcheckbox"], [role="menuitemradio"], [role="combobox"], [role="listbox"], [role="option"]';
-const speedStep = 5;
+export const speedStep = 5;
 const scrollRateStep = 2;
 
 function bindingFor(key: string, state: PracticeKeyState): Binding | null {

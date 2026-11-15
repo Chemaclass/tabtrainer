@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { advanceSpeedPractice, defaultSpeedPractice, defaultSpeedPracticeFrom, isSpeedPracticeConfig, nextSpeedPracticeSpeed } from '../../src/core/speedPractice';
+import { advanceSpeedPractice, defaultSpeedPractice, defaultSpeedPracticeFrom, isSpeedPracticeConfig, nextSpeedPracticeSpeed, passMarks, speedPracticeProgressText } from '../../src/core/speedPractice';
 
 describe('speed practice rules', () => {
   it('climbs to 100% in steps of 5 points after 4 passes by default', () => {
@@ -25,5 +25,15 @@ describe('speed practice rules', () => {
   it('validates integer values and bounds', () => {
     expect(isSpeedPracticeConfig({ repetitions: 1, increase: 20, target: 130 })).toBe(true);
     for (const value of [null, [], {}, { repetitions: 1.5, increase: 5, target: 80 }, { repetitions: 1, increase: Infinity, target: 80 }, { repetitions: 0, increase: 5, target: 80 }, { repetitions: 1, increase: 5, target: 29 }]) expect(isSpeedPracticeConfig(value)).toBe(false);
+  });
+  it('says which pass is playing and the speed that comes next', () => {
+    expect(speedPracticeProgressText({ speed: 75, completed: 2, repetitions: 4, increase: 5, target: 100 })).toBe('pass 3 of 4, then 80%');
+    expect(speedPracticeProgressText({ speed: 98, completed: 0, repetitions: 2, increase: 5, target: 100 })).toBe('pass 1 of 2, then 100%');
+    expect(speedPracticeProgressText({ speed: 100, completed: 0, repetitions: 4, increase: 5, target: 100 })).toBe('Target reached: 100%');
+  });
+  it('marks each pass of the set as done, playing or still to come', () => {
+    expect(passMarks({ completed: 2, repetitions: 4 })).toEqual(['done', 'done', 'current', 'todo']);
+    expect(passMarks({ completed: 0, repetitions: 1 })).toEqual(['current']);
+    expect(passMarks({ completed: 0, repetitions: 0 })).toEqual([]);
   });
 });

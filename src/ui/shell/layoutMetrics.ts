@@ -10,4 +10,5 @@ export function publishLayoutHeights() {
   publishHeight(one('.top'), '--top-h');
   publishHeight(byId('exerciseContinuation'), '--continuation-h');
   publishHeight(one('.save-state'), '--save-state-h');
+  publishHeight(byId('extras'), '--sheet-h');
 }

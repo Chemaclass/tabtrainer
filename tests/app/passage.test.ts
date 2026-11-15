@@ -27,6 +27,13 @@ describe('practice passage', () => {
     passage.clear(); passage.toggleRepeat(); expect(passage.snapshot()).toMatchObject({ first: 1, last: 8, repeat: true, active: true });
     passage.toggleRepeat(); expect(passage.range()).toBeNull();
   });
+  it('names the passage for the deck: a loop, a play once range, or nothing for the whole song', () => {
+    const passage = song(); expect(passage.label()).toBeNull();
+    passage.setRange(5, 8, true); expect(passage.label()).toBe('Loop 5-8');
+    passage.toggleRepeat(); expect(passage.label()).toBe('Bars 5-8');
+    passage.setRange(4, 4, false); expect(passage.label()).toBe('Bar 4');
+    passage.toggleRepeat(); expect(passage.label()).toBe('Loop 4');
+  });
   it('retains a valid range across edits and resets it for shorter arrangements', () => {
     const passage = song(); passage.setRange(3, 5, true); passage.setSong(10, false);
     expect(passage.range()).toEqual([3, 5]); expect(passage.snapshot().selected).toBe(0);
