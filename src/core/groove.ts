@@ -88,7 +88,8 @@ function barsAt(part: GroovePart, grid: string, at: IssueSpan): RawBar[] {
   let col = at.col;
   const bars = grid.split('|').map(bar => {
     const steps = stepsAt(part, bar, col);
-    const raw = { steps, at: { line: at.line, col, length: bar.length } };
+    // A bar with no characters points at the "|" that closes it.
+    const raw = { steps, at: { line: at.line, col, length: bar.length || 1 } };
     col += bar.length + 1;
     return raw;
   });

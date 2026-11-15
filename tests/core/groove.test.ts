@@ -142,6 +142,10 @@ describe('groove issue codes', () => {
   it.each(Object.entries(CASES))('points %s at its token', (code, [src, where]) => {
     expect(parseGroove(src).issues).toEqual([expect.objectContaining({ code, severity: 'warning', ...where })]);
   });
+  it('points a bar with no characters at the "|" that closes it', () => {
+    expect(parseGroove(`${head}kick: | x...x...`).issues).toEqual([expect.objectContaining({ code: 'bar-empty', line: 6, col: 7, length: 1 })]);
+    expect(parseGroove(`${head}kick: x...x...||x...x...`).issues).toEqual([expect.objectContaining({ code: 'bar-empty', line: 6, col: 16, length: 1 })]);
+  });
   it('points an unknown bass step at its word', () => {
     expect(parseGroove(`${head}bass: 1 2 3 4 5 . . .`).issues).toEqual([expect.objectContaining({ code: 'step-unknown', line: 6, col: 13, length: 1 })]);
   });
