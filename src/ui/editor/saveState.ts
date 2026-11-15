@@ -14,7 +14,7 @@ export function saveState(draftSession: DraftSession, workspace: Workspace, onDo
   }
   function show() {
     byId('returnDraftBtn').hidden = workspace.screen === 'practice' || !hasChanges();
-    one('.save-state').hidden = !hasChanges() && !feedback.textContent;
+    one('.save-state').hidden = workspace.screen === 'jam' || (!hasChanges() && !feedback.textContent);
     showShare();
     byId('dirtyState').textContent = hasChanges() ? `Unsaved changes${draftSession.stored ? '' : ' (draft recovery unavailable)'}` : 'No unsaved changes';
   }

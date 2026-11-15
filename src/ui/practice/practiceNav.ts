@@ -10,20 +10,23 @@ export interface PracticeNavState {
   instrument: string;
   kind: LibraryKind;
   next: CatalogueEntry | undefined;
+  song: string;
+  played: boolean;
   practising: boolean;
 }
 
 export function practiceNav(onBack: (kind: LibraryKind) => void, onNext: (value: string) => void) {
   const continuation = byId('exerciseContinuation'), nextButton = byId('nextExerciseBtn'), allButton = byId('allExercisesBtn');
-  let dismissed = false;
+  let dismissedSong: string | null = null, shownSong: string | null = null;
   allButton.onclick = () => onBack('exercises');
-  byId('closeContinuationBtn').onclick = () => { dismissed = true; byId('playBtn').focus(); continuation.hidden = true; };
+  byId('closeContinuationBtn').onclick = () => { dismissedSong = shownSong; byId('playBtn').focus(); continuation.hidden = true; };
   return {
-    show({ title, instrument, kind, next, practising }: PracticeNavState) {
+    show({ title, instrument, kind, next, practising, song, played }: PracticeNavState) {
       byId('backLibraryBtn').textContent = backLabels[kind];
       byId('practiceName').textContent = title ?? 'Your song';
       byId('practiceContext').textContent = `${instrument} / ${kindNames[kind]}`;
-      continuation.hidden = !practising || kind !== 'exercises' || dismissed;
+      shownSong = song;
+      continuation.hidden = !practising || kind !== 'exercises' || !played || dismissedSong === song;
       nextButton.hidden = !next; allButton.hidden = !!next;
       if (next) { byId('nextExerciseTitle').textContent = next.title; nextButton.onclick = () => onNext(next.value); }
       byId('backLibraryBtn').onclick = () => onBack(kind);

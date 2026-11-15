@@ -241,7 +241,7 @@ tempo: 90
       </section>
     </aside>
   </main>
-  <footer class="site-footer"><a href="./">What is TabTrainer?</a> Free and open source. <a href="./?view=library&amp;kind=mine&amp;new=1">Write a song and send it in</a>. Made by <a href="https://chemaclass.com" target="_blank" rel="noopener">Chemaclass</a> · <a href="https://github.com/Chemaclass/tabtrainer" target="_blank" rel="noopener">Source code on GitHub</a></footer>
+  <footer class="site-footer"><a href="./">What is TabTrainer?</a> Free and open source. <a href="./?view=library&amp;kind=mine&amp;new=1">Write a song and send it in</a>. Made by <a href="https://chemaclass.com" target="_blank" rel="noopener">Chemaclass</a> · <a href="https://github.com/Chemaclass/tabtrainer" target="_blank" rel="noopener">Source code on GitHub</a><button class="round theme-toggle footer-theme" type="button" aria-label="Switch to dark theme" title="Switch to dark theme"><svg class="moon" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M13.5 9.6A5.5 5.5 0 0 1 6.4 2.5a5.5 5.5 0 1 0 7.1 7.1Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg><svg class="sun" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="3" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 1v1.5M8 13.5V15M1 8h1.5M13.5 8H15M3 3l1 1M12 12l1 1M3 13l1-1M12 4l1-1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></button></footer>
   <div id="practiceScreen" hidden>
   <main class="layout noedit">
     <section id="editorPane" class="editor">
@@ -268,7 +268,7 @@ tempo: 90
         <p id="rangeSummary" role="status" aria-live="polite"></p>
       </div>
       <div id="sheet" class="sheet"></div>
-      <p class="tip">Select a note with a click, tap, or Enter, then press Play. Double-click a note to start there. Tap a bar number to start a loop there, and another to extend it. Tap either end of the loop to clear it. Stop returns to the selected note or bar, or to the passage start. <button id="shortcutsBtn" class="tip-link" type="button" aria-haspopup="dialog">Keyboard shortcuts</button><span class="keys">: press <kbd>?</kbd></span></p>
+      <p class="tip">Tap a note, then Play. Tap a bar number to loop it. <span class="keys">Press <kbd>?</kbd> for </span><button id="shortcutsBtn" class="tip-link" type="button" aria-haspopup="dialog"><span class="keys">shortcuts</span><span class="touch-label">Shortcuts</span></button><span class="keys">.</span></p>
     </section>
   </main>
 
@@ -300,7 +300,7 @@ tempo: 90
         <button data-speed="50" aria-pressed="false">50%</button><button data-speed="75" aria-pressed="false">75%</button><button data-speed="100" aria-pressed="true">100%</button>
       </div>
     </div>
-    <button id="moreBtn" class="more" aria-expanded="false" aria-controls="extras" title="Loop, timing, scrolling and text size"><svg class="more-chevron" width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M3 9l4-4 4 4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg><svg class="more-icon" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h2M10 17h10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="16" cy="7" r="2" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="8" cy="17" r="2" fill="none" stroke="currentColor" stroke-width="2"/></svg><span class="more-wide">Loop / more</span><span class="more-narrow">More</span></button>
+    <button id="moreBtn" class="more" aria-expanded="false" aria-controls="extras" title="Loop, timing, scrolling and tab size"><svg class="more-chevron" width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M3 9l4-4 4 4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg><svg class="more-icon" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h2M10 17h10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="16" cy="7" r="2" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="8" cy="17" r="2" fill="none" stroke="currentColor" stroke-width="2"/></svg><span class="more-wide">Loop / more</span><span class="more-narrow">More</span></button>
     <div id="extras" class="extras">
     <div class="loop">
       <label class="pill"><input id="loopChk" type="checkbox" /><svg width="16" height="14" viewBox="0 0 16 14" aria-hidden="true"><path d="M2 7a4 4 0 0 1 4-4h6M14 7a4 4 0 0 1-4 4H4M10 1l2 2-2 2M6 9l-2 2 2 2" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Loop bars</label>
@@ -335,9 +335,9 @@ tempo: 90
       <span id="scrollHelp">Keep the playing line in view.</span>
       <div id="scrollRate" hidden><label for="scrollSpeed">Scroll speed</label><input id="scrollSpeed" type="range" min="3" max="80" value="15" /></div>
     </div>
-    <div class="text-size" role="group" aria-labelledby="textSizeLabel">
-      <span id="textSizeLabel" class="lbl">Text size</span>
-      <button id="zoomOut" title="Smaller" aria-label="Smaller">A−</button><button id="zoomIn" title="Bigger" aria-label="Bigger">A+</button>
+    <div class="tab-size" role="group" aria-labelledby="tabSizeLabel">
+      <span id="tabSizeLabel" class="lbl">Tab size</span>
+      <button id="zoomOut" title="Smaller tab" aria-label="Smaller tab">A−</button><button id="zoomIn" title="Bigger tab" aria-label="Bigger tab">A+</button>
     </div>
     </div>
   </footer>

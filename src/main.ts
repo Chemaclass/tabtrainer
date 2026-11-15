@@ -118,8 +118,8 @@ practiceShortcuts(player, {
   showShortcuts: help.showShortcuts,
 });
 const playback = playbackView(player, { transport: transportView, score, follows: scrolling.follows }, {
-  started: () => { if (workspace.picked) { recordPractice(workspace.picked); songs.fill(); } },
-  stopped: () => { passagePlayback.deselect(); passages.show(); },
+  started: () => { songs.started(); if (workspace.picked) { recordPractice(workspace.picked); songs.fill(); } },
+  stopped: () => { passagePlayback.deselect(); passages.show(); songs.stopped(); },
 });
 player.on(playback.show);
 player.on(state => { if (state.playing) jamming.stop(); });
