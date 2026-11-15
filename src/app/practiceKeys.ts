@@ -1,4 +1,4 @@
-import { insideAny, nativeControls } from './playbackShortcut';
+import { closestOf, insideAny, nativeControls } from './playbackShortcut';
 
 export type PracticeAction =
   | { kind: 'restart' }
@@ -31,9 +31,13 @@ export interface PracticeKeyState {
   scrolling: boolean;
 }
 
-interface Binding { action: PracticeAction; native?: boolean; repeats?: boolean }
+export interface PassageBounds { count: number; first: number; last: number; active: boolean }
 
-const typingControls = 'input, select, textarea, [contenteditable], dialog, .file-menu, [role="menu"], [role="menuitem"], [role="menuitemcheckbox"], [role="menuitemradio"], [role="combobox"], [role="listbox"], [role="option"]';
+interface Binding { action: PracticeAction; native?: boolean; repeats?: boolean; altGraph?: boolean }
+
+const practiceNativeControls = `${nativeControls}, a[href]`;
+const nonTextInputs = new Set(['range', 'checkbox', 'radio', 'button', 'submit', 'reset', 'color', 'file', 'image', 'hidden']);
+const typingControls = 'select, textarea, [contenteditable], dialog, .file-menu, [role="menu"], [role="menuitem"], [role="menuitemcheckbox"], [role="menuitemradio"], [role="combobox"], [role="listbox"], [role="option"]';
 const speedStep = 5;
 const scrollRateStep = 2;
 
@@ -43,8 +47,8 @@ function bindingFor(key: string, state: PracticeKeyState): Binding | null {
     case 'PageDown': return { action: { kind: 'restart' } };
     case 'PageUp': return { action: { kind: 'bar', step: -1 }, repeats: true };
     case 'l': case 'L': return { action: { kind: 'loop' } };
-    case '[': return { action: { kind: 'loopStart' } };
-    case ']': return { action: { kind: 'loopEnd' } };
+    case '[': return { action: { kind: 'loopStart' }, altGraph: true };
+    case ']': return { action: { kind: 'loopEnd' }, altGraph: true };
     case '-': return { action: { kind: 'nudgeSpeed', by: -speedStep }, repeats: true };
     case '=': case '+': return { action: { kind: 'nudgeSpeed', by: speedStep }, repeats: true };
     case '1': return { action: { kind: 'speed', percent: 50 } };
@@ -61,14 +65,30 @@ function bindingFor(key: string, state: PracticeKeyState): Binding | null {
   }
 }
 
-export function practiceKey(event: PracticeKeyEvent, state: PracticeKeyState): PracticeAction | null {
-  if (!state.active || state.dialogOpen || event.defaultPrevented || event.isComposing || event.ctrlKey || event.altKey || event.metaKey) return null;
-  const binding = bindingFor(event.key, state);
-  if (!binding || (event.repeat && !binding.repeats)) return null;
-  return insideAny(event.target, binding.native ? nativeControls : typingControls) ? null : binding.action;
+function typingIn(target: EventTarget | null) {
+  if (insideAny(target, typingControls)) return true;
+  const input = closestOf(target, 'input');
+  if (!input || typeof input !== 'object') return false;
+  const type = 'type' in input && typeof input.type === 'string' ? input.type.toLowerCase() : 'text';
+  return !nonTextInputs.has(type);
 }
 
-export function barAfter(current: number, step: -1 | 1, count: number): number | null {
-  if (count < 1) return null;
-  return Math.min(count, Math.max(1, current + step));
+function modified(event: PracticeKeyEvent, binding: Binding) {
+  if (event.metaKey) return true;
+  if (binding.altGraph && event.altKey) return false;
+  return event.ctrlKey || event.altKey;
+}
+
+export function practiceKey(event: PracticeKeyEvent, state: PracticeKeyState): PracticeAction | null {
+  if (!state.active || state.dialogOpen || event.defaultPrevented || event.isComposing) return null;
+  const binding = bindingFor(event.key, state);
+  if (!binding || modified(event, binding) || (event.repeat && !binding.repeats)) return null;
+  const blocked = binding.native ? insideAny(event.target, practiceNativeControls) : typingIn(event.target);
+  return blocked ? null : binding.action;
+}
+
+export function barAfter(current: number, step: -1 | 1, passage: PassageBounds): number | null {
+  if (passage.count < 1) return null;
+  const [first, last] = passage.active ? [passage.first, passage.last] : [1, passage.count];
+  return Math.min(last, Math.max(first, current + step));
 }

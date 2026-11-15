@@ -17,9 +17,13 @@ interface ShortcutEvent {
 
 export const nativeControls = 'button, input, select, textarea, [contenteditable], dialog, summary, .file-menu, [role="menu"], [role="menuitem"], [role="menuitemcheckbox"], [role="menuitemradio"], [role="checkbox"], [role="radio"], [role="switch"], [role="slider"], [role="combobox"], [role="listbox"], [role="option"], [role="separator"]';
 
+export function closestOf(target: EventTarget | null, selectors: string): unknown {
+  if (!target || !('closest' in target) || typeof target.closest !== 'function') return null;
+  return (target as ShortcutTarget).closest(selectors);
+}
+
 export function insideAny(target: EventTarget | null, selectors: string): boolean {
-  if (!target || !('closest' in target) || typeof target.closest !== 'function') return false;
-  return Boolean((target as ShortcutTarget).closest(selectors));
+  return Boolean(closestOf(target, selectors));
 }
 
 export function playbackShortcut(active: () => boolean, playing: () => boolean, play: () => void, pause: () => void) {

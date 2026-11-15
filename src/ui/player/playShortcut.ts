@@ -41,7 +41,7 @@ export function practiceShortcuts(player: Player, controls: PracticeControls) {
       case 'nudgeSpeed': controls.speed.nudge(action.by); break;
       case 'speed': controls.speed.set(action.percent); break;
       case 'bar': {
-        const bar = barAfter(currentBar(), action.step, controls.passage.snapshot().count);
+        const bar = barAfter(currentBar(), action.step, controls.passage.snapshot());
         if (bar) controls.passages.selectBar(bar);
         break;
       }

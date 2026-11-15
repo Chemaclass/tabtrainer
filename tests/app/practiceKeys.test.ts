@@ -7,9 +7,11 @@ function event(key: string, overrides: Partial<PracticeKeyEvent> = {}): Practice
 
 const stopped: PracticeKeyState = { active: true, dialogOpen: false, playing: false, scrolling: false };
 
-function target(selector: string) {
-  return { closest: (selectors: string) => selectors.split(', ').includes(selector) ? {} : null } as unknown as EventTarget;
+function target(selector: string, found: object = {}) {
+  return { closest: (selectors: string) => selectors.split(', ').includes(selector) ? found : null } as unknown as EventTarget;
 }
+
+const wholeSong = { count: 8, first: 1, last: 8, active: false };
 
 describe('practice keys', () => {
   it('restarts with Enter and Page Down', () => {
@@ -91,6 +93,36 @@ describe('practice keys', () => {
     }
   });
 
+  it('accepts [ and ] typed with AltGr or Option, as on Spanish, German and French layouts', () => {
+    for (const overrides of [{ altKey: true }, { ctrlKey: true, altKey: true }]) {
+      expect(practiceKey(event('[', overrides), stopped)).toEqual({ kind: 'loopStart' });
+      expect(practiceKey(event(']', overrides), stopped)).toEqual({ kind: 'loopEnd' });
+      expect(practiceKey(event('l', overrides), stopped)).toBeNull();
+    }
+    expect(practiceKey(event('[', { ctrlKey: true }), stopped)).toBeNull();
+    expect(practiceKey(event('[', { metaKey: true }), stopped)).toBeNull();
+  });
+
+  it('leaves Enter and arrows to a focused link', () => {
+    expect(practiceKey(event('Enter', { target: target('a[href]') }), stopped)).toBeNull();
+    expect(practiceKey(event('ArrowLeft', { target: target('a[href]') }), stopped)).toBeNull();
+    expect(practiceKey(event('l', { target: target('a[href]') }), stopped)).toEqual({ kind: 'loop' });
+  });
+
+  it('takes letters and pedal keys on a focused slider or checkbox, but leaves them Enter and arrows', () => {
+    for (const type of ['range', 'checkbox']) {
+      const control = target('input', { type });
+      expect(practiceKey(event('l', { target: control }), stopped)).toEqual({ kind: 'loop' });
+      expect(practiceKey(event('PageDown', { target: control }), stopped)).toEqual({ kind: 'restart' });
+      expect(practiceKey(event('PageUp', { target: control }), stopped)).toEqual({ kind: 'bar', step: -1 });
+      expect(practiceKey(event('Enter', { target: control }), stopped)).toBeNull();
+      expect(practiceKey(event('ArrowRight', { target: control }), stopped)).toBeNull();
+    }
+    for (const type of ['text', 'number', 'search']) {
+      expect(practiceKey(event('PageDown', { target: target('input', { type }) }), stopped)).toBeNull();
+    }
+  });
+
   it('ignores modifiers, composition, handled keys and other screens', () => {
     for (const overrides of [{ ctrlKey: true }, { altKey: true }, { metaKey: true }, { isComposing: true }, { defaultPrevented: true }]) {
       expect(practiceKey(event('l', overrides), stopped)).toBeNull();
@@ -108,12 +140,20 @@ describe('practice keys', () => {
 
 describe('bar after a step', () => {
   it('stays inside the song and starts at the first bar with nothing selected', () => {
-    expect(barAfter(3, 1, 8)).toBe(4);
-    expect(barAfter(3, -1, 8)).toBe(2);
-    expect(barAfter(1, -1, 8)).toBe(1);
-    expect(barAfter(8, 1, 8)).toBe(8);
-    expect(barAfter(0, 1, 8)).toBe(1);
-    expect(barAfter(0, -1, 8)).toBe(1);
-    expect(barAfter(0, 1, 0)).toBeNull();
+    expect(barAfter(3, 1, wholeSong)).toBe(4);
+    expect(barAfter(3, -1, wholeSong)).toBe(2);
+    expect(barAfter(1, -1, wholeSong)).toBe(1);
+    expect(barAfter(8, 1, wholeSong)).toBe(8);
+    expect(barAfter(0, 1, wholeSong)).toBe(1);
+    expect(barAfter(0, -1, wholeSong)).toBe(1);
+    expect(barAfter(0, 1, { count: 0, first: 1, last: 1, active: false })).toBeNull();
+  });
+
+  it('stays inside an active loop so stepping never clears it', () => {
+    const loop = { count: 8, first: 3, last: 5, active: true };
+    expect(barAfter(3, -1, loop)).toBe(3);
+    expect(barAfter(5, 1, loop)).toBe(5);
+    expect(barAfter(4, 1, loop)).toBe(5);
+    expect(barAfter(0, 1, loop)).toBe(3);
   });
 });
