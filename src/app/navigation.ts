@@ -48,6 +48,7 @@ export function routeSearch(search: string, route: Route): string {
 export class Navigation {
   private position: number;
   private restoring = false;
+  private visits = 0;
   constructor(private history: Pick<History, 'state' | 'pushState' | 'replaceState' | 'go'>, private location: Pick<Location, 'pathname' | 'search' | 'hash'>, private paths: string[]) {
     this.position = navigationState(history.state)?.index ?? 0;
   }
@@ -59,11 +60,20 @@ export class Navigation {
     const state = { app: 'tabtrainer', index: this.position, picked };
     if (push && changed) this.history.pushState(state, '', url); else this.history.replaceState(state, '', url);
   }
-  visit(state: unknown, open: (route: Route, accept: () => void, cancel: () => void) => void) {
+  /** Answers to a visit, and what runs after accepting it, are ignored once a later visit has been handled. */
+  visit(state: unknown, open: (route: Route, accept: (then?: () => void) => void, cancel: () => void) => void) {
     if (this.restoring) { this.restoring = false; return; }
     const target = navigationState(state), previous = this.position;
     const destination = target?.index ?? previous - 1;
-    open(readRoute(this.location.search, this.paths, target?.picked), () => { this.position = destination; }, () => {
+    const visit = ++this.visits;
+    const isLatest = () => visit === this.visits;
+    const accept = (then?: () => void) => {
+      if (!isLatest()) return;
+      this.position = destination;
+      then?.();
+    };
+    open(readRoute(this.location.search, this.paths, target?.picked), accept, () => {
+      if (!isLatest()) return;
       const current = navigationState(this.history.state)?.index ?? destination;
       if (previous !== current) { this.restoring = true; this.history.go(previous - current); }
     });

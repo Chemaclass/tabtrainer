@@ -23,7 +23,7 @@ describe('draft session', () => {
     expect(session.hasChanges()).toBe(true);
     session.persist('lib:Song');
     expect(JSON.parse(values.get('tabtrainer:draft')!)).toEqual({ text: 'title: Song\noriginal\nchanged', base: 'title: Song\noriginal', picked: 'lib:Song' });
-    expect(await session.save(() => 'replace')).toEqual({ status: 'saved', title: 'Song', text: 'title: Song\noriginal\nchanged' });
+    expect(await session.save(() => 'replace')).toEqual({ status: 'saved', title: 'Song', text: 'title: Song\noriginal\nchanged', current: true });
     expect(session.hasChanges()).toBe(false);
   });
   it('keeps changes when storage fails or overwrite is cancelled', async () => {
@@ -39,7 +39,7 @@ describe('draft session', () => {
     const { session, edit } = draft();
     await session.save(() => 'replace'); edit();
     const choose = vi.fn((): SaveChoice => 'replace');
-    expect(await session.save(choose)).toEqual({ status: 'saved', title: 'Song', text: 'title: Song\noriginal\nchanged' });
+    expect(await session.save(choose)).toEqual({ status: 'saved', title: 'Song', text: 'title: Song\noriginal\nchanged', current: true });
     expect(choose).toHaveBeenCalledWith({ title: 'Song', copyTitle: 'Song 2' });
     expect(savedLibrary(values)).toEqual(['Song']);
     expect(session.hasChanges()).toBe(false);
@@ -48,7 +48,7 @@ describe('draft session', () => {
     const values = memoryStorage();
     const { session } = draft();
     await session.save(() => 'replace');
-    expect(await session.save(() => 'keep-both')).toEqual({ status: 'saved', title: 'Song 2', text: 'title: Song 2\noriginal' });
+    expect(await session.save(() => 'keep-both')).toEqual({ status: 'saved', title: 'Song 2', text: 'title: Song 2\noriginal', current: true });
     expect(savedLibrary(values)).toEqual(['Song', 'Song 2']);
     expect(JSON.parse(values.get('tabtrainer:library')!).Song.text).toBe('title: Song\noriginal');
   });
@@ -72,9 +72,24 @@ describe('draft session', () => {
     expect(second).not.toHaveBeenCalled();
     text = 'title: Song\ntyped while asking';
     answer('replace');
-    expect(await asked).toEqual({ status: 'saved', title: 'Song', text: 'title: Song\nfirst' });
+    expect(await asked).toEqual({ status: 'saved', title: 'Song', text: 'title: Song\nfirst', current: true });
     expect(JSON.parse(values.get('tabtrainer:library')!).Song.text).toBe('title: Song\nfirst');
     expect(session.hasChanges()).toBe(true);
+  });
+  it('saves but leaves the newly opened text alone when another navigation happened while asking', async () => {
+    const values = memoryStorage();
+    let text = 'title: Song\nfirst';
+    const session = new DraftSession(() => text);
+    await session.save(() => 'replace');
+    text = 'title: Song\nedited';
+    let answer: (choice: SaveChoice) => void = () => {};
+    const asked = session.save(() => new Promise<SaveChoice>(resolve => { answer = resolve; }));
+    session.beginNavigation();
+    text = 'title: Other\nopened'; session.accept();
+    answer('replace');
+    expect(await asked).toEqual({ status: 'saved', title: 'Song', text: 'title: Song\nedited', current: false });
+    expect(JSON.parse(values.get('tabtrainer:library')!).Song.text).toBe('title: Song\nedited');
+    expect(session.hasChanges()).toBe(false);
   });
   it('names a copy after the first free number and writes it into the title line', () => {
     expect(freeTitle('Song', title => ['Song 2', 'Song 3'].includes(title))).toBe('Song 4');
@@ -118,8 +133,8 @@ describe('draft session', () => {
     const values = memoryStorage();
     const session = new DraftSession(() => 'title: Groove\nkick: x...', savedGrooves);
     const choose = vi.fn((): SaveChoice => 'replace');
-    expect(await session.save(choose)).toEqual({ status: 'saved', title: 'Groove', text: 'title: Groove\nkick: x...' });
-    expect(await session.save(choose)).toEqual({ status: 'saved', title: 'Groove', text: 'title: Groove\nkick: x...' });
+    expect(await session.save(choose)).toEqual({ status: 'saved', title: 'Groove', text: 'title: Groove\nkick: x...', current: true });
+    expect(await session.save(choose)).toEqual({ status: 'saved', title: 'Groove', text: 'title: Groove\nkick: x...', current: true });
     expect(choose).toHaveBeenCalledOnce();
     expect(savedGrooves.list().map(groove => groove.title)).toEqual(['Groove']);
     expect(values.has('tabtrainer:library')).toBe(false);

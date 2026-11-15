@@ -100,8 +100,9 @@ const score = scoreView({
 const header = songHeader(index => { if (openSong.choose(index)) showVersion(); });
 const songs = songList(songbook, workspace, openSong, practiceLog, { pick: pickSong, continue: continuePractice, showLibrary, newSong: () => startNewSong(), startFrom: startFromTemplate, openFile: () => files.open(), shown: saveView.showShare, propose: () => proposal.open(), shared: sharedSongs, proposeSaved: proposal.openSaved, backup: () => files.backup() });
 window.addEventListener('popstate', event => navigation.visit(event.state, (route, accept, cancel) => {
+  draftSession.beginNavigation();
   if (followLanding(location.search)) { accept(); setScreen('library'); return; }
-  const open = () => { accept(); openRoute(route); };
+  const open = () => accept(() => openRoute(route));
   if (route.screen === 'practice' && route.picked && route.picked !== workspace.picked && draftSession.hasChanges()) drafts.replace(open, cancel);
   else if (route.screen === 'jam') void grooveEditing.mayChoose(route.groove).then(chosen => (chosen ? open() : cancel()));
   else open();

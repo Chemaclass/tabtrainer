@@ -32,10 +32,13 @@ export function draftFlow(draftSession: DraftSession, workspace: Workspace, save
     const result = await draftSession.save(conflict => askSaveConflict(conflict, 'your library'));
     if (result.status === 'cancelled') return false;
     if (result.status === 'failed') { saveView.announce('Could not save in this browser. Your text is still here. Download a copy.', true); return false; }
-    const { title, text } = result;
-    workspace.pick(savedRef(title), 'mine');
-    if (draftSession.hasChanges()) on.retitled(text);
-    persist(); on.saved();
+    const { title, text, current } = result;
+    if (current) {
+      workspace.pick(savedRef(title), 'mine');
+      if (draftSession.hasChanges()) on.retitled(text);
+      persist();
+    }
+    on.saved();
     saveView.announce(`Saved "${title}" in this browser`); return true;
   }
   return { persist, replace, save };

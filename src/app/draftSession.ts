@@ -16,7 +16,7 @@ export function freeTitle(title: string, taken: (title: string) => boolean): str
 
 export type SaveChoice = 'replace' | 'keep-both' | 'cancel';
 export interface SaveConflict { title: string; copyTitle: string }
-type SaveResult = { status: 'saved'; title: string; text: string } | { status: 'cancelled' } | { status: 'failed' };
+type SaveResult = { status: 'saved'; title: string; text: string; current: boolean } | { status: 'cancelled' } | { status: 'failed' };
 
 export class DraftSession {
   private baseline = '';
@@ -37,22 +37,25 @@ export class DraftSession {
   async save(choose: (conflict: SaveConflict) => SaveChoice | Promise<SaveChoice>): Promise<SaveResult> {
     if (this.asking) return { status: 'cancelled' };
     const text = this.text(), title = titleOf(text);
-    if (!this.store.has(title)) return this.keep(title, text);
+    if (!this.store.has(title)) return this.keep(title, text, true);
     const copyTitle = freeTitle(title, taken => this.store.has(taken));
+    const generation = this.generation;
     this.asking = true;
     try {
       const choice = await choose({ title, copyTitle });
-      if (choice === 'replace') return this.keep(title, text);
-      if (choice === 'keep-both') return this.keep(copyTitle, withTitle(text, copyTitle));
+      const current = this.isCurrent(generation);
+      if (choice === 'replace') return this.keep(title, text, current);
+      if (choice === 'keep-both') return this.keep(copyTitle, withTitle(text, copyTitle), current);
       return { status: 'cancelled' };
     } finally {
       this.asking = false;
     }
   }
-  private keep(title: string, text: string): SaveResult {
+  /** A save answered after another navigation keeps the text but leaves the newly opened song as it is. */
+  private keep(title: string, text: string, current: boolean): SaveResult {
     if (!this.store.save(title, text)) return { status: 'failed' };
-    this.accept(text);
-    return { status: 'saved', title, text };
+    if (current) this.accept(text);
+    return { status: 'saved', title, text, current };
   }
   beginNavigation() { return ++this.generation; }
   isCurrent(generation: number) { return generation === this.generation; }

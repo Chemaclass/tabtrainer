@@ -108,6 +108,26 @@ test('saving over a saved song asks in the app, and Escape keeps the saved one',
   await expect(page.locator('#dirtyState')).toHaveText('No unsaved changes');
 });
 
+test('a second Back while asking to discard groove changes keeps the address and the screen together', async ({ page }) => {
+  await page.goto('./?view=library&kind=exercises');
+  await page.locator('#jamNavBtn').click();
+  await page.locator('#jamPickerButton').click();
+  await page.locator('#jamGrooveList li').nth(2).locator('button, a').first().click();
+  await page.locator('#grooveEdit').click();
+  const source = page.locator('#grooveSource');
+  await source.fill(`${await source.inputValue()}\n# changed`);
+  const ask = page.locator('#askDialog');
+  await page.goBack();
+  await expect(ask).toBeVisible();
+  await page.goBack();
+  await expect(page).toHaveURL(/view=library/);
+  await ask.getByRole('button', { name: 'Discard' }).click();
+  await expect(ask).toBeHidden();
+  await expect(page).toHaveURL(/view=library/);
+  await expect(page.locator('#libraryScreen')).toBeVisible();
+  await expect(page.locator('#jamScreen')).toBeHidden();
+});
+
 test('the landing demo plays two bars in one click and lights the playing note', async ({ page }) => {
   await page.addInitScript(() => {
     const Stub = window.AudioContext;
