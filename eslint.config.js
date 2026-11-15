@@ -24,7 +24,7 @@ function layer(files, folders, globalNames) {
 }
 
 export default defineConfig(
-  { ignores: ['dist/', 'node_modules/', '.claude/'] },
+  { ignores: ['dist/', 'node_modules/', '.claude/', 'test-results/', 'playwright-report/'] },
   js.configs.recommended,
   ...tseslint.configs.recommended,
   { files: ['src/**/*.ts'], languageOptions: { globals: globals.browser } },
@@ -32,5 +32,6 @@ export default defineConfig(
   layer('src/app/**/*.ts', ['ui', 'render', 'build'], ['document', 'window']),
   layer(['src/audio/**/*.ts', 'src/render/**/*.ts', 'src/build/**/*.ts'], ['ui'], []),
   layer(['src/ui/**/*.ts', 'src/*.ts', 'tests/**/*.ts', 'scripts/**/*.ts'], [], []),
-  { files: ['tests/**/*.ts', 'scripts/**/*.ts', '*.config.{js,ts}'], languageOptions: { globals: globals.node } },
+  { files: ['tests/**/*.ts', 'scripts/**/*.ts', 'e2e/**/*.ts', '*.config.{js,ts}'], languageOptions: { globals: globals.node } },
+  { files: ['e2e/audioStub.ts'], languageOptions: { globals: globals.browser } },
 );
