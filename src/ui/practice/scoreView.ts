@@ -32,7 +32,7 @@ function barAt(event: Event) {
 export function scoreView({ redraw, onBar, onNote, onPlayNote }: ScoreActions) {
   const sheet = byId('sheet'), frame = sheet.parentElement;
   if (!frame) throw new Error('#sheet has no parent');
-  let zoom = pref('zoom', 1), notation = pref('notation', matchMedia('(min-width:600px)').matches);
+  let zoom = pref('zoom', 1), notation = pref('notation', false);
   let lit: Element[] = [], litKey: string | null = null;
   let line: Element | null = null, bar: number | null = null;
 

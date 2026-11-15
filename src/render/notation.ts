@@ -1,4 +1,4 @@
-import { Accidental, Beam, Dot, Formatter, GhostNote, Renderer, Stave, StaveConnector, StaveNote, StaveTie, TabNote, TabStave, Tuplet, Voice } from 'vexflow';
+import { Accidental, Beam, Dot, Formatter, GhostNote, Renderer, Stave, StaveConnector, StaveNote, StaveTie, Stem, TabNote, TabStave, Tuplet, Voice, type StemmableNote, type TabNotePosition } from 'vexflow';
 import { PPQ, type Bar, type NoteEvent, type Song } from '../core/model';
 import { onsetKey } from '../core/timeline';
 import { safeKey, vexKey } from '../core/theory';
@@ -15,6 +15,38 @@ function pieces(e: NoteEvent): [string, number, boolean][] {
   const out: [string, number, boolean][] = []; let d = e.dur;
   while (d > 0.5) { const t = TABLE.find(x => x[0] <= d + 0.01)!; out.push([t[1], t[2], t[3]]); d -= t[0]; }
   return out;
+}
+
+type TabTickable = TabNote | StaveNote | GhostNote;
+const STRING_SPACE = 13, RHYTHM_GLYPH_SCALE = 26;
+
+function tabNote(positions: TabNotePosition[], duration: string, rhythm: boolean): TabNote {
+  if (!rhythm) return new TabNote({ positions, duration });
+  const note = new TabNote({ positions, duration }, true);
+  note.render_options.glyph_font_scale = RHYTHM_GLYPH_SCALE;
+  note.setStemDirection(Stem.DOWN);
+  if (duration !== 'w') note.setStemLength(duration === 'h' ? STRING_SPACE : 2 * STRING_SPACE);
+  return note;
+}
+
+function tabRest(duration: string, rhythm: boolean, nStr: number): StaveNote | GhostNote {
+  if (!rhythm) return new GhostNote({ duration });
+  const rest = new StaveNote({ keys: ['b/4'], duration: duration + 'r' });
+  rest.setKeyLine(0, 5 - (nStr - 1) / 2);
+  return rest;
+}
+
+function beamsFor(notes: StemmableNote[], triplets: StemmableNote[][], stem_direction?: number): Beam[] {
+  const inTrip = new Set(triplets.flat());
+  const beams = Beam.generateBeams(notes.filter(n => !n.isRest() && !inTrip.has(n)), { stem_direction });
+  triplets.forEach(grp => { const beamable = grp.filter(n => !n.isRest() && ['8', '16', '32'].includes(n.getDuration())); if (beamable.length >= 2) beams.push(new Beam(beamable)); });
+  return beams;
+}
+
+function rhythmBottom(notes: TabTickable[], tuplets: Tuplet[]): number {
+  const stems = notes.filter((n): n is TabNote => n instanceof TabNote && n.hasStem()).map(n => n.getStemExtents().topY);
+  const marks = tuplets.map(t => t.getYPosition() + 14);
+  return Math.max(0, ...stems, ...marks);
 }
 
 export function renderSong(host: HTMLElement, song: Song, opt: RenderOptions): void {
@@ -63,26 +95,28 @@ function drawSystem(div: HTMLDivElement, bars: Bar[], prev: Bar | undefined, c: 
       if (bi === 0) new StaveConnector(st, tab).setType('singleLeft').setContext(ctx).draw();
       new StaveConnector(st, tab).setType('singleRight').setContext(ctx).draw();
     }
-    const sn: StaveNote[] = [], tn: (TabNote | GhostNote)[] = [];
-    const targets: { notation: StaveNote | null; tab: TabNote | GhostNote; event: NoteEvent }[] = [];
-    const ties: [StaveNote, StaveNote][] = []; const trip: StaveNote[][] = [], ttrip: (TabNote | GhostNote)[][] = [];
-    let g: StaveNote[] = [], tg: (TabNote | GhostNote)[] = [];
-    const labels: [StaveNote | TabNote | GhostNote, NoteEvent][] = [];
-    const lyricAt: [TabNote | GhostNote, string][] = [];
+    const rhythm = !st;
+    const sn: StaveNote[] = [], tn: TabTickable[] = [];
+    const targets: { notation: StaveNote | null; tab: TabTickable; event: NoteEvent }[] = [];
+    const ties: [StaveNote, StaveNote][] = []; const trip: StaveNote[][] = [], ttrip: TabTickable[][] = [];
+    let g: StaveNote[] = [], tg: TabTickable[] = [];
+    const labels: [TabTickable, NoteEvent][] = [];
+    const lyricAt: [TabTickable, string][] = [];
     for (const ev of bar.events) {
       const ps = pieces(ev); let prevS: StaveNote | null = null;
       ps.forEach(([val, dots, isT], pi) => {
-        let s: StaveNote; let t: TabNote | GhostNote;
+        let s: StaveNote; let t: TabTickable;
         const sorted = [...ev.notes].sort((a, b) => (c.tuning[a.string - 1] + a.fret) - (c.tuning[b.string - 1] + b.fret));
         if (!sorted.length) {
           s = new StaveNote({ clef: c.clef, keys: [c.clef === 'bass' ? 'd/3' : 'b/4'], duration: val + 'r' });
-          t = new GhostNote({ duration: val });
+          t = tabRest(val, rhythm, c.nStr);
         } else {
           s = new StaveNote({ clef: c.clef, keys: sorted.map(n => vexKey(c.tuning[n.string - 1] + n.fret, c.key)), duration: val, auto_stem: true });
-          t = new TabNote({ positions: sorted.map(n => ({ str: n.string, fret: (pi > 0 || n.tie) ? `(${n.fret})` : String(n.fret) })), duration: val });
+          t = tabNote(sorted.map(n => ({ str: n.string, fret: (pi > 0 || n.tie) ? `(${n.fret})` : String(n.fret) })), val, rhythm);
           if (prevS) ties.push([prevS, s]);
         }
         if (dots) Dot.buildAndAttach([s], { all: true });
+        if (dots && rhythm) Dot.buildAndAttach([t]);
         if (isT) { g.push(s); tg.push(t); if (g.length === 3) { trip.push(g); ttrip.push(tg); g = []; tg = []; } }
         else if (g.length) { trip.push(g); ttrip.push(tg); g = []; tg = []; }
         if (pi === 0 && (ev.chord || ev.text)) labels.push([st ? s : t, ev]);
@@ -93,14 +127,14 @@ function drawSystem(div: HTMLDivElement, bars: Bar[], prev: Bar | undefined, c: 
     if (g.length) { trip.push(g); ttrip.push(tg); }
     const ticks = bar.beats; const bv = bar.beatValue;
     const tv = new Voice({ num_beats: ticks, beat_value: bv }).setMode(Voice.Mode.SOFT).addTickables(tn);
-    ttrip.forEach(grp => new Tuplet(grp as never, { num_notes: 3, notes_occupied: 2 }));
-    let sv: Voice | null = null; let beams: Beam[] = []; let tups: Tuplet[] = [];
+    let beams = rhythm ? beamsFor(tn, ttrip, Stem.DOWN) : [];
+    const below = (grp: TabTickable[]) => rhythm ? { location: Tuplet.LOCATION_BOTTOM, bracketed: grp.some(n => !n.hasBeam()) } : {};
+    const ttups = ttrip.map(grp => new Tuplet(grp as never, { num_notes: 3, notes_occupied: 2, ...below(grp) }));
+    let sv: Voice | null = null; let tups = rhythm ? ttups : [];
     if (st) {
       sv = new Voice({ num_beats: ticks, beat_value: bv }).setMode(Voice.Mode.SOFT).addTickables(sn);
       Accidental.applyAccidentals([sv], c.key);
-      const inTrip = new Set(trip.flat());
-      beams = Beam.generateBeams(sn.filter(n => !n.isRest() && !inTrip.has(n)));
-      trip.forEach(grp => { const beamable = grp.filter(n => !n.isRest() && ['8', '16', '32'].includes(n.getDuration())); if (beamable.length >= 2) beams.push(new Beam(beamable)); });
+      beams = beamsFor(sn, trip);
       tups = trip.map(grp => new Tuplet(grp, { num_notes: 3, notes_occupied: 2, bracketed: true }));
     }
     const fmt = new Formatter();
@@ -109,6 +143,7 @@ function drawSystem(div: HTMLDivElement, bars: Bar[], prev: Bar | undefined, c: 
     if (sv && st) sv.draw(ctx, st);
     tv.draw(ctx, tab);
     beams.forEach(b => b.setContext(ctx).draw()); tups.forEach(t => t.setContext(ctx).draw());
+    if (rhythm) bottom = Math.max(bottom, rhythmBottom(tn, tups));
     if (st) ties.forEach(([a, b]) => { try { new StaveTie({ first_note: a, last_note: b, first_indices: a.getKeys().map((_, i) => i), last_indices: b.getKeys().map((_, i) => i) }).setContext(ctx).draw(); } catch { /* skip */ } });
     // labels
     ctx.save(); ctx.setFont('Inter, Arial, sans-serif', 12, 'bold');
@@ -118,7 +153,7 @@ function drawSystem(div: HTMLDivElement, bars: Bar[], prev: Bar | undefined, c: 
     lyricAt.forEach(([n, words]) => lyrics.push([n.getAbsoluteX() - 2, words]));
     const target = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
     target.setAttribute('x', String(x)); target.setAttribute('y', String(top - 18));
-    target.setAttribute('width', String(bw)); target.setAttribute('height', String(bottom - top + 42));
+    target.setAttribute('width', String(bw));
     target.setAttribute('tabindex', '0'); target.setAttribute('role', 'button');
     target.setAttribute('aria-label', `Select bar ${bar.index}`);
     target.classList.add('bar-target'); target.dataset.bar = String(bar.index);
@@ -149,6 +184,7 @@ function drawSystem(div: HTMLDivElement, bars: Bar[], prev: Bar | undefined, c: 
     });
     x += bw;
   });
+  div.querySelectorAll('.bar-target').forEach(target => target.setAttribute('height', String(bottom - top + 42)));
   if (lyrics.length) {
     ctx.save(); ctx.setFont('Inter, Arial, sans-serif', 13, 'italic'); ctx.setFillStyle('#6b6b6b');
     lyrics.forEach(([px, words]) => ctx.fillText(words, px, bottom + 30));
