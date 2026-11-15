@@ -88,6 +88,20 @@ describe('navigation history', () => {
     expect(history.go).toHaveBeenCalledWith(1);
     const open = vi.fn(); navigation.visit({ app: 'tabtrainer', index: 1, picked: 'lib:A' }, open); expect(open).not.toHaveBeenCalled();
   });
+  it('ignores the answer to a visit once a later visit has been handled', () => {
+    const { history, location, navigation } = browser();
+    navigation.show({ screen: 'practice', picked: 'lib:A', version: null }, 'lib:A', true);
+    navigation.show({ screen: 'practice', picked: 'lib:B', version: null }, 'lib:B', true);
+    history.state = { app: 'tabtrainer', index: 1, picked: 'lib:A' }; location.search = '?view=practice';
+    let first: { accept: (then?: () => void) => void; cancel: () => void } = { accept: () => {}, cancel: () => {} };
+    navigation.visit(history.state, (_route, accept, cancel) => { first = { accept, cancel }; });
+    history.state = { app: 'tabtrainer', index: 0, picked: '' }; location.search = '?view=library';
+    navigation.visit(history.state, (_route, _accept, cancel) => cancel());
+    expect(history.go).toHaveBeenCalledWith(2);
+    const opened = vi.fn();
+    first.cancel(); first.accept(opened);
+    expect(history.go).toHaveBeenCalledOnce(); expect(opened).not.toHaveBeenCalled();
+  });
   it('adopts an accepted history position before replacing its URL', () => {
     const { history, location, navigation } = browser();
     navigation.show({ screen: 'practice', picked: 'lib:A', version: null }, 'lib:A', true);

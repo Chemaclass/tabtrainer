@@ -1,4 +1,4 @@
-import { DraftSession, titleOf } from '../../app/draftSession';
+import { DraftSession, titleOf, type SaveChoice, type SaveConflict } from '../../app/draftSession';
 import { NEW_GROOVE_TEXT, playableGroove, type Jam } from '../../app/jam';
 import { mineGrooveSlug, mineGrooveTitle } from '../../app/jamLink';
 import { savedGrooves } from '../../app/storage';
@@ -6,6 +6,7 @@ import type { ParseIssue } from '../../core/parseIssue';
 import { byId } from '../dom';
 import { downloadText } from '../editor/textFile';
 import { settledInput, showIssueList } from '../editor/sourceText';
+import { askChoice, askSaveConflict } from '../shell/askDialog';
 
 interface GrooveEditorHandlers {
   played: () => void;
@@ -54,9 +55,15 @@ export function grooveEditor(jam: Jam, { played, saved, deleted }: GrooveEditorH
     feedback.classList.toggle('bad', failed);
   }
 
-  function mayDiscard(): boolean {
+  async function mayDiscard(): Promise<boolean> {
     if (!isOpen() || !draft.hasChanges()) return true;
-    return window.confirm(`Discard your changes to "${titleOf(source.value)}"?`);
+    const choice = await askChoice({
+      title: 'Discard your changes?',
+      message: `Your changes to "${titleOf(source.value)}" are not saved.`,
+      choices: [{ value: 'cancel', label: 'Cancel' }, { value: 'discard', label: 'Discard', main: true }],
+      safe: 'cancel',
+    });
+    return choice === 'discard';
   }
 
   function isSavedGrooveOpen(): boolean {
@@ -121,72 +128,82 @@ export function grooveEditor(jam: Jam, { played, saved, deleted }: GrooveEditorH
 
   function toggle() {
     if (isOpen()) {
-      hide();
+      void hide();
       return;
     }
     load(jam.entry.text, true);
     open();
   }
 
-  function hide() {
-    if (!mayDiscard()) return;
+  async function hide() {
+    if (!(await mayDiscard())) return;
     close();
     editButton.focus();
   }
 
-  function startWith(text: string) {
-    if (!mayDiscard()) return;
+  async function startWith(text: string) {
+    if (!(await mayDiscard())) return;
     announce('');
     load(text, false);
     open();
   }
 
   function startNew() {
-    startWith(NEW_GROOVE_TEXT);
+    void startWith(NEW_GROOVE_TEXT);
   }
 
   async function openChosenFile() {
     const file = fileInput.files?.[0];
     fileInput.value = '';
     if (!file) return;
+    let text: string;
     try {
-      startWith(await file.text());
+      text = await file.text();
     } catch {
       announce('Could not open that file.', true);
+      return;
     }
+    await startWith(text);
   }
 
   function isEditing(title: string): boolean {
     return isSavedGrooveOpen() && mineGrooveTitle(jam.slug) === title;
   }
 
-  function mayReplace(title: string): boolean {
-    if (isEditing(title)) return true;
-    return window.confirm(`Replace "${title}" in your grooves?`);
+  function chooseOnConflict(conflict: SaveConflict): SaveChoice | Promise<SaveChoice> {
+    if (isEditing(conflict.title)) return 'replace';
+    return askSaveConflict(conflict, 'your grooves');
   }
 
   function hasProblems(): boolean {
     return playableGroove(source.value).issues.length > 0;
   }
 
-  function save() {
+  async function save() {
     if (hasProblems()) {
       announce('Fix the problems listed above before saving. Download keeps a copy as it is.', true);
       return;
     }
-    const result = draft.save(mayReplace);
+    const result = await draft.save(chooseOnConflict);
     if (result.status === 'cancelled') return;
     if (result.status === 'failed') {
       announce('Could not save in this browser. Download a copy to keep it.', true);
       return;
     }
+    if (draft.hasChanges()) load(result.text, false);
     saved(mineGrooveSlug(result.title));
     announce(`Saved "${result.title}" in this browser`);
   }
 
-  function remove() {
+  async function remove() {
     const title = mineGrooveTitle(jam.slug);
-    if (!window.confirm(`Delete "${title}" from this browser? This cannot be undone.`)) return;
+    const choice = await askChoice({
+      title: `Delete "${title}"?`,
+      message: 'This removes it from this browser. This cannot be undone.',
+      choices: [{ value: 'cancel', label: 'Cancel' }, { value: 'delete', label: 'Delete', main: true }],
+      safe: 'cancel',
+    });
+    if (choice !== 'delete') return;
     if (!savedGrooves.remove(title)) {
       announce('Could not delete it from this browser.', true);
       return;
@@ -201,7 +218,7 @@ export function grooveEditor(jam: Jam, { played, saved, deleted }: GrooveEditorH
     if (isOpen()) load(jam.entry.text, true);
   }
 
-  function mayChoose(slug: string): boolean {
+  async function mayChoose(slug: string): Promise<boolean> {
     return slug === jam.slug || mayDiscard();
   }
 
