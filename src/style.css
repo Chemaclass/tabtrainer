@@ -51,6 +51,9 @@ kbd{font:600 12px var(--mono);padding:1px 5px;border:1px solid var(--rule);borde
 .listen-host::after{content:" ↗"}
 .meta{display:flex;flex-wrap:wrap;align-items:center;gap:6px 18px;color:var(--mut);font-size:13px;line-height:20px}
 .about{max-width:64ch;margin:12px 0 0;font-size:16px;line-height:24px;color:var(--ink)}
+.song-source{margin:8px 0 0;font-size:13px;line-height:20px;color:var(--mut)}
+.song-source[hidden]{display:none}
+.song-source a{color:var(--ink)}
 .lvl{align-self:center;padding:0 8px;border:1px solid var(--rule);border-radius:999px;font:600 11px/18px var(--ui);letter-spacing:.04em;text-transform:uppercase;color:var(--mut);white-space:nowrap}
 .lvl::before{content:"";display:inline-block;width:6px;height:6px;margin-right:6px;border-radius:50%;vertical-align:1px;background:#2e9e5b}
 .lvl-medium::before{background:#d39a1c}

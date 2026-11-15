@@ -2,7 +2,9 @@
 
 Practise electric bass and guitar from tab with rhythm. Slow a song down, loop the bars you miss, and follow each note as it plays.
 
-TabTrainer is a free, open source web app. It needs no account and no server, and your songs stay in your browser. Anyone can add a song to the site with a pull request: see [Contributing](#contributing).
+Wrote a song? Add it to the site from the app. You don't need Git: see [Contributing](#contributing).
+
+TabTrainer is a free, open source web app. It needs no account and no server, and your songs stay in your browser.
 
 **Try it:** https://chemaclass.github.io/tabtrainer/
 
@@ -20,13 +22,20 @@ TabTrainer is a free, open source web app. It needs no account and no server, an
 - **Jam:** improvise over a looping groove of drums, bass and keys in blues, rock, funk, reggae, jazz, bossa or metal. Pick the key, tempo, chord progression and swing, and mute the part you play. Count in one bar before the loop starts, and share a link that opens the groove with your setup.
 - **Your grooves:** write a groove in the text format below and hear it as you type. Save it in your browser under Mine.
 - **Fretboard:** see where the notes of any key and scale sit on your bass or guitar, as note names or degrees. Pick a mood, such as sad or dreamy, to get a scale and progressions that carry it.
+- **Send your song in:** propose your exercise or public domain song from the editor. Once we accept it, every player can practise it.
 - **Your files:** download a song or groove as `.txt` to share it or move it to another device, and open it again.
 
 ## Contributing
 
-TabTrainer is open source under the MIT licence, and anyone can add an exercise or a public domain song to the site. In the editor, open **File** and choose **Add to TabTrainer**. The app opens GitHub with your song file ready, and you send it as a pull request in a few clicks. You don't need to know Git. You can also write the file by hand.
+TabTrainer is open source under the MIT licence. Anyone can add an exercise or a public domain song to the site, and you don't need to know Git:
 
-Once we accept your song, it appears on the site for everyone. [CONTRIBUTING.md](CONTRIBUTING.md) has the steps, the rules on what we accept, and how to send code changes.
+1. Open your song in TabTrainer, or [write a new one](https://chemaclass.github.io/tabtrainer/?view=library&kind=mine&new=1).
+2. In the editor, open **File** and choose **Add to TabTrainer**.
+3. Fix anything the dialog lists, choose **Exercise** or **Song**, and tick the box that says you wrote the music or that it is in the public domain.
+4. Press **Open GitHub**. Your song file opens there, ready to send.
+5. Sign in, then press **Commit changes**, **Propose changes** and **Create pull request**.
+
+Once we accept your song, it appears on the site for everyone. [CONTRIBUTING.md](CONTRIBUTING.md) has the full steps, the rules on what we accept, and how to send code changes.
 
 ## Song format
 

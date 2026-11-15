@@ -2,6 +2,7 @@ import type { Song } from '../../core/model';
 import type { OpenSong } from '../../app/openSong';
 import { hasPracticeLevels } from '../../app/practiceLevels';
 import { shownCredits } from '../../app/credits';
+import type { SongSource } from '../../app/songLink';
 import { byId } from '../dom';
 
 const levelHelp = [
@@ -53,8 +54,17 @@ export function songHeader(onVersion: (index: number) => void) {
     });
   };
 
+  const showSource = (source: SongSource | null) => {
+    byId('songSource').hidden = !source;
+    if (!source) return;
+    byId('songSourceLead').textContent = source.exercise ? 'Spot a mistake?' : 'Every song here is a plain text file.';
+    const link = byId('songSourceLink', HTMLAnchorElement);
+    link.textContent = source.exercise ? 'Suggest a fix on GitHub' : 'See this one on GitHub';
+    link.href = source.url;
+  };
+
   return {
-    show(open: OpenSong) {
+    show(open: OpenSong, source: SongSource | null) {
       const song = open.song;
       if (!song) return;
       showVersions(open);
@@ -62,6 +72,7 @@ export function songHeader(onVersion: (index: number) => void) {
       showCredit(song);
       showFacts(song);
       byId('about').textContent = song.meta.about ?? ''; byId('about').hidden = !song.meta.about;
+      showSource(source);
     },
   };
 }

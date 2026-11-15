@@ -27,3 +27,13 @@ export function songShareLink(root: string, picked: string, version: string | nu
   if (path === null) return null;
   return dev ? `${root}?${new URLSearchParams({ song: songSlug(path), ...version && { version } })}` : shareUrl(root, path, version);
 }
+
+const REPOSITORY = 'https://github.com/Chemaclass/tabtrainer';
+export interface SongSource { url: string; exercise: boolean }
+// An exercise opens GitHub's editor so a player can fix it; a song opens its file to read.
+export function songSource(picked: string): SongSource | null {
+  const path = bundledPath(picked);
+  if (path === null) return null;
+  const exercise = path.split('/')[3] === 'exercises';
+  return { url: `${REPOSITORY}/${exercise ? 'edit' : 'blob'}/main/src/${path.replace(/^\.\//, '')}`, exercise };
+}
