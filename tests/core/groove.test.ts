@@ -6,9 +6,9 @@ import type { GrooveIssueCode, ParseIssue } from '../../src/core/parseIssue';
 const head = 'title: Test\ntempo: 100\nkey: C\ntime: 4/4\nprogression: I IV V I\n';
 
 describe('parseGroove', () => {
-  it('reads the README example without warnings', () => {
-    const readme = readFileSync('README.md', 'utf8');
-    const example = /## Groove format[\s\S]*?```text\n([\s\S]*?)```/.exec(readme)?.[1] ?? '';
+  it('reads the groove docs example without warnings', () => {
+    const docs = readFileSync('docs/grooves.md', 'utf8');
+    const example = /## Groove format[\s\S]*?```text\n([\s\S]*?)```/.exec(docs)?.[1] ?? '';
     const { groove, issues } = parseGroove(example);
     expect(issues).toEqual([]);
     expect(groove.grids.map(g => g.part)).toEqual(['hat', 'snare', 'kick', 'keys', 'bass']);
