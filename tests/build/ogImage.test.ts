@@ -17,6 +17,14 @@ describe('share card', () => {
     expect(card.details).toEqual(['Key D', '90 BPM']);
     expect(card.staff).toMatchObject({ columns: [{ notes: [{ string: 4, fret: 3 }] }, 'bar'] });
   });
+  it('skips bars with no notes and brackets tied notes the way the tab does', () => {
+    const card = songCard(song('', ':w r | :w r | :h 3.4 :h ~3.4 |'), 'bass');
+    expect(card.staff).toMatchObject({ columns: [{ notes: [{ fret: 3 }] }, { notes: [{ fret: 3, tie: true }] }, 'bar'] });
+    expect(cardSvg(card, 'example.com')).toContain('>(3)</text>');
+  });
+  it('moves a chord written on a rest to the next note', () => {
+    expect(songCard(song('', '"Am" :q r 5.3 "D7" 5.2 |'), 'bass').staff).toMatchObject({ columns: [{ chord: 'Am' }, { chord: 'D7' }, 'bar'] });
+  });
   it('charts the first eight chords of a groove in its key', () => {
     const groove = parseGroove('title: Shuffle\ngenre: blues\ntempo: 80\nkey: A\ntime: 4/4\nprogression: I7 IV7\nkick: x...\n').groove;
     expect(grooveCard(groove)).toEqual({ kicker: 'blues groove', title: 'Shuffle', details: ['Key A', '80 BPM', '4/4'], staff: { chords: ['A7', 'D7', 'A7', 'D7', 'A7', 'D7', 'A7', 'D7'] } });
@@ -27,6 +35,10 @@ describe('share card', () => {
     const long = cardSvg({ kicker: 'bass tab', title: 'word '.repeat(40).trim(), details: [], staff: { chords: [] } }, 'example.com');
     expect(long.match(/font-size="64"[^>]*>[^<]*<\/text>/g)).toHaveLength(2);
     expect(long).toContain('…</text>');
+    const oneWord = cardSvg({ kicker: 'bass tab', title: 'a'.repeat(40) + ' ' + 'b'.repeat(41) + ' ccc', details: [], staff: { chords: [] } }, 'example.com');
+    const lines = [...oneWord.matchAll(/font-size="64"[^>]*>([^<]*)<\/text>/g)].map(m => m[1]);
+    expect(lines).toHaveLength(2);
+    expect(lines.every(line => line.length <= 29 && /[ab]/.test(line))).toBe(true);
   });
   it('renders a card at the size link previews expect', () => {
     const png = cardPng(cardSvg(songCard(song('', ':q 3.4 5.3 |'), 'bass'), 'example.com'));

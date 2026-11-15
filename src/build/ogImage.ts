@@ -1,6 +1,5 @@
-import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { basename, join } from 'node:path';
 import { createRequire } from 'node:module';
 import { inflateSync } from 'node:zlib';
 import { Resvg } from '@resvg/resvg-js';
@@ -23,10 +22,18 @@ const TAB_COLUMNS = 18;
 export function songCard(song: Song, family: string): Card {
   const { meta } = song;
   const columns: Column[] = [];
+  let chord: string | undefined;
   for (const bar of song.bars) {
     if (columns.filter(c => c !== 'bar').length >= TAB_COLUMNS) break;
-    for (const event of bar.events) if (event.notes.length) columns.push({ notes: event.notes, chord: event.chord });
-    columns.push('bar');
+    let played = false;
+    for (const event of bar.events) {
+      chord = event.chord ?? chord;
+      if (!event.notes.length) continue;
+      columns.push({ notes: event.notes, chord });
+      chord = undefined;
+      played = true;
+    }
+    if (played) columns.push('bar');
   }
   return {
     kicker: `${family} tab`,
@@ -54,13 +61,15 @@ function titleLines(title: string): { size: number; lines: string[] } {
     const lines = wrapWords(title, perLine);
     if (lines.length <= 2) return { size, lines };
   }
-  const lines = wrapWords(title, Math.floor((RIGHT - LEFT) / (64 * TITLE_WIDTH_PER_EM)));
-  return { size: 64, lines: [lines[0], `${lines[1].replace(/\s*\S*$/, '')}…`] };
+  const perLine = Math.floor((RIGHT - LEFT) / (64 * TITLE_WIDTH_PER_EM));
+  const [first, second] = wrapWords(title, perLine);
+  return { size: 64, lines: [first, `${second.slice(0, perLine - 1).trimEnd()}…`] };
 }
 
 function wrapWords(text: string, perLine: number): string[] {
   const lines: string[] = [];
-  for (const word of text.split(/\s+/)) {
+  const words = text.split(/\s+/).flatMap(word => word.match(new RegExp(`.{1,${perLine}}`, 'gu')) ?? []);
+  for (const word of words) {
     const last = lines.at(-1);
     if (last !== undefined && `${last} ${word}`.length <= perLine) lines[lines.length - 1] = `${last} ${word}`;
     else lines.push(word);
@@ -90,7 +99,7 @@ function tabStaff(strings: number, columns: Column[]): string {
     if (column.chord) marks.push(text(x, top - 22, TEXT_FONT, 24, INK, column.chord, ' text-anchor="middle"'));
     for (const note of column.notes) {
       const y = top + (note.string - 1) * gap;
-      const label = String(note.fret);
+      const label = note.tie ? `(${note.fret})` : String(note.fret);
       marks.push(`<rect x="${x - label.length * 9 - 4}" y="${y - 14}" width="${label.length * 18 + 8}" height="28" fill="${PAPER}"/>`);
       marks.push(text(x, y + 10, MONO_FONT, 28, INK, label, ' text-anchor="middle"'));
     }
@@ -159,11 +168,12 @@ export function woffToSfnt(woff: Buffer): Buffer {
 }
 
 // resvg-js 2.6 ignores fontBuffers, so the unpacked fonts go through files.
+const FONT_CACHE = 'node_modules/.cache/tabtrainer-fonts';
 let fontFiles: string[] | undefined;
 function unpackedFonts(): string[] {
-  const dir = mkdtempSync(join(tmpdir(), 'tabtrainer-fonts-'));
-  return FONT_FILES.map((file, i) => {
-    const path = join(dir, `${i}.ttf`);
+  mkdirSync(FONT_CACHE, { recursive: true });
+  return FONT_FILES.map(file => {
+    const path = join(FONT_CACHE, basename(file).replace(/\.woff$/, '.ttf'));
     writeFileSync(path, woffToSfnt(readFileSync(require.resolve(file))));
     return path;
   });
