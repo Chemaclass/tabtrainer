@@ -22,7 +22,6 @@ export interface Proposal {
 
 const REPOSITORY = 'https://github.com/Chemaclass/tabtrainer';
 const BRANCH = 'main';
-const PULL_REQUEST_TEMPLATE = 'song.md';
 // Measured against GitHub: a longer link fails for a signed-out player, whose sign-in redirect carries it.
 export const MAX_PROPOSAL_URL = 6000;
 const CHECK_LABELS: Record<ProposalCheck, string> = {
@@ -74,7 +73,7 @@ export function proposeSong(text: string, group: ProposalGroup, paths: readonly 
   const folder = `src/songs/${family}/${group}`;
   const number = nextNumber(paths, family, group);
   const fileName = name ? `${number}-${name}.txt` : '';
-  const page = `${REPOSITORY}/new/${BRANCH}/${folder}?filename=${encodeURIComponent(fileName)}&template=${PULL_REQUEST_TEMPLATE}`;
+  const page = `${REPOSITORY}/new/${BRANCH}/${folder}?filename=${encodeURIComponent(fileName)}`;
   const value = encoded(sent);
   const filled = value === null ? '' : `${page}&value=${value}`;
   const carriesText = filled !== '' && filled.length <= MAX_PROPOSAL_URL;

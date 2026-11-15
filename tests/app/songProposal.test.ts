@@ -57,7 +57,6 @@ describe('song proposal', () => {
     expect(proposal.url.startsWith('https://github.com/Chemaclass/tabtrainer/new/main/src/songs/bass/exercises?filename=16-')).toBe(true);
     expect(proposal.url).not.toContain('+');
     expect(new URL(proposal.url).searchParams.get('value')).toBe(exercise);
-    expect(new URL(proposal.url).searchParams.get('template')).toBe('song.md');
   });
   it('takes the instrument folder from the song', () => {
     expect(proposeSong(exercise.replace('bass4', 'guitar6'), 'exercises', paths).folder).toBe('src/songs/guitar/exercises');
@@ -98,7 +97,7 @@ describe('song proposal', () => {
   it('leaves the text out of a link that would be too long', () => {
     const proposal = proposeSong(readFileSync('src/songs/bass/songs/07-a-dawning.txt', 'utf8'), 'songs', paths);
     expect(proposal.carriesText).toBe(false);
-    expect(proposal.url).toBe('https://github.com/Chemaclass/tabtrainer/new/main/src/songs/bass/songs?filename=10-a-dawning.txt&template=song.md');
+    expect(proposal.url).toBe('https://github.com/Chemaclass/tabtrainer/new/main/src/songs/bass/songs?filename=10-a-dawning.txt');
     expect(proposal.url.length).toBeLessThanOrEqual(MAX_PROPOSAL_URL);
   });
   it('keeps the text in a link just under the limit', () => {
@@ -117,7 +116,7 @@ describe('song proposal', () => {
   it('asks to paste a text the link cannot encode', () => {
     const proposal = proposeSong(exercise + '# \uD800\n', 'exercises', paths);
     expect(proposal.carriesText).toBe(false);
-    expect(proposal.url).toBe('https://github.com/Chemaclass/tabtrainer/new/main/src/songs/bass/exercises?filename=16-my-walking-line.txt&template=song.md');
+    expect(proposal.url).toBe('https://github.com/Chemaclass/tabtrainer/new/main/src/songs/bass/exercises?filename=16-my-walking-line.txt');
   });
   it('points each problem at the line to fix', () => {
     const lines = (text: string, group: 'exercises' | 'songs' = 'exercises') => proposeSong(text, group, paths).problems.map(problem => problem.line);
