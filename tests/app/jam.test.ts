@@ -290,15 +290,12 @@ describe('mixer', () => {
     mixer.setPlays('guitar');
     expect(gains(mixer)).toEqual([1, 1, 0]);
   });
-  it('follows the library instrument until the player makes a mixer choice', () => {
-    const mixer = new Mixer('guitar');
-    expect([mixer.plays, mixer.gain('bass')]).toEqual(['guitar', 1]);
-    expect(mixer.followLibrary('bass')).toBe(true);
-    expect([mixer.plays, mixer.gain('bass')]).toEqual(['bass', 0]);
-    expect(stored.has('tabtrainer:jamMixer')).toBe(false);
-    mixer.setVolume('keys', 50);
-    expect(mixer.followLibrary('guitar')).toBe(false);
-    expect(new Mixer('guitar').plays).toBe('bass');
+  it('plays as the instrument it is given, resetting the bass mute when the saved mix was for the other one', () => {
+    new Mixer('bass').setVolume('keys', 50);
+    const asGuitar = new Mixer('guitar');
+    expect([asGuitar.plays, asGuitar.gain('bass'), asGuitar.gain('keys')]).toEqual(['guitar', 1, 0.5]);
+    asGuitar.setVolume('keys', 60);
+    expect(new Mixer('bass').gain('bass')).toBe(0);
   });
   it('changes only the volume of one part, from 0 to 100', () => {
     const mixer = new Mixer();
@@ -312,11 +309,10 @@ describe('mixer', () => {
     expect(mixer.level('drums')).toEqual({ volume: 40, muted: true });
     expect(mixer.gain('drums')).toBe(0);
   });
-  it('remembers the parts and the instrument across reloads', () => {
+  it('remembers the parts across reloads', () => {
     const mixer = new Mixer();
     mixer.setPlays('guitar'); mixer.setVolume('keys', 55); mixer.setMuted('drums', true);
-    stored.set('tabtrainer:family', JSON.stringify('bass'));
-    const reloaded = new Mixer();
+    const reloaded = new Mixer('guitar');
     expect(reloaded.plays).toBe('guitar');
     expect(MIXER_PARTS.map(p => reloaded.level(p))).toEqual([{ volume: 100, muted: true }, { volume: 100, muted: false }, { volume: 55, muted: false }]);
   });
