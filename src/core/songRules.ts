@@ -47,10 +47,14 @@ function headerOrderProblems(text: string): SongProblem[] {
   return problems;
 }
 
-// A bundled file name may leave words of its title out: renaming it would break the song's links.
+// A file name may leave words of its title out, as long as the rest keep their order: renaming a bundled file would break its links.
 const namedAfter = (name: string, title: string) => {
-  const words = new Set(songName(title).split('-'));
-  return name.split('-').every(word => words.has(word));
+  const words = songName(title).split('-');
+  let next = 0;
+  return name.split('-').every(word => {
+    next = words.indexOf(word, next) + 1;
+    return next > 0;
+  });
 };
 
 // The line of a header, even one left empty, or the top line when it is missing.

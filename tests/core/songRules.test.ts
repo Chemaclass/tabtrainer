@@ -56,10 +56,13 @@ describe('song rules', () => {
     expect(messages(song('Shuffle Blues in E'), file('shuffle-blues'))).toEqual([]);
     expect(messages(song('A Minor Pentatonic'), file('minor-pentatonic'))).toEqual([]);
     expect(messages(song(), file('walking-blues'))).toEqual(['Name the file after the title, such as 02-my-walking-line.txt.']);
+    expect(messages(song(), file('line-walking-my'))).toEqual(['Name the file after the title, such as 02-my-walking-line.txt.']);
+    expect(messages(song(), file('my-line'))).toEqual([]);
   });
   it('refuses a name or a number another bundled song has', () => {
     expect(messages(song('Orion'), file('orion'))).toEqual(['A bundled song already has this name. Change the title.']);
     expect(messages(song(), file('my-walking-line', '01'))).toEqual(['Number 01 is taken by 01-first-steps.txt. Use a free number.']);
+    expect(messages(song(), file('my-walking-line', '1'))).toEqual(['Number 1 is taken by 01-first-steps.txt. Use a free number.']);
     expect(messages(song('Greensleeves'), file('greensleeves'))).toEqual([]);
   });
   it('does not count the file against itself', () => {

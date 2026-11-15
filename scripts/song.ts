@@ -1,4 +1,6 @@
-import { existsSync, readFileSync, readdirSync } from 'node:fs';
+import { readFileSync, readdirSync, statSync } from 'node:fs';
+import { relative } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { parseSong } from '../src/core/parser';
 import { parseGroove } from '../src/core/groove';
 import { formatProblem, grooveProblems, songFileAt, songProblems, type SongProblem } from '../src/core/songRules';
@@ -7,9 +9,14 @@ interface Check { problems: SongProblem[]; summary: string }
 
 const SONGS = 'src/songs';
 const GROOVES = 'src/grooves';
+const ROOT = fileURLToPath(new URL('..', import.meta.url));
 
-const listed = (folder: string) =>
-  readdirSync(folder, { recursive: true, encoding: 'utf8' }).filter(file => file.endsWith('.txt')).map(file => `${folder}/${file}`).sort();
+const slashed = (path: string) => path.replace(/\\/g, '/');
+const listed = (folder: string) => {
+  const near = relative(process.cwd(), `${ROOT}${folder}`);
+  const shown = slashed(near.startsWith('..') ? `${ROOT}${folder}` : near || '.');
+  return readdirSync(`${ROOT}${folder}`, { recursive: true, encoding: 'utf8' }).filter(file => file.endsWith('.txt')).map(file => `${shown}/${slashed(file)}`).sort();
+};
 const count = (amount: number, word: string) => `${amount} ${word}${amount === 1 ? '' : 's'}`;
 const catalogue = listed(SONGS);
 
@@ -27,12 +34,13 @@ function checkSong(path: string, text: string): Check {
 }
 
 function check(path: string): Check {
-  if (!existsSync(path)) return { problems: [{ message: 'No such file.' }], summary: 'not checked' };
+  const found = statSync(path, { throwIfNoEntry: false });
+  if (!found?.isFile()) return { problems: [{ message: found ? 'Not a file.' : 'No such file.' }], summary: 'not checked' };
   const text = readFileSync(path, 'utf8');
-  return /(^|\/)grooves\//.test(path) ? checkGroove(text) : checkSong(path, text);
+  return /(^|\/)grooves\/[^/]+\.txt$/.test(path) ? checkGroove(text) : checkSong(path, text);
 }
 
-const named = process.argv.slice(2).map(path => path.replace(/\\/g, '/').replace(/^\.\//, ''));
+const named = process.argv.slice(2).map(path => slashed(path).replace(/^\.\//, ''));
 const grooves = listed(GROOVES);
 const paths = named.length > 0 ? named : [...catalogue, ...grooves];
 let problems = 0;
