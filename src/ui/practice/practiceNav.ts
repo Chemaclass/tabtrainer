@@ -2,6 +2,7 @@ import type { CatalogueEntry, LibraryKind } from '../../app/catalogue';
 import { byId } from '../dom';
 
 const backLabels: Record<LibraryKind, string> = { exercises: '← All exercises', songs: '← All songs', mine: '← My songs' };
+const backNames: Record<LibraryKind, string> = { exercises: 'Back to all exercises', songs: 'Back to all songs', mine: 'Back to my songs' };
 const kindNames: Record<LibraryKind, string> = { exercises: 'exercise', songs: 'song', mine: 'your song' };
 
 export interface PracticeNavState {
@@ -26,6 +27,7 @@ export function practiceNav(onBack: (kind: LibraryKind) => void, onNext: (value:
       nextButton.hidden = !next; allButton.hidden = !!next;
       if (next) { byId('nextExerciseTitle').textContent = next.title; nextButton.onclick = () => onNext(next.value); }
       byId('backLibraryBtn').onclick = () => onBack(kind);
+      const headBack = byId('headBackBtn'); headBack.onclick = () => onBack(kind); headBack.setAttribute('aria-label', backNames[kind]); headBack.title = backNames[kind];
     },
   };
 }

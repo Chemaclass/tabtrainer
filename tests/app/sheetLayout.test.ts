@@ -10,6 +10,31 @@ describe('bars per line', () => {
     expect(barsPerLine(1200, 2)).toBe(3);
     expect(barsPerLine(1200, 0.6)).toBe(8);
   });
+  it('fits two bars on a phone sheet', () => {
+    expect(barsPerLine(358, 1, true)).toBe(2);
+    expect(barsPerLine(346, 1, true)).toBe(2);
+    expect(barsPerLine(300, 1, true)).toBe(2);
+  });
+  it('keeps two bars on the widest phone sheets', () => {
+    expect(barsPerLine(448, 1, true)).toBe(2);
+    expect(barsPerLine(479, 1, true)).toBe(2);
+    expect(barsPerLine(555, 1, true)).toBe(2);
+  });
+  it('never fits fewer bars on a wider phone sheet', () => {
+    for (const zoom of [0.6, 1, 1.4]) {
+      const counts = Array.from({ length: 300 }, (_, i) => barsPerLine(260 + i, zoom, true));
+      counts.slice(1).forEach((n, i) => expect(n).toBeGreaterThanOrEqual(counts[i]));
+    }
+  });
+  it('lets the text size override the phone sheet', () => {
+    expect(barsPerLine(358, 0.6, true)).toBe(3);
+    expect(barsPerLine(358, 1.4, true)).toBe(1);
+  });
+  it('keeps a bar for every 240 pixels on narrow sheets outside a phone', () => {
+    expect(barsPerLine(358, 1)).toBe(1);
+    expect(barsPerLine(479, 1)).toBe(2);
+    expect(barsPerLine(700, 1)).toBe(3);
+  });
   it('keeps between one and eight bars on a line', () => {
     expect(barsPerLine(100, 1)).toBe(1);
     expect(barsPerLine(0, 1)).toBe(1);

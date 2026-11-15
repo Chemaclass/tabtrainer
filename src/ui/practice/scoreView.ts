@@ -4,6 +4,8 @@ import { pref, setPref } from '../../app/storage';
 import { barsPerLine, nextZoom, type ZoomStep } from '../../app/sheetLayout';
 import { byId } from '../dom';
 
+const phoneLayout = window.matchMedia('(max-width:599px)');
+
 interface ScoreActions {
   redraw: () => void;
   onBar: (bar: number) => void;
@@ -73,7 +75,7 @@ export function scoreView({ redraw, onBar, onNote, onPlayNote }: ScoreActions) {
       const box = getComputedStyle(frame);
       const width = frame.clientWidth - parseFloat(box.paddingLeft) - parseFloat(box.paddingRight) - 12;
       sheet.style.setProperty('zoom', String(zoom));
-      renderSong(sheet, song, { barsPerLine: barsPerLine(width, zoom), width: width / zoom });
+      renderSong(sheet, song, { barsPerLine: barsPerLine(width, zoom, phoneLayout.matches), width: width / zoom });
       lit = notesOf(litKey); lit.forEach(element => element.classList.add('on'));
       line = lineOf(bar); line?.classList.add('cur');
     },

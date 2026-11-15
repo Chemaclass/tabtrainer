@@ -20,8 +20,8 @@ export function playbackView(player: Player, { transport, score, follows }: Play
       transport.show(state);
       if (state.phase === 'counting-in') { wasActive = false; return; }
       const started = player.playing && !wasActive; wasActive = player.playing;
-      if (started) on.started();
-      if (state.beat === null) { on.stopped(); score.clear(); transport.showBar(null); return; }
+      if (started) { document.body.classList.add('is-playing'); on.started(); }
+      if (state.beat === null) { document.body.classList.remove('is-playing'); on.stopped(); score.clear(); transport.showBar(null); return; }
       score.highlight(state.playing ? onsetAt(onsets, state.beat) : null);
       const bar = player.barAt(state.beat); transport.showBar(bar);
       const newLine = score.showBar(bar);
