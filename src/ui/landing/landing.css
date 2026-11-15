@@ -8,6 +8,7 @@ html.landing body > :not(#landing):not(.top):not(dialog):not(script) {
   display: none !important;
 }
 .landing-page {
+  --landing-gutter: 64px;
   color: var(--ink);
   background: var(--page);
 }
@@ -30,7 +31,7 @@ html.landing body > :not(#landing):not(.top):not(dialog):not(script) {
   column-gap: 64px;
   row-gap: 40px;
   align-items: start;
-  padding: 80px 72px 88px;
+  padding: 80px var(--landing-gutter) 88px;
   max-width: 1600px;
   margin: 0 auto;
 }
@@ -73,7 +74,7 @@ html.landing body > :not(#landing):not(.top):not(dialog):not(script) {
   gap: 10px;
   min-height: 52px;
   padding: 0 26px;
-  border-radius: 8px;
+  border-radius: var(--radius-s);
   background: var(--led);
   color: #111 !important;
   font-weight: 600;
@@ -165,7 +166,7 @@ html.landing body > :not(#landing):not(.top):not(dialog):not(script) {
   min-height: 44px;
   padding: 0;
   border: 1px solid var(--deck-line);
-  border-radius: 8px;
+  border-radius: var(--radius-s);
   background: var(--page);
   color: var(--deck-text);
   font: 600 14px/18px var(--mono);
@@ -233,7 +234,7 @@ html.landing body > :not(#landing):not(.top):not(dialog):not(script) {
 .landing-steps {
   display: flex;
   gap: 64px;
-  padding: 64px 72px 80px;
+  padding: 64px var(--landing-gutter) 80px;
   border-top: 1px solid var(--rule);
 }
 .landing-steps-intro {
@@ -284,7 +285,11 @@ html.landing body > :not(#landing):not(.top):not(dialog):not(script) {
 }
 .landing-free .landing-link {
   min-height: 0;
+  padding-block: var(--space-3);
+  margin-block: -12px;
   font-size: 15px;
+  line-height: 20px;
+  vertical-align: baseline;
 }
 .landing-write {
   --write-ink: #f2f2f2;
@@ -293,7 +298,7 @@ html.landing body > :not(#landing):not(.top):not(dialog):not(script) {
   --write-rule: #2a2a2a;
   display: flex;
   gap: 88px;
-  padding: 88px 72px 32px;
+  padding: 88px var(--landing-gutter) 32px;
   background: #000;
   color: var(--write-ink);
 }
@@ -489,7 +494,7 @@ pre.landing-artefact b {
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 12px 24px;
-  padding: 32px 72px;
+  padding: 32px var(--landing-gutter);
   font-size: 14px;
   color: var(--mut);
 }
@@ -518,10 +523,10 @@ pre.landing-artefact b {
 }
 @media (max-width: 1279px) {
   .landing-hero {
-    grid-template-columns: minmax(0, 640px);
+    grid-template-columns: minmax(0, 1fr);
     grid-template-areas: "copy" "demo" "entries";
     row-gap: 28px;
-    padding: 32px 32px 64px;
+    padding: 32px var(--landing-gutter) 64px;
   }
   .landing-copy {
     gap: 16px;
@@ -535,7 +540,7 @@ pre.landing-artefact b {
   .landing-write {
     flex-direction: column;
     gap: 40px;
-    padding: 72px 32px;
+    padding: 72px var(--landing-gutter);
   }
   .landing-write-copy {
     flex-basis: auto;
@@ -548,14 +553,16 @@ pre.landing-artefact b {
     padding-bottom: 0;
   }
 }
-@media (max-width: 1099px) {
-  .landing-footer {
-    padding-inline: 32px;
+@media (max-width: 1199px) {
+  .landing-page {
+    --landing-gutter: 32px;
   }
+}
+@media (max-width: 1099px) {
   .landing-steps {
     flex-direction: column;
     gap: 32px;
-    padding: 56px 32px 64px;
+    padding: 56px var(--landing-gutter) 64px;
   }
   .landing-steps-intro {
     flex-basis: auto;
@@ -575,7 +582,7 @@ pre.landing-artefact b {
 @media (max-width: 699px) {
   .landing-hero {
     row-gap: 20px;
-    padding: 24px 16px 48px;
+    padding: 24px var(--landing-gutter) 48px;
   }
   .landing-copy {
     gap: 10px;
@@ -584,8 +591,8 @@ pre.landing-artefact b {
     display: none;
   }
   .landing-demo {
-    margin: 0 -16px;
-    padding: 16px;
+    margin: 0 calc(-1 * var(--landing-gutter));
+    padding: 16px var(--landing-gutter);
     border-width: 1px 0;
     border-radius: 0;
     gap: 14px;
@@ -605,10 +612,6 @@ pre.landing-artefact b {
     flex-direction: column;
     gap: 28px;
   }
-  .landing-steps,
-  .landing-write {
-    padding-inline: 16px;
-  }
   .landing-write h2 {
     font-size: min(40px, 10vw);
     line-height: 1.04;
@@ -617,6 +620,11 @@ pre.landing-artefact b {
     gap: 20px;
   }
   .landing-footer {
-    padding: 24px 16px;
+    padding-block: 24px;
+  }
+}
+@media (max-width: 599px) {
+  .landing-page {
+    --landing-gutter: 16px;
   }
 }

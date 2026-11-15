@@ -3,12 +3,12 @@
   z-index: 8;
   display: grid;
   grid-template-columns:
-    114px 24px 132px 32px 424px 32px minmax(0, 1fr)
-    24px 140px 16px 160px;
+    114px minmax(12px, 24px) 132px minmax(16px, 32px) 424px minmax(16px, 32px)
+    minmax(0, 1fr) minmax(12px, 24px) 140px 16px 160px;
   grid-template-areas: "logo . family . nav . context . tools . action";
   grid-template-rows: 72px;
   align-items: center;
-  padding: 0 48px;
+  padding: 0 64px;
   background: var(--page);
   box-shadow: inset 0 -1px 0 var(--rule);
 }
@@ -45,7 +45,7 @@
   height: 28px;
   padding: 0;
   border: 0;
-  border-radius: 5px;
+  border-radius: var(--radius-s);
   font: 500 13px/16px var(--ui);
   color: var(--mut);
 }
@@ -71,7 +71,7 @@
   align-items: center;
   justify-content: center;
   gap: var(--space-2);
-  min-width: 0;
+  min-width: 44px;
   padding: 3px 0 0;
   border: 0;
   border-bottom: 3px solid transparent;
@@ -509,7 +509,7 @@ body:not(.library-view) .family-switch {
   top: 50%;
   right: 68px;
   transform: translateY(-50%);
-  height: 40px;
+  height: 44px;
   padding: 0 14px;
   font-weight: 600;
   white-space: nowrap;
@@ -567,7 +567,6 @@ body:not(.library-view) .family-switch {
   min-height: 44px;
 }
 .library-aside {
-  padding-top: 10px;
   min-width: 0;
 }
 .pick-up {
@@ -685,7 +684,7 @@ body:not(.library-view) .family-switch {
   display: flex;
   align-items: center;
   gap: 6px;
-  min-height: 44px;
+  min-height: 48px;
   padding: 0 var(--space-3);
   border: 1px solid var(--control-border);
   border-radius: var(--radius-s);
@@ -951,7 +950,7 @@ body:not(.library-view) .family-switch {
   min-height: 128px;
   padding: var(--space-4);
   border: 1px solid var(--deck-line);
-  border-radius: 8px;
+  border-radius: var(--radius-s);
   text-align: left;
   background: var(--page);
   color: var(--ink);
@@ -974,9 +973,6 @@ body:not(.library-view) .family-switch {
   padding-top: 10px;
   font: 400 var(--text-xs)/16px var(--mono);
   color: var(--mut);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
   max-width: 100%;
 }
 .template-card.default {
@@ -1115,7 +1111,7 @@ body:not(.library-view) .site-footer {
       114px 12px 132px 16px 376px minmax(0, 1fr)
       140px 12px 112px;
     grid-template-areas: "logo . family . nav . tools . action";
-    padding: 0 var(--space-5);
+    padding: 0 var(--space-6);
   }
   .library-nav {
     column-gap: var(--space-3);
@@ -1183,6 +1179,9 @@ body:not(.library-view) .site-footer {
   #catalogueHint {
     max-width: 19ch;
   }
+  .site-footer {
+    padding-inline: var(--space-6);
+  }
 }
 @media (max-width: 1023px) {
   .top {
@@ -1199,7 +1198,7 @@ body:not(.library-view) .site-footer {
   .library {
     display: flex;
     flex-direction: column;
-    padding: 28px var(--space-5) var(--space-6);
+    padding: 28px var(--space-6) var(--space-6);
     gap: var(--space-5);
   }
   .library-intro h1 {
@@ -1224,8 +1223,10 @@ body:not(.library-view) .site-footer {
   #songSearch {
     font-size: var(--text-m);
   }
-  :is(#songLevel, [data-select="songLevel"]) {
+  :is(#songLevel, [data-select="songLevel"]),
+  .progress-filters button {
     height: 44px;
+    min-height: 44px;
   }
   .catalogue-heading h2 {
     font-size: var(--text-m);
@@ -1327,7 +1328,13 @@ body:not(.library-view) .site-footer {
     width: 104px;
   }
   .family-switch button {
+    position: relative;
     font-size: var(--text-xs);
+  }
+  .family-switch button::after {
+    content: "";
+    position: absolute;
+    inset: -8px 0;
   }
   .write-song {
     width: 44px;
@@ -1351,18 +1358,18 @@ body:not(.library-view) .site-footer {
     display: block;
   }
   .library {
-    padding: 28px var(--space-5) var(--space-3);
+    padding: 28px var(--space-4) var(--space-3);
   }
   .explore {
     flex-wrap: wrap;
-    row-gap: var(--space-1);
+    row-gap: var(--space-3);
     padding-top: 20px;
   }
   .mobile-tab-help {
-    margin-top: 0;
+    margin-top: var(--space-3);
   }
   .site-footer {
-    padding: 0 var(--space-5) var(--space-5);
+    padding: 0 var(--space-4) var(--space-5);
   }
 }
 @media (max-width: 459px) {
@@ -1389,6 +1396,9 @@ body:not(.library-view) .site-footer {
   }
   .family-switch {
     width: 100%;
+  }
+  .catalogue-progress-line {
+    white-space: normal;
   }
 }
 @media (max-width: 339px) {
