@@ -1,7 +1,7 @@
 import { setPref } from '../../app/storage';
 import { byId, one } from '../dom';
 import type { Song } from '../../core/model';
-import type { ParseIssue } from '../../core/parser';
+import type { ParseIssue } from '../../core/parseIssue';
 import { editorResize } from './editorResize';
 import { selectLine, settledInput, showIssueList } from './sourceText';
 

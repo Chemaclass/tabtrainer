@@ -1,7 +1,7 @@
 import { INSTRUMENTS, customInstrument, type Instrument } from './instruments';
 import { LEVELS, PPQ, barTicks, type Bar, type Level, type Note, type NoteEvent, type Song, type Version } from './model';
+import { NO_TOKEN, hinted, spanOf, valueSpan, type IssueSpan, type ParseIssue, type SongIssueCode } from './parseIssue';
 
-export interface ParseIssue { line: number; col: number; message: string; severity: 'error' | 'warning' }
 export interface ParseResult { song: Song; issues: ParseIssue[] }
 
 const VALUES: Record<string, number> = { w: 4 * PPQ, h: 2 * PPQ, q: PPQ, '8': PPQ / 2, '16': PPQ / 4, '32': PPQ / 8 };
@@ -61,12 +61,16 @@ export function headerLines(src: string): HeaderLine[] {
 
 export const headerKeys = (src: string) => new Set(headerLines(src).map(header => header.key));
 
+type IssueDetails = Pick<ParseIssue, 'message' | 'hint' | 'beats' | 'expected'>;
+
 export function parseSong(src: string): ParseResult {
   const issues: ParseIssue[] = [];
+  const report = (severity: ParseIssue['severity'], code: SongIssueCode, at: IssueSpan, details: IssueDetails | string) =>
+    issues.push({ ...at, code, severity, ...(typeof details === 'string' ? { message: details } : details) });
   const lines = src.replace(/\r\n?/g, '\n').split('\n');
   const meta = { title: 'Untitled', artist: undefined as string | undefined, about: undefined as string | undefined, level: undefined as Level | undefined, listen: undefined as string | undefined, tempo: 90, key: 'C', instrument: INSTRUMENTS.bass4 as Instrument };
   let time: [number, number] = [4, 4];
-  let tuning: string | null = null; let clef: 'bass' | 'treble' | undefined;
+  let tuning: { value: string; at: IssueSpan } | null = null; let clef: 'bass' | 'treble' | undefined;
   let bodyStart = 0;
   for (let i = 0; i < lines.length; i++) {
     const l = lines[i];
@@ -76,64 +80,77 @@ export function parseSong(src: string): ParseResult {
     if (!h) { bodyStart = i; break; }
     const [, k, raw] = h; const key = k.toLowerCase();
     const v = raw.replace(/(^|\s)#.*$/, '').trim();
+    const at = valueSpan(l, i + 1, v);
     if (key === 'title') meta.title = v;
     else if (key === 'artist') meta.artist = v;
     else if (key === 'about') meta.about = v;
-    else if (key === 'level') { const lv = asLevel(v); if (lv) meta.level = lv; else issues.push({ line: i + 1, col: 1, message: LEVEL_HELP(v), severity: 'error' }); }
-    else if (key === 'listen') { if (isWebAddress(v)) meta.listen = v; else issues.push({ line: i + 1, col: 1, message: `"listen:" needs a web address starting with https://`, severity: 'error' }); }
-    else if (key === 'tempo') { const t = parseFloat(v); if (t >= 20 && t <= 400) meta.tempo = t; else issues.push({ line: i + 1, col: 1, message: `Tempo must be between 20 and 400 (got "${v}")`, severity: 'error' }); }
+    else if (key === 'level') { const lv = asLevel(v); if (lv) meta.level = lv; else report('error', 'level-unknown', at, LEVEL_HELP(v)); }
+    else if (key === 'listen') { if (isWebAddress(v)) meta.listen = v; else report('error', 'listen-address', at, `"listen:" needs a web address starting with https://`); }
+    else if (key === 'tempo') { const t = parseFloat(v); if (t >= 20 && t <= 400) meta.tempo = t; else report('error', 'tempo-range', at, `Tempo must be between 20 and 400 (got "${v}")`); }
     else if (key === 'key') meta.key = v;
-    else if (key === 'instrument') { if (INSTRUMENTS[v]) meta.instrument = INSTRUMENTS[v]; else issues.push({ line: i + 1, col: 1, message: `Unknown instrument "${v}". Use one of: ${Object.keys(INSTRUMENTS).join(', ')} (or a "tuning:" line)`, severity: 'error' }); }
-    else if (key === 'tuning') tuning = v;
+    else if (key === 'instrument') { if (INSTRUMENTS[v]) meta.instrument = INSTRUMENTS[v]; else report('error', 'instrument-unknown', at, hinted(`Unknown instrument "${v}".`, `Use one of: ${Object.keys(INSTRUMENTS).join(', ')} (or a "tuning:" line)`)); }
+    else if (key === 'tuning') tuning = { value: v, at };
     else if (key === 'clef') clef = v === 'treble' ? 'treble' : 'bass';
-    else if (key === 'time') { const t = /^(\d+)\/(\d+)$/.exec(v); if (t) time = [+t[1], +t[2]]; else issues.push({ line: i + 1, col: 1, message: `Time signature like 4/4 expected`, severity: 'error' }); }
+    else if (key === 'time') { const t = /^(\d+)\/(\d+)$/.exec(v); if (t) time = [+t[1], +t[2]]; else report('error', 'time-signature', at, `Time signature like 4/4 expected`); }
     bodyStart = i + 1;
   }
-  if (tuning) { try { meta.instrument = customInstrument(tuning, clef); } catch (e) { issues.push({ line: 1, col: 1, message: (e as Error).message, severity: 'error' }); } }
+  if (tuning) { try { meta.instrument = customInstrument(tuning.value, clef); } catch (e) { report('error', 'tuning-unreadable', tuning.at, (e as Error).message); } }
   else if (clef) meta.instrument = { ...meta.instrument, clef };
   const strings = meta.instrument.tuning.length;
 
   const headerTime: [number, number] = [time[0], time[1]];
   const versions: Version[] = [];
   let versionName = 'Main'; let versionLine = 0; let versionLevel: Level | undefined;
-  const version = (): Version => ({ name: versionName, bars, ...(versionLevel ? { level: versionLevel } : {}) });
+  let versionAt = NO_TOKEN;
+  const versionLines = new Map<Version, IssueSpan>();
+  const version = (): Version => {
+    const made = { name: versionName, bars, ...(versionLevel ? { level: versionLevel } : {}) };
+    versionLines.set(made, versionAt);
+    return made;
+  };
   let bars: Bar[] = [];
-  const st = { cur: null as Bar | null }; let t = 0;
+  const st = { cur: null as Bar | null, notesAt: NO_TOKEN }; let t = 0;
   let dur = parseDuration('q')!;
   let pendingTempo: number | undefined;
   let pendingChord: string | undefined; let pendingText: string | undefined; let pendingLyric: string | undefined; let pendingSection: string | undefined;
-  const newBar = (line: number): Bar => {
-    const b: Bar = { index: bars.length + 1, beats: time[0], beatValue: time[1], events: [], line, section: pendingSection };
+  const beatsOf = (ticks: number) => Number((ticks / PPQ).toFixed(2));
+  const expectedBeats = (bar: Bar) => bar.beats * 4 / bar.beatValue;
+  const newBar = (tok: Tok): Bar => {
+    const b: Bar = { index: bars.length + 1, beats: time[0], beatValue: time[1], events: [], line: tok.line, section: pendingSection };
+    st.notesAt = spanOf(tok);
     if (pendingTempo !== undefined) b.tempo = pendingTempo;
     pendingTempo = undefined; pendingSection = undefined; bars.push(b); t = 0; return b;
   };
-  const closeBar = (tok: Tok) => {
+  const closeBar = () => {
     if (!st.cur) return;
     const full = barTicks(st.cur);
     if (t < full && st.cur.events.length) {
-      issues.push({ line: st.cur.line ?? tok.line, col: 1, message: `Bar ${st.cur.index} has ${(t / PPQ).toFixed(2).replace(/\.?0+$/, '')} of ${st.cur.beats * 4 / st.cur.beatValue} beats; filled with a rest`, severity: 'warning' });
+      const beats = beatsOf(t); const expected = expectedBeats(st.cur);
+      report('warning', 'bar-short', st.notesAt, { message: `Bar ${st.cur.index} has ${beats} of ${expected} beats; filled with a rest`, beats, expected });
       st.cur.events.push({ start: t, dur: full - t, notes: [], value: 'q', dots: 0, triplet: false });
     }
     if (!st.cur.events.length) bars.pop();
     st.cur = null;
   };
-  const parseNote = (s: string, tok: Tok): Note | null => {
+  const parseNote = (s: string, at: IssueSpan): Note | null => {
     const tie = s.startsWith('~'); const body = tie ? s.slice(1) : s;
     const r = /^(\d{1,2})\.(\d{1,2})$/.exec(body);
-    if (!r) { issues.push({ line: tok.line, col: tok.col, message: `Can't read "${s}". Notes are fret.string, e.g. 3.4 (fret 3 on string 4)`, severity: 'error' }); return null; }
+    if (!r) { report('error', 'note-unreadable', at, hinted(`Can't read "${s}".`, 'Notes are fret.string, e.g. 3.4 (fret 3 on string 4)')); return null; }
     const fret = +r[1], string = +r[2];
-    if (string < 1 || string > strings) { issues.push({ line: tok.line, col: tok.col, message: `String ${string} doesn't exist on this ${strings}-string instrument`, severity: 'error' }); return null; }
-    if (fret > meta.instrument.maxFret) { issues.push({ line: tok.line, col: tok.col, message: `Fret ${fret} is above the instrument's ${meta.instrument.maxFret} frets`, severity: 'error' }); return null; }
+    if (string < 1 || string > strings) { report('error', 'string-missing', at, `String ${string} doesn't exist on this ${strings}-string instrument`); return null; }
+    if (fret > meta.instrument.maxFret) { report('error', 'fret-high', at, `Fret ${fret} is above the instrument's ${meta.instrument.maxFret} frets`); return null; }
     return { string, fret, ...(tie ? { tie: true } : {}) };
   };
   const pushEvent = (notes: Note[], tok: Tok) => {
-    if (!st.cur) st.cur = newBar(tok.line);
+    if (!st.cur) st.cur = newBar(tok);
+    else if (tok.line === st.notesAt.line) st.notesAt = { ...st.notesAt, length: tok.col + tok.text.length - st.notesAt.col };
     const full = barTicks(st.cur);
     if (t + dur.ticks > full + 0.001) {
-      issues.push({ line: tok.line, col: tok.col, message: `Bar ${st.cur.index} is too long: this note goes past ${st.cur.beats * 4 / st.cur.beatValue} beats (missing a "|"?)`, severity: 'error' });
+      const expected = expectedBeats(st.cur);
+      report('error', 'bar-long', spanOf(tok), { ...hinted(`Bar ${st.cur.index} is too long: this note goes past ${expected} beats`, '(missing a "|"?)'), beats: beatsOf(t + dur.ticks), expected });
     }
     const strs = notes.map(n => n.string);
-    if (new Set(strs).size !== strs.length) issues.push({ line: tok.line, col: tok.col, message: 'Two notes on the same string in one chord', severity: 'error' });
+    if (new Set(strs).size !== strs.length) report('error', 'string-twice', spanOf(tok), 'Two notes on the same string in one chord');
     const ev: NoteEvent = { start: t, dur: dur.ticks, notes, value: dur.value, dots: dur.dots, triplet: dur.triplet };
     if (pendingChord) ev.chord = pendingChord; if (pendingText) ev.text = pendingText; if (pendingLyric) ev.lyric = pendingLyric;
     pendingChord = pendingText = pendingLyric = undefined;
@@ -142,38 +159,38 @@ export function parseSong(src: string): ParseResult {
 
   for (const tok of tokenize(lines.slice(bodyStart).join('\n'), bodyStart + 1)) {
     let s = tok.text;
-    if (s.startsWith('@')) { if (st.cur && st.cur.events.length) closeBar(tok); pendingSection = s.slice(1).trim(); continue; }
+    if (s.startsWith('@')) { if (st.cur && st.cur.events.length) closeBar(); pendingSection = s.slice(1).trim(); continue; }
     if (s.startsWith('==')) {
       // a new version of the song: finish the current one and start counting bars again
-      closeBar(tok);
+      closeBar();
       const name = s.replace(/^=+/, '').trim() || `Version ${versions.length + 1}`;
       if (bars.length || versionLine) versions.push(version());
       else if (versions.length === 0 && pendingSection) { /* section before the first version applies to it */ }
-      bars = []; versionName = name; versionLine = tok.line; versionLevel = undefined;
+      bars = []; versionName = name; versionLine = tok.line; versionAt = spanOf(tok); versionLevel = undefined;
       pendingTempo = undefined;
       time = [headerTime[0], headerTime[1]]; dur = parseDuration('q')!; pendingChord = pendingText = pendingLyric = undefined;
-      if (versions.some(v => v.name === name)) issues.push({ line: tok.line, col: tok.col, message: `There is already a version called "${name}"`, severity: 'warning' });
+      if (versions.some(v => v.name === name)) report('warning', 'version-duplicate', spanOf(tok), `There is already a version called "${name}"`);
       continue;
     }
     if (/^level\s*:/i.test(s)) {
       const v = s.replace(/^level\s*:/i, '').trim(); const lv = asLevel(v);
-      if (lv) versionLevel = lv; else issues.push({ line: tok.line, col: tok.col, message: LEVEL_HELP(v), severity: 'error' });
+      if (lv) versionLevel = lv; else report('error', 'level-unknown', valueSpan(s, tok.line, v, tok.col), LEVEL_HELP(v));
       continue;
     }
-    if (s === '|') { closeBar(tok); continue; }
+    if (s === '|') { closeBar(); continue; }
     if (s.startsWith('[tempo=')) {
       const match = /^\[tempo=(\d+(?:\.\d+)?)\]$/.exec(s);
       const tempo = match ? Number(match[1]) : NaN;
       if (!Number.isFinite(tempo) || tempo < 20 || tempo > 400) {
-        issues.push({ line: tok.line, col: tok.col, message: 'Tempo must be between 20 and 400, e.g. [tempo=130]', severity: 'error' });
+        report('error', 'tempo-range', spanOf(tok), hinted('Tempo must be between 20 and 400', 'e.g. [tempo=130]', ', '));
       } else if (st.cur?.events.length) {
-        issues.push({ line: tok.line, col: tok.col, message: 'Put tempo changes before the first note of a bar', severity: 'error' });
+        report('error', 'tempo-late', spanOf(tok), 'Put tempo changes before the first note of a bar');
       } else pendingTempo = tempo;
       continue;
     }
     if (s.startsWith('[')) {
       const r = /^\[(\d+)\/(\d+)\]$/.exec(s);
-      if (!r) { issues.push({ line: tok.line, col: tok.col, message: `Time signature like [3/4] expected`, severity: 'error' }); continue; }
+      if (!r) { report('error', 'time-signature', spanOf(tok), `Time signature like [3/4] expected`); continue; }
       time = [+r[1], +r[2]];
       if (st.cur && !st.cur.events.length) { st.cur.beats = time[0]; st.cur.beatValue = time[1]; }
       continue;
@@ -187,23 +204,23 @@ export function parseSong(src: string): ParseResult {
     if (ci >= 0) { inline = s.slice(ci + 1); s = s.slice(0, ci); }
     if (inline !== null) {
       const d = parseDuration(inline);
-      if (!d) { issues.push({ line: tok.line, col: tok.col, message: `Unknown duration ":${inline}". Use w h q 8 16 32, add "." for dotted, "t" for triplet`, severity: 'error' }); continue; }
+      if (!d) { report('error', 'duration-unknown', { line: tok.line, col: tok.col + ci, length: inline.length + 1 }, hinted(`Unknown duration ":${inline}".`, 'Use w h q 8 16 32, add "." for dotted, "t" for triplet')); continue; }
       dur = d;
       if (s === '') continue; // bare duration change like ":8"
     }
     if (s === 'r') { pushEvent([], tok); continue; }
     if (s.startsWith('(')) {
-      const inner = s.slice(1, -1).trim().split(/\s+/).filter(Boolean);
-      const notes = inner.map(x => parseNote(x, tok)).filter((x): x is Note => !!x);
+      const inner = [...s.slice(1, -1).matchAll(/\S+/g)];
+      const notes = inner.map(x => parseNote(x[0], { line: tok.line, col: tok.col + 1 + x.index, length: x[0].length })).filter((x): x is Note => !!x);
       if (notes.length) pushEvent(notes, tok);
       continue;
     }
-    const n = parseNote(s, tok);
+    const n = parseNote(s, { line: tok.line, col: tok.col, length: s.length });
     if (n) pushEvent([n], tok);
   }
-  if (st.cur) closeBar({ text: '', line: lines.length, col: 1 });
+  if (st.cur) closeBar();
   if (bars.length || !versions.length) versions.push(version());
-  if (versions.every(v => !v.bars.length)) issues.push({ line: 1, col: 1, message: 'No bars yet. Add notes like:  :q 3.4 5.4 3.3 5.3 |', severity: 'warning' });
-  for (const v of versions) if (!v.bars.length && versions.length > 1) issues.push({ line: 1, col: 1, message: `Version "${v.name}" has no bars`, severity: 'warning' });
+  if (versions.every(v => !v.bars.length)) report('warning', 'song-empty', NO_TOKEN, hinted('No bars yet.', 'Add notes like:  :q 3.4 5.4 3.3 5.3 |'));
+  for (const v of versions) if (!v.bars.length && versions.length > 1) report('warning', 'version-empty', versionLines.get(v) ?? NO_TOKEN, `Version "${v.name}" has no bars`);
   return { song: { meta, bars: versions[0].bars, versions }, issues };
 }

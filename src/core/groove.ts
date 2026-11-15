@@ -1,5 +1,5 @@
 import { BASS_DEGREES, parseNumeral, type Numeral } from './harmony';
-import type { ParseIssue } from './parser';
+import { NO_TOKEN, hinted, spanOf, valueSpan, type GrooveIssueCode, type IssueSpan, type ParseIssue } from './parseIssue';
 import { isKey } from './theory';
 
 export const DRUMS = ['kick', 'snare', 'rim', 'hat', 'halfhat', 'openhat', 'pedalhat', 'ride', 'bell', 'crash', 'hightom', 'midtom', 'lowtom'] as const;
@@ -75,29 +75,45 @@ function stepsOf(part: GroovePart): readonly string[] {
   return DRUM_STEPS;
 }
 
+interface Step { text: string; col: number }
+interface RawBar { steps: Step[]; at: IssueSpan }
+
 /** Bass steps are words split by spaces; every other part is one character per step. */
-function splitSteps(part: GroovePart, bar: string): string[] {
-  if (part === 'bass') return bar.trim().split(/\s+/).filter(Boolean);
-  return bar.replace(/\s+/g, '').split('');
+function stepsAt(part: GroovePart, bar: string, col: number): Step[] {
+  const step = part === 'bass' ? /\S+/g : /\S/g;
+  return [...bar.matchAll(step)].map(found => ({ text: found[0], col: col + found.index }));
 }
 
-const holdsNothing = (steps: readonly string[]) => steps.some((step, i) => step === HOLD && (i === 0 || steps[i - 1] === REST));
+function barsAt(part: GroovePart, grid: string, at: IssueSpan): RawBar[] {
+  let col = at.col;
+  const bars = grid.split('|').map(bar => {
+    const steps = stepsAt(part, bar, col);
+    // A bar with no characters points at the "|" that closes it.
+    const raw = { steps, at: { line: at.line, col, length: bar.length || 1 } };
+    col += bar.length + 1;
+    return raw;
+  });
+  if (bars.length > 1 && !bars[bars.length - 1].steps.length) bars.pop();
+  return bars;
+}
+
+const emptyHold = (steps: readonly Step[]) => steps.find((step, i) => step.text === HOLD && (i === 0 || steps[i - 1].text === REST));
 
 function defaultGroove(): Groove {
   return { title: 'Untitled', genre: '', tempo: 90, key: 'C', time: [4, 4], swing: SWING_RANGE.straight, progression: [], voice: 'keys', kit: 'rock', fill: false, grids: [] };
 }
 
-interface RawGrid { part: GroovePart; text: string; line: number }
+interface RawGrid { part: GroovePart; text: string; at: IssueSpan }
 
 class GrooveReader {
   readonly groove = defaultGroove();
   readonly issues: ParseIssue[] = [];
   private rawGrids: RawGrid[] = [];
   private progressionLine = 0;
-  private fillLine = 0;
+  private fillAt = NO_TOKEN;
 
-  warn(line: number, message: string, col = 1) {
-    this.issues.push({ line, col, message, severity: 'warning' });
+  warn(code: GrooveIssueCode, at: IssueSpan, details: Pick<ParseIssue, 'message' | 'hint'> | string) {
+    this.issues.push({ ...at, code, severity: 'warning', ...(typeof details === 'string' ? { message: details } : details) });
   }
 
   readLine(raw: string, line: number) {
@@ -106,134 +122,135 @@ class GrooveReader {
     if (!text.trim()) return;
     const match = LINE.exec(text);
     if (!match) {
-      this.warn(line, `Expected a line like "kick: x...x..." (got "${text.trim()}")`);
+      this.warn('line-unreadable', { line, col: text.search(/\S/) + 1, length: text.trim().length }, `Expected a line like "kick: x...x..." (got "${text.trim()}")`);
       return;
     }
     const [, written, value] = match;
-    this.readField(written, value, line, text);
+    this.readField(written, value, valueSpan(text, line, value), valueSpan(text, line, ''));
   }
 
-  private readField(written: string, value: string, line: number, text: string) {
+  private readField(written: string, value: string, at: IssueSpan, keyAt: IssueSpan) {
     const name = written.toLowerCase();
     if (isTextHeader(name)) {
       this.groove[name] = value;
       return;
     }
     switch (name) {
-      case 'tempo': return this.readTempo(value, line);
-      case 'key': return this.readKey(value, line);
-      case 'time': return this.readTime(value, line);
-      case 'swing': return this.readSwing(value, line);
-      case 'progression': return this.readProgression(value, line, text);
-      case 'voice': return this.readVoice(value, line);
-      case 'kit': return this.readKit(value, line);
-      case 'fill': return this.readFill(value, line);
+      case 'tempo': return this.readTempo(value, at);
+      case 'key': return this.readKey(value, at);
+      case 'time': return this.readTime(value, at);
+      case 'swing': return this.readSwing(value, at);
+      case 'progression': return this.readProgression(value, at, keyAt);
+      case 'voice': return this.readVoice(value, at);
+      case 'kit': return this.readKit(value, at);
+      case 'fill': return this.readFill(value, at);
     }
-    if (isPart(name)) return this.readGrid(name, value, line);
-    this.warn(line, `Unknown line "${written}:": use a header (${HEADERS.join(', ')}) or a part (${PARTS.join(', ')})`);
+    if (isPart(name)) return this.readGrid(name, value, at, keyAt);
+    this.warn('line-unknown', keyAt, hinted(`Unknown line "${written}:":`, `use a header (${HEADERS.join(', ')}) or a part (${PARTS.join(', ')})`));
   }
 
-  private readTempo(value: string, line: number) {
+  private readTempo(value: string, at: IssueSpan) {
     const tempo = parseFloat(value);
     if (tempo >= TEMPO_RANGE.min && tempo <= TEMPO_RANGE.max) this.groove.tempo = tempo;
-    else this.warn(line, `Tempo must be between ${TEMPO_RANGE.min} and ${TEMPO_RANGE.max} (got "${value}")`);
+    else this.warn('tempo-range', at, `Tempo must be between ${TEMPO_RANGE.min} and ${TEMPO_RANGE.max} (got "${value}")`);
   }
 
-  private readKey(value: string, line: number) {
+  private readKey(value: string, at: IssueSpan) {
     if (isKey(value)) this.groove.key = value;
-    else this.warn(line, `Unknown key "${value}": use a key like A, Bb or F#m`);
+    else this.warn('key-unknown', at, hinted(`Unknown key "${value}":`, 'use a key like A, Bb or F#m'));
   }
 
-  private readTime(value: string, line: number) {
+  private readTime(value: string, at: IssueSpan) {
     const match = TIME_SIGNATURE.exec(value);
     const beats = match ? Number(match[1]) : 0;
     if (match && beats >= 1 && beats <= MAX_BEATS) this.groove.time = [beats, Number(match[2])];
-    else this.warn(line, `Time signature like 4/4 expected (got "${value}")`);
+    else this.warn('time-signature', at, `Time signature like 4/4 expected (got "${value}")`);
   }
 
-  private readSwing(value: string, line: number) {
+  private readSwing(value: string, at: IssueSpan) {
     const swing = /^\d+$/.test(value) ? Number(value) : NaN;
     if (swing >= SWING_RANGE.straight && swing <= SWING_RANGE.max) this.groove.swing = swing;
-    else this.warn(line, `Swing must be a whole number from ${SWING_RANGE.straight} (straight) to ${SWING_RANGE.max} (got "${value}")`);
+    else this.warn('swing-range', at, `Swing must be a whole number from ${SWING_RANGE.straight} (straight) to ${SWING_RANGE.max} (got "${value}")`);
   }
 
-  private readProgression(value: string, line: number, text: string) {
+  private readProgression(value: string, at: IssueSpan, keyAt: IssueSpan) {
     if (this.progressionLine) {
-      this.warn(line, `There is already a "progression:" line (line ${this.progressionLine})`);
+      this.warn('progression-duplicate', keyAt, `There is already a "progression:" line (line ${this.progressionLine})`);
       return;
     }
-    this.progressionLine = line;
-    const valueColumn = text.indexOf(value) + 1;
+    this.progressionLine = at.line;
     for (const token of value.matchAll(NUMERAL_TOKEN)) {
       const result = parseNumeral(token[0]);
-      if ('error' in result) this.warn(line, result.error, valueColumn + token.index);
+      if ('error' in result) this.warn('numeral-unknown', { line: at.line, col: at.col + token.index, length: token[0].length }, result.error);
       else this.groove.progression.push(result.numeral);
     }
   }
 
-  private readVoice(value: string, line: number) {
+  private readVoice(value: string, at: IssueSpan) {
     if (isVoice(value)) this.groove.voice = value;
-    else this.warn(line, `Unknown voice "${value}": use ${KEYS_VOICES.join(', ')}`);
+    else this.warn('voice-unknown', at, hinted(`Unknown voice "${value}":`, `use ${KEYS_VOICES.join(', ')}`));
   }
 
-  private readKit(value: string, line: number) {
+  private readKit(value: string, at: IssueSpan) {
     if (isDrumKit(value)) this.groove.kit = value;
-    else this.warn(line, `Unknown kit "${value}": use ${DRUM_KITS.join(', ')}`);
+    else this.warn('kit-unknown', at, hinted(`Unknown kit "${value}":`, `use ${DRUM_KITS.join(', ')}`));
   }
 
-  private readFill(value: string, line: number) {
+  private readFill(value: string, at: IssueSpan) {
     if (!Object.hasOwn(FILL_SWITCH, value)) {
-      this.warn(line, `Fill must be on or off (got "${value}")`);
+      this.warn('fill-switch', at, `Fill must be on or off (got "${value}")`);
       return;
     }
     this.groove.fill = FILL_SWITCH[value];
-    this.fillLine = line;
+    this.fillAt = at;
   }
 
-  private readGrid(part: GroovePart, text: string, line: number) {
-    if (this.rawGrids.some(grid => grid.part === part)) this.warn(line, `There is already a "${part}:" line`);
-    else this.rawGrids.push({ part, text, line });
+  private readGrid(part: GroovePart, text: string, at: IssueSpan, keyAt: IssueSpan) {
+    if (this.rawGrids.some(grid => grid.part === part)) this.warn('grid-duplicate', keyAt, `There is already a "${part}:" line`);
+    else this.rawGrids.push({ part, text, at: text ? at : keyAt });
   }
 
   finish(): GrooveResult {
     const { groove } = this;
-    if (!groove.progression.length) this.warn(1, 'No progression yet. Add a line like:  progression: I7 IV7 I7 V7');
+    if (!groove.progression.length) this.warn('progression-missing', NO_TOKEN, hinted('No progression yet.', 'Add a line like:  progression: I7 IV7 I7 V7'));
     const [beats, beatValue] = groove.time;
     if (groove.fill && barLength(groove.time) < FILL_BEATS) {
-      this.warn(this.fillLine, `A fill needs a bar of at least ${FILL_BEATS} beats, so this ${beats}/${beatValue} groove plays none`);
+      this.warn('fill-short', this.fillAt, `A fill needs a bar of at least ${FILL_BEATS} beats, so this ${beats}/${beatValue} groove plays none`);
     }
     for (const rawGrid of this.rawGrids) this.addGrid(rawGrid);
     return { groove, issues: this.issues };
   }
 
-  private addGrid({ part, text, line }: RawGrid) {
-    const bars = text.split('|').map(bar => splitSteps(part, bar));
-    if (bars.length > 1 && !bars[bars.length - 1].length) bars.pop();
+  private addGrid({ part, text, at }: RawGrid) {
+    const rawBars = barsAt(part, text, at);
     const before = this.issues.length;
-    bars.forEach((steps, index) => this.checkBar(part, steps, line, bars.length > 1 ? index + 1 : null));
-    if (!bars.some(steps => steps.length)) this.warn(line, `"${part}:" has no steps`);
+    rawBars.forEach((bar, index) => this.checkBar(part, bar, rawBars.length > 1 ? index + 1 : null));
+    if (!rawBars.some(bar => bar.steps.length)) this.warn('grid-empty', at, `"${part}:" has no steps`);
     if (this.issues.length > before) return;
-    this.groove.grids.push({ part, bars, line });
+    const bars = rawBars.map(bar => bar.steps.map(step => step.text));
+    this.groove.grids.push({ part, bars, line: at.line });
     const chords = this.groove.progression.length;
-    if (chords && bars.length > chords) this.warn(line, `"${part}:" has ${bars.length} bars, but the progression has only ${chords}`);
+    if (chords && bars.length > chords) this.warn('grid-long', at, `"${part}:" has ${bars.length} bars, but the progression has only ${chords}`);
   }
 
   /** barNumber is null when the grid has a single bar, which then goes unnamed. */
-  private checkBar(part: GroovePart, steps: string[], line: number, barNumber: number | null) {
+  private checkBar(part: GroovePart, { steps, at }: RawBar, barNumber: number | null) {
     const where = barNumber === null ? `"${part}:"` : `"${part}:" bar ${barNumber}`;
     if (!steps.length) {
-      if (barNumber !== null) this.warn(line, `${where} is empty`);
+      if (barNumber !== null) this.warn('bar-empty', at, `${where} is empty`);
       return;
     }
+    const barAt = { line: at.line, col: steps[0].col, length: steps[steps.length - 1].col + steps[steps.length - 1].text.length - steps[0].col };
     const [beats, beatValue] = this.groove.time;
     const stepCounts = (hasShortBeats(this.groove.time) ? STEPS_PER_SHORT_BEAT : STEPS_PER_BEAT).map(perBeat => perBeat * beats);
     if (!stepCounts.includes(steps.length)) {
-      this.warn(line, `${where} has ${steps.length} steps, which do not fit a ${beats}/${beatValue} bar: use ${stepCounts.join(', ')}`);
+      this.warn('bar-steps', barAt, hinted(`${where} has ${steps.length} steps, which do not fit a ${beats}/${beatValue} bar:`, `use ${stepCounts.join(', ')}`));
     }
     const allowed = stepsOf(part);
-    const unknown = steps.find(step => !allowed.includes(step));
-    if (unknown) this.warn(line, `${where} has an unknown step "${unknown}": use ${allowed.join(' ')}`);
-    else if (holdsNothing(steps)) this.warn(line, `${where} has a "${HOLD}" with no note before it to hold`);
+    const unknown = steps.find(step => !allowed.includes(step.text));
+    const hold = emptyHold(steps);
+    if (unknown) this.warn('step-unknown', spanOf({ ...unknown, line: at.line }), hinted(`${where} has an unknown step "${unknown.text}":`, `use ${allowed.join(' ')}`));
+    else if (hold) this.warn('hold-empty', spanOf({ ...hold, line: at.line }), `${where} has a "${HOLD}" with no note before it to hold`);
   }
 }
 

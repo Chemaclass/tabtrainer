@@ -1,4 +1,4 @@
-import type { ParseIssue } from '../../core/parser';
+import type { IssueSpan, ParseIssue } from '../../core/parseIssue';
 
 const SETTLE_MS = 300;
 const nothing = () => undefined;
@@ -10,16 +10,19 @@ function lineStart(lines: readonly string[], line: number): number {
   return before.reduce((start, text) => start + text.length + LINE_BREAK_LENGTH, 0);
 }
 
-export function selectLine(source: HTMLTextAreaElement, line: number) {
+/** Selects the span, or its whole line when the span has no length. */
+function selectSpan(source: HTMLTextAreaElement, { line, col, length: spanLength }: IssueSpan) {
   const lines = source.value.split('\n');
-  const start = lineStart(lines, line);
-  const length = lines[line - 1]?.length ?? 0;
+  const lineFrom = lineStart(lines, line);
+  const [start, length] = spanLength ? [lineFrom + col - 1, spanLength] : [lineFrom, lines[line - 1]?.length ?? 0];
   source.focus();
   source.setSelectionRange(start, start + length);
   // Chrome keeps the old scroll position when the selection moves; wrapped lines make this approximate.
   const lineHeight = parseFloat(getComputedStyle(source).lineHeight) || 0;
   source.scrollTop = Math.max(0, (line - 1) * lineHeight - source.clientHeight / 3);
 }
+
+export const selectLine = (source: HTMLTextAreaElement, line: number) => selectSpan(source, { line, col: 1, length: 0 });
 
 function issueItem(issue: ParseIssue, source: HTMLTextAreaElement): HTMLLIElement {
   const item = document.createElement('li');
@@ -28,7 +31,7 @@ function issueItem(issue: ParseIssue, source: HTMLTextAreaElement): HTMLLIElemen
   button.type = 'button';
   button.className = 'issue-link';
   button.textContent = `Line ${issue.line}: ${issue.message}`;
-  button.addEventListener('click', () => selectLine(source, issue.line));
+  button.addEventListener('click', () => selectSpan(source, issue));
   item.append(button);
   return item;
 }

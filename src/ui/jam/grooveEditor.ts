@@ -2,7 +2,7 @@ import { DraftSession, titleOf } from '../../app/draftSession';
 import { NEW_GROOVE_TEXT, playableGroove, type Jam } from '../../app/jam';
 import { mineGrooveSlug, mineGrooveTitle } from '../../app/jamLink';
 import { savedGrooves } from '../../app/storage';
-import type { ParseIssue } from '../../core/parser';
+import type { ParseIssue } from '../../core/parseIssue';
 import { byId } from '../dom';
 import { downloadText } from '../editor/textFile';
 import { settledInput, showIssueList } from '../editor/sourceText';

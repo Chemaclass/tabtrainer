@@ -1,4 +1,5 @@
-import { parseSong, type ParseIssue } from '../core/parser';
+import { parseSong } from '../core/parser';
+import type { ParseIssue } from '../core/parseIssue';
 import { withVersion, type Song, type Version } from '../core/model';
 import { versionSlug } from './songLink';
 
