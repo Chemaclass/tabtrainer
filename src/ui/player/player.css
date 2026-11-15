@@ -37,7 +37,7 @@
 .play {
   width: 48px;
   height: 48px;
-  border-radius: 24px;
+  border-radius: var(--radius-pill);
   background: var(--led);
   padding: 0;
   display: grid;
@@ -70,7 +70,7 @@
 .stop {
   width: 36px;
   height: 36px;
-  border-radius: 18px;
+  border-radius: var(--radius-pill);
   border-color: var(--deck-line);
   padding: 0;
   display: grid;
@@ -118,7 +118,7 @@
   gap: var(--space-1);
   font-size: var(--text-xs);
   white-space: nowrap;
-  border-radius: 20px;
+  border-radius: var(--radius-pill);
   border-color: var(--deck-line);
   padding: var(--space-1) var(--space-2);
   display: grid;
@@ -214,7 +214,7 @@ input[type="range"]::-moz-range-thumb {
   font: 600 var(--text-m) var(--mono);
   padding: var(--space-2) 6px;
   border: 1px solid var(--control-border);
-  border-radius: 5px;
+  border-radius: var(--radius-s);
   background: var(--deck-raise);
   color: var(--deck-hi);
   text-align: center;
@@ -236,7 +236,7 @@ input[type="range"]::-moz-range-thumb {
   height: 40px;
   padding: 0 14px;
   border: 1px solid var(--deck-line);
-  border-radius: 20px;
+  border-radius: var(--radius-pill);
   font: 500 13px var(--ui);
   color: var(--deck-text);
   cursor: pointer;
@@ -517,7 +517,7 @@ input[type="range"]::-moz-range-thumb {
   gap: 10px;
   padding: 0 14px;
   border: 1px solid var(--deck-line);
-  border-radius: 22px;
+  border-radius: var(--radius-pill);
   cursor: pointer;
   list-style: none;
 }
@@ -620,7 +620,7 @@ input[type="range"]::-moz-range-thumb {
   min-height: 44px;
   padding: 6px;
   border: 1px solid var(--control-border);
-  border-radius: 5px;
+  border-radius: var(--radius-s);
   background: var(--deck-raise);
   color: var(--deck-hi);
   font: 600 var(--text-m) var(--mono);
@@ -714,14 +714,15 @@ input[type="range"]::-moz-range-thumb {
   .player-badges {
     position: static;
     order: -1;
-  }
-  .player-badges:not(:has(:not([hidden]))) {
-    display: none;
+    min-height: 34px;
+    padding-right: var(--space-6);
   }
   .count-in-display,
   .speed-practice-progress {
+    border-bottom: 1px solid var(--deck-line);
     border-radius: 8px;
     background: var(--deck-raise);
+    line-height: 16px;
   }
   .timing-controls,
   .speed-practice-controls {
@@ -787,7 +788,7 @@ input[type="range"]::-moz-range-thumb {
     height: 36px;
     padding: 0;
     border-color: var(--deck-line);
-    border-radius: 18px;
+    border-radius: var(--radius-pill);
     color: var(--deck-text);
   }
   .minimize:hover {
@@ -812,6 +813,8 @@ input[type="range"]::-moz-range-thumb {
     display: none;
   }
   .player-min .player-badges {
+    min-height: 0;
+    padding-right: 0;
     position: fixed;
     top: calc(var(--top-h, 64px) + 12px);
     right: calc(var(--player-w) + 12px);
@@ -854,6 +857,20 @@ input[type="range"]::-moz-range-thumb {
     display: none;
   }
 }
+@media (min-width: 900px) and (max-width: 1199px) {
+  .count-in-display,
+  .speed-practice-progress {
+    padding-inline: var(--space-2);
+    font-size: var(--text-xs);
+  }
+  .loop .pill {
+    flex-basis: 100%;
+    justify-content: center;
+  }
+  .loop input[type="number"] {
+    min-width: 0;
+  }
+}
 @media (min-width: 1200px) {
   :root {
     --player-w: 300px;
@@ -872,17 +889,25 @@ input[type="range"]::-moz-range-thumb {
 }
 @media (max-width: 599px) {
   .player {
-    gap: var(--space-3) 10px;
+    --deck-key: 64px;
+    --deck-step: 52px;
+    --deck-play: 72px;
+    display: grid;
+    grid-template-columns: var(--deck-key) minmax(0, 1fr) var(--deck-key);
+    align-items: center;
+    gap: 0 10px;
     padding: var(--space-3) max(var(--space-4), env(safe-area-inset-right))
       calc(var(--space-3) + env(safe-area-inset-bottom))
       max(var(--space-4), env(safe-area-inset-left));
   }
   .deck-status:not([hidden]) {
-    order: -2;
+    grid-column: 2;
+    grid-row: 1;
     display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
     align-items: center;
-    gap: var(--space-2);
-    flex-basis: 100%;
+    gap: 0 var(--space-2);
     min-width: 0;
     font: 400 var(--text-xs)/16px var(--mono);
     color: var(--deck-text);
@@ -898,8 +923,8 @@ input[type="range"]::-moz-range-thumb {
     color: var(--led-text);
   }
   .deck-pass {
-    flex: 1;
     min-width: 0;
+    max-width: 100%;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -932,8 +957,8 @@ input[type="range"]::-moz-range-thumb {
     justify-content: center;
     gap: var(--space-1);
     flex: none;
-    width: 64px;
-    height: 64px;
+    width: var(--deck-key);
+    height: var(--deck-key);
     padding: 0;
     border-color: var(--deck-line);
     border-radius: var(--radius-m);
@@ -959,13 +984,7 @@ input[type="range"]::-moz-range-thumb {
     color: var(--led-text);
   }
   .speed {
-    order: -1;
-    display: grid;
-    grid-template-columns: 64px minmax(0, 1fr) 64px;
-    grid-template-rows: auto auto;
-    align-items: center;
-    gap: 6px 10px;
-    flex-basis: 100%;
+    display: contents;
   }
   .speed > input[type="range"],
   .speed-presets,
@@ -973,9 +992,16 @@ input[type="range"]::-moz-range-thumb {
     display: none;
   }
   .speed-step {
-    grid-row: 1 / 3;
-    height: 56px;
+    grid-row: 2 / 4;
+    width: auto;
+    height: var(--deck-step);
     font: 600 18px/22px var(--mono);
+  }
+  .player:has(> .deck-status:not([hidden])) .speed-step {
+    grid-row: 1 / 4;
+  }
+  .player:has(> .deck-status:not([hidden])) #speedOut {
+    line-height: 28px;
   }
   #speedDown {
     grid-column: 1;
@@ -985,7 +1011,7 @@ input[type="range"]::-moz-range-thumb {
   }
   .speed-head {
     grid-column: 2;
-    grid-row: 1;
+    grid-row: 2;
     justify-content: center;
     align-self: end;
   }
@@ -1002,8 +1028,9 @@ input[type="range"]::-moz-range-thumb {
   }
   .speed-track {
     grid-column: 2;
-    grid-row: 2;
+    grid-row: 3;
     align-self: start;
+    margin-top: 6px;
     display: block;
     position: relative;
     height: 4px;
@@ -1025,8 +1052,10 @@ input[type="range"]::-moz-range-thumb {
     background: var(--deck-dim);
   }
   .transport {
-    flex: 1;
+    grid-column: 1 / 3;
+    grid-row: 4;
     min-width: 0;
+    margin-top: var(--space-3);
     gap: 10px;
   }
   .stop {
@@ -1036,8 +1065,8 @@ input[type="range"]::-moz-range-thumb {
     flex: 1;
     min-width: 56px;
     width: auto;
-    height: 72px;
-    border-radius: 36px;
+    height: var(--deck-play);
+    border-radius: var(--radius-pill);
     gap: 10px;
     display: flex;
     align-items: center;
@@ -1053,9 +1082,11 @@ input[type="range"]::-moz-range-thumb {
     content: "Pause";
   }
   .more {
-    flex: none;
-    width: 64px;
-    height: 64px;
+    grid-column: 3;
+    grid-row: 4;
+    margin-top: var(--space-3);
+    width: var(--deck-key);
+    height: var(--deck-key);
     padding: 0;
     border-radius: var(--radius-m);
     border-color: var(--deck-line);
@@ -1117,6 +1148,13 @@ input[type="range"]::-moz-range-thumb {
     margin-top: var(--space-2);
     box-shadow: none;
     background: var(--deck-raise);
+  }
+}
+@media (max-width: 599px) and (max-height: 599px) {
+  .player {
+    --deck-key: 52px;
+    --deck-step: 48px;
+    --deck-play: 56px;
   }
 }
 @media (max-width: 359px) {
@@ -1262,7 +1300,7 @@ input[type="range"]::-moz-range-thumb {
 .cleared-action.primary {
   min-height: 64px;
   border-color: var(--led);
-  border-radius: 32px;
+  border-radius: var(--radius-pill);
   background: var(--led);
   color: #111;
   font: 800 var(--text-l)/24px var(--display);
