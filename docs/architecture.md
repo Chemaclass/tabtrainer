@@ -15,8 +15,8 @@ flowchart TD
   build["build/<br>pages made at build time"]
   app["app/<br>what the app knows and decides, without the page"]
   core["core/<br>song model, parser, timeline, instruments"]
-  main --> ui
-  ui --> render & audio & build & app
+  main --> ui & render & audio & build & app & core
+  ui --> render & audio & build & app & core
   render & audio & build --> app
   app --> audio
   app & audio & render & build --> core
@@ -40,7 +40,7 @@ The page itself is `index.html`: every button, panel and dialog starts there, an
 | A preference that survives a reload | A field in the `Preferences` interface and a check in `validators`, both in `src/app/storage.ts`. Read it with `pref('name', fallback)` and save it with `setPref('name', value)` from the code that owns the control. `src/ui/player/timingPanel.ts` does this for `metronome`. |
 | A header line in the song format | The parser in `src/core/parser.ts` (the `HEADER` pattern and the line that reads it), the serializer in `src/core/serialize.ts`, and `HEADER_ORDER` in `src/core/songRules.ts` if bundled songs need it. Then document it in the [Song format](../README.md#song-format) section of the README and in the help dialog (`<dialog id="help">`) in `index.html`, with the same example. |
 | A dialog | A `<dialog>` in `index.html`. The DOM code in the folder of the region that opens it, under `src/ui/`. `src/ui/shell/helpDialogs.ts` shows how the help dialogs open and close. One call in `src/main.ts` if it needs objects from elsewhere. |
-| An instrument | An entry in `INSTRUMENTS` in `src/core/instruments.ts`. Then search for an existing id, such as `bass5`, to find the lists that name each instrument: the `instrument:` line in the README and the help dialog, and the pickers. |
+| An instrument | An entry in `INSTRUMENTS` in `src/core/instruments.ts`. Then search for an existing id, such as `bass5`, to find the lists that name each instrument: the `instrument:` line in the README and the help dialog, the header table in [What the file needs](../CONTRIBUTING.md#what-the-file-needs), and the pickers. |
 
 Any decision that does not need the page goes in `src/app/` or `src/core/`, so a test can check it. The file in `src/ui/` then only reads the page, calls that code, and shows the result.
 
@@ -61,11 +61,11 @@ Run the tests whose name matches some text:
 npm test -- -t "counts a source once"
 ```
 
-Before you send a pull request, run `npm run check`. It runs lint, the tests and the build, which typechecks, and stops at the first failure.
+Before you send a pull request, run the checks in [Code changes](../CONTRIBUTING.md#code-changes).
 
 ## A worked example: keep the screen on
 
-[Pull request #133](https://github.com/Chemaclass/tabtrainer/pull/133) keeps the phone screen on while a song plays, the Jam loop runs or the score scrolls on its own. It touched these files in this order.
+[Pull request #133](https://github.com/Chemaclass/tabtrainer/pull/133) keeps the phone screen on while a song plays, the Jam loop runs or the score scrolls on its own. The screen-on part touched these files.
 
 1. `src/app/screenAwake.ts`: the decision. `ScreenAwake` remembers which sources are running (`'player'`, `'jam'`, `'scroll'`) and says whether the screen should stay on. It knows nothing about the browser.
 2. `tests/app/screenAwake.test.ts`: tests for that decision, such as "stays awake while continuous scrolling runs after the player pauses".
