@@ -1,4 +1,5 @@
 import { isFamily, type Family } from '../core/instruments';
+import { addressOf, routeQuery } from './address';
 import { isLibraryKind, type LibraryKind } from './catalogue';
 import { jamSetup, writeJamSetup, type JamSetup } from './jamLink';
 import { findBySlug, normalizeSongReference, songSlug } from './songLink';
@@ -49,17 +50,17 @@ export class Navigation {
   private position: number;
   private restoring = false;
   private visits = 0;
-  constructor(private history: Pick<History, 'state' | 'pushState' | 'replaceState' | 'go'>, private location: Pick<Location, 'pathname' | 'search' | 'hash'>, private paths: string[]) {
+  constructor(private history: Pick<History, 'state' | 'pushState' | 'replaceState' | 'go'>, private location: Pick<Location, 'pathname' | 'search' | 'hash'>, private paths: string[], private base: string) {
     this.position = navigationState(history.state)?.index ?? 0;
   }
   show(route: Route, picked: string, push = false) {
-    const search = routeSearch(this.location.search, route);
-    const url = this.location.pathname + (search ? '?' + search : '') + this.location.hash;
+    const url = addressOf(routeSearch(this.search(), route), this.base) + this.location.hash;
     const changed = url !== this.location.pathname + this.location.search + this.location.hash || normalizeSongReference(navigationState(this.history.state)?.picked ?? '', this.paths) !== picked;
     if (push && changed) this.position++;
     const state = { app: 'tabtrainer', index: this.position, picked };
     if (push && changed) this.history.pushState(state, '', url); else this.history.replaceState(state, '', url);
   }
+  search() { return routeQuery(this.location.pathname, this.location.search, this.base); }
   /** Answers to a visit, and what runs after accepting it, are ignored once a later visit has been handled. */
   visit(state: unknown, open: (route: Route, accept: (then?: () => void) => void, cancel: () => void) => void) {
     if (this.restoring) { this.restoring = false; return; }
@@ -72,7 +73,7 @@ export class Navigation {
       this.position = destination;
       then?.();
     };
-    open(readRoute(this.location.search, this.paths, target?.picked), accept, () => {
+    open(readRoute(this.search(), this.paths, target?.picked), accept, () => {
       if (!isLatest()) return;
       const current = navigationState(this.history.state)?.index ?? destination;
       if (previous !== current) { this.restoring = true; this.history.go(previous - current); }

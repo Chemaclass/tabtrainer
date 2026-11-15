@@ -5,7 +5,7 @@ globs: src/grooves/**
 ---
 
 - Only original patterns in a genre style. Never copy the drum, bass or keys part of a recording, even a short fill.
-- `src/grooves/NN-name.txt`: `name` is the slug in `?view=jam&groove=name`, `NN` sets the order in the groove list, which groups grooves by genre. Renaming a file breaks shared links and saved choices.
+- `src/grooves/NN-name.txt`: `name` is the slug in the groove link `jam/name/`, `NN` sets the order in the groove list, which groups grooves by genre. Renaming a file breaks shared links and saved choices.
 - Header order: `title`, `genre`, `about`, `tempo`, `key`, `time`, `swing`, `progression`, then `voice` when the keys part is not the electric piano. `genre` is one lower case word (`blues`, `rock`, `reggae`, `funk`, `jazz`, `bossa`, `metal`). `about:` is one sentence saying what the groove practises, written for the player.
 - Each groove has drums, `bass` and `keys`. Add a comment line above a grid when it does something a player would not guess, and a count line (`1 & 2 &` or `1 e & a`) above the first grid.
 - Write the bass and keys for any progression, not only the default: the Jam screen swaps in presets such as 12 bar blues or ii V I and repeats each part's bars over them. Prefer degrees that follow the chord (`1 3 5 8`); `2`, `6` and `b7` colour every chord they land on. To lead into a chord change, end the bar on an approach step (`>b1`, `>2`, `>5`), which follows whatever chord comes next.

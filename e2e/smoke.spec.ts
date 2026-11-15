@@ -171,6 +171,6 @@ test('without audio the landing demo opens First Steps', async ({ page }) => {
   const play = page.locator('#demoPlay');
   await expect(play).toHaveText('Open First Steps');
   await play.click();
-  await expect(page).toHaveURL(/song=bass\/first-steps/);
+  await expect(page).toHaveURL(/\/bass\/first-steps\/$/);
   expect(errors).toEqual([]);
 });

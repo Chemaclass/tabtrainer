@@ -1,5 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { Navigation, asksForNewSong, isLandingAddress, navigationState, readRoute, routeSearch, type Route } from '../../src/app/navigation';
+import { bundledRef } from '../../src/app/songRef';
+import { songSlug } from '../../src/app/songLink';
 
 const path = './songs/bass/songs/07-a-dawning.txt';
 describe('routes', () => {
@@ -67,11 +69,11 @@ describe('navigation history', () => {
     const location = { pathname: '/tabtrainer/', search: '', hash: '#score' };
     const history = {
       state: { app: 'tabtrainer', index: 0, picked: '' },
-      pushState: vi.fn((state, _unused, url) => { history.state = state; location.search = new URL(url, 'https://example.com').search; }),
-      replaceState: vi.fn((state, _unused, url) => { history.state = state; location.search = new URL(url, 'https://example.com').search; }),
+      pushState: vi.fn((state, _unused, url) => { history.state = state; ({ pathname: location.pathname, search: location.search } = new URL(url, 'https://example.com')); }),
+      replaceState: vi.fn((state, _unused, url) => { history.state = state; ({ pathname: location.pathname, search: location.search } = new URL(url, 'https://example.com')); }),
       go: vi.fn(),
     };
-    return { history, location, navigation: new Navigation(history, location, [path]) };
+    return { history, location, navigation: new Navigation(history, location, [path], '/tabtrainer/') };
   }
   it('pushes each distinct visit once and retains the URL hash', () => {
     const { history, navigation } = browser(); const route: Route = { screen: 'practice', picked: 'lib:A', version: null };
@@ -79,6 +81,14 @@ describe('navigation history', () => {
     expect(history.pushState).toHaveBeenCalledOnce(); expect(history.replaceState).toHaveBeenCalledOnce();
     expect(history.state.index).toBe(1); expect(history.pushState.mock.calls[0][2]).toBe('/tabtrainer/?view=practice#score');
     navigation.show({ ...route, picked: 'lib:B' }, 'lib:B', true); expect(history.state.index).toBe(2);
+  });
+  it('gives a bundled song its own path and reads the route back from it', () => {
+    const { history, location, navigation } = browser();
+    navigation.show({ screen: 'practice', picked: bundledRef(path), version: 'easy' }, bundledRef(path), true);
+    expect(history.pushState.mock.calls[0][2]).toBe(`/tabtrainer/${songSlug(path)}/?version=easy#score`);
+    expect(location.search).toBe('?version=easy');
+    const open = vi.fn(); navigation.visit({ app: 'tabtrainer', index: 0, picked: '' }, open);
+    expect(open.mock.calls[0][0]).toEqual({ screen: 'practice', picked: bundledRef(path), version: 'easy' });
   });
   it('restores the prior position after cancellation without reopening it', () => {
     const { history, location, navigation } = browser();
