@@ -14,13 +14,13 @@ export function editorPane(redraw: () => void) {
   const source = byId('src', HTMLTextAreaElement);
   const gutter = sourceGutter(source);
   const showIssueList = songIssueList(byId('issues'), source);
-  const tabs = editorTabs(source, redraw);
+  const open = () => !one('.layout').classList.contains('noedit');
+  const tabs = editorTabs(source, open, redraw);
   let settling = { cancel() {} };
   let issues: readonly ParseIssue[] = [];
-  const open = () => !one('.layout').classList.contains('noedit');
   const show = (on: boolean) => {
     one('.layout').classList.toggle('noedit', !on); byId('editBtn').classList.toggle('on', on); byId('editBtn').setAttribute('aria-pressed', String(on));
-    if (on) tabs.showText();
+    if (on) tabs.opened(); else tabs.closed();
     setPref('editor', on); setTimeout(redraw, 50);
   };
   editorResize(byId('editorPane'), byId('editorResize'), redraw);
@@ -36,10 +36,10 @@ export function editorPane(redraw: () => void) {
     show,
     open,
     text: () => source.value,
-    setText(text: string) { settling.cancel(); source.value = text; gutter.refresh(); },
+    setText(text: string) { settling.cancel(); source.value = text; tabs.reset(); gutter.refresh(); },
     focus: () => source.focus(),
     goToLine(line: number) { show(true); selectLine(source, line); },
-    goTo(span: IssueSpan) { tabs.showText(); selectSpan(source, span); },
+    goTo(span: IssueSpan) { if (!tabs.scoreShown()) selectSpan(source, span); },
     onEdit(immediately: () => void, settled: () => void) {
       settling = settledInput(source, settled, immediately);
     },
