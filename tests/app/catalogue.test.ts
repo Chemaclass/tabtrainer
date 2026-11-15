@@ -1,6 +1,6 @@
 import type { SongProgress } from '../../src/app/practiceLog';
 import { describe, expect, it } from 'vitest';
-import { catalogueMatches, categoryCounts, difficultyLabel, nextExercise, progressCounts, type CatalogueEntry } from '../../src/app/catalogue';
+import { catalogueMatches, categoryCounts, difficultyLabel, nextExercise, progressCounts, shownCount, type CatalogueEntry } from '../../src/app/catalogue';
 
 const entry = (value: string, kind: CatalogueEntry['kind'] = 'exercises', family = 'bass'): CatalogueEntry => ({ value, title: value, artist: '', kind, family, tempo: 90, versions: 1, levels: ['easy'] });
 const entries = [entry('Open strings'), { ...entry('Scale'), about: 'One finger per fret', levels: ['medium', 'hard'] }, entry('Song', 'songs'), entry('Saved', 'mine'), entry('Guitar exercise', 'exercises', 'guitar')];
@@ -34,6 +34,11 @@ describe('practice catalogue', () => {
 it('counts every entry in the selected instrument independently of filters', () => {
   expect(categoryCounts(entries, 'bass')).toEqual({ exercises: 2, songs: 1, mine: 1 });
   expect(categoryCounts(entries, 'guitar')).toEqual({ exercises: 1, songs: 0, mine: 0 });
+});
+it('fits a count in two digits', () => {
+  expect(shownCount(0)).toBe('0');
+  expect(shownCount(99)).toBe('99');
+  expect(shownCount(100)).toBe('99+');
 });
 it('summarizes ordered unique difficulty levels', () => {
   expect(difficultyLabel(['hard', 'easy', 'easy'])).toBe('Easy to hard');

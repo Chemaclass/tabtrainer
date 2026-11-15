@@ -36,3 +36,5 @@ export function categoryCounts(entries: readonly CatalogueEntry[], family: strin
   for (const entry of entries) if (entry.family === family) counts[entry.kind]++;
   return counts;
 }
+
+export const shownCount = (count: number) => (count > 99 ? '99+' : String(count));

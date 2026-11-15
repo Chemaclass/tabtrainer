@@ -37,15 +37,42 @@
   </script>
 </head>
 <body class="library-view">
+  <header class="top">
+    <a id="homeBtn" class="brand" href="./" title="About TabTrainer">
+      <svg class="logo" width="22" height="22" viewBox="0 0 22 22" aria-hidden="true"><path d="M1 5h20M1 11h20M1 17h20" stroke="currentColor" stroke-width="1.5"/><circle cx="14" cy="11" r="4" fill="var(--playing)"/></svg>
+      TabTrainer
+    </a>
+    <div id="familySwitch" class="family-switch" role="group" aria-label="Instrument"><button type="button" data-family="bass" aria-pressed="true">Bass</button><button type="button" data-family="guitar" aria-pressed="false">Guitar</button></div>
+    <nav class="library-nav" aria-label="Practice library">
+      <button data-kind="exercises" aria-current="page">Exercises <span class="nav-count">0</span></button><button data-kind="songs">Songs <span class="nav-count">0</span></button><button data-kind="mine">My songs <span class="nav-count">0</span></button><button id="jamNavBtn">Jam</button>
+    </nav>
+    <div class="top-context"><span aria-hidden="true">/</span><span id="practiceName"></span></div>
+    <div class="top-tools">
+      <button id="tunerBtn" class="tool-open" aria-haspopup="dialog" aria-controls="tuner" aria-label="Tuner" title="Tune your instrument"><svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M6 1.5v6a3 3 0 0 0 6 0v-6M9 10.5v6" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></button>
+      <button id="fretboardBtn" class="tool-open" aria-haspopup="dialog" aria-controls="fretboard" aria-label="Fretboard" title="See the notes of a scale on the fretboard"><svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M1.5 4.5h15M1.5 9h15M1.5 13.5h15M5 3v12M10 3v12M15 3v12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></button>
+      <button id="themeBtn" class="theme-toggle" aria-label="Switch to dark theme" title="Switch to dark theme"><svg class="moon" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M13.5 9.6A5.5 5.5 0 0 1 6.4 2.5a5.5 5.5 0 1 0 7.1 7.1Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg><svg class="sun" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="3" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 1v1.5M8 13.5V15M1 8h1.5M13.5 8H15M3 3l1 1M12 12l1 1M3 13l1-1M12 4l1-1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></button>
+    </div>
+    <div class="top-action">
+      <button id="writeSongBtn" class="write-song" aria-label="Write a song" title="Write a song"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M7 1v12M1 7h12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><span>Write<span class="write-noun"> a song</span></span></button>
+      <button id="editBtn" class="toggle" aria-controls="editorPane" aria-pressed="false" aria-label="Edit song"><span>Edit<span class="edit-noun"> song</span></span></button>
+      <details class="file-menu">
+        <summary>File</summary>
+        <nav class="file-actions" aria-label="Song file">
+        <button id="newBtn" class="ghost" title="Start a new song">New</button>
+        <button id="openBtn" class="ghost" title="Open a song file from your computer">Open</button>
+        <input id="openFile" type="file" accept=".txt,.tab,.tabt,text/plain,.json,application/json" hidden />
+        <button id="saveBtn" class="ghost" title="Save to this browser's library">Save</button>
+        <button id="dlBtn" class="ghost" title="Download the song as a text file">Download</button>
+        <button id="backupBtn" class="ghost" title="Download your saved songs and practice record as one file">Download a backup</button>
+        <button id="shareBtn" class="ghost" title="Copy a link that opens this song">Copy link</button>
+        <button id="proposeBtn" class="ghost" title="Send this song to the TabTrainer website">Add to TabTrainer</button>
+        <button id="syntaxHelpBtn" class="ghost">Song format help</button>
+        <button id="themeMenuBtn" class="ghost theme-item">Switch to dark theme</button>
+        </nav>
+      </details>
+    </div>
+  </header>
   <div id="landing" class="landing-page">
-    <header class="landing-top">
-      <a class="landing-brand" href="./"><svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true"><path d="M1 5h20M1 11h20M1 17h20" stroke="currentColor" stroke-width="1.5"/><circle cx="14" cy="11" r="4" fill="var(--playing)"/></svg>TabTrainer</a>
-      <nav class="landing-nav" aria-label="TabTrainer">
-        <a href="./?view=library&amp;kind=exercises">Exercises</a><a href="./?view=library&amp;kind=songs">Songs</a><a href="./?view=library&amp;kind=mine&amp;new=1">Write a song</a><a href="https://github.com/Chemaclass/tabtrainer" target="_blank" rel="noopener">Source on GitHub</a>
-        <a class="landing-outline" href="./?view=library&amp;kind=exercises">Open the library</a>
-        <button class="round theme-toggle" type="button" aria-label="Switch to dark theme" title="Switch to dark theme"><svg class="moon" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M13.5 9.6A5.5 5.5 0 0 1 6.4 2.5a5.5 5.5 0 1 0 7.1 7.1Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg><svg class="sun" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="3" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 1v1.5M8 13.5V15M1 8h1.5M13.5 8H15M3 3l1 1M12 12l1 1M3 13l1-1M12 4l1-1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></button>
-      </nav>
-    </header>
     <main class="landing-hero">
       <div class="landing-copy">
         <p class="landing-kicker">For electric bass and guitar</p>
@@ -100,41 +127,6 @@ tempo: 90
     </section>
     <footer class="landing-footer"><span class="landing-brand"><svg width="18" height="18" viewBox="0 0 22 22" aria-hidden="true"><path d="M1 5h20M1 11h20M1 17h20" stroke="currentColor" stroke-width="1.5"/><circle cx="14" cy="11" r="4" fill="var(--playing)"/></svg>TabTrainer</span><span>Made by <a href="https://chemaclass.com" target="_blank" rel="noopener">Chemaclass</a> · <a href="https://github.com/Chemaclass/tabtrainer" target="_blank" rel="noopener">Source code on GitHub</a> · MIT licence</span></footer>
   </div>
-  <header class="top">
-    <a id="homeBtn" class="brand" href="./" title="About TabTrainer">
-      <svg class="logo" width="22" height="22" viewBox="0 0 22 22" aria-hidden="true"><path d="M1 5h20M1 11h20M1 17h20" stroke="currentColor" stroke-width="1.5"/><circle cx="14" cy="11" r="4" fill="var(--playing)"/></svg>
-      TabTrainer
-    </a>
-    <nav class="library-nav" aria-label="Practice library">
-      <button data-kind="exercises" aria-current="page">Exercises <span class="nav-count">0</span></button><button data-kind="songs">Songs <span class="nav-count">0</span></button><button data-kind="mine">My songs <span class="nav-count">0</span></button><button id="jamNavBtn">Jam</button>
-    </nav>
-    <div class="practice-crumb"><button id="backLibraryBtn">← All exercises</button><span aria-hidden="true">/</span><span id="practiceName"></span></div>
-    <div class="header-actions">
-      <label class="sr-only" for="familySelect">Instrument</label>
-      <select id="familySelect" aria-label="Instrument"><option value="bass">Bass</option><option value="guitar">Guitar</option></select>
-      <button id="tunerBtn" class="ghost tool-open" aria-haspopup="dialog" aria-controls="tuner" aria-label="Tuner" title="Tune your instrument"><svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M6 1.5v6a3 3 0 0 0 6 0v-6M9 10.5v6" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg><span>Tuner</span></button>
-      <button id="fretboardBtn" class="ghost tool-open" aria-haspopup="dialog" aria-controls="fretboard" aria-label="Fretboard" title="See the notes of a scale on the fretboard"><svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M1.5 4.5h15M1.5 9h15M1.5 13.5h15M5 3v12M10 3v12M15 3v12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg><span>Fretboard</span></button>
-      <button id="themeBtn" class="round theme-toggle" aria-label="Switch to dark theme" title="Switch to dark theme"><svg class="moon" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M13.5 9.6A5.5 5.5 0 0 1 6.4 2.5a5.5 5.5 0 1 0 7.1 7.1Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg><svg class="sun" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="3" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 1v1.5M8 13.5V15M1 8h1.5M13.5 8H15M3 3l1 1M12 12l1 1M3 13l1-1M12 4l1-1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></button>
-      <button id="writeSongBtn" class="write-song" aria-label="Write a song" title="Write a song"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M7 1v12M1 7h12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><span>Write a song</span></button>
-      <span id="shareStatus" class="share-status" hidden></span>
-      <button id="headProposeBtn" class="toggle head-propose" title="Send this song to the TabTrainer website">Add to TabTrainer</button>
-      <button id="editBtn" class="toggle" aria-controls="editorPane" aria-pressed="false" aria-label="Edit song"><span>Edit<span class="edit-noun"> song</span></span></button>
-    <details class="file-menu">
-      <summary>File</summary>
-      <nav class="file-actions" aria-label="Song file">
-      <button id="newBtn" class="ghost" title="Start a new song">New</button>
-      <button id="openBtn" class="ghost" title="Open a song file from your computer">Open</button>
-      <input id="openFile" type="file" accept=".txt,.tab,.tabt,text/plain,.json,application/json" hidden />
-      <button id="saveBtn" class="ghost" title="Save to this browser's library">Save</button>
-      <button id="dlBtn" class="ghost" title="Download the song as a text file">Download</button>
-      <button id="backupBtn" class="ghost" title="Download your saved songs and practice record as one file">Download a backup</button>
-      <button id="shareBtn" class="ghost" title="Copy a link that opens this song">Copy link</button>
-      <button id="proposeBtn" class="ghost" title="Send this song to the TabTrainer website">Add to TabTrainer</button>
-      <button id="syntaxHelpBtn" class="ghost">Song format help</button>
-      </nav>
-    </details>
-    </div>
-  </header>
 
   <div class="save-state" hidden><span id="dirtyState">No unsaved changes</span><button id="returnDraftBtn" class="ghost" hidden>Return to draft</button><span id="saveFeedback" role="status" aria-live="polite"></span><button id="recoverDownload" class="ghost" hidden>Download a copy</button><span id="shareNotice" class="share-notice" hidden>This song is ready to share with everyone. <button id="shareNoticeBtn" class="ghost">Add to TabTrainer</button><button id="shareNoticeClose" class="ghost" aria-label="Dismiss the share notice" title="Dismiss">✕</button></span></div>
   <dialog id="replaceDialog" aria-labelledby="replaceTitle" aria-describedby="replaceHelp">
@@ -256,7 +248,7 @@ tempo: 90
       </section>
     </aside>
   </main>
-  <footer class="site-footer"><a href="./">What is TabTrainer?</a> Free and open source. <a href="./?view=library&amp;kind=mine&amp;new=1">Write a song and send it in</a>. Made by <a href="https://chemaclass.com" target="_blank" rel="noopener">Chemaclass</a> · <a href="https://github.com/Chemaclass/tabtrainer" target="_blank" rel="noopener">Source code on GitHub</a><span id="offlineReady" class="offline-ready" role="status"></span><button class="round theme-toggle footer-theme" type="button" aria-label="Switch to dark theme" title="Switch to dark theme"><svg class="moon" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M13.5 9.6A5.5 5.5 0 0 1 6.4 2.5a5.5 5.5 0 1 0 7.1 7.1Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg><svg class="sun" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="3" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 1v1.5M8 13.5V15M1 8h1.5M13.5 8H15M3 3l1 1M12 12l1 1M3 13l1-1M12 4l1-1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></button></footer>
+  <footer class="site-footer"><a href="./">What is TabTrainer?</a> Free and open source. <a href="./?view=library&amp;kind=mine&amp;new=1">Write a song and send it in</a>. Made by <a href="https://chemaclass.com" target="_blank" rel="noopener">Chemaclass</a> · <a href="https://github.com/Chemaclass/tabtrainer" target="_blank" rel="noopener">Source code on GitHub</a><span id="offlineReady" class="offline-ready" role="status"></span></footer>
   <div id="practiceScreen" hidden>
   <main class="layout noedit">
     <section id="editorPane" class="editor">

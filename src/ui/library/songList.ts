@@ -40,8 +40,8 @@ export function songList(songbook: Songbook, workspace: Workspace, openSong: Ope
   }, () => actions.backup());
   byId('writeSongBtn').onclick = actions.newSong;
   function showNavigation() {
-    tabs.show(categoryCounts(entries, workspace.family), workspace.screen === 'jam' ? null : workspace.kind);
     const kind = entries.find(e => e.value === workspace.picked)?.kind ?? 'mine';
+    tabs.show(categoryCounts(entries, workspace.family), { library: workspace.kind, practice: kind, jam: null }[workspace.screen]);
     const song = openSong.song;
     practice.show({
       title: song?.meta.title,

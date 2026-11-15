@@ -1,7 +1,7 @@
 import type { DraftSession } from '../../app/draftSession';
 import type { Workspace } from '../../app/workspace';
 import { bundledPath } from '../../app/songRef';
-import { shareLabel, type ShareState } from '../../app/songProposal';
+import type { ShareState } from '../../app/songProposal';
 import { pref, setPref } from '../../app/storage';
 import { byId, one } from '../dom';
 
@@ -11,8 +11,7 @@ export interface SongSharing {
 }
 
 export function saveState(draftSession: DraftSession, workspace: Workspace, onDownload: () => void, onReturn: () => void, sharing: SongSharing) {
-  const feedback = byId('saveFeedback'), recover = byId('recoverDownload');
-  const shareStatus = byId('shareStatus'), notice = byId('shareNotice');
+  const feedback = byId('saveFeedback'), recover = byId('recoverDownload'), notice = byId('shareNotice');
   const hasChanges = () => draftSession.hasChanges();
   function showBar() { one('.save-state').hidden = workspace.screen === 'jam' || (!hasChanges() && !feedback.textContent && notice.hidden); }
   // The link opens the bundled song, so it would drop unsaved edits.
@@ -20,13 +19,8 @@ export function saveState(draftSession: DraftSession, workspace: Workspace, onDo
     const bundled = bundledPath(workspace.picked) !== null;
     byId('shareBtn').hidden = !bundled || draftSession.hasChanges();
     byId('proposeBtn').hidden = bundled;
-    byId('headProposeBtn').hidden = bundled;
     const state = bundled || workspace.screen !== 'practice' ? null : sharing.state();
-    const shown = state?.longEnough ? state : null;
-    shareStatus.hidden = !shown;
-    shareStatus.textContent = shown ? shareLabel(shown) : '';
-    shareStatus.classList.toggle('ready', !!shown?.ready);
-    notice.hidden = !shown?.ready || pref('shareNoticeDismissed', false);
+    notice.hidden = !(state?.longEnough && state.ready) || pref('shareNoticeDismissed', false);
     showBar();
   }
   function show() {
@@ -41,12 +35,7 @@ export function saveState(draftSession: DraftSession, workspace: Workspace, onDo
   }
   recover.onclick = onDownload;
   byId('returnDraftBtn').onclick = onReturn;
-  byId('headProposeBtn').onclick = sharing.propose;
   byId('shareNoticeBtn').onclick = sharing.propose;
-  function focusAfterNotice() {
-    const head = byId('headProposeBtn');
-    (head.offsetParent ? head : byId('editBtn')).focus();
-  }
-  byId('shareNoticeClose').onclick = () => { setPref('shareNoticeDismissed', true); showShare(); focusAfterNotice(); };
+  byId('shareNoticeClose').onclick = () => { setPref('shareNoticeDismissed', true); showShare(); byId('editBtn').focus(); };
   return { show, showShare, announce };
 }

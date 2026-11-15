@@ -1,4 +1,6 @@
-import { isLibraryKind, type LibraryKind } from '../../app/catalogue';
+import { isLibraryKind, shownCount, type LibraryKind } from '../../app/catalogue';
+
+const onLanding = () => document.documentElement.classList.contains('landing');
 
 export function libraryNav(onKind: (kind: LibraryKind) => void) {
   const buttons = [...document.querySelectorAll<HTMLButtonElement>('[data-kind]')];
@@ -10,9 +12,9 @@ export function libraryNav(onKind: (kind: LibraryKind) => void) {
         if (isLibraryKind(kind)) {
           const count = button.querySelector<HTMLElement>('.nav-count');
           if (!count) throw new Error(`Missing .nav-count in [data-kind="${kind}"]`);
-          count.textContent = String(counts[kind]);
+          count.textContent = shownCount(counts[kind]);
         }
-        if (kind === current) button.setAttribute('aria-current', 'page'); else button.removeAttribute('aria-current');
+        if (kind === current && !onLanding()) button.setAttribute('aria-current', 'page'); else button.removeAttribute('aria-current');
       });
     },
   };
