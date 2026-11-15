@@ -5,18 +5,10 @@ import { BASS_RANGE, KEYS_RANGE, POWER_CHORD_RANGE, buildGrooveTimeline } from '
 import { OWN_PROGRESSION, PROGRESSION_PRESETS, presetProgression } from '../src/core/harmony';
 import { jamKeys } from '../src/app/jam';
 import { pitchClass } from '../src/core/theory';
+import { formatProblem, grooveProblems } from '../src/core/songRules';
 
 const MAJOR_KEYS = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B'];
 const MINOR_KEYS = MAJOR_KEYS.map(k => `${k}m`);
-
-function grooveProblems(src: string): string[] {
-  const { groove, issues } = parseGroove(src);
-  const problems = issues.map(i => `line ${i.line}: ${i.message}`);
-  if (!src.split('\n').some(line => /^title\s*:\s*\S/.test(line))) problems.push('no title');
-  if (!groove.genre) problems.push('no genre');
-  if (!groove.about) problems.push('no about');
-  return problems;
-}
 
 const files = readdirSync('src/grooves').filter(f => f.endsWith('.txt'));
 const read = (file: string) => readFileSync(`src/grooves/${file}`, 'utf8');
@@ -28,7 +20,7 @@ describe('bundled grooves', () => {
 
   it('fails a groove whose grid does not fit its bar', () => {
     const broken = read(files[0]).replace(/^hat:.*$/m, 'hat: xoxoxoxoxo');
-    expect(grooveProblems(broken)).toEqual(expect.arrayContaining([expect.stringMatching(/"hat:".*10 steps/)]));
+    expect(grooveProblems(broken).map(problem => problem.message)).toEqual(expect.arrayContaining([expect.stringMatching(/"hat:".*10 steps/)]));
   });
 
   for (const file of files) {
@@ -36,7 +28,7 @@ describe('bundled grooves', () => {
     const { groove } = parseGroove(src);
 
     it(`${file} parses cleanly with a title, genre and about line`, () => {
-      expect(grooveProblems(src)).toEqual([]);
+      expect(grooveProblems(src).map(problem => formatProblem(`src/grooves/${file}`, problem))).toEqual([]);
     });
 
     it(`${file} keeps bass and keys in range in all 12 keys, with every progression`, () => {
