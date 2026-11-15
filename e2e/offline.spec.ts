@@ -1,32 +1,33 @@
-import { spawn, type ChildProcess } from 'node:child_process';
+import { readFile } from 'node:fs/promises';
+import { createServer, type Server } from 'node:http';
+import { extname, join, normalize } from 'node:path';
 import { expect, test } from '@playwright/test';
 
 test.use({ serviceWorkers: 'allow' });
 
-// Playwright's offline switch and request routing both catch navigations before the worker on Linux,
-// so the test runs its own server and stops it: the browser is then offline for real.
-async function startServer(port: number): Promise<ChildProcess> {
-  const server = spawn('npx', ['vite', 'preview', '--port', String(port), '--strictPort'], { detached: true, stdio: 'ignore' });
-  for (let tries = 0; tries < 100; tries++) {
-    try { if ((await fetch(`http://localhost:${port}/tabtrainer/`)).ok) return server; } catch { /* not up yet */ }
-    await new Promise(resolve => setTimeout(resolve, 100));
-  }
-  throw new Error(`vite preview did not start on port ${port}`);
+const TYPES: Record<string, string> = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.webmanifest': 'application/manifest+json', '.svg': 'image/svg+xml', '.png': 'image/png', '.woff2': 'font/woff2' };
+
+// Serves dist/ the way GitHub Pages does. Playwright's offline switch and request routing catch navigations before
+// the worker on Linux, so the test stops this server instead: the browser is then offline for real.
+function serve(): Promise<{ server: Server; root: string }> {
+  const server = createServer(async (request, response) => {
+    const path = normalize(decodeURIComponent(new URL(request.url ?? '/', 'http://x').pathname)).replace(/^\/tabtrainer\//, '');
+    const file = join('dist', path.endsWith('/') || path === '' ? `${path}index.html` : path);
+    try {
+      const body = await readFile(file);
+      response.writeHead(200, { 'Content-Type': TYPES[extname(file)] ?? 'application/octet-stream' }).end(body);
+    } catch {
+      response.writeHead(404).end();
+    }
+  });
+  return new Promise(resolve => server.listen(0, '127.0.0.1', () => {
+    const address = server.address();
+    resolve({ server, root: `http://127.0.0.1:${typeof address === 'object' && address ? address.port : 0}/tabtrainer/` });
+  }));
 }
 
-async function stopServer(server: ChildProcess, port: number) {
-  if (server.pid) process.kill(-server.pid);
-  for (let tries = 0; tries < 100; tries++) {
-    try { await fetch(`http://localhost:${port}/tabtrainer/`); } catch { return; }
-    await new Promise(resolve => setTimeout(resolve, 100));
-  }
-  throw new Error(`vite preview kept running on port ${port}`);
-}
-
-test('once cached, a song, groove and library page open offline', async ({ page }, testInfo) => {
-  const port = 4400 + testInfo.workerIndex;
-  const root = `http://localhost:${port}/tabtrainer/`;
-  const server = await startServer(port);
+test('once cached, a song, groove and library page open offline', async ({ page }) => {
+  const { server, root } = await serve();
   try {
     await page.goto(root);
     await page.waitForFunction(async () => {
@@ -34,7 +35,8 @@ test('once cached, a song, groove and library page open offline', async ({ page 
       return registration?.active?.state === 'activated' && (await caches.keys()).length > 0;
     });
   } finally {
-    await stopServer(server, port);
+    server.closeAllConnections();
+    await new Promise(resolve => server.close(resolve));
   }
   await page.goto(`${root}bass/first-steps/`);
   await expect(page.locator('.note').first()).toBeAttached();
