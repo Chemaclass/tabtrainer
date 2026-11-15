@@ -19,6 +19,14 @@ describe('practice passage', () => {
     passage.select(5); passage.endAtSelection(); expect(passage.range()).toEqual([3, 5]);
     expect(passage.summary()).toBe('Selected bar 5. Bars 3-5, play once.');
   });
+  it('moves the passage start and end to a bar and toggles its repeat', () => {
+    const passage = song(); passage.startAt(6); expect(passage.range()).toEqual([6, 8]);
+    passage.endAt(3); expect(passage.range()).toEqual([3, 3]);
+    passage.endAt(7); expect(passage.range()).toEqual([3, 7]);
+    passage.startAt(8); expect(passage.range()).toEqual([8, 8]);
+    passage.clear(); passage.toggleRepeat(); expect(passage.snapshot()).toMatchObject({ first: 1, last: 8, repeat: true, active: true });
+    passage.toggleRepeat(); expect(passage.range()).toBeNull();
+  });
   it('retains a valid range across edits and resets it for shorter arrangements', () => {
     const passage = song(); passage.setRange(3, 5, true); passage.setSong(10, false);
     expect(passage.range()).toEqual([3, 5]); expect(passage.snapshot().selected).toBe(0);

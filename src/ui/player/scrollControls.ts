@@ -5,7 +5,7 @@ import { setSelectValue } from '../shell/dropdown';
 
 type ScrollMode = 'off' | 'follow' | 'continuous';
 
-export function scrollControls(active: () => boolean, onFollow: () => void, onContinuous: (running: boolean) => void) {
+export function scrollControls(onFollow: () => void, onContinuous: (running: boolean) => void) {
   let current: ScrollMode = 'follow';
   const rate = byId('scrollSpeed', HTMLInputElement); rate.value = String(pref('scroll', 15));
   fillRange(rate);
@@ -32,15 +32,11 @@ export function scrollControls(active: () => boolean, onFollow: () => void, onCo
     const value = (e.target as HTMLSelectElement).value;
     if (value === 'off' || value === 'follow' || value === 'continuous') set(value);
   };
-  document.addEventListener('keydown', e => {
-    const t = e.target as HTMLElement;
-    if (!active() || t.closest('button, summary, input, select, textarea, dialog, [role=separator]') || t.isContentEditable) return;
-    if (e.key === 's' || e.key === 'S') { e.preventDefault(); set(current === 'continuous' ? 'off' : 'continuous'); }
-    else if (current === 'continuous' && e.key === 'ArrowUp') { e.preventDefault(); rate.value = String(Math.min(80, +rate.value + 2)); rate.dispatchEvent(new Event('input')); }
-    else if (current === 'continuous' && e.key === 'ArrowDown') { e.preventDefault(); rate.value = String(Math.max(3, +rate.value - 2)); rate.dispatchEvent(new Event('input')); }
-  });
   return {
     follows: () => current === 'follow',
+    continuous: () => current === 'continuous',
+    toggleContinuous: () => set(current === 'continuous' ? 'off' : 'continuous'),
+    nudgeRate: (by: number) => { rate.value = String(+rate.value + by); rate.dispatchEvent(new Event('input')); },
     stopContinuous: () => { if (current === 'continuous') set('off'); },
   };
 }

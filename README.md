@@ -15,6 +15,7 @@ TabTrainer is a free, open source web app. It needs no account and no server, an
 - **Playback:** set the speed from 30 to 130%, loop a range of bars, and raise the speed after a set number of loops. Add a metronome or a one-bar count-in.
 - **Start anywhere:** select a note or bar, then press Play. `Space` pauses and resumes. Stop goes back to your selection.
 - **Follow along:** the playing note turns red, and the page scrolls with it. Press `S` for continuous scrolling at your own speed.
+- **Keyboard and pedal:** `Space` plays or pauses, `Enter` or `Page Down` restarts from the loop start or your selection, `Page Up` goes back a bar, and `Left` and `Right` step through bars while stopped. `L` turns the loop on or off, `[` and `]` set its start and end at the current bar, `-` and `=` change the speed by 5 points, and `1`, `2`, `3` jump to 50, 75 and 100%. `M` toggles the metronome, `S` continuous scrolling, and `Up` and `Down` change its speed. `?` lists them all. A two-button page turner pedal works as a foot switch.
 - **Editor:** write songs in plain text and see the score update as you type. Errors name their line.
 - **Jam:** improvise over a looping groove of drums, bass and keys in blues, rock, funk, reggae, jazz, bossa or metal. Pick the key, tempo, chord progression and swing, and mute the part you play. Count in one bar before the loop starts, and share a link that opens the groove with your setup.
 - **Your grooves:** write a groove in the text format below and hear it as you type. Save it in your browser under Mine.

@@ -29,7 +29,7 @@ import { passageView } from './ui/player/passageView';
 import { playbackView } from './ui/player/playbackView';
 import { playerPanel } from './ui/player/playerPanel';
 import { screenWakeLock } from './ui/player/wakeLock';
-import { playShortcut } from './ui/player/playShortcut';
+import { playShortcut, practiceShortcuts } from './ui/player/playShortcut';
 import { scrollControls } from './ui/player/scrollControls';
 import { speedControls } from './ui/player/speedControls';
 import { speedPracticePanel } from './ui/player/speedPracticePanel';
@@ -61,7 +61,7 @@ const linkedRoute = readRoute(location.search, songbook.paths);
 if (linkedRoute.screen === 'jam') jam.open(linkedRoute.groove, linkedRoute.setup);
 const loop = new LoopEngine();
 
-helpDialogs();
+const help = helpDialogs();
 const proposal = proposeSongDialog(songbook.paths, () => editor.text(), library);
 const view = screens(chooseFamily, () => showJam(jam.slug));
 const mixer = new Mixer(workspace.family);
@@ -93,13 +93,20 @@ window.addEventListener('popstate', event => navigation.visit(event.state, (rout
 const transportView = transport(player, () => { scrolling.stopContinuous(); passagePlayback.stop(); passages.show(); });
 const speed = speedControls(player);
 const speedPractice = speedPracticePanel(player, () => passage.snapshot().repeat, speed.show);
-timingPanel(player);
+const timing = timingPanel(player);
 const passages = passageView(player, passage, passagePlayback, openSong, score, speedPractice.show);
 const awake = screenWakeLock();
 player.on(state => awake.keep('player', state.playing));
 loop.on(state => awake.keep('jam', state.playing));
-const scrolling = scrollControls(() => workspace.screen === 'practice', score.forgetLine, running => awake.keep('scroll', running));
+const scrolling = scrollControls(score.forgetLine, running => awake.keep('scroll', running));
 playShortcut(player, () => workspace.screen === 'practice');
+practiceShortcuts(player, {
+  active: () => workspace.screen === 'practice',
+  passage, passages, speed, scrolling,
+  restart: () => { passagePlayback.stop(); passages.show(); player.play(); },
+  toggleMetronome: timing.toggleMetronome,
+  showShortcuts: help.showShortcuts,
+});
 const playback = playbackView(player, { transport: transportView, score, follows: scrolling.follows }, {
   started: () => { if (workspace.picked) { recordPractice(workspace.picked); songs.fill(); } },
   stopped: () => { passagePlayback.deselect(); passages.show(); },
