@@ -14,7 +14,7 @@ describe('share pages', () => {
     const html = sharePage(site, path, { title: 'Ode "to" Joy', about: 'A melody', family: 'bass' });
     expect(html).toContain('<meta property="og:title" content="Ode &quot;to&quot; Joy, bass tab with rhythm · TabTrainer" />');
     expect(html).toContain('<meta property="og:url" content="https://example.com/tabtrainer/bass/ode-to-joy/" />');
-    expect(html).toContain('<meta property="og:image" content="https://example.com/tabtrainer/og.png" />');
+    expect(html).toContain('<meta property="og:image" content="https://example.com/tabtrainer/bass/ode-to-joy/og.png" />');
     expect(html).toContain('location.replace("../../?song=bass%2Fode-to-joy"');
   });
   it('points the share page canonical at the song address, with a card and structured data', () => {
@@ -22,7 +22,7 @@ describe('share pages', () => {
     expect(html).toContain('<link rel="canonical" href="https://example.com/tabtrainer/?song=bass%2Fode-to-joy" />');
     expect(html).toContain('<meta property="og:url" content="https://example.com/tabtrainer/bass/ode-to-joy/" />');
     expect(html).toContain('<meta property="og:type" content="music.song" />');
-    expect(html).toContain('<meta name="twitter:image" content="https://example.com/tabtrainer/og.png" />');
+    expect(html).toContain('<meta name="twitter:image" content="https://example.com/tabtrainer/bass/ode-to-joy/og.png" />');
     expect(html).toContain('<meta property="og:image:alt"');
     const json = html.match(/<script type="application\/ld\+json">(.*)<\/script>/)![1];
     expect(json).not.toContain('<');

@@ -13,12 +13,14 @@ export function songMeta(path: string, text: string): SongMeta {
   return { title: meta.title, about: meta.about ?? '', family: songSlug(path).split('/')[0] };
 }
 
-interface Preview { title: string; description: string; canonical: string; url: string; local: string; type: string; data: object; link: string }
+interface Preview { title: string; description: string; canonical: string; url: string; local: string; type: string; data: object; link: string; imageAlt: string }
 
-function previewPage({ title: plainTitle, description: plainDescription, canonical, url, local, type, data, link }: Preview, site: string): string {
-  const title = escapeHtml(plainTitle), description = escapeHtml(plainDescription), image = `${site}og.png`;
+export const CARD_IMAGE = 'og.png';
+
+function previewPage({ title: plainTitle, description: plainDescription, canonical, url, local, type, data, link, imageAlt: plainAlt }: Preview): string {
+  const title = escapeHtml(plainTitle), description = escapeHtml(plainDescription), image = escapeHtml(`${url}${CARD_IMAGE}`);
   const structured = JSON.stringify(data).replaceAll('<', '\\u003c');
-  const imageAlt = 'TabTrainer: tab with rhythm for bass and guitar';
+  const imageAlt = escapeHtml(plainAlt);
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -65,7 +67,8 @@ export function sharePage(site: string, path: string, meta: SongMeta): string {
     type: 'music.song',
     data: { '@context': 'https://schema.org', '@type': 'MusicComposition', name: meta.title, url: address, ...meta.about && { description: meta.about }, isAccessibleForFree: true, isPartOf: { '@type': 'WebApplication', name: 'TabTrainer', url: site } },
     link: `Open ${meta.title} in TabTrainer`,
-  }, site);
+    imageAlt: `${meta.title}: its first bars of ${meta.family} tab`,
+  });
 }
 
 export function groovePage(site: string, slug: string, meta: GrooveMeta): string {
@@ -79,7 +82,8 @@ export function groovePage(site: string, slug: string, meta: GrooveMeta): string
     type: 'website',
     data: { '@context': 'https://schema.org', '@type': 'MusicComposition', name: meta.title, url: address, genre: meta.genre, ...meta.about && { description: meta.about }, isAccessibleForFree: true, isPartOf: { '@type': 'WebApplication', name: 'TabTrainer', url: site } },
     link: `Jam over ${meta.title} in TabTrainer`,
-  }, site);
+    imageAlt: `${meta.title}: its first chords`,
+  });
 }
 
 export function sitemap(site: string, paths: string[], grooves: string[] = []): string {

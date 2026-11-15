@@ -30,7 +30,7 @@ describe('offline cache list', () => {
     for (const page of [...songPages, ...groovePages]) expect(urls).toContain(page.replace(/index\.html$/, ''));
   });
   it('leaves out what the app never asks for', () => {
-    for (const file of ['assets/index-Dg53OQro.js.map', 'assets/inter-latin-400-normal-XyZ.woff', 'og.png', 'sitemap.xml', 'robots.txt', 'sw.js', 'index.html']) expect(urls).not.toContain(file);
+    for (const file of ['assets/index-Dg53OQro.js.map', 'assets/inter-latin-400-normal-XyZ.woff', 'og.png', 'bass/orion/og.png', 'jam/blues-shuffle/og.png', 'sitemap.xml', 'robots.txt', 'sw.js', 'index.html']) expect(urls).not.toContain(file);
   });
   it('reads Windows paths', () => {
     expect(offlineUrls(['bass\\ode-to-joy\\index.html', 'assets\\app.js'])).toEqual(['assets/app.js', 'bass/ode-to-joy/']);
@@ -51,6 +51,11 @@ describe('build output', () => {
     expect(urls).toEqual(expect.arrayContaining(['./', 'assets/index-abc.js']));
     for (const page of [...songPages, ...groovePages]) expect(urls).toContain(page.replace(/index\.html$/, ''));
     expect(urls).not.toContain('sitemap.xml');
+    for (const page of [...songPages, ...groovePages]) {
+      const card = page.replace(/index\.html$/, 'og.png');
+      expect(readFileSync(join(outDir, card)).subarray(1, 4).toString()).toBe('PNG');
+      expect(urls).not.toContain(card);
+    }
   });
 });
 
