@@ -115,6 +115,7 @@ interface Preferences {
   jamCountIn: boolean;
   jamFretboard: JamFretboardChoice;
   practice: PracticeRecord;
+  shareNoticeDismissed: boolean;
 }
 const finiteBetween = (value: unknown, min: number, max: number): value is number => typeof value === 'number' && Number.isFinite(value) && value >= min && value <= max;
 const isBoolean = (value: unknown): value is boolean => typeof value === 'boolean';
@@ -147,6 +148,7 @@ const validators: { [K in keyof Preferences]: (value: unknown) => value is Prefe
   jamCountIn: isBoolean,
   jamFretboard: (value): value is JamFretboardChoice => !!value && typeof value === 'object' && !Array.isArray(value),
   practice: isPracticeRecord,
+  shareNoticeDismissed: isBoolean,
 };
 const upgrades: { [K in keyof Preferences]?: (value: unknown) => unknown } = {
   fretboardSheet: withFretboardDefaults,

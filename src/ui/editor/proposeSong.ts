@@ -93,20 +93,30 @@ export function proposeSongDialog(paths: readonly string[], editorText: () => st
   download.onclick = () => { if (proposal) downloadText(proposal.text); };
   byId('proposeBack').onclick = () => { showForm(true); link.focus(); };
   dismissHelpOnBackdrop(dialog);
-  function open(songText?: string) {
+  function open(songText?: string, savedTitle?: string) {
     rights.checked = false;
     const fromLibrary = songText === undefined;
     byId('proposePickRow').hidden = !fromLibrary;
     byId('proposeName').hidden = fromLibrary;
+    let chosen: Saved | undefined;
     if (fromLibrary) {
       songs = saved();
+      chosen = songs.find(song => song.title === savedTitle) ?? songs[0];
       pick.replaceChildren(...songs.map(song => new Option(song.title)));
-      setSelectValue(pick, songs[0]?.title ?? '');
+      setSelectValue(pick, chosen?.title ?? '');
     }
-    picked = fromLibrary ? songs[0]?.title ?? null : null;
-    showSong(songText ?? songs[0]?.text ?? '');
+    picked = chosen?.title ?? null;
+    showSong(songText ?? chosen?.text ?? '');
     dialog.showModal();
   }
-  byId('proposeBtn').onclick = () => open(editorText());
-  return { open };
+  const openWithEditorText = () => open(editorText());
+  byId('proposeBtn').onclick = openWithEditorText;
+  return {
+    open: () => open(),
+    openEditorSong: openWithEditorText,
+    openSaved(title: string, onChecklist = false) {
+      open(undefined, title);
+      if (onChecklist) byId('proposeChecks').querySelector<HTMLElement>('.propose-goto')?.focus();
+    },
+  };
 }

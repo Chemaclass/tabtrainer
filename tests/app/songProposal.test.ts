@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
-import { MAX_PROPOSAL_URL, guessGroup, nextNumber, proposeSong, withOpenDraft } from '../../src/app/songProposal';
+import { MAX_PROPOSAL_URL, guessGroup, nextNumber, proposeSong, shareLabel, shareState, withOpenDraft } from '../../src/app/songProposal';
 import { templateText } from '../../src/app/songTemplates';
 
 const paths = [
@@ -133,5 +133,24 @@ describe('song proposal', () => {
   });
   it('names an empty title once', () => {
     expect(problems(exercise.replace('title: My Walking Line', 'title:'))).toEqual(['Add a "title:" line at the top.']);
+  });
+});
+
+describe('share state', () => {
+  it('is ready when every checklist row is clear, without the rights tick', () => {
+    expect(shareState(exercise, paths)).toEqual({ ready: true, left: 0, longEnough: true });
+    expect(shareLabel(shareState(exercise, paths))).toBe('Ready to share');
+  });
+  it('counts the checklist rows left, not each problem', () => {
+    const text = exercise.replace('about: Roots on every beat.\n', '').replace('level: easy\n', '').replace(bars, bars.slice(0, 42));
+    const state = shareState(text, paths);
+    expect(state).toEqual({ ready: false, left: 2, longEnough: false });
+    expect(shareLabel(state)).toBe('2 things left to share');
+    expect(proposeSong(text, 'exercises', paths).checks.filter(check => check.problems.length > 0).map(check => check.check)).toEqual(['header', 'bars']);
+  });
+  it('is not ready for a song by a composer who is not in the public domain', () => {
+    const state = shareState(header('Enter Sandman', 'Metallica') + '\n' + bars, paths);
+    expect(state).toEqual({ ready: false, left: 1, longEnough: true });
+    expect(shareLabel(state)).toBe('1 thing left to share');
   });
 });
