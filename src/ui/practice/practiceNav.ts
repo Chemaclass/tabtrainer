@@ -16,21 +16,20 @@ export interface PracticeNavState {
 }
 
 export function practiceNav(onBack: (kind: LibraryKind) => void, onNext: (value: string) => void) {
-  const continuation = byId('exerciseContinuation'), nextButton = byId('nextExerciseBtn'), allButton = byId('allExercisesBtn');
-  let dismissedSong: string | null = null, shownSong: string | null = null;
+  const nextButton = byId('nextExerciseBtn'), allButton = byId('allExercisesBtn');
+  let offersNext = false;
   allButton.onclick = () => onBack('exercises');
-  byId('closeContinuationBtn').onclick = () => { dismissedSong = shownSong; byId('playBtn').focus(); continuation.hidden = true; };
   return {
-    show({ title, instrument, kind, next, practising, song, played }: PracticeNavState) {
+    show({ title, instrument, kind, next, practising }: PracticeNavState) {
       byId('backLibraryBtn').textContent = backLabels[kind];
       byId('practiceName').textContent = title ?? 'Your song';
       byId('practiceContext').textContent = `${instrument} / ${kindNames[kind]}`;
-      shownSong = song;
-      continuation.hidden = !practising || kind !== 'exercises' || !played || dismissedSong === song;
+      offersNext = practising && kind === 'exercises';
       nextButton.hidden = !next; allButton.hidden = !!next;
       if (next) { byId('nextExerciseTitle').textContent = next.title; nextButton.onclick = () => onNext(next.value); }
       byId('backLibraryBtn').onclick = () => onBack(kind);
       const headBack = byId('headBackBtn'); headBack.onclick = () => onBack(kind); headBack.setAttribute('aria-label', backNames[kind]); headBack.title = backNames[kind];
     },
+    offersNext: () => offersNext,
   };
 }
