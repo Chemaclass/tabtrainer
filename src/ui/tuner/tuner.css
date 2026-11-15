@@ -1,9 +1,3 @@
-:root {
-  --ok-text: #1d7a43;
-}
-[data-theme="dark"] {
-  --ok-text: #4cc985;
-}
 .tuner {
   width: min(560px, calc(100% - 24px));
 }
@@ -13,10 +7,6 @@
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--mut);
-}
-.tuner .close {
-  width: 44px;
-  height: 44px;
 }
 .tuner-setup {
   margin: 0 0 16px;
@@ -235,7 +225,7 @@
   min-height: 64px;
   padding: 8px 2px;
   border-color: var(--control-border);
-  border-radius: 8px;
+  border-radius: var(--radius-s);
 }
 .tuner-note b {
   font: 600 18px/22px var(--mono);
@@ -295,9 +285,6 @@
   display: none;
 }
 @media (max-width: 599px) {
-  .tuner {
-    padding: 16px 12px;
-  }
   .tuner-deck {
     padding: 14px 12px;
   }
