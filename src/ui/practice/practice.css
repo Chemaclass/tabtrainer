@@ -363,7 +363,7 @@
   .save-state :is(button, #returnDraftBtn) {
     min-height: 44px;
   }
-  #shareNoticeClose {
+  .save-state #shareNoticeClose {
     width: 44px;
   }
 }
@@ -398,7 +398,7 @@
   font-size: 12px;
   color: var(--mut);
 }
-.library-view #dirtyState {
+.library-view .save-state:has(#returnDraftBtn[hidden]) #dirtyState {
   display: none;
 }
 #saveFeedback.bad {
@@ -877,6 +877,28 @@
       clip-path: inset(50%);
       white-space: nowrap;
     }
+  }
+  #passageHelp {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  .passage {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-1) var(--space-3);
+  }
+  #rangeSummary {
+    flex: 1 1 140px;
+    min-height: 0;
+    margin: 0;
+    font-size: var(--text-xs);
+    line-height: 16px;
   }
   .passage:has(#rangeReset:disabled) {
     position: absolute;
