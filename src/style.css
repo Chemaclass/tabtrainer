@@ -91,6 +91,31 @@ dialog td:first-child{white-space:nowrap}
 dialog .groove-syntax td:first-child{white-space:normal;min-width:9ch}
 dialog .close{float:right}
 dialog .muted{color:var(--mut)}
+.propose h3{margin:20px 0 6px;font-size:16px;line-height:22px}
+.propose :is(p,li){line-height:22px}
+.propose :is(ul,ol){margin:0;padding-left:22px}
+.propose a:not(.primary){color:var(--ink)}
+.propose-file code{overflow-wrap:anywhere;font-weight:600}
+.propose-pick{display:flex;align-items:center;gap:12px}
+.propose-problems{margin:16px 0;padding:4px 16px 12px;border-left:3px solid var(--error);background:var(--wash);border-radius:4px}
+.propose-problems h3{margin-top:10px;color:var(--error)}
+fieldset.propose-group{display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin:12px 0 0;padding:0;border:0}
+.propose-group legend{float:left;padding:0}
+.propose-group-options{display:flex}
+.propose-group label{position:relative;display:flex;cursor:pointer}
+.propose-group label+label{margin-left:-1px}
+.propose-group input{position:absolute;inset:0;margin:0;opacity:0;cursor:pointer}
+.propose-group span{display:flex;align-items:center;min-height:44px;padding:0 14px;border:1px solid var(--control-border)}
+.propose-group label:first-child span{border-radius:6px 0 0 6px}
+.propose-group label:last-child span{border-radius:0 6px 6px 0}
+.propose-group label:hover span{background:var(--wash)}
+.propose-group input:checked+span{position:relative;background:var(--ink);color:var(--page);border-color:var(--ink)}
+.propose-group input:focus-visible+span{position:relative;outline:2px solid var(--ink);outline-offset:2px}
+.propose-rights{display:flex;align-items:flex-start;gap:10px;margin:16px 0;line-height:22px;cursor:pointer}
+.propose-rights input{flex-shrink:0;width:18px;height:18px;margin:2px 0 0}
+.propose-actions{display:flex;flex-wrap:wrap;gap:12px}
+.propose-actions .primary{border-radius:6px;text-decoration:none}
+.propose-actions .primary[aria-disabled=true]{opacity:.45;cursor:not-allowed}
 @media (min-width:600px){
   .song-head h1{font-size:34px;line-height:38px}
   dialog{padding:28px 32px}

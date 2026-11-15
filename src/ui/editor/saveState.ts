@@ -7,7 +7,11 @@ export function saveState(draftSession: DraftSession, workspace: Workspace, onDo
   const feedback = byId('saveFeedback'), recover = byId('recoverDownload');
   const hasChanges = () => draftSession.hasChanges();
   // The link opens the bundled song, so it would drop unsaved edits.
-  function showShare() { byId('shareBtn').hidden = bundledPath(workspace.picked) === null || draftSession.hasChanges(); }
+  function showShare() {
+    const bundled = bundledPath(workspace.picked) !== null;
+    byId('shareBtn').hidden = !bundled || draftSession.hasChanges();
+    byId('proposeBtn').hidden = bundled;
+  }
   function show() {
     byId('returnDraftBtn').hidden = workspace.screen === 'practice' || !hasChanges();
     one('.save-state').hidden = !hasChanges() && !feedback.textContent;
