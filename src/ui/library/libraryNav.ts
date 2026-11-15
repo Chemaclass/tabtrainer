@@ -1,6 +1,5 @@
 import { isLibraryKind, shownCount, type LibraryKind } from '../../app/catalogue';
-
-const onLanding = () => document.documentElement.classList.contains('landing');
+import { onLanding } from '../shell/landingMode';
 
 export function libraryNav(onKind: (kind: LibraryKind) => void) {
   const buttons = [...document.querySelectorAll<HTMLButtonElement>('[data-kind]')];

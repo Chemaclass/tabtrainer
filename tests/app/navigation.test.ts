@@ -1,8 +1,15 @@
 import { describe, expect, it, vi } from 'vitest';
-import { Navigation, asksForNewSong, navigationState, readRoute, routeSearch, type Route } from '../../src/app/navigation';
+import { Navigation, asksForNewSong, isLandingAddress, navigationState, readRoute, routeSearch, type Route } from '../../src/app/navigation';
 
 const path = './songs/bass/songs/07-a-dawning.txt';
 describe('routes', () => {
+  it('shows the landing page for an address without a route', () => {
+    expect(isLandingAddress('')).toBe(true);
+    expect(isLandingAddress('?utm_source=x')).toBe(true);
+    expect(isLandingAddress('?welcome&view=library')).toBe(true);
+    expect(isLandingAddress('?view=library&kind=songs')).toBe(false);
+    expect(isLandingAddress('?song=bass/ode-to-joy')).toBe(false);
+  });
   it('opens the practice screen without a song link when no bundled song is picked', () => {
     for (const picked of ['', null]) {
       const query = new URLSearchParams(routeSearch('?song=bass/a-dawning&version=solo', { screen: 'practice', picked, version: null }));

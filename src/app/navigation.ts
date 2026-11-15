@@ -20,6 +20,11 @@ export function readRoute(search: string, paths: string[], picked: string | null
   const kind = query.get('kind'), family = query.get('instrument');
   return { screen: 'library', kind: isLibraryKind(kind) ? kind : 'exercises', family: family && isFamily(family) ? family : null };
 }
+const routeKeys = ['song', 'view', 'kind', 'instrument', 'version'];
+export function isLandingAddress(search: string) {
+  const query = new URLSearchParams(search);
+  return query.has('welcome') || !routeKeys.some(key => query.has(key));
+}
 export const asksForNewSong = (search: string) => new URLSearchParams(search).get('new') === '1';
 export function routeSearch(search: string, route: Route): string {
   const query = new URLSearchParams(search);

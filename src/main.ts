@@ -51,6 +51,7 @@ import { grooveEditor } from './ui/jam/grooveEditor';
 import { jamView } from './ui/jam/jamView';
 import { mixerView } from './ui/jam/mixer';
 import { publishLayoutHeights } from './ui/shell/layoutMetrics';
+import { followLanding, onLanding } from './ui/shell/landingMode';
 import { offlineCache } from './ui/shell/offline';
 import { screens } from './ui/shell/screens';
 import { theme } from './ui/shell/theme';
@@ -99,6 +100,7 @@ const score = scoreView({
 const header = songHeader(index => { if (openSong.choose(index)) showVersion(); });
 const songs = songList(songbook, workspace, openSong, practiceLog, { pick: pickSong, continue: continuePractice, showLibrary, newSong: () => startNewSong(), startFrom: startFromTemplate, openFile: () => files.open(), shown: saveView.showShare, propose: () => proposal.open(), shared: sharedSongs, proposeSaved: proposal.openSaved, backup: () => files.backup() });
 window.addEventListener('popstate', event => navigation.visit(event.state, (route, accept, cancel) => {
+  if (followLanding(location.search)) { accept(); setScreen('library'); return; }
   const open = () => { accept(); openRoute(route); };
   if (route.screen === 'practice' && route.picked && route.picked !== workspace.picked && draftSession.hasChanges()) drafts.replace(open, cancel);
   else if (route.screen === 'jam' && !grooveEditing.mayChoose(route.groove)) cancel();
@@ -177,7 +179,7 @@ function playAlongAs(family: Family) {
   jamFretboard.show();
 }
 function unpick() { workspace.unpick(); songs.fill(); }
-function showLink(push = false) { navigation.show(workspace.route(openSong.versionSlug(), jam.slug, jam.setup), workspace.picked, push); }
+function showLink(push = false) { if (!onLanding()) navigation.show(workspace.route(openSong.versionSlug(), jam.slug, jam.setup), workspace.picked, push); }
 function showTitle() {
   const practising = workspace.screen === 'practice';
   view.showTitle(practising ? openSong.song : null, practising ? bundledPath(workspace.picked) : null, workspace.screen === 'jam' ? jam.groove.title : null);

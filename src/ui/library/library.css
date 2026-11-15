@@ -182,8 +182,15 @@ body:not(.library-view) .family-switch{visibility:hidden}
 .site-footer a{color:var(--ink)}
 body:not(.library-view) .site-footer{display:none}
 .offline-ready:not(:empty)::before{content:" · "}
-@media(min-width:900px){
+@media(min-width:1024px){
   .top{position:sticky;top:0}
+}
+/* the practice layout pins its player and editor under the bar from 900 */
+@media(min-width:900px){
+  body:not(.library-view) .top{position:sticky;top:0}
+}
+@media(min-width:900px) and (max-width:1023px){
+  .library-view .save-state{top:0}
 }
 @media(max-width:1199px){
   .top{grid-template-columns:114px 12px 132px 16px 376px minmax(0,1fr) 140px 12px 112px;grid-template-areas:"logo . family . nav . tools . action";padding:0 24px}
@@ -242,6 +249,7 @@ body:not(.library-view) .site-footer{display:none}
   #themeBtn,#editBtn{grid-area:a;justify-self:center}
   #writeSongBtn,.top-action .file-menu{grid-area:b;justify-self:center}
   .family-switch{width:104px}
+  .family-switch button{font-size:12px}
   .write-song{width:44px}
   .write-song>span{display:none}
   #editBtn,.top-action .file-menu summary{width:44px;height:44px;font-size:13px}
@@ -261,6 +269,9 @@ body:not(.library-view) .site-footer{display:none}
   .library-nav button{gap:6px;font-size:14px}
 }
 @media(max-width:359px){
-  .top{grid-template-columns:44px 0 96px minmax(0,1fr) 44px 44px 44px 44px}
-  .family-switch{width:96px}
+  .top{grid-template-columns:44px 0 minmax(0,96px) minmax(0,1fr) 44px 44px 44px 44px}
+  .family-switch{width:100%}
+}
+@media(max-width:339px){
+  .top{padding:0 4px}
 }
