@@ -60,6 +60,13 @@ describe('practice log time', () => {
     expect(log.record.days).toEqual({ '2026-11-02': 45 });
     expect(log.played('demo:a', 0, at(2))).toBe(false);
   });
+  it('knows whether there is any practice record', () => {
+    const { log } = memory();
+    expect(log.practised()).toBe(false);
+    log.played('demo:a', 30, at(2));
+    expect(log.practised()).toBe(true);
+    expect(memory({ songs: {}, days: { '2026-11-02': 30 }, wins: [] }).log.practised()).toBe(true);
+  });
   it('starts a new day at local midnight', () => {
     const { log } = memory();
     log.played('demo:a', 60, at(2, 23, 59));

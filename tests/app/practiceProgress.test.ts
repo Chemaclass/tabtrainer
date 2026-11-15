@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { CatalogueEntry } from '../../src/app/catalogue';
-import type { SongRecord } from '../../src/app/practiceLog';
-import { daysAgo, nextSpeed, pickUp, pickUpAction, pickUpState, pickUpTitle, progressSummary, rowProgress, speedLadder } from '../../src/app/practiceProgress';
+import type { PracticeDay, SongRecord, Win } from '../../src/app/practiceLog';
+import { daysAgo, minutesLabel, nextSpeed, recentWins, weekSummary, weekUnit, pickUp, pickUpAction, pickUpState, pickUpTitle, progressSummary, rowProgress, speedLadder } from '../../src/app/practiceProgress';
 
 const at = (day: number, hour = 12) => new Date(2026, 10, day, hour).getTime();
 const entry = (value: string, family = 'bass'): CatalogueEntry => ({ value, title: `${value} title`, artist: '', kind: 'exercises', family, tempo: 90, versions: 1 });
@@ -93,5 +93,51 @@ describe('row progress', () => {
   it('sums up a row on one line', () => {
     expect(progressSummary(rowProgress(song({ cleanAt: at(13) }), at(15)))).toBe('Clean at 100% · 2 days ago');
     expect(progressSummary(rowProgress(song({ bestSpeed: 85 }), at(15)))).toBe('Best 85%');
+  });
+});
+
+describe('week summary', () => {
+  const week = (seconds: number[]): PracticeDay[] => seconds.map((s, i) => ({ day: `2026-11-${String(9 + i).padStart(2, '0')}`, seconds: s }));
+
+  it('words practice time', () => {
+    expect(minutesLabel(0)).toBe('none');
+    expect(minutesLabel(20)).toBe('under a minute');
+    expect(minutesLabel(60)).toBe('1 minute');
+    expect(minutesLabel(12 * 60 + 10)).toBe('12 minutes');
+  });
+  it('adds up the minutes and the days with practice, Monday first', () => {
+    const summary = weekSummary(week([720, 0, 1200, 480, 0, 600, 0]), at(14, 20));
+    expect(summary.minutes).toBe(50);
+    expect(summary.days).toBe(4);
+    expect(summary.bars.map(bar => bar.letter).join('')).toBe('MTWTFSS');
+    expect(summary.bars.map(bar => bar.share)).toEqual([0.6, 0, 1, 0.4, 0, 0.5, 0]);
+    expect(summary.bars.map(bar => bar.today)).toEqual([false, false, false, false, false, true, false]);
+    expect(summary.spoken).toBe('Monday 12 minutes, Tuesday none, Wednesday 20 minutes, Thursday 8 minutes, Friday none, Saturday 10 minutes, Sunday none');
+    expect(summary.hint).toBe('Played 10 minutes today.');
+    expect(weekUnit(summary)).toEqual(['minutes on', '4 days']);
+  });
+  it('invites a short session on a day with no practice yet', () => {
+    const summary = weekSummary(week([0, 0, 0, 0, 0, 0, 0]), at(15, 9));
+    expect(summary.bars.every(bar => bar.share === 0)).toBe(true);
+    expect(summary.bars[6].today).toBe(true);
+    expect(summary.hint).toBe('Ten minutes today keeps the week going.');
+    expect(weekUnit(summary)).toEqual(['minutes on', '0 days']);
+    expect(weekUnit(weekSummary(week([60, 0, 0, 0, 0, 0, 0]), at(9)))).toEqual(['minute on', '1 day']);
+  });
+});
+
+describe('recent wins', () => {
+  const win = (song: string, speed: number, loop: Win['loop'], day: number): Win => ({ song, speed, loop, at: at(day) });
+
+  it('words the last three wins of songs still in the catalogue', () => {
+    const wins = [win('ladder', 75, [5, 8], 14), win('gone', 80, null, 13), win('steps', 100, null, 12), win('riff', 85, null, 11), win('ladder', 70, [5, 5], 10)];
+    expect(recentWins(wins, entries, at(14, 20))).toEqual([
+      { when: 'Today', text: 'ladder title, bars 5 to 8 played through at 75%' },
+      { when: 'Thu', text: 'steps title clean at 100%' },
+      { when: 'Wed', text: 'riff title played through at 85%' },
+    ]);
+  });
+  it('dates wins older than a week', () => {
+    expect(recentWins([win('steps', 90, [3, 3], 2)], entries, at(14))).toEqual([{ when: '2 Nov', text: 'steps title, bar 3 played through at 90%' }]);
   });
 });

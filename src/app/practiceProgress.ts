@@ -1,11 +1,19 @@
 import { defaultSpeedPractice, nextSpeedPracticeSpeed, type PassMark } from '../core/speedPractice';
 import type { CatalogueEntry } from './catalogue';
-import { CLEAN_SPEED, songProgress, type BarLoop, type SongProgress, type SongRecord } from './practiceLog';
+import { CLEAN_SPEED, dayKey, songProgress, type BarLoop, type PracticeDay, type SongProgress, type SongRecord, type Win } from './practiceLog';
 
 export interface PickUp { entry: CatalogueEntry; loop: BarLoop | null; version: string | null; passSpeed: number | null; nextSpeed: number | null; lastPlayed: number }
 export interface RowProgress { progress: SongProgress; label: string; when: string | null; best: number | null }
+export interface PracticeHistory { week: PracticeDay[]; wins: Win[] }
+export interface WeekBar { letter: string; name: string; share: number; today: boolean }
+export interface WeekSummary { minutes: number; days: number; bars: WeekBar[]; spoken: string; hint: string }
+export interface RecentWin { when: string; text: string }
 
 const LADDER = Array.from({ length: 10 }, (_, step) => CLEAN_SPEED - (9 - step) * 5);
+
+const DAY_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const RECENT_WINS = 3;
 
 const startOfDay = (time: number) => { const date = new Date(time); return new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime(); };
 
@@ -29,10 +37,12 @@ export function pickUp(songs: Record<string, SongRecord>, entries: readonly Cata
   return { entry: available.get(ref)!, loop: song.lastLoop, version: song.version, passSpeed, nextSpeed: passSpeed === null ? null : nextSpeed(passSpeed, increase), lastPlayed: song.lastPlayed };
 }
 
-export function pickUpTitle({ entry, loop }: PickUp): string {
-  if (!loop) return entry.title;
-  return loop[0] === loop[1] ? `${entry.title}, bar ${loop[0]}` : `${entry.title}, bars ${loop[0]} to ${loop[1]}`;
+function loopTitle(title: string, loop: BarLoop | null): string {
+  if (!loop) return title;
+  return loop[0] === loop[1] ? `${title}, bar ${loop[0]}` : `${title}, bars ${loop[0]} to ${loop[1]}`;
 }
+
+export const pickUpTitle = ({ entry, loop }: PickUp): string => loopTitle(entry.title, loop);
 
 export function pickUpState({ passSpeed, nextSpeed, lastPlayed }: PickUp, now: number): string {
   const when = daysAgo(lastPlayed, now);
@@ -61,3 +71,43 @@ export function rowProgress(song: SongRecord | null, now: number): RowProgress {
 }
 
 export const progressSummary = ({ label, when }: RowProgress): string => when ? `${label} · ${when}` : label;
+
+/** Practice time as words: none, under a minute, or whole minutes. */
+export function minutesLabel(seconds: number): string {
+  const minutes = Math.round(seconds / 60);
+  if (!(seconds > 0)) return 'none';
+  if (minutes === 0) return 'under a minute';
+  return minutes === 1 ? '1 minute' : `${minutes} minutes`;
+}
+
+/** The week's minutes, the days with practice, and a bar per day scaled to the busiest one. */
+export function weekSummary(week: readonly PracticeDay[], now: number): WeekSummary {
+  const today = dayKey(now), most = Math.max(0, ...week.map(d => d.seconds));
+  const total = week.reduce((sum, d) => sum + d.seconds, 0), todaySeconds = week.find(d => d.day === today)?.seconds ?? 0;
+  const bars = week.map((d, i) => ({ letter: DAY_NAMES[i][0], name: DAY_NAMES[i], share: most > 0 ? d.seconds / most : 0, today: d.day === today }));
+  return {
+    minutes: Math.round(total / 60),
+    days: week.filter(d => d.seconds > 0).length,
+    bars,
+    spoken: week.map((d, i) => `${DAY_NAMES[i]} ${minutesLabel(d.seconds)}`).join(', '),
+    hint: todaySeconds > 0 ? `Played ${minutesLabel(todaySeconds)} today.` : 'Ten minutes today keeps the week going.',
+  };
+}
+
+export const weekUnit = ({ minutes, days }: WeekSummary): [string, string] =>
+  [`${minutes === 1 ? 'minute' : 'minutes'} on`, `${days} ${days === 1 ? 'day' : 'days'}`];
+
+function winDay(time: number, now: number): string {
+  const days = Math.round((startOfDay(now) - startOfDay(time)) / 86_400_000), date = new Date(time);
+  if (days <= 0) return 'Today';
+  return days < 7 ? DAY_NAMES[(date.getDay() + 6) % 7].slice(0, 3) : `${date.getDate()} ${MONTHS[date.getMonth()]}`;
+}
+
+/** The latest wins of songs still in the catalogue, with the day they happened. */
+export function recentWins(wins: readonly Win[], entries: readonly CatalogueEntry[], now: number): RecentWin[] {
+  const titles = new Map(entries.map(e => [e.value, e.title]));
+  return wins.filter(win => titles.has(win.song)).slice(0, RECENT_WINS).map(win => {
+    const title = loopTitle(titles.get(win.song)!, win.loop), clean = !win.loop && win.speed >= CLEAN_SPEED;
+    return { when: winDay(win.at, now), text: clean ? `${title} clean at ${win.speed}%` : `${title} played through at ${win.speed}%` };
+  });
+}

@@ -81,6 +81,11 @@ export class PracticeLog {
     return entry ? { ref: entry[0], song: entry[1] } : null;
   }
 
+  practised(): boolean {
+    const { songs, days } = this.record;
+    return Object.keys(songs).length > 0 || Object.keys(days).length > 0;
+  }
+
   wins(): Win[] {
     return this.record.wins;
   }

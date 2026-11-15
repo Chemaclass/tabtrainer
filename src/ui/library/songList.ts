@@ -26,6 +26,7 @@ interface SongListActions {
   propose: () => void;
   shared: () => Saved[];
   proposeSaved: (title: string, onChecklist: boolean) => void;
+  backup: () => void;
 }
 
 export function songList(songbook: Songbook, workspace: Workspace, openSong: OpenSong, practiceLog: PracticeLog, actions: SongListActions) {
@@ -36,7 +37,7 @@ export function songList(songbook: Songbook, workspace: Workspace, openSong: Ope
   const catalogue = libraryView(ref => actions.pick(ref), actions.continue, actions.newSong, actions.startFrom, () => actions.openFile(), () => actions.propose(), () => { actions.showLibrary('exercises'); byId('libraryTitle').focus({ preventScroll: true }); }, (ref, ready) => {
     const saved = actions.shared().find(song => savedRef(song.title) === ref);
     if (saved) actions.proposeSaved(saved.title, !ready);
-  });
+  }, () => actions.backup());
   byId('writeSongBtn').onclick = actions.newSong;
   function showNavigation() {
     tabs.show(categoryCounts(entries, workspace.family), workspace.screen === 'jam' ? null : workspace.kind);
@@ -57,7 +58,8 @@ export function songList(songbook: Songbook, workspace: Workspace, openSong: Ope
     fill() {
       entries = songbook.entries();
       const shares = new Map<string, ShareState>(workspace.screen === 'library' && workspace.kind === 'mine' ? actions.shared().map(song => [savedRef(song.title), shareState(song.text, songbook.paths)]) : []);
-      catalogue.show(entries, workspace.family, workspace.kind, practiceLog.record.songs, Date.now(), shares, pref('speedPractice', defaultSpeedPractice).increase);
+      const now = Date.now(), history = practiceLog.practised() ? { week: practiceLog.week(now), wins: practiceLog.wins() } : null;
+      catalogue.show(entries, workspace.family, workspace.kind, practiceLog.record.songs, now, shares, pref('speedPractice', defaultSpeedPractice).increase, history);
       showNavigation();
     },
     showNavigation,
