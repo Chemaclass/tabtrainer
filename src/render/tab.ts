@@ -78,7 +78,7 @@ function svgText(svg: SVGSVGElement, className: string, x: number, y: number, te
 }
 
 function tabLineTop(bars: Bar[], firstSystem: boolean): number {
-  const [row, size] = firstSystem || bars.some(b => b.section) ? [ROW.section, 11]
+  const [row, size] = firstSystem || bars.some(b => b.section || b.tempo !== undefined) ? [ROW.section, 11]
     : bars.some(b => b.events.some(e => e.chord || e.text)) ? [ROW.label, 12] : [ROW.barNo, 9];
   return Math.round(row + size * DIGIT_CAP_HEIGHT + STRING_SPACE / 2);
 }
@@ -160,7 +160,7 @@ function drawSystem(div: HTMLDivElement, bars: Bar[], prev: Bar | undefined, c: 
     const sectionY = top - ROW.section;
     const section = bar.section ? svgText(svg, 'section-label', x + 4, sectionY, bar.section.toUpperCase()) : null;
     svgText(svg, 'bar-no', x + 2, top - ROW.barNo, String(bar.index));
-    if (!prev && bi === 0) drawTempo(svg, section, x + 4, sectionY, c.tempo);
+    if (bar.tempo !== undefined || !prev && bi === 0) drawTempo(svg, section, x + 4, sectionY, bar.tempo ?? c.tempo);
     lyricAt.forEach(([n, words]) => lyrics.push([n.getAbsoluteX() - 2, words]));
     const target = document.createElementNS(SVG_NS, 'rect');
     target.setAttribute('x', String(x)); target.setAttribute('y', '0');

@@ -52,6 +52,7 @@ time: 4/4
 | `"Am7"` | chord name above the next note |
 | `{let ring}` | text above the next note |
 | `[3/4]` | time signature from this bar on |
+| `[tempo=130]` | quarter-note tempo from this bar on, before its first note |
 | `@Chorus` | section name, on its own line |
 | `== Bass line` | starts another version of the song, such as a solo arrangement |
 | `# ...` | comment |

@@ -83,10 +83,12 @@ export function parseSong(src: string): ParseResult {
   let bars: Bar[] = [];
   const st = { cur: null as Bar | null }; let t = 0;
   let dur = parseDuration('q')!;
+  let pendingTempo: number | undefined;
   let pendingChord: string | undefined; let pendingText: string | undefined; let pendingLyric: string | undefined; let pendingSection: string | undefined;
   const newBar = (line: number): Bar => {
     const b: Bar = { index: bars.length + 1, beats: time[0], beatValue: time[1], events: [], line, section: pendingSection };
-    pendingSection = undefined; bars.push(b); t = 0; return b;
+    if (pendingTempo !== undefined) b.tempo = pendingTempo;
+    pendingTempo = undefined; pendingSection = undefined; bars.push(b); t = 0; return b;
   };
   const closeBar = (tok: Tok) => {
     if (!st.cur) return;
@@ -131,6 +133,7 @@ export function parseSong(src: string): ParseResult {
       if (bars.length || versionLine) versions.push(version());
       else if (versions.length === 0 && pendingSection) { /* section before the first version applies to it */ }
       bars = []; versionName = name; versionLine = tok.line; versionLevel = undefined;
+      pendingTempo = undefined;
       time = [headerTime[0], headerTime[1]]; dur = parseDuration('q')!; pendingChord = pendingText = pendingLyric = undefined;
       if (versions.some(v => v.name === name)) issues.push({ line: tok.line, col: tok.col, message: `There is already a version called "${name}"`, severity: 'warning' });
       continue;
@@ -141,6 +144,16 @@ export function parseSong(src: string): ParseResult {
       continue;
     }
     if (s === '|') { closeBar(tok); continue; }
+    if (s.startsWith('[tempo=')) {
+      const match = /^\[tempo=(\d+(?:\.\d+)?)\]$/.exec(s);
+      const tempo = match ? Number(match[1]) : NaN;
+      if (!Number.isFinite(tempo) || tempo < 20 || tempo > 400) {
+        issues.push({ line: tok.line, col: tok.col, message: 'Tempo must be between 20 and 400, e.g. [tempo=130]', severity: 'error' });
+      } else if (st.cur?.events.length) {
+        issues.push({ line: tok.line, col: tok.col, message: 'Put tempo changes before the first note of a bar', severity: 'error' });
+      } else pendingTempo = tempo;
+      continue;
+    }
     if (s.startsWith('[')) {
       const r = /^\[(\d+)\/(\d+)\]$/.exec(s);
       if (!r) { issues.push({ line: tok.line, col: tok.col, message: `Time signature like [3/4] expected`, severity: 'error' }); continue; }

@@ -1,7 +1,7 @@
 import { advanceSpeedPractice, type SpeedPracticeConfig, type SpeedPracticeProgress } from '../core/speedPractice';
 
 export interface PracticePass { start: number; end: number; from: number; speed: number; eligible: boolean; id: number; progress: SpeedPracticeProgress }
-export interface LoopedPassage { from: number; to: number; tempo: number }
+export interface LoopedPassage { from: number; to: number; tempo: number; seconds?: number }
 
 export class PracticePasses {
   private passes: PracticePass[] = [];
@@ -21,7 +21,7 @@ export class PracticePasses {
     let pass = this.passes[this.passes.length - 1];
     while (pass.end <= until && passage.to > passage.from) {
       const progress = pass.eligible ? advanceSpeedPractice(pass.progress, config) : pass.progress;
-      const speed = progress.speed / 100, duration = (passage.to - passage.from) * 60 / (passage.tempo * speed);
+      const speed = progress.speed / 100, duration = (passage.seconds ?? (passage.to - passage.from) * 60 / passage.tempo) / speed;
       let start = pass.end;
       if (progress.speed >= config.target && until - start > duration * 2) start += Math.floor((until - start) / duration - 1) * duration;
       pass = { start, end: start + duration, from: passage.from, speed, eligible: true, id: this.nextId++, progress };

@@ -36,6 +36,7 @@ export function serializeSong(song: Song, barsPerLine = 2): string {
       const parts: string[] = [];
       const bts = `${b.beats}/${b.beatValue}`;
       if (bts !== ts) { parts.push(`[${bts}]`); ts = bts; }
+      if (b.tempo !== undefined) parts.push(`[tempo=${b.tempo}]`);
       for (const e of b.events) {
         if (e.chord) parts.push(`"${e.chord}"`);
         if (e.text) parts.push(`{${e.text}}`);

@@ -126,7 +126,7 @@ describe('practice click scheduling', () => {
 
 describe('audio clock', () => {
   afterEach(() => { vi.useRealTimers(); vi.unstubAllGlobals(); });
-  function setup(bars: { bar: number; start: number; length: number; beats: number; beatValue: number }[], total: number) {
+  function setup(bars: { bar: number; start: number; length: number; beats: number; beatValue: number; tempo?: number }[], total: number) {
     vi.useFakeTimers();
     let now = 0;
     const sounds: { frequency: { value: number }; start: ReturnType<typeof vi.fn>; stop: ReturnType<typeof vi.fn>; connect: () => void; type: string }[] = [];
@@ -150,6 +150,48 @@ describe('audio clock', () => {
     { bar: 2, start: 4, length: 3, beats: 3, beatValue: 4 },
     { bar: 3, start: 7, length: 3, beats: 6, beatValue: 8 },
   ];
+  const tempoBars = [
+    { bar: 1, start: 0, length: 4, beats: 4, beatValue: 4 },
+    { bar: 2, start: 4, length: 4, beats: 4, beatValue: 4, tempo: 60 },
+  ];
+  it('schedules notes and clicks at written tempos and keeps the highlight clock aligned', () => {
+    const { p, sounds, advance } = setup(tempoBars, 8);
+    const states: (number | null)[] = []; p.on(s => states.push(s.beat));
+    p.notes = [{ beat: 5, key: '5000', bar: 2, string: 1, fret: 0, midi: 60, ring: 1 }];
+    p.setMetronome(true); p.play(); advance(3.1);
+    const times = sounds.map(s => s.start.mock.calls[0][0]);
+    expect(times.filter(t => Math.abs(t - 3.08) < 1e-6)).toHaveLength(3);
+    expect(states.at(-1)).toBeCloseTo(5.02);
+    expect(p.currentTempo).toBe(60);
+    advance(5.5); expect(p.playing).toBe(true);
+    advance(6.1); expect(p.playing).toBe(false);
+  });
+  it('seeks and counts in at the selected bar tempo, scaled by practice speed', () => {
+    const { p, sounds, advance } = setup(tempoBars, 8);
+    p.setSpeed(0.5); p.seek(4); p.setCountIn(true); p.setMetronome(true); p.play();
+    expect(p.currentTempo).toBe(60);
+    advance(8.2);
+    const times = sounds.map(s => s.start.mock.calls[0][0]);
+    [0.08, 2.08, 4.08, 6.08, 8.08].forEach(t => expect(times.some(x => Math.abs(x - t) < 1e-6)).toBe(true));
+    expect(p.phase).toBe('playing');
+  });
+  it('loops a passage across a tempo change without gaps and restores the starting tempo', () => {
+    const { p, sounds, advance } = setup(tempoBars, 8);
+    const states: (number | null)[] = []; p.on(s => states.push(s.beat));
+    p.setRange([3, 6], true); p.setMetronome(true); p.play(); advance(2.7);
+    const times = sounds.map(s => s.start.mock.calls[0][0]);
+    [0.08, 0.58, 1.58, 2.58].forEach(t => expect(times.filter(x => Math.abs(x - t) < 1e-6)).toHaveLength(1));
+    expect(states.at(-1)).toBeCloseTo(3.24);
+    expect(p.currentTempo).toBe(120);
+  });
+  it('uses the full tempo map for gradual-speed loops', () => {
+    const { p, advance } = setup(tempoBars, 8);
+    p.setRange([0, 8], true); p.setSpeedPractice({ repetitions: 1, increase: 20, target: 120 }); p.play();
+    advance(6); expect(p.speed).toBe(1);
+    advance(6.2); expect(p.speed).toBe(1.2);
+    advance(11); expect(p.speedPracticeState.completed).toBe(0);
+    expect(p.playing).toBe(true);
+  });
   it('schedules written beats and accents across meter changes at 75% speed', () => {
     const { p, sounds, advance } = setup(bars, 10); p.setSpeed(0.75); p.setMetronome(true); p.play(); advance(6.8);
     expect(sounds.map(s => s.frequency.value)).toEqual([1200, 800, 800, 800, 1200, 800, 800, 1200, 800, 800, 800, 800, 800]);

@@ -117,3 +117,23 @@ time: 4/4
     expect(parseSong(serializeSong(song)).song.bars).toEqual(song.bars.map(b => expect.objectContaining({ events: b.events })));
   });
 });
+
+describe('bar tempo changes', () => {
+  it('preserves tempo marks through serialization and version changes', () => {
+    const { song, issues } = parseSong('tempo: 78\n== First\n:q 0.4 0.4 0.4 0.4 |\n[tempo=130] :w 0.4 |\n== Second\n:w 0.4 |');
+    expect(issues).toEqual([]);
+    expect(song.versions[0].bars.map(b => b.tempo)).toEqual([undefined, 130]);
+    expect(song.versions[1].bars[0].tempo).toBeUndefined();
+    const again = parseSong(serializeSong(song));
+    expect(again.issues).toEqual([]);
+    expect(again.song.versions.map(v => v.bars.map(b => b.tempo))).toEqual([[undefined, 130], [undefined]]);
+    expect(buildTimeline(song).bars[1].tempo).toBe(130);
+  });
+  it.each(['0', '19', '401', 'Infinity', 'NaN', '-1', '78bpm'])('rejects invalid tempo %s', tempo => {
+    expect(parseSong(`[tempo=${tempo}] :w 0.4 |`).issues).toEqual([expect.objectContaining({ severity: 'error' })]);
+  });
+  it('rejects a tempo change after notes in the same bar', () => {
+    const result = parseSong(':q 0.4 [tempo=130] 0.4 0.4 0.4 |');
+    expect(result.issues).toEqual([expect.objectContaining({ message: 'Put tempo changes before the first note of a bar' })]);
+  });
+});

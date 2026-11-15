@@ -34,6 +34,7 @@ export interface Bar {
   index: number; // 1-based bar number
   beats: number;
   beatValue: number;
+  tempo?: number;
   section?: string;
   events: NoteEvent[];
   /** Source line of the bar's first token, for editor error reporting. */
