@@ -28,6 +28,7 @@ import { songList } from './ui/library/songList';
 import { passageView } from './ui/player/passageView';
 import { playbackView } from './ui/player/playbackView';
 import { playerPanel } from './ui/player/playerPanel';
+import { screenWakeLock } from './ui/player/wakeLock';
 import { playShortcut } from './ui/player/playShortcut';
 import { scrollControls } from './ui/player/scrollControls';
 import { speedControls } from './ui/player/speedControls';
@@ -94,7 +95,10 @@ const speed = speedControls(player);
 const speedPractice = speedPracticePanel(player, () => passage.snapshot().repeat, speed.show);
 timingPanel(player);
 const passages = passageView(player, passage, passagePlayback, openSong, score, speedPractice.show);
-const scrolling = scrollControls(() => workspace.screen === 'practice', score.forgetLine);
+const awake = screenWakeLock();
+player.on(state => awake.keep('player', state.playing));
+loop.on(state => awake.keep('jam', state.playing));
+const scrolling = scrollControls(() => workspace.screen === 'practice', score.forgetLine, running => awake.keep('scroll', running));
 playShortcut(player, () => workspace.screen === 'practice');
 const playback = playbackView(player, { transport: transportView, score, follows: scrolling.follows }, {
   started: () => { if (workspace.picked) { recordPractice(workspace.picked); songs.fill(); } },

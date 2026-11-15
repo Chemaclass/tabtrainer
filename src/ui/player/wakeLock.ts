@@ -1,5 +1,7 @@
+import { ScreenAwake, type AwakeSource } from '../../app/screenAwake';
+
 export function screenWakeLock() {
-  let wanted = false;
+  const awake = new ScreenAwake();
   let pending = false;
   let sentinel: WakeLockSentinel | null = null;
 
@@ -9,18 +11,23 @@ export function screenWakeLock() {
     try {
       const lock = await navigator.wakeLock.request('screen');
       lock.addEventListener('release', () => { if (sentinel === lock) sentinel = null; });
-      if (wanted) sentinel = lock; else void lock.release();
+      if (awake.wanted) sentinel = lock; else void lock.release();
     } catch { sentinel = null; } finally { pending = false; }
   }
 
-  document.addEventListener('visibilitychange', () => { if (wanted) void request(); });
+  function release() {
+    const lock = sentinel; sentinel = null;
+    if (lock) void lock.release();
+  }
+
+  document.addEventListener('visibilitychange', () => { if (awake.wanted) void request(); });
 
   return {
-    hold() { if (wanted) return; wanted = true; void request(); },
-    release() {
-      wanted = false;
-      const lock = sentinel; sentinel = null;
-      if (lock) void lock.release();
+    keep(source: AwakeSource, active: boolean) {
+      const wasWanted = awake.wanted;
+      awake.keep(source, active);
+      if (awake.wanted && !wasWanted) void request();
+      else if (!awake.wanted && wasWanted) release();
     },
   };
 }
