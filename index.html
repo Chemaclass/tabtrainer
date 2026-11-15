@@ -111,10 +111,10 @@ tempo: 90
     <div class="header-actions">
       <label class="sr-only" for="familySelect">Instrument</label>
       <select id="familySelect" aria-label="Instrument"><option value="bass">Bass</option><option value="guitar">Guitar</option></select>
-      <button id="libraryOpenBtn" class="ghost tool-open" aria-label="Open a song file" title="Open a song file"><svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M2 5h5l2 2h7v8H2Z" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span>Open a file</span></button>
       <button id="tunerBtn" class="ghost tool-open" aria-haspopup="dialog" aria-controls="tuner" aria-label="Tuner" title="Tune your instrument"><svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M6 1.5v6a3 3 0 0 0 6 0v-6M9 10.5v6" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg><span>Tuner</span></button>
       <button id="fretboardBtn" class="ghost tool-open" aria-haspopup="dialog" aria-controls="fretboard" aria-label="Fretboard" title="See the notes of a scale on the fretboard"><svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M1.5 4.5h15M1.5 9h15M1.5 13.5h15M5 3v12M10 3v12M15 3v12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg><span>Fretboard</span></button>
       <button id="themeBtn" class="round theme-toggle" aria-label="Switch to dark theme" title="Switch to dark theme"><svg class="moon" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M13.5 9.6A5.5 5.5 0 0 1 6.4 2.5a5.5 5.5 0 1 0 7.1 7.1Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg><svg class="sun" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="3" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 1v1.5M8 13.5V15M1 8h1.5M13.5 8H15M3 3l1 1M12 12l1 1M3 13l1-1M12 4l1-1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></button>
+      <button id="writeSongBtn" class="write-song" aria-label="Write a song" title="Write a song"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M7 1v12M1 7h12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><span>Write a song</span></button>
       <button id="editBtn" class="toggle" aria-controls="editorPane" aria-pressed="false" aria-label="Edit song"><span>Edit<span class="edit-noun"> song</span></span></button>
     <details class="file-menu">
       <summary>File</summary>
@@ -141,7 +141,7 @@ tempo: 90
   <main id="libraryScreen" class="library" aria-labelledby="libraryTitle">
     <div class="catalogue">
       <div class="library-intro"><div id="libraryContext" class="library-context">Bass / Exercises</div><h1 id="libraryTitle" tabindex="-1">Build a skill.</h1><p id="libraryDescription">Short exercises for your hands, timing, and fretboard knowledge.</p></div>
-      <div id="mySongActions" class="my-song-actions" hidden><button id="libraryNewBtn" class="toggle">New song</button><button id="libraryImportBtn" class="toggle">Open a file</button><button id="libraryProposeBtn" class="toggle">Add a song to TabTrainer</button></div>
+      <div id="mySongActions" class="my-song-actions" hidden><button id="libraryNewBtn" class="toggle">Write a song</button><button id="libraryImportBtn" class="toggle">Open a file</button><button id="libraryProposeBtn" class="toggle">Add a song to TabTrainer</button></div>
       <div class="library-filters">
         <label class="library-search"><svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><circle cx="7.5" cy="7.5" r="5" stroke="currentColor" stroke-width="1.5" fill="none"/><path d="m11.5 11.5 4 4" stroke="currentColor" stroke-width="1.5"/></svg><input id="songSearch" type="search" aria-label="Search exercises or skills" placeholder="Search exercises or skills" autocomplete="off" /></label>
         <label for="songLevel" class="sr-only">Difficulty</label><select id="songLevel"><option value="">All levels</option><option value="easy">Easy</option><option value="medium">Medium</option><option value="hard">Hard</option><option value="unrated">Unrated</option></select>
@@ -150,9 +150,9 @@ tempo: 90
       <div class="catalogue-heading"><h2 id="catalogueHeading">Start here</h2><span id="catalogueHint">A suggested order. Start anywhere.</span></div>
       <p id="songResults" class="sr-only" role="status" aria-live="polite"></p>
       <ul id="catalogueList" class="catalogue-list"></ul>
-      <div id="catalogueEmpty" class="catalogue-empty" hidden><h2 id="emptyTitle">No exercises match</h2><p id="emptyDescription">Try another search or clear the filters.</p><div><button id="emptyClearBtn" class="toggle">Clear filters</button><button id="emptyExercisesBtn" class="toggle" hidden>Browse exercises</button><button id="emptyNewBtn" class="primary" hidden>New song</button><button id="emptyOpenBtn" class="toggle" hidden>Open a file</button></div></div>
+      <div id="catalogueEmpty" class="catalogue-empty" hidden><h2 id="emptyTitle">No exercises match</h2><p id="emptyDescription">Try another search or clear the filters.</p><div><button id="emptyClearBtn" class="toggle">Clear filters</button><button id="emptyExercisesBtn" class="toggle" hidden>Browse exercises</button><button id="emptyNewBtn" class="primary" hidden>Write a song</button><button id="emptyOpenBtn" class="toggle" hidden>Open a file</button></div></div>
+      <div id="closingRow" class="explore"><p><span id="closingText">Missing a song? Write it, and send it in for everyone.</span> <button id="closingWriteBtn">Write a song</button></p><button id="exploreAllBtn">Explore all exercises →</button></div>
       <button id="readTabMobileBtn" class="mobile-tab-help">How to read tab →</button>
-      <div class="explore"><span id="exploreHint">Next: scales, disco, blues, and Latin rhythms.</span><button id="exploreAllBtn">Explore all exercises →</button></div>
     </div>
     <aside class="library-aside" aria-label="Practice suggestions">
       <section id="recentPanel" class="recent-panel" hidden><h2>Recent practice</h2><h3 id="recentTitle"></h3><p id="recentAbout"></p><p id="recentMeta"></p><button id="resumeBtn" class="primary">Continue practising →</button><div id="otherRecent"></div></section>

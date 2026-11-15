@@ -8,6 +8,10 @@ const intro = {
   songs: ['Learn a song.', 'Choose a song. Practise a few bars at a time.', 'Search songs or artists'],
   mine: ['Your own music.', 'Songs you save stay in this browser. Open a file to bring one from another device.', 'Search your songs'],
 };
+const closingText = {
+  exercises: (noMatch: boolean) => noMatch ? 'No exercises match. Write it yourself.' : 'Missing an exercise? Write it, and send it in for everyone.',
+  songs: (noMatch: boolean) => noMatch ? 'No songs match. Write it yourself.' : 'Missing a song? Write it, and send it in for everyone.',
+};
 const text = (tag: string, value: string, className = '') => { const node = document.createElement(tag); node.textContent = value; node.className = className; return node; };
 const levelLabel = (entry: CatalogueEntry) => difficultyLabel(entry.levels);
 
@@ -20,7 +24,7 @@ export function libraryView(onPick: (value: string) => void, onNew: () => void, 
   clear.onclick = resetFilters; byId('emptyClearBtn').onclick = resetFilters;
   byId('emptyExercisesBtn').onclick = onExercises;
   byId('emptyNewBtn').onclick = onNew; byId('emptyOpenBtn').onclick = onOpen;
-  byId('libraryNewBtn').onclick = onNew; byId('libraryImportBtn').onclick = onOpen; byId('libraryProposeBtn').onclick = onPropose;
+  byId('libraryNewBtn').onclick = onNew; byId('closingWriteBtn').onclick = onNew; byId('libraryImportBtn').onclick = onOpen; byId('libraryProposeBtn').onclick = onPropose;
   byId('exploreAllBtn').onclick = () => { expanded = true; render(); byId('catalogueHeading').focus(); };
   function row(entry: CatalogueEntry) {
     const li = document.createElement('li'), button = document.createElement('button'); button.className = 'catalogue-row'; button.type = 'button'; button.dataset.value = entry.value;
@@ -60,17 +64,18 @@ export function libraryView(onPick: (value: string) => void, onNew: () => void, 
     byId('songResults').textContent = `${matches.length} ${kind === 'exercises' ? 'exercises' : 'songs'} found.`;
     clear.hidden = !search.value && !level.value;
     list.replaceChildren(...shown.map(row));
-    byId('catalogueEmpty').hidden = matches.length > 0;
-    byId('emptyTitle').textContent = emptyMine ? 'Make room for your own songs.' : emptySongs ? `No bundled ${family} songs yet.` : `No ${kind === 'exercises' ? 'exercises' : 'songs'} match`;
-    byId('emptyDescription').textContent = emptyMine ? 'Start a new song or open a song file. Save it here when you are ready.' : emptySongs ? 'Browse exercises or open a song file to practise.' : `Try another search, clear the filters, or choose another instrument.`;
+    const filtered = Boolean(search.value.trim() || level.value);
+    byId('catalogueEmpty').hidden = matches.length > 0 || (kind !== 'mine' && !emptySongs);
+    byId('emptyTitle').textContent = emptyMine ? 'Make room for your own songs.' : emptySongs ? `No bundled ${family} songs yet.` : 'No songs match';
+    byId('emptyDescription').textContent = emptyMine ? 'Write a song or open a song file. Save it here when you are ready.' : emptySongs ? 'Browse exercises or open a song file to practise.' : `Try another search, clear the filters, or choose another instrument.`;
     byId('emptyClearBtn').hidden = emptyMine || emptySongs || (!search.value && !level.value);
     byId('emptyNewBtn').hidden = !emptyMine; byId('emptyOpenBtn').hidden = !emptyMine && !emptySongs;
     byId('emptyExercisesBtn').hidden = !emptySongs || counts.exercises === 0;
     byId('emptyExercisesBtn').textContent = `Browse ${counts.exercises} ${family} exercises`;
     byId('exploreAllBtn').hidden = !foundations;
     byId('exploreAllBtn').textContent = `Explore all ${matches.length} exercises →`;
-    byId('exploreHint').hidden = !foundations;
-    byId('exploreHint').textContent = 'Keep going at your own pace.';
+    byId('closingRow').hidden = kind === 'mine';
+    byId('closingText').textContent = closingText[kind === 'exercises' ? 'exercises' : 'songs'](matches.length === 0 && filtered);
     const practised = recentEntries(entries, recent, family), first = practised[0];
     byId('recentPanel').hidden = !first;
     if (first) {

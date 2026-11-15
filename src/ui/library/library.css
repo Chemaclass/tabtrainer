@@ -9,9 +9,11 @@
 .library-nav button[aria-current=page] .nav-count{background:var(--wash)}
 .header-actions{display:flex;align-items:center;justify-content:flex-end;gap:var(--actions-gap);min-width:0}
 :is(#familySelect,[data-select="familySelect"]){height:44px;min-width:100px;background-color:var(--page)}
-#libraryOpenBtn svg{display:none}
 .tool-open{display:flex;align-items:center;justify-content:center;gap:8px;min-height:44px;min-width:44px;white-space:nowrap}
 .tool-open svg{flex-shrink:0}
+.write-song{display:flex;align-items:center;justify-content:center;gap:8px;min-height:44px;min-width:44px;padding:0 16px;background:var(--ink);color:var(--page);font-weight:600;white-space:nowrap}
+.write-song:hover{opacity:.88}
+.write-song svg{flex-shrink:0}
 .theme-toggle{display:grid;place-items:center;flex-shrink:0;width:44px;height:44px;color:var(--ink)}
 @media(min-width:900px) and (pointer:fine){.theme-toggle{width:32px;height:32px}}
 .theme-toggle .sun,[data-theme=dark] .theme-toggle .moon{display:none}
@@ -20,7 +22,7 @@
 #backLibraryBtn{white-space:nowrap;font-weight:600;min-height:44px}
 #practiceName{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:32ch}
 .library-view .practice-crumb,.library-view #editBtn,.library-view .file-menu{display:none}
-body:not(.library-view) .library-nav,body:not(.library-view) .dropdown:has([data-select="familySelect"]),body:not(.library-view) #familySelect,body:not(.library-view) #libraryOpenBtn{display:none}
+body:not(.library-view) .library-nav,body:not(.library-view) .dropdown:has([data-select="familySelect"]),body:not(.library-view) #familySelect,body:not(.library-view) #writeSongBtn{display:none}
 .library{display:grid;grid-template-columns:minmax(0,900px) minmax(220px,1fr);gap:64px;padding:48px 64px 40px;max-width:1600px;margin:0 auto}
 .catalogue{min-width:0}
 .library-intro{margin-bottom:24px}
@@ -53,7 +55,8 @@ body:not(.library-view) .library-nav,body:not(.library-view) .dropdown:has([data
 .catalogue-mobile-meta{display:none;font-size:13px;line-height:18px;color:var(--mut);font-weight:400}
 .catalogue-arrangements{font-size:13px;line-height:18px;color:var(--mut);font-weight:400}
 .explore{display:flex;align-items:center;justify-content:space-between;gap:16px;padding-top:24px;font-size:14px}
-.explore span{color:var(--mut)}
+.explore p{margin:0;color:var(--mut)}
+.explore p button{min-height:0;padding-block:12px;margin-block:-12px;vertical-align:baseline}
 .explore button{min-height:44px;padding:0;font-size:14px;font-weight:600;text-decoration:underline}
 .catalogue-empty{padding:40px 0}
 .catalogue-empty h2{font:800 26px/32px var(--display);margin:0 0 12px}
@@ -92,7 +95,6 @@ body:not(.library-view) .site-footer{display:none}
 }
 @media(max-width:1279px){
   .top{--nav-gap:20px;--actions-gap:8px}
-  #libraryOpenBtn svg{display:block}
   .tool-open{width:44px;padding:0}
   .tool-open span{display:none}
 }
@@ -143,6 +145,8 @@ body:not(.library-view) .site-footer{display:none}
   :is(#familySelect,[data-select="familySelect"]){min-width:92px;padding:6px 32px 6px 10px}
   .header-actions .toggle{padding:0 10px;font-size:13px}
   .file-menu summary{font-size:13px;padding:0 10px}
+  .write-song{width:44px;padding:0}
+  .write-song span{display:none}
   .library{padding-inline:24px}
   .explore{flex-wrap:wrap}
   .site-footer{padding:0 24px 24px}
@@ -156,7 +160,7 @@ body:not(.library-view) .site-footer{display:none}
   .library-nav button{flex:auto;font-size:13px}
   .library-nav .nav-count{min-width:0;padding:3px 4px}
   .top{--top-padding:12px;--top-gap:6px;--actions-gap:0}
-  .header-actions :is(.round,#editBtn,.file-menu){margin-left:4px}
+  .header-actions :is(.round,#editBtn,.file-menu,.write-song){margin-left:4px}
   :is(#familySelect,[data-select="familySelect"]){min-width:0;padding:6px 26px 6px 8px;background-position:right 8px center;font-size:14px}
   .edit-noun{display:none}
 }
