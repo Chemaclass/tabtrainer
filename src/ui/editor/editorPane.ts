@@ -4,6 +4,7 @@ import { byId, one } from '../dom';
 import type { Song } from '../../core/model';
 import type { IssueSpan, ParseIssue } from '../../core/parseIssue';
 import { editorResize } from './editorResize';
+import { editorTabs } from './editorTabs';
 import { sourceGutter } from './gutter';
 import { selectLine, selectSpan, settledInput, songIssueList } from './sourceText';
 
@@ -13,11 +14,13 @@ export function editorPane(redraw: () => void) {
   const source = byId('src', HTMLTextAreaElement);
   const gutter = sourceGutter(source);
   const showIssueList = songIssueList(byId('issues'), source);
+  const open = () => !one('.layout').classList.contains('noedit');
+  const tabs = editorTabs(source, open, redraw);
   let settling = { cancel() {} };
   let issues: readonly ParseIssue[] = [];
-  const open = () => !one('.layout').classList.contains('noedit');
   const show = (on: boolean) => {
     one('.layout').classList.toggle('noedit', !on); byId('editBtn').classList.toggle('on', on); byId('editBtn').setAttribute('aria-pressed', String(on));
+    if (on) tabs.opened(); else tabs.closed();
     setPref('editor', on); setTimeout(redraw, 50);
   };
   editorResize(byId('editorPane'), byId('editorResize'), redraw);
@@ -33,10 +36,10 @@ export function editorPane(redraw: () => void) {
     show,
     open,
     text: () => source.value,
-    setText(text: string) { settling.cancel(); source.value = text; gutter.refresh(); },
+    setText(text: string) { settling.cancel(); source.value = text; tabs.reset(); gutter.refresh(); },
     focus: () => source.focus(),
     goToLine(line: number) { show(true); selectLine(source, line); },
-    goTo(span: IssueSpan) { selectSpan(source, span); },
+    goTo(span: IssueSpan) { if (!tabs.scoreShown()) selectSpan(source, span); },
     onEdit(immediately: () => void, settled: () => void) {
       settling = settledInput(source, settled, immediately);
     },
@@ -53,6 +56,7 @@ export function editorPane(redraw: () => void) {
       status.textContent = found.length ? problemCount(found.length) : `${song.bars.length} bar${song.bars.length === 1 ? '' : 's'} · ${song.meta.instrument.name}`;
       status.classList.toggle('bad', errors); status.classList.toggle('warn', found.length > 0 && !errors); status.title = status.textContent ?? '';
       byId('nextProblemHint').hidden = !found.length;
+      tabs.showProblems(found.length ? problemCount(found.length) : '', errors);
     },
     select(range: { start: number; end: number }) { source.focus(); source.setSelectionRange(range.start, range.end); source.scrollTop = 0; },
   };

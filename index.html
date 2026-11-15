@@ -251,13 +251,17 @@ tempo: 90
   <footer class="site-footer"><a href="./">What is TabTrainer?</a> Free and open source. <a href="./?view=library&amp;kind=mine&amp;new=1">Write a song and send it in</a>. Made by <a href="https://chemaclass.com" target="_blank" rel="noopener">Chemaclass</a> · <a href="https://github.com/Chemaclass/tabtrainer" target="_blank" rel="noopener">Source code on GitHub</a><span id="offlineReady" class="offline-ready" role="status"></span></footer>
   <div id="practiceScreen" hidden>
   <main class="layout noedit">
+    <div id="editorTabs" class="editor-tabs" role="tablist" aria-label="Editor view">
+      <button id="textTab" class="editor-tab" type="button" role="tab" aria-selected="true" aria-controls="editorPane" data-name="Text">Text<span id="textTabDot" class="tab-dot" aria-hidden="true" hidden></span></button>
+      <button id="scoreTab" class="editor-tab" type="button" role="tab" aria-selected="false" aria-controls="scorePane" data-name="Score" tabindex="-1">Score<span id="scoreTabDot" class="tab-dot changed" aria-hidden="true" hidden></span></button>
+    </div>
     <section id="editorPane" class="editor">
       <div class="pane-head"><span class="caps">Song text</span><span id="status" class="status"></span><span id="nextProblemHint" class="next-problem-hint" hidden><kbd>F8</kbd> next problem</span><button id="hideEditorBtn" class="pane-close" title="Hide editor" aria-label="Hide editor">Hide</button></div>
       <textarea id="src" class="source-text" spellcheck="false" aria-label="Song source"></textarea>
       <ul id="issues" class="issues" aria-label="Problems" aria-live="polite"></ul>
     </section>
     <div id="editorResize" title="Drag to resize, double-click to reset" role="separator" tabindex="0" aria-label="Editor width" aria-orientation="vertical" aria-controls="editorPane" aria-valuemin="240" aria-valuemax="720" aria-valuenow="400" aria-describedby="editorResizeHelp"><span id="editorResizeHelp" class="sr-only">Drag to resize. Use Left and Right arrows, Home or End. Double-click to reset the width.</span></div>
-    <section class="viewer">
+    <section id="scorePane" class="viewer">
       <div class="song-head">
         <button id="headBackBtn" class="head-back" type="button"><svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><path d="M12 4 6 10l6 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
         <div class="song-id"><p id="practiceContext" class="practice-context"></p><h1 id="title" tabindex="-1"></h1><div id="credit" class="credit"><span id="byline" class="byline" hidden></span><a id="listen" class="listen" target="_blank" rel="noopener noreferrer" hidden><span class="listen-dot" aria-hidden="true"></span><span class="listen-label">Listen to the original</span><span id="listenHost" class="listen-host"></span></a></div><div id="subtitle" class="meta"></div><p id="about" class="about" hidden></p><p id="songSource" class="song-source" hidden><span id="songSourceLead"></span> <a id="songSourceLink" target="_blank" rel="noopener"></a></p></div>

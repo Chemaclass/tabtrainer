@@ -59,3 +59,25 @@ test('the player reaches the playing state and lights the current note', async (
   await expect(page.locator('#playbackStatus')).toHaveText('Playing', { timeout: 10_000 });
   await expect(page.locator('#playBtn')).toHaveAttribute('aria-label', 'Pause');
   await expect(page.locator('.note.on').first()).toBeAttached();});
+
+test('the phone editor switches between text and score and keeps the caret', async ({ page }, testInfo) => {
+  await openFirstExercise(page);
+  await page.locator('#editBtn').click();
+  const source = page.locator('#src');
+  if (testInfo.project.name !== 'phone') {
+    await expect(page.locator('#editorTabs')).toBeHidden();
+    await expect(source).toBeVisible();
+    await expect(page.locator('#sheet')).toBeVisible();
+    return;
+  }
+  await expect(source).toBeVisible();
+  await expect(page.locator('#sheet')).toBeHidden();
+  await source.evaluate((area: HTMLTextAreaElement) => area.setSelectionRange(12, 18));
+  await page.locator('#scoreTab').click();
+  await expect(page.locator('#scoreTab')).toHaveAttribute('aria-selected', 'true');
+  await expect(source).toBeHidden();
+  await expect(page.locator('.note').first()).toBeVisible();
+  await page.locator('#textTab').click();
+  await expect(source).toBeVisible();
+  expect(await source.evaluate((area: HTMLTextAreaElement) => [area.selectionStart, area.selectionEnd])).toEqual([12, 18]);
+});
