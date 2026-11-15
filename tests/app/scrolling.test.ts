@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { AutoScroller } from '../../src/app/scrolling';
+import { AutoScroller, followScrollBehavior } from '../../src/app/scrolling';
 
 const setup = () => {
   const frames = new Map<number, FrameRequestCallback>();
@@ -24,5 +24,13 @@ describe('continuous scrolling', () => {
     const s = setup(); s.scroller.start(); s.reachBottom(); s.tick(0);
     expect(s.frames.size).toBe(0); expect(s.ended).toHaveBeenCalledTimes(1);
     s.tick(1000); expect(s.ended).toHaveBeenCalledTimes(1);
+  });
+});
+describe('following playback', () => {
+  it('glides to the next line by default', () => {
+    expect(followScrollBehavior(false)).toBe('smooth');
+  });
+  it('jumps to the next line when the player asks for reduced motion', () => {
+    expect(followScrollBehavior(true)).toBe('instant');
   });
 });

@@ -32,3 +32,6 @@ export class AutoScroller {
     this.frame = this.environment.request(next => this.step(next));
   }
 }
+export function followScrollBehavior(reducedMotion: boolean): ScrollBehavior {
+  return reducedMotion ? 'instant' : 'smooth';
+}
