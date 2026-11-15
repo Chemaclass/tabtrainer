@@ -3,6 +3,10 @@ export interface SpeedPracticeProgress { speed: number; completed: number }
 
 export const defaultSpeedPractice: SpeedPracticeConfig = { repetitions: 4, increase: 5, target: 100 };
 
+export function defaultSpeedPracticeFrom(speed: number): SpeedPracticeConfig {
+  return { ...defaultSpeedPractice, target: Math.max(defaultSpeedPractice.target, speed) };
+}
+
 export function isSpeedPracticeConfig(value: unknown): value is SpeedPracticeConfig {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
   const v = value as Record<string, unknown>;

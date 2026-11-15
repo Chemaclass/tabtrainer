@@ -264,6 +264,7 @@ export class Player {
   toggle() { if (this.playing) this.pause(); else this.play(); }
   stop() { this.reconcile(); this.halt(); this.state = 'stopped'; this.paused = null; this.resumeMusic = false; this.passes.clear(); if (this.practice && this.baseline !== null) { this.speed = this.baseline / 100; this.progress = { speed: this.baseline, completed: 0 }; this.practiceActive = false; this.emitPractice('reset'); } this.emit(null); }
   setSpeed(s: number) {
+    if (Math.round(s * 100) === Math.round(this.speed * 100)) return;
     this.endPractice('speed');
     const now = this.synth.now, beat = this.state === 'playing' ? this.position(now) : null;
     if (this.state === 'counting-in') {

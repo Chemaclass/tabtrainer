@@ -1,4 +1,4 @@
-import { defaultSpeedPractice, isSpeedPracticeConfig, nextSpeedPracticeSpeed } from '../../core/speedPractice';
+import { defaultSpeedPracticeFrom, isSpeedPracticeConfig, nextSpeedPracticeSpeed } from '../../core/speedPractice';
 import { pref, setPref } from '../../app/storage';
 import type { Player } from '../../audio/player';
 import { closeOnOutside } from '../shell/disclosure';
@@ -13,7 +13,8 @@ export function speedPracticePanel(player: Player, canLoop: () => boolean, onSpe
   const target = byId('speedPracticeTarget', HTMLInputElement);
   const error = byId('speedPracticeError');
   const status = byId('speedPracticeStatus');
-  const saved = pref('speedPractice', defaultSpeedPractice);
+  const saved = pref('speedPractice', defaultSpeedPracticeFrom(Math.round(player.speed * 100)));
+  let lastTarget = saved.target;
   repetitions.value = String(saved.repetitions); increase.value = String(saved.increase); target.value = String(saved.target);
   const config = () => ({ repetitions: repetitions.valueAsNumber, increase: increase.valueAsNumber, target: target.valueAsNumber });
   function validate() {
@@ -24,9 +25,10 @@ export function speedPracticePanel(player: Player, canLoop: () => boolean, onSpe
   }
   function show() {
     const state = player.speedPracticeState;
-    climb.hidden = !canLoop();
+    const climbTarget = state.enabled ? state.target : lastTarget;
+    climb.hidden = !canLoop() || (!state.enabled && state.speed >= climbTarget);
     climb.setAttribute('aria-pressed', String(state.enabled));
-    climb.textContent = `Climb to ${state.enabled ? state.target : target.value}%`;
+    climb.textContent = `Climb to ${climbTarget}%`;
     const progress = byId('speedPracticeProgress');
     progress.hidden = !state.enabled;
     progress.textContent = state.reached ? `Target reached: ${state.speed}%` : `pass ${state.completed + 1} of ${state.repetitions}, then ${nextSpeedPracticeSpeed(state.speed, state)}%`;
@@ -39,17 +41,23 @@ export function speedPracticePanel(player: Player, canLoop: () => boolean, onSpe
     if (reason === 'increase') status.textContent = `Speed increased to ${state.speed}%.`;
     if (reason === 'target') status.textContent = `Target reached: ${state.speed}%.`;
   });
-  climb.onclick = () => {
+  climb.onclick = event => {
     if (player.speedPracticeState.enabled) { player.setSpeedPractice(null); show(); return; }
     const valid = validate();
-    if (!valid || !player.setSpeedPractice(valid)) { settings.open = true; show(); return; }
+    if (!valid || !player.setSpeedPractice(valid)) {
+      event.stopPropagation();
+      settings.open = true;
+      status.textContent = `Climb did not start. ${error.textContent || 'Turn on Loop bars first.'}`;
+      show(); return;
+    }
     setPref('speedPractice', valid); show();
   };
+  byId('speed', HTMLInputElement).addEventListener('input', show);
   [repetitions, increase, target].forEach(input => input.addEventListener('input', () => {
     if (player.speedPracticeState.enabled) player.setSpeedPractice(null);
     validate();
     const current = config();
-    if (isSpeedPracticeConfig(current)) setPref('speedPractice', current);
+    if (isSpeedPracticeConfig(current)) { setPref('speedPractice', current); lastTarget = current.target; }
     show();
   }));
   show();
