@@ -410,30 +410,43 @@ tempo: 90
   <dialog id="proposeDialog" class="propose" aria-labelledby="proposeTitle">
     <form method="dialog"><button class="close round" aria-label="Close">✕</button></form>
     <h2 id="proposeTitle">Add your song to TabTrainer</h2>
-    <p>When we accept your song, it appears on the website for everyone, with a link of its own.</p>
-    <h3>The rules</h3>
-    <ul>
-      <li>Send only music you wrote yourself, or music in the public domain (old enough that nobody owns it).</li>
-      <li>No copyrighted songs, not even a short riff. Keep those in My songs.</li>
-      <li>Say what the song trains in the <code>about:</code> line, in one sentence.</li>
-    </ul>
-    <h3>Your song</h3>
-    <div id="proposePickRow" class="propose-pick"><label for="proposePick">Song</label><select id="proposePick"></select></div>
-    <p class="propose-file">File: <code id="proposeFile"></code></p>
-    <fieldset class="propose-group"><legend>This is an:</legend><div class="propose-group-options"><label><input type="radio" name="proposeGroup" value="exercises" /><span>Exercise</span></label><label><input type="radio" name="proposeGroup" value="songs" /><span>Song</span></label></div></fieldset>
-    <p class="muted">The number sets the place in the list. We may change it when we review your song.</p>
-    <div id="proposeProblems" class="propose-problems"><h3>Fix these first</h3><ul id="proposeProblemList"></ul></div>
-    <label class="propose-rights"><input id="proposeRights" type="checkbox" /> <span>I wrote this music, or it is in the public domain, and I agree to share it under the MIT licence of TabTrainer.</span></label>
-    <p id="proposeLong" class="propose-long" hidden>Your song is too long to send in the link. "Open GitHub" also copies it. Paste it into the empty box on GitHub.</p>
-    <div class="propose-actions"><a id="proposeLink" class="primary" target="_blank" rel="noopener" aria-disabled="true">Open GitHub</a><button id="proposeDownload" type="button" class="toggle" hidden>Download</button></div>
-    <p id="proposeStatus" class="propose-status" role="status"></p>
-    <h3>What happens next</h3>
-    <ol>
-      <li>Sign in to GitHub. An account is free.</li>
-      <li>Press "Commit changes", then "Propose changes".</li>
-      <li>Press "Create pull request". We review it and write to you there.</li>
-    </ol>
-    <p><a href="https://github.com/Chemaclass/tabtrainer/blob/main/CONTRIBUTING.md" target="_blank" rel="noopener">Read the full guide</a></p>
+    <div id="proposeForm">
+      <p class="muted">Once we accept it, every player can practise it, with a link of its own.</p>
+      <section class="propose-step" aria-labelledby="proposeSongTitle">
+        <h3 id="proposeSongTitle"><span class="propose-no">01</span>Your song</h3>
+        <div id="proposePickRow" class="propose-pick"><label for="proposePick">Song</label><select id="proposePick"></select></div>
+        <p id="proposeName" class="propose-name"></p>
+        <fieldset class="propose-group"><legend>This is an:</legend><div class="propose-group-options"><label><input type="radio" name="proposeGroup" value="exercises" /><span>Exercise</span></label><label><input type="radio" name="proposeGroup" value="songs" /><span>Song</span></label></div></fieldset>
+        <ul id="proposeChecks" class="propose-checks" aria-label="Checklist"></ul>
+      </section>
+      <section class="propose-step" aria-labelledby="proposeRulesTitle">
+        <h3 id="proposeRulesTitle"><span class="propose-no">02</span>The rules</h3>
+        <ul class="propose-rules">
+          <li>Send only music you wrote yourself, or music in the public domain (old enough that nobody owns it).</li>
+          <li>No copyrighted songs, not even a short riff. Keep those in My songs.</li>
+          <li>Say what the song trains in the <code>about:</code> line, in one sentence.</li>
+        </ul>
+        <label class="propose-rights"><input id="proposeRights" type="checkbox" /> <span>I wrote this music, or it is in the public domain, and I agree to share it under the MIT licence of TabTrainer.</span></label>
+      </section>
+      <section class="propose-step" aria-labelledby="proposeSendTitle">
+        <h3 id="proposeSendTitle"><span class="propose-no">03</span>Send</h3>
+        <a id="proposeLink" class="primary" target="_blank" rel="noopener" aria-disabled="true" aria-describedby="proposeReason">Open GitHub</a>
+        <p id="proposeReason" class="propose-reason" role="status"></p>
+        <p id="proposeLong" class="propose-long" hidden>Your song is too long to send in the link. "Open GitHub" also copies it, so you can paste it there.</p>
+        <ol class="propose-clicks">
+          <li>Sign in to GitHub. An account is free.</li>
+          <li>Press "Commit changes", then "Propose changes".</li>
+          <li>Press "Create pull request".</li>
+        </ol>
+        <p class="propose-file"><code id="proposeFile"></code> The number sets the place in the list. We may change it.</p>
+      </section>
+    </div>
+    <div id="proposeSent" class="propose-sent" hidden>
+      <p><strong>Sent to GitHub.</strong> Finish the three clicks there. We reply on the pull request.</p>
+      <p id="proposeStatus" class="propose-status" role="status"></p>
+      <div class="propose-sent-actions"><button id="proposeDownload" type="button" class="toggle" hidden>Download</button><button id="proposeBack" type="button" class="toggle">Back to the checklist</button></div>
+      <p><a href="https://github.com/Chemaclass/tabtrainer/pulls" target="_blank" rel="noopener">See the open pull requests</a> · <a href="https://github.com/Chemaclass/tabtrainer/blob/main/CONTRIBUTING.md" target="_blank" rel="noopener">Read the full guide</a></p>
+    </div>
   </dialog>
   <dialog id="shortcuts" class="shortcuts" aria-labelledby="shortcutsTitle" aria-describedby="shortcutsHelp">
     <form method="dialog"><button class="close round" aria-label="Close">✕</button></form><h2 id="shortcutsTitle">Keyboard shortcuts</h2>

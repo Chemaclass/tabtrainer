@@ -16,6 +16,9 @@ export function selectLine(source: HTMLTextAreaElement, line: number) {
   const length = lines[line - 1]?.length ?? 0;
   source.focus();
   source.setSelectionRange(start, start + length);
+  // Chrome keeps the old scroll position when the selection moves; wrapped lines make this approximate.
+  const lineHeight = parseFloat(getComputedStyle(source).lineHeight) || 0;
+  source.scrollTop = Math.max(0, (line - 1) * lineHeight - source.clientHeight / 3);
 }
 
 function issueItem(issue: ParseIssue, source: HTMLTextAreaElement): HTMLLIElement {

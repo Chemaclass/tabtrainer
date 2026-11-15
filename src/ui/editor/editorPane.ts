@@ -3,7 +3,7 @@ import { byId, one } from '../dom';
 import type { Song } from '../../core/model';
 import type { ParseIssue } from '../../core/parser';
 import { editorResize } from './editorResize';
-import { settledInput, showIssueList } from './sourceText';
+import { selectLine, settledInput, showIssueList } from './sourceText';
 
 export function editorPane(redraw: () => void) {
   const source = byId('src', HTMLTextAreaElement);
@@ -20,6 +20,7 @@ export function editorPane(redraw: () => void) {
     text: () => source.value,
     setText(text: string) { settling.cancel(); source.value = text; },
     focus: () => source.focus(),
+    goToLine(line: number) { show(true); selectLine(source, line); },
     onEdit(immediately: () => void, settled: () => void) {
       settling = settledInput(source, settled, immediately);
     },
