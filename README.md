@@ -14,10 +14,10 @@ It's a free web app with no account. Your songs stay in your browser, and it wor
 - **Slow down and loop:** play from 30 to 130% speed, loop any bars, and raise the speed after a set number of loops.
 - **Follow along:** the playing note turns red and the page scrolls with it. Add a metronome or a count-in.
 - **Keep your place:** the library shows how far you got on each song and takes you back to it.
-- **Play hands free:** every control has a key, and `?` lists them. A two-button page turner pedal works as a foot switch.
+- **Play hands free:** the main controls have keys, and `?` lists them. A two-button page turner pedal works as a foot switch.
 - **Jam:** improvise over a looping groove in blues, rock, funk, reggae, jazz, bossa or metal, in any key.
 - **Fretboard:** see where the notes of any key and scale sit on your instrument.
-- **Write your own:** write a song or groove in plain text and hear it as you type.
+- **Write your own:** write a song or groove in plain text. The score updates as you type, and a groove plays what you type.
 
 ## Add your song
 
@@ -25,7 +25,7 @@ Anyone can add an exercise or a public domain song to the site, without Git:
 
 1. Open your song in TabTrainer, or [write a new one](https://chemaclass.github.io/tabtrainer/?view=library&kind=mine&new=1).
 2. Open **File** and choose **Add to TabTrainer**.
-3. Fix anything the checklist shows, then press **Open GitHub** and send it.
+3. Fix anything the checklist shows, tick the box that says the music is yours or public domain, then press **Open GitHub** and send it.
 
 Once we accept it, everyone can practise it. [CONTRIBUTING.md](CONTRIBUTING.md) has the full steps, what we accept, and how to send code.
 
@@ -75,9 +75,10 @@ npm install
 npm run dev        # http://localhost:5173/tabtrainer/
 npm run check      # lint, tests and production build
 npm run e2e        # browser test of the built site (first run: npx playwright install chromium)
+npm run render-song -- <file>  # PNG of a song or groove in song-preview/ (build first)
 ```
 
-It's TypeScript, Vite and [VexFlow](https://www.vexflow.com/), with no server. CI checks every pull request, and GitHub Pages publishes `main`. [How the code fits together](docs/architecture.md) shows where new code goes.
+It's TypeScript, Vite and [VexFlow](https://www.vexflow.com/), with no server. CI checks every pull request, and GitHub Pages publishes `main`. A pull request that changes a song gets a comment with its rendered tab. [How the code fits together](docs/architecture.md) shows where new code goes.
 
 ## License
 

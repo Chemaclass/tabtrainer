@@ -45,4 +45,3 @@ bass:  1 - 3 - 5 - 6 - | b7 - 6 - 5 - >b1 -
 | `# ...` | comment, on its own line or after a space (`#IV` is a numeral) |
 
 The steps in a bar set its grid. In 4/4 that is 8 for eighths, 12 for triplets or 16 for sixteenths. Swing moves the off beat eighths, or the off beat sixteenths when no part plays eighths. With another progression, each part repeats its bars over the new chords.
-
