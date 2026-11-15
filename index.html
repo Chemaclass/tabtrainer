@@ -41,7 +41,7 @@
   <script async src="https://rum.cronitor.io/script.js"></script>
   <script>
     window.cronitor = window.cronitor || function () { (window.cronitor.q = window.cronitor.q || []).push(arguments); };
-    // A song or bundled groove is in the path; other screens are the root with a query, so keep the route keys. A groove of your own carries its title, which stays private:
+    // Songs, bundled grooves and the library are in the path. The rest of the route is in the query, so keep its keys. A groove of your own carries its title, which stays private:
     // the title is sent unencoded and may hold & or #, so groove stays last and everything after its prefix is cut.
     cronitor('config', {
       clientKey: 'a225bb1865119c485e9d4544392452de',

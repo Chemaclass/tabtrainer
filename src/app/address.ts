@@ -25,14 +25,15 @@ export function routeQuery(pathname: string, search: string, base: string): stri
 }
 
 function libraryQuery(query: URLSearchParams, family: string | undefined, [kind, ...rest]: string[]): string {
-  if (rest.length || (family !== undefined && !isFamily(family)) || (kind !== undefined && !isLibraryKind(kind))) return query.toString().replace(/%2F/g, '/');
+  if (rest.length) return query.toString().replace(/%2F/g, '/');
   query.set('view', 'library'); query.delete('song'); query.delete('groove');
-  if (family) query.set('instrument', family);
-  if (kind) query.set('kind', kind);
+  if (family && isFamily(family)) query.set('instrument', family);
+  if (kind && isLibraryKind(kind)) query.set('kind', kind);
   return query.toString().replace(/%2F/g, '/');
 }
 
-export const libraryAddress = (root: string, kind: LibraryKind, family: Family) => `${root}library/${family}/${kind}/`;
+export const libraryAddress = (root: string, kind: LibraryKind | null = null, family: Family | null = null) =>
+  `${root}library/${family ? `${family}/${kind ? `${kind}/` : ''}` : ''}`;
 
 export function addressOf(search: string, base: string): string {
   const query = new URLSearchParams(search);

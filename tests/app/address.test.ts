@@ -22,11 +22,14 @@ describe('addresses', () => {
     expect(routeQuery('/tabtrainer/library/guitar/', '', base)).toBe('view=library&instrument=guitar');
     expect(routeQuery('/tabtrainer/library/bass/mine/', '?new=1', base)).toBe('new=1&view=library&instrument=bass&kind=mine');
     expect(routeQuery('/tabtrainer/library/', '?kind=mine&new=1', base)).toBe('kind=mine&new=1&view=library');
-    expect(routeQuery('/tabtrainer/library/piano/songs/', '', base)).toBe('');
+    expect(routeQuery('/tabtrainer/library/piano/songs/', '', base)).toBe('view=library&kind=songs');
+    expect(routeQuery('/tabtrainer/library/guitar/bogus/', '', base)).toBe('view=library&instrument=guitar');
     expect(routeQuery('/tabtrainer/library/bass/songs/extra/', '', base)).toBe('');
   });
   it('addresses each library page', () => {
     expect(libraryAddress('https://example.com/tabtrainer/', 'exercises', 'bass')).toBe('https://example.com/tabtrainer/library/bass/exercises/');
+    expect(libraryAddress('https://example.com/tabtrainer/', null, 'guitar')).toBe('https://example.com/tabtrainer/library/guitar/');
+    expect(libraryAddress('https://example.com/tabtrainer/')).toBe('https://example.com/tabtrainer/library/');
   });
   it('treats the base and its index.html as the root', () => {
     expect(isRootPath('/tabtrainer/', base)).toBe(true);

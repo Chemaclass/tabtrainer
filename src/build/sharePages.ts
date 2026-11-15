@@ -3,7 +3,7 @@ import { parseGroove } from '../core/groove';
 import { songAddress, songSlug } from '../app/songLink';
 import { jamAddress } from '../app/jamLink';
 import { libraryAddress } from '../app/address';
-import { libraryPage } from '../app/pageTitles';
+import { libraryIndexPage, libraryPage } from '../app/pageTitles';
 import type { LibraryKind } from '../app/catalogue';
 import type { Family } from '../core/instruments';
 
@@ -81,8 +81,8 @@ export function groovePageMeta(site: string, slug: string, meta: GrooveMeta): st
   });
 }
 
-export function libraryPageMeta(site: string, kind: LibraryKind, family: Family): string {
-  const { title, description } = libraryPage(kind, family), address = libraryAddress(site, kind, family);
+export function libraryPageMeta(site: string, kind: LibraryKind | null, family: Family | null): string {
+  const { title, description } = kind && family ? libraryPage(kind, family) : libraryIndexPage(family), address = libraryAddress(site, family && kind, family);
   return pageMeta({
     title, description, url: address, type: 'website', image: `${site}${CARD_IMAGE}`,
     data: { '@context': 'https://schema.org', '@type': 'CollectionPage', name: title, url: address, description, isPartOf: { '@type': 'WebApplication', name: 'TabTrainer', url: site } },
@@ -90,7 +90,9 @@ export function libraryPageMeta(site: string, kind: LibraryKind, family: Family)
   });
 }
 
-export const LIBRARY_PAGES = (['bass', 'guitar'] as const).flatMap(family => (['exercises', 'songs', 'mine'] as const).map(kind => ({ family, kind })));
+const FAMILIES = ['bass', 'guitar'] as const;
+export const LIBRARY_PAGES = FAMILIES.flatMap(family => (['exercises', 'songs', 'mine'] as const).map(kind => ({ family, kind })));
+export const LIBRARY_INDEXES = [null, ...FAMILIES];
 
 export function sitemap(site: string, paths: string[], grooves: string[] = []): string {
   const library = LIBRARY_PAGES.filter(({ kind }) => kind !== 'mine').map(({ kind, family }) => libraryAddress(site, kind, family));

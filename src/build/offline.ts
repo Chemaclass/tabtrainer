@@ -13,7 +13,7 @@ export function offlineUrls(files: readonly string[]): string[] {
   return files
     .map(file => file.replaceAll('\\', '/'))
     .filter(file => file !== SERVICE_WORKER && !notForTheApp.test(file))
-    .map(file => file === 'index.html' ? './' : file.replace(/(^|\/)index\.html$/, '$1'))
+    .map(file => file === 'index.html' ? './' : file)
     .sort();
 }
 
