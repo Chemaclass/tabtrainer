@@ -3,15 +3,15 @@ import type { Song } from '../../core/model';
 import { songAddress } from '../../app/songLink';
 import type { Screen } from '../../app/workspace';
 import { byId, one } from '../dom';
-import { setSelectValue } from './dropdown';
 
 export function screens(onFamily: (family: Family) => void, onJam: () => void) {
-  const siteTitle = document.title, canonical = one('link[rel=canonical]', HTMLLinkElement), site = canonical.href, familySelect = byId('familySelect', HTMLSelectElement);
-  familySelect.onchange = () => { if (isFamily(familySelect.value)) onFamily(familySelect.value); };
+  const siteTitle = document.title, canonical = one('link[rel=canonical]', HTMLLinkElement), site = canonical.href;
+  const familyButtons = [...byId('familySwitch').querySelectorAll<HTMLButtonElement>('[data-family]')];
+  familyButtons.forEach(button => { const family = button.dataset.family ?? ''; button.onclick = () => { if (isFamily(family)) onFamily(family); }; });
   const jamNav = byId('jamNavBtn', HTMLButtonElement);
   jamNav.onclick = onJam;
   return {
-    showFamily(family: Family) { setSelectValue(familySelect, family); },
+    showFamily(family: Family) { familyButtons.forEach(button => button.setAttribute('aria-pressed', String(button.dataset.family === family))); },
     show(screen: Screen) {
       document.body.classList.toggle('library-view', screen !== 'practice');
       document.body.classList.toggle('jam-view', screen === 'jam');

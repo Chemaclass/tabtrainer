@@ -1,14 +1,9 @@
 html:not(.landing) #landing{display:none}
 html.landing body{padding-bottom:0}
-html.landing body>:not(#landing):not(dialog):not(script){display:none !important}
+html.landing body>:not(#landing):not(.top):not(dialog):not(script){display:none !important}
 .landing-page{color:var(--ink);background:var(--page)}
 .landing-page a{color:inherit}
-.landing-top{display:flex;align-items:center;justify-content:space-between;gap:24px;min-height:80px;padding:0 72px;border-bottom:1px solid var(--rule)}
 .landing-brand{display:flex;align-items:center;gap:10px;min-height:44px;font:800 17px var(--display);letter-spacing:-.02em;text-decoration:none}
-.landing-nav{display:flex;align-items:center;gap:32px;font-size:14px}
-.landing-nav a{display:flex;align-items:center;min-height:44px;color:var(--mut);text-decoration:none}
-.landing-nav a:hover{color:var(--ink)}
-.landing-nav .landing-outline{padding:0 18px;border:1px solid var(--ink);border-radius:6px;color:var(--ink);font-weight:500}
 .landing-hero{display:flex;align-items:center;gap:48px;padding:88px 72px 96px;max-width:1600px;margin:0 auto}
 .landing-copy{display:flex;flex-direction:column;gap:28px;flex:1 1 0;min-width:0}
 .landing-kicker{margin:0;font:600 12px/16px var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--mut)}
@@ -93,19 +88,16 @@ pre.landing-artefact b{font-weight:400;color:var(--led)}
   .landing-facts{padding-bottom:0}
 }
 @media(max-width:1099px){
-  .landing-top,.landing-footer{padding-inline:32px}
+  .landing-footer{padding-inline:32px}
   .landing-steps{flex-direction:column;gap:32px;padding:56px 32px 64px}
   .landing-steps-intro{flex-basis:auto}
 }
 @media(max-width:759px){
-  .landing-nav a:not(.landing-outline){display:none}
   .landing-write{padding-block:56px 64px}
   .landing-write-steps>li>div:first-of-type{flex:1}
   .landing-write-steps .landing-artefact{display:none}
 }
 @media(max-width:699px){
-  .landing-top{min-height:64px;padding:10px 16px}
-  .landing-nav{gap:8px}
   .landing-hero{gap:40px;padding:40px 16px 56px}
   .landing-copy{gap:20px}
   .landing-copy h1{font-size:min(48px,10.4vw);line-height:1.04}
@@ -115,8 +107,4 @@ pre.landing-artefact b{font-weight:400;color:var(--led)}
   .landing-write h2{font-size:min(40px,10vw);line-height:1.04}
   .landing-facts{gap:20px}
   .landing-footer{padding:24px 16px}
-}
-@media(max-width:359px){
-  .landing-top{gap:8px}
-  .landing-nav .landing-outline{padding:0 12px;white-space:nowrap}
 }
