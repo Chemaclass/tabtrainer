@@ -2,6 +2,10 @@ import { parseSong } from '../core/parser';
 import { parseGroove } from '../core/groove';
 import { songAddress, songSlug } from '../app/songLink';
 import { jamAddress } from '../app/jamLink';
+import { libraryAddress } from '../app/address';
+import { libraryPage } from '../app/pageTitles';
+import type { LibraryKind } from '../app/catalogue';
+import type { Family } from '../core/instruments';
 
 export interface SongMeta { title: string; about: string; family: string }
 export interface GrooveMeta { title: string; about: string; genre: string }
@@ -13,13 +17,13 @@ export function songMeta(path: string, text: string): SongMeta {
   return { title: meta.title, about: meta.about ?? '', family: songSlug(path).split('/')[0] };
 }
 
-interface PageMeta { title: string; description: string; url: string; type: string; data: object; imageAlt: string }
+interface PageMeta { title: string; description: string; url: string; type: string; data: object; imageAlt: string; image?: string }
 
 export const CARD_IMAGE = 'og.png';
 const PAGE_META = /<!-- page meta[^>]*-->[\s\S]*?<!-- \/page meta -->/;
 
-function pageMeta({ title: plainTitle, description: plainDescription, url: plainUrl, type, data, imageAlt: plainAlt }: PageMeta): string {
-  const title = escapeHtml(plainTitle), description = escapeHtml(plainDescription), url = escapeHtml(plainUrl), image = escapeHtml(`${plainUrl}${CARD_IMAGE}`);
+function pageMeta({ title: plainTitle, description: plainDescription, url: plainUrl, type, data, imageAlt: plainAlt, image: plainImage = `${plainUrl}${CARD_IMAGE}` }: PageMeta): string {
+  const title = escapeHtml(plainTitle), description = escapeHtml(plainDescription), url = escapeHtml(plainUrl), image = escapeHtml(plainImage);
   const structured = JSON.stringify(data).replaceAll('<', '\\u003c');
   const imageAlt = escapeHtml(plainAlt);
   return `<title>${title}</title>
@@ -77,8 +81,20 @@ export function groovePageMeta(site: string, slug: string, meta: GrooveMeta): st
   });
 }
 
+export function libraryPageMeta(site: string, kind: LibraryKind, family: Family): string {
+  const { title, description } = libraryPage(kind, family), address = libraryAddress(site, kind, family);
+  return pageMeta({
+    title, description, url: address, type: 'website', image: `${site}${CARD_IMAGE}`,
+    data: { '@context': 'https://schema.org', '@type': 'CollectionPage', name: title, url: address, description, isPartOf: { '@type': 'WebApplication', name: 'TabTrainer', url: site } },
+    imageAlt: 'TabTrainer: tab with rhythm for bass and guitar',
+  });
+}
+
+export const LIBRARY_PAGES = (['bass', 'guitar'] as const).flatMap(family => (['exercises', 'songs', 'mine'] as const).map(kind => ({ family, kind })));
+
 export function sitemap(site: string, paths: string[], grooves: string[] = []): string {
-  const urls = [site, ...paths.map(path => songAddress(site, path)), ...grooves.map(slug => jamAddress(site, slug))];
+  const library = LIBRARY_PAGES.filter(({ kind }) => kind !== 'mine').map(({ kind, family }) => libraryAddress(site, kind, family));
+  const urls = [site, ...library, ...paths.map(path => songAddress(site, path)), ...grooves.map(slug => jamAddress(site, slug))];
   return `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 ${urls.map(url => `  <url><loc>${escapeHtml(url)}</loc></url>`).join('\n')}

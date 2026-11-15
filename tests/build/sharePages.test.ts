@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { groovePageMeta, grooveMeta, robotsTxt, sitemap, songMeta, songPageMeta, withPageMeta } from '../../src/build/sharePages';
+import { groovePageMeta, grooveMeta, libraryPageMeta, robotsTxt, sitemap, songMeta, songPageMeta, withPageMeta } from '../../src/build/sharePages';
 import { shareUrl } from '../../src/app/songLink';
 
 const site = 'https://example.com/tabtrainer/';
@@ -45,6 +45,17 @@ describe('share pages', () => {
     expect(meta).toContain('<link rel="canonical" href="https://example.com/tabtrainer/jam/funk-sixteenths/" />');
     const json = meta.match(/<script type="application\/ld\+json">(.*)<\/script>/)![1];
     expect(JSON.parse(json)).toMatchObject({ '@type': 'MusicComposition', name: 'Funk <sixteenths>', genre: 'Funk' });
+  });
+  it('gives each library page its own title and address, with the site card', () => {
+    const meta = libraryPageMeta(site, 'songs', 'bass');
+    expect(meta).toContain('<title>Bass songs · TabTrainer</title>');
+    expect(meta).toContain('<link rel="canonical" href="https://example.com/tabtrainer/library/bass/songs/" />');
+    expect(meta).toContain('<meta property="og:image" content="https://example.com/tabtrainer/og.png" />');
+  });
+  it('lists the shared library pages in the sitemap, not your own songs', () => {
+    const xml = sitemap(site, []);
+    expect(xml).toContain('<loc>https://example.com/tabtrainer/library/guitar/exercises/</loc>');
+    expect(xml).not.toContain('/mine/');
   });
   it('lists every groove address in the sitemap after the songs', () => {
     const xml = sitemap(site, [path], ['blues-shuffle']);

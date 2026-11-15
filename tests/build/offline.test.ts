@@ -27,7 +27,7 @@ describe('offline cache list', () => {
   });
   it('leaves out the song, groove and 404 pages, which are copies of the app page the worker falls back to', () => {
     expect(songPages.length).toBeGreaterThan(0);
-    for (const page of [...songPages, ...groovePages, '404.html']) {
+    for (const page of [...songPages, ...groovePages, 'library/bass/songs/index.html', '404.html']) {
       expect(urls).not.toContain(page);
       expect(urls).not.toContain(page.replace(/index\.html$/, ''));
     }
@@ -36,7 +36,7 @@ describe('offline cache list', () => {
     for (const file of ['assets/index-Dg53OQro.js.map', 'assets/inter-latin-400-normal-XyZ.woff', 'og.png', 'bass/orion/og.png', 'jam/blues-shuffle/og.png', 'sitemap.xml', 'robots.txt', 'sw.js', 'index.html']) expect(urls).not.toContain(file);
   });
   it('reads Windows paths', () => {
-    expect(offlineUrls(['docs\\index.html', 'assets\\app.js'])).toEqual(['assets/app.js', 'docs/']);
+    expect(offlineUrls(['assets\\app.js', 'assets\\fonts\\a.woff2', 'bass\\orion\\index.html'])).toEqual(['assets/app.js', 'assets/fonts/a.woff2']);
   });
 });
 
@@ -58,6 +58,7 @@ describe('build output', () => {
     expect(orion).toContain('<title>Orion (bass solo), bass tab with rhythm · TabTrainer</title>');
     expect(orion).toContain('<script src="/tabtrainer/assets/index-abc.js"></script>');
     expect(orion).not.toContain('<title>App</title>');
+    expect(readFileSync(join(outDir, 'library/guitar/mine/index.html'), 'utf8')).toContain('<title>My guitar songs · TabTrainer</title>');
     for (const page of [...songPages, ...groovePages]) {
       const card = page.replace(/index\.html$/, 'og.png');
       expect(readFileSync(join(outDir, card)).subarray(1, 4).toString()).toBe('PNG');

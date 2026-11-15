@@ -41,7 +41,7 @@ describe('landing entries', () => {
     const bass = landingEntries(bundled, 'bass', '/tabtrainer/');
     expect(bass.firstSteps).toEqual({ href: '/tabtrainer/bass/first-steps/', detail: 'First Steps · easy' });
     expect(bass.rhythm).toEqual({ href: '/tabtrainer/bass/rhythm-ladder/', detail: 'Rhythm Ladder · medium' });
-    expect(bass.songs).toEqual({ href: '/tabtrainer/?view=library&kind=songs&instrument=bass', detail: 'Ode to Joy and 1 more' });
+    expect(bass.songs).toEqual({ href: '/tabtrainer/library/bass/songs/', detail: 'Ode to Joy and 1 more' });
   });
   it('falls back to the second exercise when an instrument has no rhythm ladder', () => {
     const guitar = landingEntries(bundled, 'guitar', '/tabtrainer/');
@@ -60,7 +60,7 @@ describe('landing entries', () => {
         expect(songSlug(findBySlug(paths, slug) ?? '')).toBe(slug);
       }
       expect(entries.rhythm.detail).toMatch(/^Rhythm Ladder/);
-      expect(readRoute(entries.songs.href.slice(1), paths)).toEqual({ screen: 'library', kind: 'songs', family });
+      expect(readRoute(routeQuery(entries.songs.href, '', '/'), paths)).toEqual({ screen: 'library', kind: 'songs', family });
     }
   });
 });

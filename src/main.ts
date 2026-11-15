@@ -23,6 +23,8 @@ import { Navigation, asksForNewSong, navigationState, readRoute, type Route } fr
 import { DraftSession } from './app/draftSession';
 import { Jam, Mixer, bundledGrooves } from './app/jam';
 import { JamFretboardSettings } from './app/jamFretboard';
+import { SITE_TITLE, jamPageTitle, libraryPage, songPageTitle } from './app/pageTitles';
+import { libraryAddress } from './app/address';
 import { isMineGroove, jamAddress, jamShareLink, type JamSetup } from './app/jamLink';
 import { draftFlow } from './ui/editor/draftFlow';
 import { editorPane } from './ui/editor/editorPane';
@@ -181,12 +183,19 @@ function playAlongAs(family: Family) {
   jamFretboard.show();
 }
 function unpick() { workspace.unpick(); songs.fill(); }
-function showLink(push = false) { if (!onLanding()) navigation.show(workspace.route(openSong.versionSlug(), jam.slug, jam.setup), workspace.picked, push); }
+// The title and canonical address follow the address, so a change that only switches the instrument renames the page too.
+function showLink(push = false) {
+  if (onLanding()) return;
+  navigation.show(workspace.route(openSong.versionSlug(), jam.slug, jam.setup), workspace.picked, push);
+  showTitle();
+}
 function showTitle() {
-  const practising = workspace.screen === 'practice', jamming = workspace.screen === 'jam';
-  const path = practising ? bundledPath(workspace.picked) : null;
-  const address = path ? songAddress(site, path) : jamming && !isMineGroove(jam.slug) ? jamAddress(site, jam.slug) : site;
-  view.showTitle(practising ? openSong.song : null, address, jamming ? jam.groove.title : null);
+  const { screen, kind, family } = workspace;
+  const path = screen === 'practice' ? bundledPath(workspace.picked) : null;
+  if (onLanding()) view.showTitle(SITE_TITLE, site);
+  else if (screen === 'library') view.showTitle(libraryPage(kind, family).title, libraryAddress(site, kind, family));
+  else if (screen === 'jam') view.showTitle(jamPageTitle(jam.groove.title), isMineGroove(jam.slug) ? site : jamAddress(site, jam.slug));
+  else view.showTitle(openSong.song ? songPageTitle(openSong.song.meta.title) : SITE_TITLE, path ? songAddress(site, path) : site);
 }
 function setScreen(next: Screen, focus = false) {
   if (next !== 'practice') { player.stop(); scrolling.stopContinuous(); }

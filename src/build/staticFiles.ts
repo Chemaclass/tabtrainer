@@ -1,6 +1,6 @@
 import { mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
-import { CARD_IMAGE, groovePageMeta, grooveMeta, robotsTxt, sitemap, songMeta, songPageMeta, withPageMeta } from './sharePages';
+import { CARD_IMAGE, LIBRARY_PAGES, groovePageMeta, grooveMeta, libraryPageMeta, robotsTxt, sitemap, songMeta, songPageMeta, withPageMeta } from './sharePages';
 import { cardPng, cardSvg, grooveCard, songCard, type Card } from './ogImage';
 import { parseSong } from '../core/parser';
 import { parseGroove } from '../core/groove';
@@ -31,6 +31,11 @@ export function writeStaticFiles({ outDir, site, atHostRoot }: StaticSite) {
     const text = readFileSync(join('src/grooves', file), 'utf8');
     writeFileSync(page, withPageMeta(app, groovePageMeta(site, grooveSlug(file), grooveMeta(text))));
     writeCard(dirname(page), grooveCard(parseGroove(text).groove));
+  }
+  for (const { kind, family } of LIBRARY_PAGES) {
+    const page = join(outDir, 'library', family, kind, 'index.html');
+    mkdirSync(dirname(page), { recursive: true });
+    writeFileSync(page, withPageMeta(app, libraryPageMeta(site, kind, family)));
   }
   writeFileSync(join(outDir, 'sitemap.xml'), sitemap(site, paths, grooves.map(grooveSlug)));
   // Crawlers read robots.txt only at the host root, so a project site under /<repo>/ gets none.
