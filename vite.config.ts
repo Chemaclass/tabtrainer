@@ -1,10 +1,11 @@
 import { defineConfig, type Plugin } from 'vite';
 import { configDefaults } from 'vitest/config';
-import { mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { groovePage, grooveMeta, robotsTxt, sharePage, sitemap, songMeta } from './src/build/sharePages';
 import { songSlug } from './src/app/songLink';
 import { grooveSlug } from './src/app/jamLink';
+import { SERVICE_WORKER, cacheVersion, offlineUrls, serviceWorker } from './src/build/offline';
 
 // GitHub Pages serves the app from /<repo>/. For a custom domain, set BASE=/ and SITE_URL to its address.
 const base = process.env.BASE ?? '/tabtrainer/';
@@ -38,8 +39,16 @@ function sharePages(): Plugin {
       writeFileSync(join(outDir, 'sitemap.xml'), sitemap(site, paths, grooves.map(grooveSlug)));
       // Crawlers read robots.txt only at the host root, so a project site under /<repo>/ gets none.
       if (base === '/') writeFileSync(join(outDir, 'robots.txt'), robotsTxt(site));
+      writeOfflineCache(outDir);
     },
   };
+}
+
+// Runs after every other file is written, so the cache list and its version cover the whole build.
+function writeOfflineCache(outDir: string) {
+  const urls = offlineUrls(readdirSync(outDir, { recursive: true, encoding: 'utf8' }).filter(file => statSync(join(outDir, file)).isFile()));
+  const files = urls.map(url => ({ path: url, content: readFileSync(join(outDir, url.endsWith('/') ? `${url}index.html` : url)) }));
+  writeFileSync(join(outDir, SERVICE_WORKER), serviceWorker(cacheVersion(files), urls));
 }
 
 export default defineConfig({
