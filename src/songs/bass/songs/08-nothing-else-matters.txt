@@ -1,0 +1,346 @@
+title: Nothing Else Matters
+artist: Metallica
+about: Practise dotted-quarter bass lines, steady eighth notes and fills from Jason Newsted's bass part.
+level: medium
+instrument: bass4
+tempo: 71
+key: Em
+time: 6/8
+
+# Transcribed from user-supplied screenshots; bundled with the user's stated permission.
+# Copyright remains with the respective rights holders; this transcription is not MIT licensed.
+# Slides, articulations, octave pedal and fade dynamics are not represented by the format.
+
+@Intro (bass rests)
+# Bar 1
+:h. r |
+# Bar 2
+:h. r |
+# Bar 3
+:h. r |
+# Bar 4
+:h. r |
+# Bar 5
+:h. r |
+# Bar 6
+[9/8] :h. r :q. r |
+# Bar 7
+[6/8] :h. r |
+# Bar 8
+:h. r |
+# Bar 9
+:h. r |
+# Bar 10
+:h. r |
+# Bar 11
+:h. r |
+# Bar 12
+:h. r |
+# Bar 13
+:h. r |
+# Bar 14
+:h. r |
+# Bar 15
+:h. r |
+# Bar 16
+:h. r |
+# Bar 17
+:h. r |
+# Bar 18
+:h. r |
+# Bar 19
+:h. r |
+# Bar 20
+:h. r |
+# Bar 21
+:h. r |
+# Bar 22
+:h. r |
+# Bar 23
+:h. r |
+
+@Verse 1
+# Bar 24
+:q. 0.4 7.3 |
+# Bar 25
+:q. 5.3 :q 8.4 :8 3.4 |
+# Bar 26
+:q. 0.4 7.3 |
+# Bar 27
+:q. 5.3 :q 8.4 :8 3.4 |
+# Bar 28
+:q. 0.4 7.3 |
+# Bar 29
+:q. 5.3 :q 8.4 :8 3.4 |
+# Bar 30
+:q. 3.4 2.3 |
+# Bar 31
+:q. 0.4 7.3 |
+# Bar 32
+:q. 0.4 :q ~0.4 :16 3.4 2.4 |
+
+@Verse 2
+# Bar 33
+:q. 0.4 7.3 |
+# Bar 34
+:q. 5.3 :q 8.4 :8 3.4 |
+# Bar 35
+:q. 0.4 7.3 |
+# Bar 36
+:q. 5.3 :q 8.4 :8 3.4 |
+# Bar 37
+:q. 0.4 7.3 |
+# Bar 38
+:q. 5.3 :q 8.4 :8 3.4 |
+# Bar 39
+:q. 3.4 2.3 |
+# Bar 40
+:q. 0.4 :q 7.3 :8 0.4 |
+# Bar 41
+:q. 0.4 :q 7.3 :16 3.4 2.4 |
+
+@Verse 3
+# Bar 42
+:q. 0.4 7.3 |
+# Bar 43
+:q. 5.3 :q 8.4 :8 3.4 |
+# Bar 44
+:q. 0.4 7.3 |
+# Bar 45
+:q. 5.3 :q 8.4 :8 3.4 |
+# Bar 46
+:q. 0.4 7.3 |
+# Bar 47
+:q. 5.3 :q 8.4 :8 3.4 |
+# Bar 48
+:q. 3.4 2.3 |
+# Bar 49
+:h. 0.4 |
+
+@Chorus
+# Bar 50
+:q. 3.3 5.4 |
+# Bar 51
+:8 5.3 5.3 5.3 5.3 5.3 5.3 |
+# Bar 52
+:q. 3.3 5.4 |
+# Bar 53
+:8 5.3 5.3 5.3 5.3 5.3 5.3 |
+# Bar 54
+[9/8] :q. 3.3 5.4 :8 5.3 5.3 5.3 |
+# Bar 55
+[6/8] :h. 0.4 |
+# Bar 56
+:q. (7.3 ~0.4) :q 0.4 :16 3.4 2.4 |
+
+@Verse 4
+# Bar 57
+:q. 0.4 7.3 |
+# Bar 58
+:q. 5.3 :q 8.4 :8 3.4 |
+# Bar 59
+:q. 0.4 7.3 |
+# Bar 60
+:q. 5.3 :q 5.2 :8 3.4 |
+# Bar 61
+:q. 0.4 7.3 |
+# Bar 62
+:q. 5.3 :q 8.4 :8 3.4 |
+# Bar 63
+:q. 3.4 2.3 |
+# Bar 64
+:q. 0.4 7.3 |
+
+@Chorus
+# Bar 65
+:q. 3.3 5.4 |
+# Bar 66
+:8 5.3 5.3 5.3 5.3 5.3 5.3 |
+# Bar 67
+:q. 3.3 5.4 |
+# Bar 68
+:8 5.3 5.3 5.3 5.3 5.3 5.3 |
+# Bar 69
+[9/8] :q. 3.3 5.4 :8 (5.3 0.4) (5.3 0.4) :16 (5.3 0.4) (7.3 0.4) |
+# Bar 70
+[6/8] :h. 0.4 |
+# Bar 71
+:q. (7.3 ~0.4) :q 0.4 :16 3.4 2.4 |
+
+@Bridge
+# Bar 72
+:8 0.4 7.3 7.3 0.4 7.3 7.3 |
+# Bar 73
+:8 0.4 7.3 7.3 0.4 :16 7.3 8.3 :8 8.4 |
+# Bar 74
+:h. 5.4 |
+# Bar 75
+:16 5.4 5.4 :q ~5.4 :8 7.2 5.4 5.4 |
+# Bar 76
+:q. 8.4 :8 8.4 8.4 :16 7.4 8.4 |
+# Bar 77
+:q. 10.4 :8 10.4 10.4 :16 10.4 12.4 |
+# Bar 78
+:q. 0.4 :8 7.3 9.2 9.1 |
+# Bar 79
+:q. 0.4 :8 7.3 7.3 :16 3.4 2.4 |
+# Bar 80
+:8 0.4 7.3 7.3 0.4 7.3 7.3 |
+# Bar 81
+:8 0.4 7.3 7.3 0.4 7.3 10.4 |
+# Bar 82
+:q. 5.4 :q 7.2 :8 7.3 |
+# Bar 83
+:q. 5.4 :q 7.2 :16 5.4 7.4 |
+# Bar 84
+:q. 8.4 :8 8.4 8.4 :16 7.4 8.4 |
+# Bar 85
+:q. 10.4 :8 12.3 10.4 10.3 |
+# Bar 86
+:q. 12.4 :q 0.4 :8 7.3 |
+# Bar 87
+:q. 7.3 :q 0.4 :16 3.4 2.4 |
+
+@Verse 5
+# Bar 88
+:q. 0.4 7.3 |
+# Bar 89
+:q. 5.3 :q 8.4 :8 3.4 |
+# Bar 90
+:q. 0.4 7.3 |
+# Bar 91
+:q. 5.3 :q 8.4 :8 3.4 |
+# Bar 92
+:q. 0.4 7.3 |
+# Bar 93
+:q. 5.3 :q 8.4 :8 3.4 |
+# Bar 94
+:q. 3.4 2.3 |
+# Bar 95
+:h. 0.4 |
+# Bar 96
+:q. 7.3 :q 0.4 :16 3.4 2.4 |
+
+@Verse 6
+# Bar 97
+:q. 0.4 7.3 |
+# Bar 98
+:q. 5.3 :q 8.4 :8 3.4 |
+# Bar 99
+:q. 0.4 7.3 |
+# Bar 100
+:q. 5.3 :q 8.4 :8 3.4 |
+# Bar 101
+:q. 0.4 7.3 |
+# Bar 102
+:q. 5.3 :q 8.4 :8 3.4 |
+# Bar 103
+:q. 3.4 2.3 |
+# Bar 104
+:q. 0.4 7.3 |
+
+@Chorus
+# Bar 105
+:q. 3.3 5.4 |
+# Bar 106
+:8 5.3 5.3 5.3 5.3 5.3 5.3 |
+# Bar 107
+:q. 3.3 5.4 |
+# Bar 108
+:8 5.3 5.3 5.3 5.3 5.3 5.3 |
+# Bar 109
+:q. 3.3 5.4 |
+# Bar 110
+:8 5.3 5.3 5.3 5.3 5.3 5.3 |
+# Bar 111
+:q. 3.3 5.4 |
+# Bar 112
+:8 5.3 5.3 5.3 5.3 5.3 5.3 |
+# Bar 113
+[9/8] :q. 3.3 5.4 :8 (5.3 0.4) (5.3 0.4) :16 (5.3 0.4) (7.3 0.4) |
+
+@Build with pick
+# Bar 114
+[6/8] :16 (5.3 0.4) (7.3 ~0.4) :q (~7.3 ~0.4) :8 0.4 0.4 0.4 |
+# Bar 115
+:16 0.4 0.4 0.4 0.4 0.4 0.4 0.4 0.4 0.4 0.4 0.4 0.4 |
+
+@Guitar solo accompaniment
+# Bar 116
+:q 0.4 :8 0.4 :q 7.3 :8 7.3 |
+# Bar 117
+:q 5.3 :8 5.3 :q 3.3 :16 3.4 2.4 |
+# Bar 118
+:q 0.4 :8 0.4 :8. 7.3 :16 0.4 :8 7.3 |
+# Bar 119
+:8. 5.3 :16 5.3 :8 5.3 :q 3.3 :16 3.4 2.4 |
+# Bar 120
+:q 0.4 :8 0.4 :q 7.3 :8 7.3 |
+# Bar 121
+:8. 5.3 :16 5.3 :8 5.3 :q 3.3 :8 3.3 |
+# Bar 122
+:q. 3.4 :q 2.3 :8 0.4 |
+
+@Outro / fade out
+# Bar 123
+:h. 0.4 |
+# Bar 124
+:h. ~0.4 |
+# Bar 125
+:h. ~0.4 |
+# Bar 126
+:h. ~0.4 |
+# Bar 127
+:h. ~0.4 |
+# Bar 128
+:h. ~0.4 |
+
+@Bass rests
+# Bar 129
+:h. r |
+# Bar 130
+:h. r |
+# Bar 131
+:h. r |
+# Bar 132
+:h. r |
+# Bar 133
+:h. r |
+# Bar 134
+:h. r |
+# Bar 135
+:h. r |
+# Bar 136
+:h. r |
+# Bar 137
+:h. r |
+# Bar 138
+[3/8] :q. r |
+# Bar 139
+[6/8] :h. r |
+# Bar 140
+:h. r |
+# Bar 141
+:h. r |
+# Bar 142
+:h. r |
+# Bar 143
+[3/8] :q. r |
+# Bar 144
+[6/8] :h. r |
+# Bar 145
+:h. r |
+# Bar 146
+:h. r |
+# Bar 147
+:h. r |
+# Bar 148
+[3/8] :q. r |
+# Bar 149
+[6/8] :h. r |
+# Bar 150
+:h. r |
+# Bar 151
+:h. r |
+# Bar 152
+:h. r |

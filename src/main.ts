@@ -112,7 +112,7 @@ const editor = editorPane(draw);
 editor.onEdit(() => { if (passagePlayback.selectedNote) player.stop(); drafts.persist(); }, () => update(false));
 playerPanel(draw);
 theme();
-fretboardSheet();
+fretboardSheet(() => workspace.family);
 tuner(() => ({ family: workspace.family, instrument: workspace.screen === 'practice' ? openSong.song?.meta.instrument ?? null : null }), () => { player.pause(); jamming.stop(); });
 Object.assign(window, { tabtrainer: { player, removeSong, onsetKey } });
 publishLayoutHeights();
