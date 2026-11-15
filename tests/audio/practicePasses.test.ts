@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { PracticePasses } from '../../src/audio/practicePasses';
+import { PracticePasses, passEnd } from '../../src/audio/practicePasses';
 
 const passage = { from: 0, to: 8, tempo: 60 };
 const config = { repetitions: 2, increase: 10, target: 120 };
@@ -117,5 +117,14 @@ describe('practice passes', () => {
     passes.extend(8, passage, config);
     expect(passes.at(8)?.id).toBe(2);
     expect(passes.overlapping(0, 8).map(p => p.id)).toEqual([1]);
+  });
+});
+
+describe('pass end', () => {
+  const bars = [{ bar: 1, start: 0, length: 4, beats: 4, beatValue: 4 }, { bar: 2, start: 4, length: 4, beats: 4, beatValue: 4 }, { bar: 3, start: 8, length: 4, beats: 4, beatValue: 4 }];
+  it('names the bars and the speed of a pass', () => {
+    expect(passEnd(bars, 12, 0, 12, 1)).toEqual({ firstBar: 1, lastBar: 3, whole: true, speed: 100 });
+    expect(passEnd(bars, 12, 4, 8, 0.855)).toEqual({ firstBar: 2, lastBar: 2, whole: false, speed: 86 });
+    expect(passEnd(bars, 12, 4, 4, 1)).toBeNull();
   });
 });

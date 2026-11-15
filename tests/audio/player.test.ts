@@ -466,3 +466,48 @@ describe('audio clock', () => {
   });
 
 });
+
+describe('pass ends', () => {
+  afterEach(() => { vi.useRealTimers(); vi.unstubAllGlobals(); });
+  function setup() {
+    vi.useFakeTimers();
+    let now = 0;
+    const gain = { gain: { value: 1, setTargetAtTime: vi.fn() }, connect() {} };
+    class AudioContext { get currentTime() { return now; } resume() { return Promise.resolve(); } createGain() { return gain; } }
+    vi.stubGlobal('window', { AudioContext, setInterval, clearInterval });
+    const p = loaded(), ends: unknown[] = [];
+    p.onPassEnd(pass => ends.push(pass));
+    const jump = (time: number) => { now = time; vi.advanceTimersByTime(25); };
+    return { p, ends, jump };
+  }
+  const bar = 60 / 90 * 4;
+  it('reports a whole song pass that played from the start', () => {
+    const { p, ends, jump } = setup();
+    p.setSpeed(0.8); p.play();
+    jump(0.08 + 2 * bar / 0.8 + 0.01);
+    expect(p.playing).toBe(false);
+    expect(ends).toEqual([{ firstBar: 1, lastBar: 2, whole: true, speed: 80 }]);
+  });
+  it('reports each loop of a passage but not a pass that started mid passage', () => {
+    const { p, ends, jump } = setup();
+    p.setRange([4, 8], true); p.seek(6); p.play();
+    jump(0.08 + bar / 2 + 0.01);
+    expect(ends).toEqual([]);
+    jump(0.08 + bar / 2 + 2 * bar + 0.01);
+    expect(ends).toEqual([{ firstBar: 2, lastBar: 2, whole: false, speed: 100 }, { firstBar: 2, lastBar: 2, whole: false, speed: 100 }]);
+  });
+  it('keeps a pass whole across a pause, and drops it after a speed change mid pass', () => {
+    const { p, ends, jump } = setup();
+    p.setRange([4, 8], true); p.play();
+    jump(0.08 + bar / 2); p.pause(); p.play();
+    jump(0.08 + bar / 2 + 0.16 + bar);
+    expect(ends).toHaveLength(1);
+    const changed = 0.08 + bar / 2 + 0.16 + bar;
+    p.setSpeed(0.5);
+    jump(changed + 0.08 + bar + 0.01);
+    expect(ends).toHaveLength(1);
+    jump(changed + 0.08 + 3 * bar + 0.02);
+    expect(ends).toHaveLength(2);
+    expect(ends[1]).toMatchObject({ speed: 50 });
+  });
+});

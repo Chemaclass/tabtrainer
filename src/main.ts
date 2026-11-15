@@ -4,7 +4,9 @@ import { buildTimeline, onsetKey } from './core/timeline';
 import { familyOf, type Family } from './core/instruments';
 import { Player } from './audio/player';
 import { LoopEngine } from './audio/loopEngine';
-import { library, removeSong, pref, recordPractice, savedGrooves } from './app/storage';
+import { library, removeSong, pref, practiceStore, recordPractice, savedGrooves, savedSongs } from './app/storage';
+import { PlayTime, PracticeLog } from './app/practiceLog';
+import { Backups } from './app/backup';
 import { songShareLink, songSource } from './app/songLink';
 import { bundledPath } from './app/songRef';
 import { Songbook, newSongText } from './app/songbook';
@@ -60,6 +62,8 @@ const jam = new Jam(bundledGrooves(import.meta.glob('./grooves/*.txt', { query: 
 const linkedRoute = readRoute(location.search, songbook.paths);
 if (linkedRoute.screen === 'jam') jam.open(linkedRoute.groove, linkedRoute.setup);
 const loop = new LoopEngine();
+const practiceLog = new PracticeLog(practiceStore);
+const playTime = new PlayTime(practiceLog);
 
 const help = helpDialogs();
 const proposal = proposeSongDialog(songbook.paths, () => editor.text(), library);
@@ -114,11 +118,15 @@ const playback = playbackView(player, { transport: transportView, score, follows
 });
 player.on(playback.show);
 player.on(state => { if (state.playing) jamming.stop(); });
+player.on(state => playTime.update(workspace.picked || null, state.playing, Date.now()));
+player.onPassEnd(pass => { if (workspace.picked) practiceLog.passEnded(workspace.picked, openSong.versionSlug(), pass, Date.now()); });
+addEventListener('pagehide', () => playTime.update(null, false, Date.now()));
 const drafts = draftFlow(draftSession, workspace, saveView, { saved: () => { songs.fill(); showLink(); }, stayed: () => showLink() });
-const files = songFile(draftSession, {
+const files = songFile(draftSession, new Backups(savedSongs, practiceLog), {
   onNew: startNewSong,
   onOpen: text => drafts.replace(() => { unpick(); setScreen('practice'); loadText(text); showLink(true); }),
   onSave: () => { drafts.save(); },
+  restored: () => songs.fill(),
   shareLink: () => songShareLink(new URL(import.meta.env.BASE_URL, location.origin).href, workspace.picked, openSong.versionSlug(), import.meta.env.DEV),
   announce: saveView.announce,
 });
