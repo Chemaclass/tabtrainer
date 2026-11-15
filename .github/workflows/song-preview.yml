@@ -1,0 +1,75 @@
+name: Song preview
+
+# Runs the pull request's code with a read-only token, so it only writes artifacts. song-preview-comment.yml posts the comment.
+on:
+  pull_request:
+    paths:
+      - 'src/songs/**'
+      - 'src/grooves/**'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: song-preview-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 2
+          persist-credentials: false
+      - name: List the changed songs and grooves
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          mkdir -p song-preview-report
+          echo "$PR_NUMBER" > song-preview-report/pr-number.txt
+          git diff -z --name-only --diff-filter=AMR HEAD^1 HEAD -- 'src/songs/*.txt' 'src/grooves/*.txt' > "$RUNNER_TEMP/changed"
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - id: playwright
+        run: echo "version=$(npx playwright --version)" >> "$GITHUB_OUTPUT"
+      - id: browser-cache
+        uses: actions/cache@v6
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.playwright.outputs.version }}
+      - if: steps.browser-cache.outputs.cache-hit != 'true'
+        run: npx playwright install --with-deps --only-shell chromium
+      - if: steps.browser-cache.outputs.cache-hit == 'true'
+        run: npx playwright install-deps chromium-headless-shell
+      - name: Check and render them
+        run: |
+          mapfile -d '' files < "$RUNNER_TEMP/changed"
+          report=song-preview-report/report.txt
+          if [ "${#files[@]}" -eq 0 ]; then
+            echo "This pull request only removes songs or grooves; nothing to render." > "$report"
+            exit 0
+          fi
+          status=0
+          npm run --silent song -- "${files[@]}" > "$report" 2>&1 || status=1
+          echo >> "$report"
+          npm run --silent render-song -- "${files[@]}" >> "$report" 2>&1 || status=1
+          cat "$report"
+          exit "$status"
+      - if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: song-preview
+          path: song-preview/
+          if-no-files-found: ignore
+          retention-days: 14
+      - if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: song-preview-report
+          path: song-preview-report/
+          retention-days: 1

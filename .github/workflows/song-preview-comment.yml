@@ -1,0 +1,78 @@
+name: Song preview comment
+
+# Pull requests from forks get no write token, so this runs from main after Song preview. It never checks out or runs the pull request's code and treats the artifact as untrusted text.
+on:
+  workflow_run:
+    workflows: [Song preview]
+    types: [completed]
+
+permissions: {}
+
+jobs:
+  comment:
+    if: github.event.workflow_run.event == 'pull_request' && (github.event.workflow_run.conclusion == 'success' || github.event.workflow_run.conclusion == 'failure')
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      pull-requests: write
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          name: song-preview-report
+          path: ${{ runner.temp }}/song-preview-report
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ github.token }}
+      - uses: actions/github-script@v9
+        env:
+          REPORT_DIR: ${{ runner.temp }}/song-preview-report
+        with:
+          script: |
+            const fs = require('node:fs');
+            const path = require('node:path');
+            const MARKER = '<!-- song-preview -->';
+            const REPORT_LIMIT = 20000;
+            const run = context.payload.workflow_run;
+
+            function readStart(name, bytes) {
+              const file = path.join(process.env.REPORT_DIR, name);
+              if (!fs.existsSync(file) || !fs.lstatSync(file).isFile()) return null;
+              const buffer = Buffer.alloc(bytes);
+              const fd = fs.openSync(file, 'r');
+              try { return buffer.subarray(0, fs.readSync(fd, buffer, 0, bytes, 0)).toString('utf8'); } finally { fs.closeSync(fd); }
+            }
+
+            const number = (readStart('pr-number.txt', 32) ?? '').trim();
+            if (!/^[1-9][0-9]{0,9}$/.test(number)) return core.setFailed('The artifact holds no valid pull request number.');
+            const { data: pull } = await github.rest.pulls.get({ ...context.repo, pull_number: Number(number) });
+            if (pull.head.sha !== run.head_sha) return core.info(`Pull request #${number} is not at ${run.head_sha}; skipping.`);
+
+            const raw = readStart('report.txt', REPORT_LIMIT + 1);
+            const cleaned = (raw ?? 'The run stopped before it checked the songs.').replace(/\r\n?/g, '\n').replace(/[^\P{C}\n\t]/gu, '');
+            const report = cleaned.length > REPORT_LIMIT ? `${cleaned.slice(0, REPORT_LIMIT)}\n[cut at ${REPORT_LIMIT} characters]` : cleaned;
+            const longestTicks = Math.max(0, ...(report.match(/`+/g) ?? []).map(ticks => ticks.length));
+            const fence = '`'.repeat(Math.max(3, longestTicks + 1));
+
+            const artifacts = await github.paginate(github.rest.actions.listWorkflowRunArtifacts, { ...context.repo, run_id: run.id });
+            const images = artifacts.find(artifact => artifact.name === 'song-preview' && !artifact.expired);
+            const runUrl = run.html_url;
+            const imagesLine = images
+              ? `[Download the rendered tab](${runUrl}/artifacts/${images.id}) as a zip of PNG images (needs a GitHub sign-in).`
+              : 'No images were rendered.';
+            const verdict = run.conclusion === 'success' ? 'No problems found.' : 'Some files have problems or could not be rendered.';
+            const body = [
+              MARKER,
+              '### Song preview',
+              '',
+              `${verdict} Checked at ${run.head_sha.slice(0, 7)} in [this run](${runUrl}).`,
+              '',
+              imagesLine,
+              '',
+              fence,
+              report.trimEnd(),
+              fence,
+            ].join('\n');
+
+            const comments = await github.paginate(github.rest.issues.listComments, { ...context.repo, issue_number: pull.number });
+            const previous = comments.find(comment => comment.user?.login === 'github-actions[bot]' && comment.body?.startsWith(MARKER));
+            if (previous) await github.rest.issues.updateComment({ ...context.repo, comment_id: previous.id, body });
+            else await github.rest.issues.createComment({ ...context.repo, issue_number: pull.number, body });
