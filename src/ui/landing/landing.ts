@@ -12,3 +12,5 @@ byId('landing').querySelector('[data-read-tab]')?.addEventListener('click', () =
   guide.addEventListener('close', () => byId('libraryTitle').focus(), { once: true });
   guide.showModal();
 });
+
+byId('landing').querySelector('[data-songs-guide]')?.addEventListener('click', () => byId('songsGuide', HTMLDialogElement).showModal());

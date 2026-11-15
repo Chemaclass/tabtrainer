@@ -3,27 +3,27 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>TabTrainer: bass and guitar tab player to slow down and loop</title>
-  <meta name="description" content="Free bass tab and guitar tab player, with the rhythm drawn under the tab. Slow a song down, loop the hard bars, and follow each note as it plays. No account needed." />
+  <title>TabTrainer: bass and guitar tab player and tab editor</title>
+  <meta name="description" content="Free bass and guitar tab player and tab editor. Slow a song down, loop the hard bars, and write your own songs in plain text. No account needed." />
   <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
   <meta name="theme-color" content="#0f0f0f" media="(prefers-color-scheme: dark)" />
   <link rel="canonical" href="__SITE_URL__" />
   <meta property="og:type" content="website" />
   <meta property="og:site_name" content="TabTrainer" />
-  <meta property="og:title" content="TabTrainer: bass and guitar tab player to slow down and loop" />
-  <meta property="og:description" content="Free bass tab and guitar tab player, with the rhythm drawn under the tab. Slow a song down, loop the hard bars, and follow each note as it plays. No account needed." />
+  <meta property="og:title" content="TabTrainer: bass and guitar tab player and tab editor" />
+  <meta property="og:description" content="Free bass and guitar tab player and tab editor. Slow a song down, loop the hard bars, and write your own songs in plain text. No account needed." />
   <meta property="og:url" content="__SITE_URL__" />
   <meta property="og:image" content="__SITE_URL__og.png" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
   <meta property="og:image:alt" content="TabTrainer: tab with rhythm for bass and guitar" />
   <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="TabTrainer: bass and guitar tab player to slow down and loop" />
-  <meta name="twitter:description" content="Free bass tab and guitar tab player, with the rhythm drawn under the tab. Slow a song down, loop the hard bars, and follow each note as it plays. No account needed." />
+  <meta name="twitter:title" content="TabTrainer: bass and guitar tab player and tab editor" />
+  <meta name="twitter:description" content="Free bass and guitar tab player and tab editor. Slow a song down, loop the hard bars, and write your own songs in plain text. No account needed." />
   <meta name="twitter:image" content="__SITE_URL__og.png" />
   <meta name="twitter:image:alt" content="TabTrainer: tab with rhythm for bass and guitar" />
   <script type="application/ld+json">
-    {"@context":"https://schema.org","@type":"WebApplication","name":"TabTrainer","url":"__SITE_URL__","description":"Free bass tab and guitar tab player, with the rhythm drawn under the tab. Slow a song down, loop the hard bars, and follow each note as it plays. No account needed.","applicationCategory":"MusicApplication","operatingSystem":"Any web browser","isAccessibleForFree":true,"offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"author":{"@type":"Person","name":"Chemaclass","url":"https://chemaclass.com"},"codeRepository":"https://github.com/Chemaclass/tabtrainer"}
+    {"@context":"https://schema.org","@type":"WebApplication","name":"TabTrainer","url":"__SITE_URL__","description":"Free bass and guitar tab player and tab editor. Slow a song down, loop the hard bars, and write your own songs in plain text. No account needed.","applicationCategory":"MusicApplication","operatingSystem":"Any web browser","isAccessibleForFree":true,"offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"author":{"@type":"Person","name":"Chemaclass","url":"https://chemaclass.com"},"codeRepository":"https://github.com/Chemaclass/tabtrainer"}
   </script>
   <link rel="icon" href="%BASE_URL%favicon.svg" type="image/svg+xml" />
   <link rel="manifest" href="%BASE_URL%manifest.webmanifest" />
@@ -40,7 +40,7 @@
     <header class="landing-top">
       <a class="landing-brand" href="./"><svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true"><path d="M1 5h20M1 11h20M1 17h20" stroke="currentColor" stroke-width="1.5"/><circle cx="14" cy="11" r="4" fill="var(--playing)"/></svg>TabTrainer</a>
       <nav class="landing-nav" aria-label="TabTrainer">
-        <a href="./?view=library&amp;kind=exercises">Exercises</a><a href="./?view=library&amp;kind=songs">Songs</a><a href="https://github.com/Chemaclass/tabtrainer" target="_blank" rel="noopener">Source on GitHub</a>
+        <a href="./?view=library&amp;kind=exercises">Exercises</a><a href="./?view=library&amp;kind=songs">Songs</a><a href="./?view=library&amp;kind=mine&amp;new=1">Write a song</a><a href="https://github.com/Chemaclass/tabtrainer" target="_blank" rel="noopener">Source on GitHub</a>
         <a class="landing-outline" href="./?view=library&amp;kind=exercises">Open the library</a>
         <button class="round theme-toggle" type="button" aria-label="Switch to dark theme" title="Switch to dark theme"><svg class="moon" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M13.5 9.6A5.5 5.5 0 0 1 6.4 2.5a5.5 5.5 0 1 0 7.1 7.1Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg><svg class="sun" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="3" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 1v1.5M8 13.5V15M1 8h1.5M13.5 8H15M3 3l1 1M12 12l1 1M3 13l1-1M12 4l1-1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></button>
       </nav>
@@ -51,6 +51,7 @@
         <h1>Slow it down.<br />Loop the hard bars.</h1>
         <p class="landing-lede">Read the tab with its rhythm, follow each note as it plays, and raise the speed as the passage settles in your hands.</p>
         <div class="landing-actions"><a class="landing-start" href="./?view=library&amp;kind=exercises">Start practising <span aria-hidden="true">→</span></a><button class="landing-link" type="button" data-read-tab>How to read tab</button></div>
+        <p class="landing-free">Free, with no account. Your songs stay in your browser.</p>
       </div>
       <figure class="landing-visual" aria-label="A bar of bass tab with the playing note highlighted">
         <svg viewBox="0 0 600 252" aria-hidden="true">
@@ -79,9 +80,22 @@
         <li><span class="landing-step-no">03</span><h3>Follow every note</h3><p>The note you should play turns red, and the page scrolls with you. The rhythm sits right under the tab.</p></li>
       </ol>
     </section>
-    <section class="landing-promise">
-      <div><h2>Free, with no account. Your songs stay in your browser.</h2><p>Write your own songs in plain text, or start from the bundled exercises. Download a song to share it or move it to another device. TabTrainer is open source, so anyone can <a href="https://github.com/Chemaclass/tabtrainer/blob/main/CONTRIBUTING.md" target="_blank" rel="noopener">add a song to this site</a> with a pull request.</p></div>
-      <ul class="landing-facts"><li>Bass · 4, 5 or 6 strings</li><li>Guitar · 6 strings</li><li>Built-in tuner</li><li><span id="landingCount">32</span> exercises and songs</li></ul>
+    <section class="landing-write" aria-labelledby="writeTitle">
+      <div class="landing-write-copy">
+        <p class="landing-kicker">Open source · MIT</p>
+        <h2 id="writeTitle">Write a song.<br />Put it on this site.</h2>
+        <p class="landing-write-lede">A song is a few lines of plain text. Write yours here, hear it as you type, and send it in. Once we accept it, every player can practise it, with your name on it.</p>
+        <div class="landing-actions"><a class="landing-start" href="./?view=library&amp;kind=mine&amp;new=1">Write a song <span aria-hidden="true">→</span></a><button class="landing-link" type="button" data-songs-guide>How songs get added</button></div>
+        <ul class="landing-facts"><li><b id="landingCount">32</b> songs and exercises</li><li><b>0</b> accounts needed to write</li><li><b>1</b> free GitHub account to send</li></ul>
+      </div>
+      <ol class="landing-write-steps">
+        <li><span class="landing-step-no">01</span><div><h3>Write it</h3><p>Start from a template. The score and the sound follow what you type.</p></div><pre class="landing-artefact" aria-hidden="true">title: Low Tide
+tempo: 90
+<b>"C"</b> :q 3.3 3.3 :8 5.2 5.2 :q 3.3 |</pre></li>
+        <li><span class="landing-step-no">02</span><div><h3>Check it</h3><p>The app lists what is missing, line by line, until the list is empty.</p></div><ul class="landing-artefact landing-checks" aria-hidden="true"><li>8 bars, every bar adds up</li><li>Says what it trains</li><li>Yours, or public domain</li></ul></li>
+        <li><span class="landing-step-no">03</span><div><h3>Send it</h3><p>One button opens GitHub with your file filled in. No Git needed.</p></div><div class="landing-artefact" aria-hidden="true"><code>src/songs/bass/songs/10-low-tide.txt</code><span class="landing-fake-button">Open GitHub</span></div></li>
+        <li><span class="landing-step-no">04</span><div><h3>It is live</h3><p>We review it and reply. After the merge it has a page of its own.</p></div><div class="landing-artefact" aria-hidden="true"><strong>Low Tide</strong><span>by Jane Doe · easy · bass</span><code class="landing-song-link">tabtrainer/?song=bass/low-tide</code></div></li>
+      </ol>
     </section>
     <footer class="landing-footer"><span class="landing-brand"><svg width="18" height="18" viewBox="0 0 22 22" aria-hidden="true"><path d="M1 5h20M1 11h20M1 17h20" stroke="currentColor" stroke-width="1.5"/><circle cx="14" cy="11" r="4" fill="var(--playing)"/></svg>TabTrainer</span><span>Made by <a href="https://chemaclass.com" target="_blank" rel="noopener">Chemaclass</a> · <a href="https://github.com/Chemaclass/tabtrainer" target="_blank" rel="noopener">Source code on GitHub</a> · MIT licence</span></footer>
   </div>
@@ -435,6 +449,26 @@
       <tr><td><kbd>↑</kbd> <kbd>↓</kbd></td><td>Scroll faster or slower, while scrolling continuously</td></tr>
       <tr><td><kbd>?</kbd></td><td>Show this list</td></tr>
     </table>
+  </dialog>
+  <dialog id="songsGuide" class="songs-guide" aria-labelledby="songsGuideTitle">
+    <form method="dialog"><button class="close round" aria-label="Close">✕</button></form>
+    <h2 id="songsGuideTitle">How songs get added</h2>
+    <p>When we accept your song, it appears on the website for everyone, with a link of its own.</p>
+    <h3>The rules</h3>
+    <ul>
+      <li>Send only music you wrote yourself, or music in the public domain (old enough that nobody owns it).</li>
+      <li>No copyrighted songs, not even a short riff. Keep those in My songs.</li>
+      <li>Say what the song trains in the <code>about:</code> line, in one sentence.</li>
+    </ul>
+    <h3>The steps</h3>
+    <ol>
+      <li>Write your song in My songs and save it.</li>
+      <li>Open the File menu and press "Add to TabTrainer". Fix anything the app lists.</li>
+      <li>Press "Open GitHub" and sign in. An account is free.</li>
+      <li>Press "Commit changes", then "Propose changes".</li>
+      <li>Press "Create pull request". We review it and write to you there.</li>
+    </ol>
+    <div class="songs-guide-actions"><a class="primary" href="./?view=library&amp;kind=mine&amp;new=1">Write a song</a><a href="https://github.com/Chemaclass/tabtrainer/blob/main/CONTRIBUTING.md" target="_blank" rel="noopener">Read the full guide</a></div>
   </dialog>
   <dialog id="tabHelp" aria-labelledby="tabHelpTitle">
     <form method="dialog"><button class="close round" aria-label="Close">✕</button></form><h2 id="tabHelpTitle">Reading your first tab</h2>

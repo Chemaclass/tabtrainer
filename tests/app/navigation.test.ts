@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { Navigation, navigationState, readRoute, routeSearch, type Route } from '../../src/app/navigation';
+import { Navigation, asksForNewSong, navigationState, readRoute, routeSearch, type Route } from '../../src/app/navigation';
 
 const path = './songs/bass/songs/07-a-dawning.txt';
 describe('routes', () => {
@@ -22,6 +22,12 @@ describe('routes', () => {
     const search = routeSearch('?song=bass/a-dawning&version=solo', route);
     expect(search).toBe('view=practice'); expect(readRoute(search, [], route.picked)).toEqual(route);
     expect(readRoute(search, []).screen).toBe('practice');
+  });
+  it('reads a request for a new song and drops it from every later URL', () => {
+    expect(asksForNewSong('?view=library&kind=mine&new=1')).toBe(true);
+    expect(asksForNewSong('?view=library&kind=mine')).toBe(false);
+    const routes: Route[] = [{ screen: 'library', kind: 'mine', family: null }, { screen: 'practice', picked: null, version: null }, { screen: 'jam', groove: 'blues-shuffle', setup: {} }];
+    for (const route of routes) expect(asksForNewSong(routeSearch('?view=library&kind=mine&new=1', route))).toBe(false);
   });
   it('round trips the jam screen and drops song and library parameters', () => {
     const route: Route = { screen: 'jam', groove: 'blues-shuffle', setup: {} };
