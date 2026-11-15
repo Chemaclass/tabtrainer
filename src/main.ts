@@ -79,6 +79,7 @@ const saveView = saveState(draftSession, workspace, () => files.download(), () =
 const score = scoreView({
   redraw: draw,
   onBar: bar => passages.selectBar(bar),
+  onBarNumber: bar => passages.loopTo(bar),
   onNote: (key, bar) => passages.selectNote(key, bar),
   onPlayNote: (key, bar) => { const chosen = passages.selectNote(key, bar) ? passagePlayback.selectedNote : null; if (chosen) player.play(chosen.beat); },
 });

@@ -3,7 +3,7 @@ import { PPQ, type Bar, type NoteEvent, type Song } from '../core/model';
 import { onsetKey } from '../core/timeline';
 import { timeSignatureDigitHeight } from '../app/sheetLayout';
 
-export interface RenderOptions { barsPerLine: number; width: number }
+export interface RenderOptions { barsPerLine: number; width: number; touchSize: number }
 
 const TABLE: [number, string, number, boolean][] = [
   [4 * PPQ, 'w', 0, false], [3 * PPQ, 'h', 1, false], [2 * PPQ, 'h', 0, false], [1.5 * PPQ, 'q', 1, false], [PPQ, 'q', 0, false],
@@ -69,6 +69,14 @@ const SHEET_MUT = '#5c5c5c', SHEET_LINE = '#c4c4c4';
 const SVG_NS = 'http://www.w3.org/2000/svg';
 const DIGIT_CAP_HEIGHT = 0.73, DIGIT_WIDTH = 0.62;
 const ROW = { barNo: 0.4 * STRING_SPACE, label: 1.4 * STRING_SPACE, section: 2.8 * STRING_SPACE };
+const LOOP_MARK_HEIGHT = 3;
+
+function svgRect(className: string, x: number, y: number, width: number, height: number): SVGRectElement {
+  const el = document.createElementNS(SVG_NS, 'rect');
+  el.setAttribute('class', className); el.setAttribute('x', String(x)); el.setAttribute('y', String(y));
+  el.setAttribute('width', String(width)); el.setAttribute('height', String(height));
+  return el;
+}
 
 function svgText(svg: SVGSVGElement, className: string, x: number, y: number, text: string): SVGTextElement {
   const el = document.createElementNS(SVG_NS, 'text');
@@ -112,7 +120,7 @@ function drawSystem(div: HTMLDivElement, bars: Bar[], prev: Bar | undefined, c: 
   const tw = weight.reduce((a, b) => a + b, 0);
   let x = 6; const avail = W - 12; let bottom = 0;
   const lyrics: [number, string][] = [];
-  const hits: SVGRectElement[] = [];
+  const hits: SVGRectElement[] = [], loopMarks: SVGRectElement[] = [];
   const tabOptions = { num_lines: c.nStr, space_above_staff_ln: 0, fill_style: SHEET_LINE };
   bars.forEach((bar, bi) => {
     const prevBar = bi === 0 ? prev : bars[bi - 1];
@@ -159,16 +167,21 @@ function drawSystem(div: HTMLDivElement, bars: Bar[], prev: Bar | undefined, c: 
     labels.forEach(([n, ev]) => svgText(svg, 'chord-label', n.getAbsoluteX() - 2, top - ROW.label, [ev.chord, ev.text].filter(Boolean).join('  ')));
     const sectionY = top - ROW.section;
     const section = bar.section ? svgText(svg, 'section-label', x + 4, sectionY, bar.section.toUpperCase()) : null;
-    svgText(svg, 'bar-no', x + 2, top - ROW.barNo, String(bar.index));
+    svgText(svg, 'bar-no', x + 2, top - ROW.barNo, String(bar.index)).dataset.bar = String(bar.index);
+    const loopMark = svgRect('loop-mark', x, 0, bw, LOOP_MARK_HEIGHT);
+    loopMark.dataset.bar = String(bar.index);
+    loopMarks.push(loopMark);
     if (bar.tempo !== undefined || !prev && bi === 0) drawTempo(svg, section, x + 4, sectionY, bar.tempo ?? c.tempo);
     lyricAt.forEach(([n, words]) => lyrics.push([n.getAbsoluteX() - 2, words]));
-    const target = document.createElementNS(SVG_NS, 'rect');
-    target.setAttribute('x', String(x)); target.setAttribute('y', '0');
-    target.setAttribute('width', String(bw));
+    const target = svgRect('bar-target', x, 0, bw, 0);
     target.setAttribute('tabindex', '0'); target.setAttribute('role', 'button');
     target.setAttribute('aria-label', `Select bar ${bar.index}`);
-    target.classList.add('bar-target'); target.dataset.bar = String(bar.index);
-    hits.push(target);
+    target.dataset.bar = String(bar.index);
+    const barNumber = svgRect('bar-no-target', x, Math.max(0, top - 2 - c.opt.touchSize), Math.min(bw, c.opt.touchSize), c.opt.touchSize);
+    barNumber.setAttribute('tabindex', '0'); barNumber.setAttribute('role', 'button');
+    barNumber.setAttribute('aria-label', `Bar ${bar.index}, set loop`);
+    barNumber.dataset.bar = String(bar.index);
+    hits.push(target, barNumber);
     targets.forEach(({ note, event }, index) => {
       if (!event.notes.length) return;
       const key = onsetKey(c.barStart[bar.index] + event.start / PPQ);
@@ -194,6 +207,7 @@ function drawSystem(div: HTMLDivElement, bars: Bar[], prev: Bar | undefined, c: 
   lyrics.forEach(([px, words]) => svgText(svg, 'lyric', px, bottom + STRING_SPACE + 11, words));
   const end = Math.ceil(bottom + (lyrics.length ? STRING_SPACE + 18 : 14));
   hits.forEach(hit => { if (hit.classList.contains('bar-target')) hit.setAttribute('height', String(Math.min(bottom + 24, end))); });
+  svg.prepend(...loopMarks);
   svg.append(...hits);
   r.resize(W, end);
 }

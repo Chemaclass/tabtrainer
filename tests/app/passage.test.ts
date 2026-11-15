@@ -34,4 +34,35 @@ describe('practice passage', () => {
     passage.setSong(8, true); expect(passage.range()).toEqual([1, 8]);
     passage.clear(); expect(passage.range()).toBeNull(); expect(passage.summary()).toBe('Whole song, play once.');
   });
+  it('starts a loop on a tapped bar number and extends it to a tap after it', () => {
+    const passage = song(); passage.loopTo(5); expect(passage.snapshot()).toMatchObject({ first: 5, last: 5, repeat: true });
+    passage.loopTo(8); expect(passage.range()).toEqual([5, 8]); expect(passage.snapshot().repeat).toBe(true);
+    passage.loopTo(9); expect(passage.range()).toEqual([5, 8]);
+  });
+  it('extends a loop to a tap before it and turns a play once passage into a loop', () => {
+    const passage = song(); passage.setRange(4, 6, false); passage.loopTo(2);
+    expect(passage.snapshot()).toMatchObject({ first: 2, last: 6, repeat: true });
+  });
+  it('ends the loop at a tap inside it and clears it from a tap on either end', () => {
+    const passage = song(); passage.setRange(2, 7, true); passage.loopTo(4); expect(passage.range()).toEqual([2, 4]);
+    expect(passage.isLoopEnd(2)).toBe(true); expect(passage.isLoopEnd(3)).toBe(false);
+    passage.loopTo(4); expect(passage.range()).toBeNull();
+    passage.loopTo(3); passage.loopTo(3); expect(passage.range()).toBeNull();
+  });
+  it('ends a whole song loop at a tap inside it and clears it from its first or last bar', () => {
+    const passage = song(); passage.toggleRepeat(); passage.loopTo(6); expect(passage.range()).toEqual([1, 6]);
+    passage.clear(); passage.toggleRepeat(); expect(passage.isLoopEnd(8)).toBe(true);
+    passage.loopTo(8); expect(passage.range()).toBeNull();
+  });
+  it('clears the loop of a one bar song from its bar number', () => {
+    const passage = new Passage(); passage.setSong(1, true);
+    passage.loopTo(1); expect(passage.snapshot()).toMatchObject({ first: 1, last: 1, repeat: true, active: true });
+    expect(passage.isLoopEnd(1)).toBe(true);
+    passage.loopTo(1); expect(passage.range()).toBeNull();
+  });
+  it('loops the selected bar on its own', () => {
+    const passage = song(); passage.loopSelection(); expect(passage.range()).toBeNull();
+    passage.select(3); expect(passage.loopsSelection()).toBe(false);
+    passage.loopSelection(); expect(passage.range()).toEqual([3, 3]); expect(passage.loopsSelection()).toBe(true);
+  });
 });

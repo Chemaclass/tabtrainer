@@ -5,10 +5,12 @@ import { barsPerLine, nextZoom, type ZoomStep } from '../../app/sheetLayout';
 import { byId } from '../dom';
 
 const phoneLayout = window.matchMedia('(max-width:599px)');
+const TOUCH_SIZE = 44;
 
 interface ScoreActions {
   redraw: () => void;
   onBar: (bar: number) => void;
+  onBarNumber: (bar: number) => void;
   onNote: (key: string, bar: number) => void;
   onPlayNote: (key: string, bar: number) => void;
 }
@@ -17,6 +19,7 @@ interface PassageMarks {
   selectedNote: string | undefined;
   selectedBar: number;
   inPassage: (bar: number) => boolean;
+  isLoopEnd: (bar: number) => boolean;
 }
 
 const targetOf = (event: Event, selector: string) => event.target instanceof Element ? event.target.closest<SVGElement>(selector) : null;
@@ -26,12 +29,14 @@ function noteAt(event: Event) {
   return target && key !== undefined ? { key, bar: Number(target.dataset.bar) } : null;
 }
 
-function barAt(event: Event) {
-  const target = targetOf(event, '.bar-target');
+function barAt(event: Event, selector = '.bar-target') {
+  const target = targetOf(event, selector);
   return target ? Number(target.dataset.bar) : null;
 }
 
-export function scoreView({ redraw, onBar, onNote, onPlayNote }: ScoreActions) {
+const barNumberAt = (event: Event) => barAt(event, '.bar-no-target');
+
+export function scoreView({ redraw, onBar, onBarNumber, onNote, onPlayNote }: ScoreActions) {
   const sheet = byId('sheet'), frame = sheet.parentElement;
   if (!frame) throw new Error('#sheet has no parent');
   let zoom = pref('zoom', 1);
@@ -52,6 +57,8 @@ export function scoreView({ redraw, onBar, onNote, onPlayNote }: ScoreActions) {
   sheet.addEventListener('click', e => {
     const note = noteAt(e);
     if (note) { onNote(note.key, note.bar); return; }
+    const number = barNumberAt(e);
+    if (number !== null) { onBarNumber(number); return; }
     const chosen = barAt(e);
     if (chosen !== null) onBar(chosen);
   });
@@ -61,10 +68,11 @@ export function scoreView({ redraw, onBar, onNote, onPlayNote }: ScoreActions) {
   });
   sheet.addEventListener('keydown', e => {
     if (e.key !== 'Enter') return;
-    const note = noteAt(e), chosen = barAt(e);
-    if (note || chosen !== null) {
+    const note = noteAt(e), number = barNumberAt(e), chosen = barAt(e);
+    if (note || number !== null || chosen !== null) {
       e.preventDefault(); e.stopPropagation();
       if (note) onNote(note.key, note.bar);
+      else if (number !== null) onBarNumber(number);
       else if (chosen !== null) onBar(chosen);
     }
   });
@@ -75,7 +83,7 @@ export function scoreView({ redraw, onBar, onNote, onPlayNote }: ScoreActions) {
       const box = getComputedStyle(frame);
       const width = frame.clientWidth - parseFloat(box.paddingLeft) - parseFloat(box.paddingRight) - 12;
       sheet.style.setProperty('zoom', String(zoom));
-      renderSong(sheet, song, { barsPerLine: barsPerLine(width, zoom, phoneLayout.matches), width: width / zoom });
+      renderSong(sheet, song, { barsPerLine: barsPerLine(width, zoom, phoneLayout.matches), width: width / zoom, touchSize: TOUCH_SIZE / zoom });
       lit = notesOf(litKey); lit.forEach(element => element.classList.add('on'));
       line = lineOf(bar); line?.classList.add('cur');
     },
@@ -97,7 +105,7 @@ export function scoreView({ redraw, onBar, onNote, onPlayNote }: ScoreActions) {
     },
     forgetLine,
     clear() { lit.forEach(e => e.classList.remove('on')); lit = []; litKey = null; forgetLine(); bar = null; },
-    markPassage({ selectedNote, selectedBar, inPassage }: PassageMarks) {
+    markPassage({ selectedNote, selectedBar, inPassage, isLoopEnd }: PassageMarks) {
       sheet.querySelectorAll<SVGElement>('.note-target').forEach(el => {
         const selected = el.dataset.key === selectedNote;
         el.classList.toggle('selected', selected);
@@ -108,6 +116,11 @@ export function scoreView({ redraw, onBar, onNote, onPlayNote }: ScoreActions) {
         el.classList.toggle('in-range', inPassage(at));
         el.classList.toggle('selected', at === selectedBar);
         el.setAttribute('aria-pressed', String(at === selectedBar));
+      });
+      sheet.querySelectorAll<SVGElement>('.loop-mark, .bar-no').forEach(el => el.classList.toggle('in-loop', inPassage(Number(el.dataset.bar))));
+      sheet.querySelectorAll<SVGElement>('.bar-no-target').forEach(el => {
+        const at = Number(el.dataset.bar);
+        el.setAttribute('aria-label', `Bar ${at}, ${isLoopEnd(at) ? 'clear' : 'set'} loop`);
       });
     },
     focusFirstBar() {

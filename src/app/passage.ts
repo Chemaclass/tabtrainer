@@ -26,6 +26,16 @@ export class Passage {
   }
   startAt(bar: number) { this.setRange(bar, this.last, this.repeat); }
   endAt(bar: number) { this.setRange(Math.min(this.first, bar), bar, this.repeat); }
+  loopTo(bar: number) {
+    if (!Number.isInteger(bar) || bar < 1 || bar > this.count) return;
+    const loop = this.range();
+    if (!loop) this.setRange(bar, bar, true);
+    else if (this.isLoopEnd(bar)) this.clear();
+    else { this.repeat = true; if (bar < loop[0]) this.startAt(bar); else this.endAt(bar); }
+  }
+  loopSelection() { if (this.selected) this.setRange(this.selected, this.selected, true); }
+  isLoopEnd(bar: number) { const loop = this.range(); return loop !== null && (bar === loop[0] || bar === loop[1]); }
+  loopsSelection() { return this.selected > 0 && this.repeat && this.first === this.selected && this.last === this.selected; }
   toggleRepeat() { this.setRange(this.first, this.last, !this.repeat); }
   startAtSelection() { if (this.selected) this.startAt(this.selected); }
   endAtSelection() { if (this.selected) this.endAt(this.selected); }

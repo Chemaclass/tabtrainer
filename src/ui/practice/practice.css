@@ -92,6 +92,21 @@
   .version-help{flex-basis:100%}
 }
 
+.sheet .loop-mark{fill:transparent;stroke:none}
+.sheet .loop-mark.in-loop{fill:var(--sheet-loop)}
+.sheet .bar-no.in-loop{fill:var(--sheet-loop-text);font-weight:600}
+.bar-no-target{fill:transparent;stroke:transparent;cursor:pointer}
+@media(hover:hover){.bar-no-target:hover{fill:var(--sheet-loop);fill-opacity:.12}}
+.bar-no-target:focus-visible{outline:none;stroke:#2766bb;stroke-width:2}
+.loop-chip{border-color:var(--led);background:var(--cur)}
+.loop-chip[hidden]{display:none}
+.deck-range{display:none}
+@media(max-width:599px){
+  :is(#rangeStart,#rangeEnd){display:none}
+  .deck-range{display:flex;gap:8px;width:100%}
+  .deck-range .toggle{flex:1;justify-content:center;color:var(--deck-hi);border-color:var(--deck-line)}
+}
+
 .head-back,.head-bar{display:none}
 @media(max-width:599px){
   .is-playing .top,.is-playing :is(.practice-context,.credit,.about,.version-details,.passage,.tip){display:none!important}
