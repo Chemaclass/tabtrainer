@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Add your own song
+    url: https://github.com/Chemaclass/tabtrainer/blob/main/CONTRIBUTING.md
+    about: Send an exercise or a public domain song straight from the app. No issue needed.

@@ -1,0 +1,45 @@
+name: Song request
+description: Ask for an exercise or a public domain song you would like to practise.
+labels: [song]
+body:
+  - type: markdown
+    attributes:
+      value: We only add exercises and public domain songs, never copyrighted ones. You can also write the song yourself and send it from the app; CONTRIBUTING.md shows how.
+  - type: dropdown
+    id: instrument
+    attributes:
+      label: Instrument
+      options:
+        - Bass
+        - Guitar
+    validations:
+      required: true
+  - type: dropdown
+    id: kind
+    attributes:
+      label: Exercise or song
+      options:
+        - Exercise
+        - Song
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What you want to practise
+      description: For an exercise, the skill it should train. For a song, its name and composer, and why it is in the public domain.
+    validations:
+      required: true
+  - type: dropdown
+    id: level
+    attributes:
+      label: Level
+      options:
+        - Easy
+        - Medium
+        - Hard
+  - type: input
+    id: listen
+    attributes:
+      label: A link to a recording
+      description: Optional.
