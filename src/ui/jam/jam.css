@@ -10,7 +10,7 @@
   max-width: 1200px;
   min-width: 0;
   margin-inline: auto;
-  padding: 40px 48px;
+  padding: 40px 64px;
 }
 .jam-stage .tip {
   margin: 0;
@@ -598,9 +598,14 @@ fieldset.jam-plays {
     border-left: 1px solid var(--rule);
   }
 }
+@media (max-width: 1199px) {
+  .jam-stage {
+    padding-inline: var(--space-6);
+  }
+}
 @media (min-width: 1024px) and (max-width: 1279px) {
   .jam-stage {
-    padding: 32px;
+    padding-block: var(--space-6);
   }
   .jam-heading h1 {
     font-size: 40px;
@@ -628,7 +633,7 @@ fieldset.jam-plays {
     );
   }
   .jam-stage {
-    padding: 28px 24px;
+    padding: 28px var(--space-6);
   }
   .jam-transport {
     position: fixed;
@@ -660,7 +665,7 @@ fieldset.jam-plays {
     line-height: 20px;
   }
   .jam-panel {
-    padding: 0 24px 32px;
+    padding: 0 var(--space-6) var(--space-6);
   }
   .jam-section {
     border-bottom: 1px solid var(--rule);
@@ -747,10 +752,10 @@ fieldset.jam-plays {
 @media (max-width: 599px) {
   .jam-stage {
     gap: 20px;
-    padding: 20px 16px;
+    padding: 20px var(--space-4);
   }
   .jam-panel {
-    padding-inline: 16px;
+    padding-inline: var(--space-4);
   }
   .jam-heading h1 {
     font-size: 32px;
@@ -793,5 +798,19 @@ fieldset.jam-plays {
   }
   .jam-share-row {
     flex-wrap: wrap;
+  }
+  .groove-editor .pane-head {
+    flex-wrap: wrap;
+    height: auto;
+    min-height: 44px;
+    row-gap: 0;
+  }
+  .groove-editor .pane-head .status {
+    order: 1;
+    flex-basis: 100%;
+    white-space: normal;
+  }
+  .groove-editor .pane-head .status:not(:empty) {
+    padding-bottom: var(--space-2);
   }
 }

@@ -20,7 +20,7 @@ export function transport(player: Player, onStop: () => void) {
       showPlayButton();
     },
     showPlayButton,
-    showBar(bar: number | null) { barNumbers.forEach(e => { e.textContent = bar ? String(bar) : '–'; }); },
-    showBarTotal(count: number) { barTotals.forEach(e => { e.textContent = String(count || '–'); }); },
+    showBar(bar: number | null) { barNumbers.forEach(e => { e.textContent = bar ? String(bar) : '-'; }); },
+    showBarTotal(count: number) { barTotals.forEach(e => { e.textContent = String(count || '-'); }); },
   };
 }

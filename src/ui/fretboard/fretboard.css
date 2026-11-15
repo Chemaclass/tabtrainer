@@ -1,10 +1,6 @@
 .fretboard {
   width: min(820px, calc(100% - 24px));
 }
-.fretboard .close {
-  width: 44px;
-  height: 44px;
-}
 .fretboard-controls {
   display: flex;
   flex-wrap: wrap;
@@ -265,12 +261,6 @@
   fill: #111;
 }
 @media (max-width: 599px) {
-  .fretboard {
-    padding: 16px 12px;
-  }
-  .fretboard-view {
-    top: -16px;
-  }
   .fretboard-controls {
     gap: 10px 12px;
   }

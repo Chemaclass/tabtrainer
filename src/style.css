@@ -129,6 +129,11 @@ input:focus-visible,
   outline: 2px solid var(--ink);
   outline-offset: 2px;
 }
+#title:focus-visible,
+#libraryTitle:focus-visible,
+#jamTitle:focus-visible {
+  outline: none;
+}
 .grow {
   flex: 1;
 }
@@ -353,7 +358,7 @@ kbd {
   min-height: 44px;
   padding: var(--space-2) var(--space-3);
   font-size: 13px;
-  border-radius: 5px;
+  border-radius: var(--radius-s);
   white-space: nowrap;
 }
 .seg.on {
@@ -431,7 +436,7 @@ kbd {
   opacity: 0.45;
 }
 [data-theme="dark"] .system.cur {
-  background: #e8ecf8;
+  background: #e9dbbb;
 }
 .system.error {
   color: #8a1c12;
@@ -490,6 +495,9 @@ dialog {
 dialog::backdrop {
   background: rgba(0, 0, 0, 0.45);
 }
+dialog form:has(.close) + h2 {
+  padding-right: 52px;
+}
 dialog h2 {
   margin: 0 0 var(--space-2);
   font: 800 24px/28px var(--display);
@@ -531,6 +539,8 @@ dialog.shortcuts kbd {
 }
 dialog .close {
   float: right;
+  width: 44px;
+  height: 44px;
 }
 dialog .muted {
   color: var(--mut);
@@ -643,7 +653,7 @@ fieldset.propose-group {
   text-align: center;
 }
 .propose-check.done .propose-mark {
-  color: var(--ok);
+  color: var(--ok-text);
 }
 .propose-check.todo .propose-mark {
   color: var(--error);
@@ -852,6 +862,26 @@ fieldset.propose-group {
   }
   .file-actions {
     right: max(16px, env(safe-area-inset-right));
+  }
+  .bar-target.in-range {
+    fill-opacity: 0.06;
+  }
+  .bar-target.loops-selection:not(:focus-visible) {
+    stroke: transparent;
+  }
+  .song-source a {
+    display: inline-block;
+  }
+  .song-source a,
+  .tip-link,
+  .songs-guide-actions a:not(.primary) {
+    padding-block: var(--space-3);
+    margin-block: calc(-1 * var(--space-3));
+  }
+  .propose-goto {
+    display: block;
+    width: fit-content;
+    padding-block: 11px;
   }
 }
 .sr-only {

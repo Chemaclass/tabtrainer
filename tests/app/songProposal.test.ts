@@ -69,6 +69,10 @@ describe('song proposal', () => {
     expect(problems(exercise.replace('key: C\n', '').replace('tempo: 90\n', ''))).toEqual(['Add a "tempo:" line at the top.', 'Add a "key:" line at the top.']);
     expect(problems(exercise)).toEqual([]);
   });
+  it('reports the header order under the header check', () => {
+    const header = proposeSong(exercise.replace('instrument: bass4\ntempo: 90\n', 'tempo: 90\ninstrument: bass4\n'), 'exercises', paths).checks.find(check => check.check === 'header');
+    expect(header).toMatchObject({ label: 'The header lines are filled in and in order', problems: [{ message: expect.stringMatching(/^Move "instrument:" above "tempo:"/) }] });
+  });
   it('passes on parser issues with their line numbers', () => {
     expect(proposeSong(exercise.replace('level: easy', 'level: expert'), 'exercises', paths).problems).toEqual([{ check: 'lines', message: expect.stringMatching(/expert/), line: 4 }]);
     expect(proposeSong(exercise + ':q 3.3 3.3 3.3 |\n', 'exercises', paths).problems).toEqual([{ check: 'lines', message: 'Bar 5 has 3 of 4 beats; filled with a rest', line: 14 }]);
