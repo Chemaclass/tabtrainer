@@ -1,20 +1,16 @@
-<!-- Rules for songs and code: https://github.com/Chemaclass/tabtrainer/blob/main/CONTRIBUTING.md -->
+<!-- Delete the section that does not apply. Rules for songs and code: https://github.com/Chemaclass/tabtrainer/blob/main/CONTRIBUTING.md -->
 
 ## Adding a song
-
-Delete the section that does not apply.
 
 What it trains:
 
 Level: easy, medium or hard
 
-- [ ] I wrote this music, or it is in the public domain. I share it under the MIT licence of TabTrainer.
+- [ ] I wrote this music, it is in the public domain, or it is a common practice pattern from a teacher's free lesson, credited as CONTRIBUTING.md says. I share it under the MIT licence of TabTrainer.
 - [ ] For a public domain song, `artist:` names the composer with `(public domain)`, or says `Traditional (public domain)`.
 - [ ] The **Add to TabTrainer** dialog listed nothing left to fix, or `npm run song -- <file>` printed no problems.
 
 ## Changing code
-
-Delete the section that does not apply.
 
 What changed:
 

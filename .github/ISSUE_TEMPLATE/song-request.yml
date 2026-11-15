@@ -4,7 +4,7 @@ labels: [song]
 body:
   - type: markdown
     attributes:
-      value: We only add exercises and public domain songs, never copyrighted ones. You can also write the song yourself and send it from the app; CONTRIBUTING.md shows how.
+      value: We only add exercises and public domain songs, never copyrighted ones. You can also write the song yourself and send it from the app; [CONTRIBUTING.md](https://github.com/Chemaclass/tabtrainer/blob/main/CONTRIBUTING.md) shows how.
   - type: dropdown
     id: instrument
     attributes:
