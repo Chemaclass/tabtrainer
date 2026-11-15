@@ -12,7 +12,7 @@ describe('share pages', () => {
   });
   it('previews the song and sends readers to it in the app', () => {
     const html = sharePage(site, path, { title: 'Ode "to" Joy', about: 'A melody', family: 'bass' });
-    expect(html).toContain('<meta property="og:title" content="Ode &quot;to&quot; Joy, bass tab and notation · TabTrainer" />');
+    expect(html).toContain('<meta property="og:title" content="Ode &quot;to&quot; Joy, bass tab with rhythm · TabTrainer" />');
     expect(html).toContain('<meta property="og:url" content="https://example.com/tabtrainer/bass/ode-to-joy/" />');
     expect(html).toContain('<meta property="og:image" content="https://example.com/tabtrainer/og.png" />');
     expect(html).toContain('location.replace("../../?song=bass%2Fode-to-joy"');

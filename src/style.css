@@ -23,7 +23,6 @@ button:disabled{opacity:.5;cursor:default}
 a:focus-visible,summary:focus-visible,button:focus-visible,.btn:focus-visible,select:focus-visible,input:focus-visible,.pill:has(input:focus-visible){outline:2px solid var(--ink);outline-offset:2px}
 .grow{flex:1}
 .caps,.lbl{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase}
-.divider{width:1px;height:20px;background:var(--rule);flex-shrink:0}
 :root :is(pre,code,kbd){font-variant-ligatures:none}
 kbd{font:600 12px var(--mono);padding:1px 5px;border:1px solid var(--rule);border-radius:4px}
 .brand{display:flex;align-items:center;gap:10px;font:800 17px var(--display);letter-spacing:-.02em;white-space:nowrap}
@@ -57,15 +56,10 @@ kbd{font:600 12px var(--mono);padding:1px 5px;border:1px solid var(--rule);borde
 .lvl-medium::before{background:#d39a1c}
 .lvl-hard::before{background:#d2483a}
 .meta .num{font:400 13px/20px var(--mono);color:var(--ink)}
-.view-opts{display:flex;align-items:center;gap:0;padding:2px;border:1px solid var(--rule);border-radius:8px;max-width:100%}
-.view-opts .divider{height:16px;margin:0 2px}
 .seg{min-height:44px;padding:8px 12px;font-size:13px;border-radius:5px;white-space:nowrap}
 .seg.on{background:var(--ink);color:var(--page)}
 .versions{display:flex;flex-wrap:wrap;align-items:center;gap:4px;padding:4px;background:var(--wash);border-radius:8px;width:max-content;max-width:100%}
 .versions[hidden]{display:none}
-.seg.small,.seg.big{width:44px;min-width:44px;padding:8px 0;font-weight:600}
-.seg.small{font-size:12px}
-.seg.big{font-size:15px}
 .sheet{--sheet-ink:#111;--sheet-mut:#5c5c5c;--sheet-line:#c4c4c4;background:#fff;color:#000;overflow-x:auto}
 .sheet :is(.bar-no,.time-sig,.tempo-mark,.chord-label,.section-label,.lyric){font-family:var(--ui);fill:var(--sheet-ink);stroke:none}
 .chord-label{font-size:12px;font-weight:700}
@@ -129,8 +123,6 @@ dialog .muted{color:var(--mut)}
 @media (max-width:599px){
   .file-menu{position:static}
   .file-actions{right:max(16px,env(safe-area-inset-right))}
-  .seg{min-height:44px}
-  .seg.small,.seg.big{width:44px}
 }
 .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap;border:0}
 body.library-view{padding-bottom:0}

@@ -86,7 +86,6 @@ describe('preferences', () => {
   it('retains valid settings and checks every recovered draft field', async () => {
     const { pref } = await import('../../src/app/storage');
     store(0.8); expect(pref('zoom', 1)).toBe(0.8);
-    store(true); expect(pref('notation', false)).toBe(true);
     store({ text: 'changed', base: 'original', picked: 'lib:Song' });
     expect(pref('draft', null)).toEqual({ text: 'changed', base: 'original', picked: 'lib:Song' });
     store({ text: 'changed', base: 12, picked: 'lib:Song' }); expect(pref('draft', null)).toBeNull();

@@ -77,7 +77,6 @@ interface Preferences {
   family: Family;
   libraryKind: LibraryKind;
   zoom: number;
-  notation: boolean;
   metronome: boolean;
   countIn: boolean;
   clickVolume: number;
@@ -108,7 +107,6 @@ const validators: { [K in keyof Preferences]: (value: unknown) => value is Prefe
   family: (value): value is Family => typeof value === 'string' && isFamily(value),
   libraryKind: isLibraryKind,
   zoom: (value): value is number => finiteBetween(value, 0.6, 1.8),
-  notation: isBoolean,
   metronome: isBoolean,
   countIn: isBoolean,
   clickVolume: (value): value is number => finiteBetween(value, 0, 100),

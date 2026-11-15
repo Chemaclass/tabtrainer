@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { OWN_PROGRESSION, PROGRESSION_PRESETS, chordAt, degreeInterval, isMinorProgression, keyTonic, parseNumeral, presetProgression, type Numeral } from '../../src/core/harmony';
-import { degreeName, letterName, pitchClassName, pitchClassOf, vexKey } from '../../src/core/theory';
+import { degreeName, letterName, pitchClassName, pitchClassOf } from '../../src/core/theory';
 
 const progression = (text: string): Numeral[] => text.split(' ').map(t => {
   const r = parseNumeral(t);
@@ -134,9 +134,5 @@ describe('pitch class names', () => {
     expect(pitchClassName(3, 'Bb')).toBe('Eb');
     expect(keyTonic('F#m')).toBe(6);
     expect(keyTonic('H')).toBeNull();
-  });
-  it('keeps VexFlow keys lower case', () => {
-    expect(vexKey(51, 'Eb')).toBe('eb/3');
-    expect(vexKey(54, 'D')).toBe('f#/3');
   });
 });

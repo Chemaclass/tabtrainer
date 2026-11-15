@@ -18,7 +18,7 @@ export interface NoteEvent {
   dur: number;
   /** Empty array = rest. Several notes = chord. */
   notes: Note[];
-  /** Base value used for notation ('w','h','q','8','16','32'). */
+  /** Written note value ('w','h','q','8','16','32'). */
   value: string;
   dots: number;
   triplet: boolean;

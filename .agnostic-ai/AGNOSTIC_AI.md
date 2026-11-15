@@ -1,6 +1,6 @@
 # TabTrainer
 
-A static web app for practising bass and guitar from tab and notation. TypeScript, Vite and VexFlow, no server. GitHub Actions lints, typechecks and tests each pull request and push (`ci.yml`); `deploy.yml` publishes `main` to GitHub Pages once CI passes. Paths start at the repository root.
+A static web app for practising bass and guitar from tab with rhythm. TypeScript, Vite and VexFlow, no server. GitHub Actions lints, typechecks and tests each pull request and push (`ci.yml`); `deploy.yml` publishes `main` to GitHub Pages once CI passes. Paths start at the repository root.
 
 ## Commands
 
@@ -12,7 +12,7 @@ A static web app for practising bass and guitar from tab and notation. TypeScrip
 ## Layout
 
 - `src/core/`: song model, text parser and serializer, timeline, instruments.
-- `src/render/notation.ts` draws notation and tab with VexFlow.
+- `src/render/tab.ts` draws the tab with its rhythm using VexFlow.
 - `src/audio/player.ts` is the Web Audio player.
 - `src/app/`: what the app knows and decides without the page: saved songs and preferences, navigation, catalogue, passage, scrolling. No `document`.
 - `src/ui/<shell|library|practice|player|editor|landing>/`: DOM code only, one folder per region of the page, most with their own CSS. `src/ui/dom.ts` holds the shared element lookups.

@@ -4,26 +4,26 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>TabTrainer: bass and guitar tab player to slow down and loop</title>
-  <meta name="description" content="Free bass tab and guitar tab player with notation. Slow a song down, loop the hard bars, and follow each note as it plays. No account needed." />
+  <meta name="description" content="Free bass tab and guitar tab player, with the rhythm drawn under the tab. Slow a song down, loop the hard bars, and follow each note as it plays. No account needed." />
   <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
   <meta name="theme-color" content="#0f0f0f" media="(prefers-color-scheme: dark)" />
   <link rel="canonical" href="__SITE_URL__" />
   <meta property="og:type" content="website" />
   <meta property="og:site_name" content="TabTrainer" />
   <meta property="og:title" content="TabTrainer: bass and guitar tab player to slow down and loop" />
-  <meta property="og:description" content="Free bass tab and guitar tab player with notation. Slow a song down, loop the hard bars, and follow each note as it plays. No account needed." />
+  <meta property="og:description" content="Free bass tab and guitar tab player, with the rhythm drawn under the tab. Slow a song down, loop the hard bars, and follow each note as it plays. No account needed." />
   <meta property="og:url" content="__SITE_URL__" />
   <meta property="og:image" content="__SITE_URL__og.png" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
-  <meta property="og:image:alt" content="TabTrainer: notation and tab for bass and guitar" />
+  <meta property="og:image:alt" content="TabTrainer: tab with rhythm for bass and guitar" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="TabTrainer: bass and guitar tab player to slow down and loop" />
-  <meta name="twitter:description" content="Free bass tab and guitar tab player with notation. Slow a song down, loop the hard bars, and follow each note as it plays. No account needed." />
+  <meta name="twitter:description" content="Free bass tab and guitar tab player, with the rhythm drawn under the tab. Slow a song down, loop the hard bars, and follow each note as it plays. No account needed." />
   <meta name="twitter:image" content="__SITE_URL__og.png" />
-  <meta name="twitter:image:alt" content="TabTrainer: notation and tab for bass and guitar" />
+  <meta name="twitter:image:alt" content="TabTrainer: tab with rhythm for bass and guitar" />
   <script type="application/ld+json">
-    {"@context":"https://schema.org","@type":"WebApplication","name":"TabTrainer","url":"__SITE_URL__","description":"Free bass tab and guitar tab player with notation. Slow a song down, loop the hard bars, and follow each note as it plays. No account needed.","applicationCategory":"MusicApplication","operatingSystem":"Any web browser","isAccessibleForFree":true,"offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"author":{"@type":"Person","name":"Chemaclass","url":"https://chemaclass.com"},"codeRepository":"https://github.com/Chemaclass/tabtrainer"}
+    {"@context":"https://schema.org","@type":"WebApplication","name":"TabTrainer","url":"__SITE_URL__","description":"Free bass tab and guitar tab player, with the rhythm drawn under the tab. Slow a song down, loop the hard bars, and follow each note as it plays. No account needed.","applicationCategory":"MusicApplication","operatingSystem":"Any web browser","isAccessibleForFree":true,"offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"author":{"@type":"Person","name":"Chemaclass","url":"https://chemaclass.com"},"codeRepository":"https://github.com/Chemaclass/tabtrainer"}
   </script>
   <link rel="icon" href="%BASE_URL%favicon.svg" type="image/svg+xml" />
   <link rel="manifest" href="%BASE_URL%manifest.webmanifest" />
@@ -49,7 +49,7 @@
       <div class="landing-copy">
         <p class="landing-kicker">For electric bass and guitar</p>
         <h1>Slow it down.<br />Loop the hard bars.</h1>
-        <p class="landing-lede">Read tab and notation side by side, follow each note as it plays, and raise the speed as the passage settles in your hands.</p>
+        <p class="landing-lede">Read the tab with its rhythm, follow each note as it plays, and raise the speed as the passage settles in your hands.</p>
         <div class="landing-actions"><a class="landing-start" href="./?view=library&amp;kind=exercises">Start practising <span aria-hidden="true">→</span></a><button class="landing-link" type="button" data-read-tab>How to read tab</button></div>
       </div>
       <figure class="landing-visual" aria-label="A bar of bass tab with the playing note highlighted">
@@ -76,7 +76,7 @@
       <ol>
         <li><span class="landing-step-no">01</span><h3>Slow it down</h3><p>Play anywhere from 30 to 130% speed. The pitch stays the same, so your ear keeps up.</p></li>
         <li><span class="landing-step-no">02</span><h3>Repeat until it’s clean</h3><p>Pick a range of bars and repeat it. Turn on gradual speed to go faster after each clean pass.</p></li>
-        <li><span class="landing-step-no">03</span><h3>Follow every note</h3><p>The note you should play turns red, and the page scrolls with you. Tab and notation, side by side.</p></li>
+        <li><span class="landing-step-no">03</span><h3>Follow every note</h3><p>The note you should play turns red, and the page scrolls with you. The rhythm sits right under the tab.</p></li>
       </ol>
     </section>
     <section class="landing-promise">
@@ -237,12 +237,6 @@
     <section class="viewer">
       <div class="song-head">
         <div><p id="practiceContext" class="practice-context"></p><h1 id="title" tabindex="-1"></h1><div id="credit" class="credit"><span id="byline" class="byline" hidden></span><a id="listen" class="listen" target="_blank" rel="noopener noreferrer" hidden><span class="listen-dot" aria-hidden="true"></span><span class="listen-label">Listen to the original</span><span id="listenHost" class="listen-host"></span></a></div><div id="subtitle" class="meta"></div><p id="about" class="about" hidden></p></div>
-        <div class="view-opts" role="group" aria-label="View">
-          <button id="tabBtn" class="seg" title="Show the tab with its rhythm">Tab</button>
-          <button id="notaBtn" class="seg" title="Show standard notation above the tab">Notation + tab</button>
-          <span class="divider" aria-hidden="true"></span>
-          <button id="zoomOut" class="seg small" title="Smaller" aria-label="Smaller">A−</button><button id="zoomIn" class="seg big" title="Bigger" aria-label="Bigger">A+</button>
-        </div>
       </div>
       <div id="versionDetails" class="version-details" hidden><span id="versionLabel" class="version-label"></span><div id="versions" class="versions" role="group" aria-label="Arrangements"></div><p id="versionHelp" class="version-help" aria-live="polite"></p></div>
       <div class="passage" aria-label="Practice passage">
@@ -314,6 +308,10 @@
       <select id="scrollMode" aria-describedby="scrollHelp"><option value="off">Off</option><option value="follow" selected>Follow playback</option><option value="continuous">Continuous</option></select>
       <span id="scrollHelp">Keep the playing line in view.</span>
       <div id="scrollRate" hidden><label for="scrollSpeed">Scroll speed</label><input id="scrollSpeed" type="range" min="3" max="80" value="15" /></div>
+    </div>
+    <div class="text-size" role="group" aria-labelledby="textSizeLabel">
+      <span id="textSizeLabel" class="lbl">Text size</span>
+      <button id="zoomOut" title="Smaller" aria-label="Smaller">A−</button><button id="zoomIn" title="Bigger" aria-label="Bigger">A+</button>
     </div>
     </div>
   </footer>
