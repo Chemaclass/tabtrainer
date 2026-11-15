@@ -24,6 +24,9 @@ export function startupPlan(input: StartupInput, songbook: Pick<Songbook, 'paths
   const savedReopened = query.get('view') === 'practice' && historyPick !== null && isSavedRef(historyPick) && songbook.text(historyPick) !== undefined;
   const requested = linked ? bundledRef(linked) : savedReopened ? historyPick : null;
   const draft = input.draft && { ...input.draft, picked: resolve(input.draft.picked) };
+  if (requested && draft?.picked === requested && draft.text === draft.base && draft.base !== songbook.text(requested)) {
+    return { kind: 'open', ref: requested };
+  }
   // the only guard against losing unsaved edits on load
   if (draft && (draft.text !== draft.base || !requested || draft.picked === requested)) {
     const offer = requested && draft.picked !== requested ? requested : null;

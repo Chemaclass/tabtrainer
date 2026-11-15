@@ -6,7 +6,7 @@ const roots = './songs/bass/exercises/01-roots.txt';
 const texts: Record<string, string> = { ['demo:' + groove]: 'title: Groove', ['demo:' + roots]: 'title: Roots', 'lib:My riff': 'title: My riff' };
 const songbook = { paths: [roots, groove], text: (ref: string) => texts[ref] };
 const plan = (input: Partial<StartupInput>) => startupPlan({ search: '', historyPick: null, draft: null, last: null, lastPick: '', ...input }, songbook);
-const unchanged = (picked: string) => ({ text: 'same', base: 'same', picked });
+const unchanged = (picked: string, text = 'same') => ({ text, base: text, picked });
 const edited = (picked: string) => ({ text: 'edited', base: 'same', picked });
 
 describe('startup plan', () => {
@@ -60,12 +60,27 @@ describe('startup plan', () => {
   });
 
   it('recovers an unchanged draft of the linked song', () => {
-    expect(plan({ search: '?song=bass/groove', draft: unchanged('demo:' + groove) })).toEqual({ kind: 'recover', draft: unchanged('demo:' + groove), offer: null, followLink: true });
+    expect(plan({ search: '?song=bass/groove', draft: unchanged('demo:' + groove, texts['demo:' + groove]) })).toEqual({ kind: 'recover', draft: unchanged('demo:' + groove, texts['demo:' + groove]), offer: null, followLink: true });
   });
 
   it('matches a draft of a renumbered bundled song to the link', () => {
-    const draft = unchanged('demo:./songs/bass/songs/07-groove.txt');
-    expect(plan({ search: '?song=bass/groove', draft })).toEqual({ kind: 'recover', draft: unchanged('demo:' + groove), offer: null, followLink: true });
+    const draft = unchanged('demo:./songs/bass/songs/07-groove.txt', texts['demo:' + groove]);
+    expect(plan({ search: '?song=bass/groove', draft })).toEqual({ kind: 'recover', draft: unchanged('demo:' + groove, texts['demo:' + groove]), offer: null, followLink: true });
+  });
+
+  it('opens the updated linked song when the recovered copy has no edits', () => {
+    const draft = unchanged('demo:' + groove, 'title: Old Groove');
+    expect(plan({ search: '?song=bass/groove', draft })).toEqual({ kind: 'open', ref: 'demo:' + groove });
+  });
+
+  it('refreshes an unedited linked song whose bundled file was renumbered', () => {
+    const draft = unchanged('demo:./songs/bass/songs/07-groove.txt', 'title: Old Groove');
+    expect(plan({ search: '?song=bass/groove', draft })).toEqual({ kind: 'open', ref: 'demo:' + groove });
+  });
+
+  it('preserves edits based on an older copy of the linked song', () => {
+    const draft = { text: 'title: My Groove edits', base: 'title: Old Groove', picked: 'demo:' + groove };
+    expect(plan({ search: '?song=bass/groove', draft })).toEqual({ kind: 'recover', draft, offer: null, followLink: true });
   });
 
   it('reloads the last text with its song as the baseline', () => {
