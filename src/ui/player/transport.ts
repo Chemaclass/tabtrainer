@@ -4,7 +4,7 @@ import { byId } from '../dom';
 const phaseNames: Record<PlayerPhase, string> = { 'counting-in': 'Counting in', playing: 'Playing', paused: 'Paused', stopped: 'Stopped' };
 
 export function transport(player: Player, onStop: () => void) {
-  const play = byId('playBtn', HTMLButtonElement), countIn = byId('countInDisplay'), status = byId('playbackStatus'), barNumber = byId('barNo');
+  const play = byId('playBtn', HTMLButtonElement), countIn = byId('countInDisplay'), status = byId('playbackStatus'), barNumbers = [byId('barNo'), byId('headBarNo')], barTotals = [byId('barTotal'), byId('headBarTotal')];
   let shownPhase = player.phase;
   const showPlayButton = () => {
     play.classList.toggle('pause', player.playing);
@@ -20,7 +20,7 @@ export function transport(player: Player, onStop: () => void) {
       showPlayButton();
     },
     showPlayButton,
-    showBar(bar: number | null) { barNumber.textContent = bar ? String(bar) : '–'; },
-    showBarTotal(count: number) { byId('barTotal').textContent = String(count || '–'); },
+    showBar(bar: number | null) { barNumbers.forEach(e => { e.textContent = bar ? String(bar) : '–'; }); },
+    showBarTotal(count: number) { barTotals.forEach(e => { e.textContent = String(count || '–'); }); },
   };
 }
