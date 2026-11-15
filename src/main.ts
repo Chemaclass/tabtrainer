@@ -13,7 +13,7 @@ import { Workspace, type Screen } from './app/workspace';
 import { startupPlan } from './app/startup';
 import { Passage } from './app/passage';
 import { PassagePlayback } from './app/passagePlayback';
-import { Navigation, navigationState, readRoute, type Route } from './app/navigation';
+import { Navigation, asksForNewSong, navigationState, readRoute, type Route } from './app/navigation';
 import { DraftSession } from './app/draftSession';
 import { Jam, Mixer, bundledGrooves } from './app/jam';
 import { JamFretboardSettings } from './app/jamFretboard';
@@ -248,6 +248,7 @@ transportView.showPlayButton();
 editor.show(pref('editor', false));
 const plan = startupPlan({ search: location.search, historyPick: storedNavigation?.picked ?? null, draft: pref('draft', null), last: pref('last', null), lastPick: pref('picked', '') }, songbook);
 const linkedVersion = new URLSearchParams(location.search).get('version');
+const newSongAsked = asksForNewSong(location.search);
 switch (plan.kind) {
   case 'recover': {
     const { draft, offer } = plan;
@@ -272,5 +273,6 @@ switch (plan.kind) {
 showFamily();
 setScreen(workspace.screen);
 showLink();
+if (newSongAsked) startNewSong();
 
 enhanceDropdowns();
