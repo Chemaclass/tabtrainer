@@ -16,13 +16,13 @@ You don't need to know Git. You need a free GitHub account.
 2. The dialog shows the file name your song gets and a list of anything still missing. Close it, fix those lines in the editor, and open it again until the list is gone.
 3. Choose **Exercise** or **Song**, and tick the box that says you wrote the music or that it is in the public domain.
 4. Press **Open GitHub**. A new tab opens with your file named, in the right folder, and filled in. If your song is too long for the link, the app copies it for you: paste it into the empty box.
-5. On GitHub, sign in, press **Commit changes**, then **Propose changes**, then **Create pull request**. We review it and reply there.
+5. On GitHub, sign in, press **Commit changes**, then **Propose changes**. Fill in the "Adding a song" part of the pull request text, delete the other part, then press **Create pull request**. We review it and reply there.
 
 ## Add a song by hand
 
 1. Fork the repository and add your file where [Where the file goes](#where-the-file-goes) says, with the lines in [What the file needs](#what-the-file-needs).
 2. Run `npm run song -- src/songs/bass/songs/10-my-song.txt` with your file's path to check it. See [Checks](#checks).
-3. Open a pull request with the file.
+3. Open a pull request with the file. Fill in the "Adding a song" part of the pull request text and delete the other part.
 
 ## What we accept
 
@@ -118,4 +118,6 @@ Pull requests with practice features are welcome too. [Development](README.md#de
 npm run check
 ```
 
-It runs lint, the tests and the build, which typechecks, and stops at the first failure.
+It runs lint, the tests and the build, which typechecks, and stops at the first failure. In the pull request text, fill in the "Changing code" part and delete the other part.
+
+To report a bug or ask for a song or a feature, [open an issue](https://github.com/Chemaclass/tabtrainer/issues/new/choose) and pick the form that fits.
