@@ -28,20 +28,19 @@ export class Passage {
   endAt(bar: number) { this.setRange(Math.min(this.first, bar), bar, this.repeat); }
   loopTo(bar: number) {
     if (!Number.isInteger(bar) || bar < 1 || bar > this.count) return;
-    const loop = this.loop();
+    const loop = this.range();
     if (!loop) this.setRange(bar, bar, true);
     else if (this.isLoopEnd(bar)) this.clear();
     else { this.repeat = true; if (bar < loop[0]) this.startAt(bar); else this.endAt(bar); }
   }
   loopSelection() { if (this.selected) this.setRange(this.selected, this.selected, true); }
-  isLoopEnd(bar: number) { const loop = this.loop(); return loop !== null && (bar === loop[0] || bar === loop[1]); }
+  isLoopEnd(bar: number) { const loop = this.range(); return loop !== null && (bar === loop[0] || bar === loop[1]); }
   loopsSelection() { return this.selected > 0 && this.repeat && this.first === this.selected && this.last === this.selected; }
   toggleRepeat() { this.setRange(this.first, this.last, !this.repeat); }
   startAtSelection() { if (this.selected) this.startAt(this.selected); }
   endAtSelection() { if (this.selected) this.endAt(this.selected); }
   selectStart() { this.selected = this.first; }
   includes(bar: number) { return bar >= this.first && bar <= this.last; }
-  private loop(): [number, number] | null { return this.first > 1 || this.last < this.count ? [this.first, this.last] : null; }
   range(): [number, number] | null { return this.repeat || this.first > 1 || this.last < this.count ? [this.first, this.last] : null; }
   summary() {
     return `${this.selected ? `Selected bar ${this.selected}. ` : ''}${this.range() ? `Bars ${this.first}-${this.last}, ${this.repeat ? 'repeating' : 'play once'}.` : 'Whole song, play once.'}`;

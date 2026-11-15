@@ -177,7 +177,7 @@ function drawSystem(div: HTMLDivElement, bars: Bar[], prev: Bar | undefined, c: 
     target.setAttribute('tabindex', '0'); target.setAttribute('role', 'button');
     target.setAttribute('aria-label', `Select bar ${bar.index}`);
     target.dataset.bar = String(bar.index);
-    const barNumber = svgRect('bar-no-target', x, top - 2 - c.opt.touchSize, Math.min(bw, c.opt.touchSize), c.opt.touchSize);
+    const barNumber = svgRect('bar-no-target', x, Math.max(0, top - 2 - c.opt.touchSize), Math.min(bw, c.opt.touchSize), c.opt.touchSize);
     barNumber.setAttribute('tabindex', '0'); barNumber.setAttribute('role', 'button');
     barNumber.setAttribute('aria-label', `Bar ${bar.index}, set loop`);
     barNumber.dataset.bar = String(bar.index);

@@ -49,8 +49,16 @@ describe('practice passage', () => {
     passage.loopTo(4); expect(passage.range()).toBeNull();
     passage.loopTo(3); passage.loopTo(3); expect(passage.range()).toBeNull();
   });
-  it('starts a fresh loop when the whole song repeats', () => {
-    const passage = song(); passage.toggleRepeat(); passage.loopTo(6); expect(passage.range()).toEqual([6, 6]);
+  it('ends a whole song loop at a tap inside it and clears it from its first or last bar', () => {
+    const passage = song(); passage.toggleRepeat(); passage.loopTo(6); expect(passage.range()).toEqual([1, 6]);
+    passage.clear(); passage.toggleRepeat(); expect(passage.isLoopEnd(8)).toBe(true);
+    passage.loopTo(8); expect(passage.range()).toBeNull();
+  });
+  it('clears the loop of a one bar song from its bar number', () => {
+    const passage = new Passage(); passage.setSong(1, true);
+    passage.loopTo(1); expect(passage.snapshot()).toMatchObject({ first: 1, last: 1, repeat: true, active: true });
+    expect(passage.isLoopEnd(1)).toBe(true);
+    passage.loopTo(1); expect(passage.range()).toBeNull();
   });
   it('loops the selected bar on its own', () => {
     const passage = song(); passage.loopSelection(); expect(passage.range()).toBeNull();
