@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { parseGroove } from '../../src/core/groove';
+import type { GrooveIssueCode, ParseIssue } from '../../src/core/parseIssue';
 
 const head = 'title: Test\ntempo: 100\nkey: C\ntime: 4/4\nprogression: I IV V I\n';
 
@@ -111,6 +112,43 @@ describe('parseGroove', () => {
   });
   it('warns when there is no progression', () => {
     expect(parseGroove('title: Empty\n').issues).toEqual([expect.objectContaining({ message: expect.stringContaining('No progression') })]);
+  });
+});
+
+describe('groove issue codes', () => {
+  const chords = 'progression: I IV\n';
+  const CASES: Record<GrooveIssueCode, [string, Partial<ParseIssue>]> = {
+    'line-unreadable': [`${chords}what is this`, { line: 2, col: 1, length: 12 }],
+    'line-unknown': [`${chords}cowbell: x...x...`, { line: 2, col: 1, length: 8 }],
+    'tempo-range': [`${chords}tempo: 5`, { line: 2, col: 8, length: 1 }],
+    'key-unknown': [`${chords}key: H`, { line: 2, col: 6, length: 1, hint: 'use a key like A, Bb or F#m' }],
+    'time-signature': [`${chords}time: 4/5`, { line: 2, col: 7, length: 3 }],
+    'swing-range': [`${chords}swing: 80  # too much`, { line: 2, col: 8, length: 2 }],
+    'progression-duplicate': [`${chords}progression: V`, { line: 2, col: 1, length: 12 }],
+    'progression-missing': ['title: T\n', { line: 1, col: 1, length: 0 }],
+    'numeral-unknown': ['progression: I IX', { line: 1, col: 16, length: 2 }],
+    'voice-unknown': [`${chords}voice: banjo`, { line: 2, col: 8, length: 5 }],
+    'kit-unknown': [`${chords}kit: toy`, { line: 2, col: 6, length: 3 }],
+    'fill-switch': [`${chords}fill: yes`, { line: 2, col: 7, length: 3 }],
+    'fill-short': ['time: 3/8\nfill: on\nprogression: I', { line: 2, col: 7, length: 2 }],
+    'grid-duplicate': [`${chords}kick: x...x...\nkick: x...x...`, { line: 3, col: 1, length: 5 }],
+    'grid-empty': [`${chords}kick:`, { line: 2, col: 1, length: 5 }],
+    'grid-long': [`${chords}kick: x...x... | x...x... | x...x...`, { line: 2, col: 7, length: 30 }],
+    'bar-empty': [`${chords}kick: x...x... | | x...x...`, { line: 2, col: 17, length: 1 }],
+    'bar-steps': [`${chords}snare: ..x..x..x.`, { line: 2, col: 8, length: 10, hint: 'use 8, 12, 16' }],
+    'step-unknown': [`${chords}hat: x.y.x.x.`, { line: 2, col: 8, length: 1 }],
+    'hold-empty': [`${chords}keys: x.-.x...`, { line: 2, col: 9, length: 1 }],
+  };
+  it.each(Object.entries(CASES))('points %s at its token', (code, [src, where]) => {
+    expect(parseGroove(src).issues).toEqual([expect.objectContaining({ code, severity: 'warning', ...where })]);
+  });
+  it('points an unknown bass step at its word', () => {
+    expect(parseGroove(`${head}bass: 1 2 3 4 5 . . .`).issues).toEqual([expect.objectContaining({ code: 'step-unknown', line: 6, col: 13, length: 1 })]);
+  });
+  it('ends each message with its hint', () => {
+    for (const issue of Object.values(CASES).flatMap(([src]) => parseGroove(src).issues)) {
+      if (issue.hint) expect(issue.message.endsWith(` ${issue.hint}`)).toBe(true);
+    }
   });
 });
 

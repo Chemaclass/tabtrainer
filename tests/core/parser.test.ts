@@ -3,6 +3,7 @@ import { headerKeys, parseSong, parseDuration } from '../../src/core/parser';
 import { serializeSong } from '../../src/core/serialize';
 import { buildTimeline } from '../../src/core/timeline';
 import { PPQ } from '../../src/core/model';
+import type { ParseIssue, SongIssueCode } from '../../src/core/parseIssue';
 
 const SRC = `title: Test
 about: Root notes in quarters
@@ -151,5 +152,38 @@ describe('header keys', () => {
   });
   it('leaves out a line with no value', () => {
     expect(headerKeys('title: A\nabout:   # later\n')).toEqual(new Set(['title']));
+  });
+});
+
+describe('issue codes', () => {
+  const CASES: Record<SongIssueCode, [string, Partial<ParseIssue>]> = {
+    'level-unknown': ['level: brutal\n:w 3.4 |', { line: 1, col: 8, length: 6 }],
+    'listen-address': ['listen: youtube\n:w 3.4 |', { line: 1, col: 9, length: 7 }],
+    'tempo-range': ['tempo:  5  # slow\n:w 3.4 |', { line: 1, col: 9, length: 1 }],
+    'tempo-late': [':q 0.4 [tempo=130] 0.4 0.4 0.4 |', { line: 1, col: 8, length: 11 }],
+    'instrument-unknown': ['instrument: banjo\n:w 3.4 |', { line: 1, col: 13, length: 5, hint: expect.stringMatching(/^Use one of: bass4/) }],
+    'tuning-unreadable': ['title: T\ntuning: X9 Q\n:w 0.2 |', { line: 2, col: 9, length: 4 }],
+    'time-signature': ['time: 4-4\n:w 3.4 |', { line: 1, col: 7, length: 3 }],
+    'note-unreadable': [':q 3.4 3x4 3.4 3.4 3.4 |', { line: 1, col: 8, length: 3, hint: 'Notes are fret.string, e.g. 3.4 (fret 3 on string 4)' }],
+    'string-missing': [':q 3.4 (3.4 3.9) 3.4 3.4 |', { line: 1, col: 13, length: 3 }],
+    'fret-high': [':h 3.4 30.4 3.4 |', { line: 1, col: 8, length: 4 }],
+    'string-twice': [':q (3.4 5.4):h r:h |', { line: 1, col: 4, length: 11 }],
+    'duration-unknown': [':q 3.4:x 3.4 3.4 3.4 3.4 |', { line: 1, col: 7, length: 2 }],
+    'bar-short': ['title: x\n:q 3.4 5.4 3.3 |', { line: 2, col: 4, length: 11, beats: 3, expected: 4 }],
+    'bar-long': [':q 3.4 3.4 3.4 3.4 3.4 |', { line: 1, col: 20, length: 3, beats: 5, expected: 4, hint: '(missing a "|"?)' }],
+    'version-duplicate': ['== A\n:w 3.4 |\n== A\n:w 3.4 |', { line: 3, col: 1, length: 4 }],
+    'version-empty': ['# x\n== A\n== B\n:w 3.4 |', { line: 2, col: 1, length: 4 }],
+    'song-empty': ['title: x\n', { line: 1, col: 1, length: 0 }],
+  };
+  it.each(Object.entries(CASES))('points %s at its token', (code, [src, where]) => {
+    expect(parseSong(src).issues).toEqual([expect.objectContaining({ code, ...where })]);
+  });
+  it('points a version level at its value', () => {
+    expect(parseSong(':w 3.4 |\n== Hard\n  level: brutal\n:w 3.4 |').issues).toEqual([expect.objectContaining({ code: 'level-unknown', line: 3, col: 10, length: 6 })]);
+  });
+  it('ends each message with its hint', () => {
+    const issues = Object.values(CASES).flatMap(([src]) => parseSong(src).issues);
+    expect(issues.filter(issue => issue.hint).length).toBeGreaterThan(3);
+    for (const issue of issues) if (issue.hint) expect(issue.message.endsWith(` ${issue.hint}`) || issue.message.endsWith(`, ${issue.hint}`)).toBe(true);
   });
 });
