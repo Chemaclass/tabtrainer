@@ -81,3 +81,50 @@ test('the phone editor switches between text and score and keeps the caret', asy
   await expect(source).toBeVisible();
   expect(await source.evaluate((area: HTMLTextAreaElement) => [area.selectionStart, area.selectionEnd])).toEqual([12, 18]);
 });
+
+test('the landing demo plays two bars in one click and lights the playing note', async ({ page }) => {
+  await page.addInitScript(() => {
+    const Stub = window.AudioContext;
+    const made = window as unknown as { audioMadeInClick?: boolean };
+    Object.defineProperty(window, 'AudioContext', { value: function () { made.audioMadeInClick = navigator.userActivation.isActive; return new Stub(); }, configurable: true });
+  });
+  await page.goto('./');
+  const play = page.locator('#demoPlay');
+  await expect(play).toHaveText('Play these two bars');
+  await play.click();
+  await expect(play).toHaveText('Stop');
+  expect(await page.evaluate(() => (window as unknown as { audioMadeInClick?: boolean }).audioMadeInClick)).toBe(true);
+  await expect(page.locator('#demoSheet .note.on').first()).toBeAttached();
+  await play.click();
+  await expect(play).toHaveText('Play these two bars');
+});
+
+for (const size of [{ width: 390, height: 844 }, { width: 320, height: 568 }, { width: 1024, height: 768 }, { width: 1440, height: 900 }]) {
+  test(`the landing play button shows without scrolling at ${size.width}x${size.height}`, async ({ page }) => {
+    await page.setViewportSize(size);
+    await page.goto('./');
+    const box = await page.locator('#demoPlay').boundingBox();
+    expect(box && box.y + box.height).toBeLessThanOrEqual(size.height);
+  });
+}
+
+test('a landing speed chip leaves the saved practice speed alone', async ({ page }) => {
+  await page.goto('./');
+  const before = await page.evaluate(() => localStorage.getItem('tabtrainer:speed'));
+  await page.locator('[data-demo-speed="50"]').click();
+  await expect(page.locator('[data-demo-speed="50"]')).toHaveAttribute('aria-pressed', 'true');
+  expect(await page.evaluate(() => localStorage.getItem('tabtrainer:speed'))).toBe(before);
+  await expect(page.locator('[data-speed="50"]')).toHaveAttribute('aria-pressed', 'false');
+});
+
+test('without audio the landing demo opens First Steps', async ({ page }) => {
+  await page.addInitScript(() => Object.defineProperty(window, 'AudioContext', { value: undefined, configurable: true }));
+  const errors: string[] = [];
+  page.on('pageerror', error => errors.push(error.message));
+  await page.goto('./');
+  const play = page.locator('#demoPlay');
+  await expect(play).toHaveText('Open First Steps');
+  await play.click();
+  await expect(page).toHaveURL(/song=bass\/first-steps/);
+  expect(errors).toEqual([]);
+});
