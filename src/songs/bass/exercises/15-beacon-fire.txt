@@ -1,0 +1,42 @@
+title: Beacon Fire
+artist: TabTrainer
+about: A whole solo that trains double stops and a long, high held note, as one theme grows from a quiet singing line through high-neck playing and fast runs.
+level: hard
+instrument: bass4
+tempo: 76
+key: Am
+time: 4/4
+
+# The theme: up from E to C, then down. Sing it in your head first. Stay around frets 7 to 10.
+@Lament
+"Am" {p} 7.3:q 7.2:q. 9.2:8 10.2:q | "F" 10.2:8 9.2:8 7.2:q 8.3:h |
+"C" 9.1:q. 7.1:8 10.2:q 10.3:q | "G" 9.2:h. r:q |
+"Am" 7.3:q 7.2:q. 9.2:8 10.2:q | "Dm" 7.1:q. 10.2:8 7.2:q 8.3:q |
+"F" 7.2:q 10.2:q 10.1:q. 9.1:8 | "E" 7.1:q 9.2:q 7.3:h |
+# Same theme with a second note under the long ones. Keep the top note louder than the bottom one.
+@Hymn
+"Am" {mp} (0.4 7.3):q (8.4 7.2):q. 9.2:8 (7.3 10.2):q | "F" 10.2:8 9.2:8 (8.4 7.2):q (5.4 8.3):h |
+"C" (10.2 9.1):q. 7.1:8 (7.3 10.2):q (8.4 10.3):q | "G" (10.3 9.2):h. r:q |
+"Am" (0.4 7.3):q (8.4 7.2):q. 9.2:8 (7.3 10.2):q | "Dm" (8.3 7.1):q. 10.2:8 (8.3 7.2):q (10.4 8.3):q |
+"F" (8.3 7.2):q (8.3 10.2):q (7.2 10.1):q. 9.1:8 | "E" {cresc.} (7.3 7.1):q (7.3 9.2):q (0.4 7.3):h |
+# Shift up as the last long note ends. The theme now sits at frets 14 to 17; the D at fret 19 is a stretch or a quick slide.
+@Ascent
+"Am" {mf} 14.2:q 14.1:q. 16.1:8 17.1:q | "F" 17.1:8 16.1:8 14.1:q 15.2:h |
+"C" 14.2:q. 15.2:8 17.2:q 17.1:q | "G" 16.1:h. 17.2:q |
+"Am" 14.2:q 14.1:q. 16.1:8 17.1:q | "Dm" 19.1:q. 17.1:8 14.1:q 15.2:q |
+"F" 14.1:q 17.1:q 16.1:q. 17.1:8 | "E" 16.1:q 13.1:q 14.2:h |
+# The hard part. Each run lands on a note of the theme: aim for that note and let the quick ones fall in on the way. Learn it at half speed.
+@Drive
+"Am" {f} 0.3:8 7.3:8 7.2:8 9.2:16 10.2:16 7.1:8 10.2:8 9.2:8 7.2:8 | "F" 8.3:8 7.2:8 10.2:8 7.2:8 10.2:8t 7.1:8t 9.1:8t 10.1:q |
+"C" 9.1:8 7.1:8 10.2:16 9.2:16 7.2:16 10.3:16 7.3:8 10.3:8 10.2:q | "G" 10.3:8t 9.2:8t 7.1:8t 10.3:8t 9.2:8t 7.1:8t 9.2:h |
+"Am" {cresc.} 7.3:16 8.3:16 10.3:16 7.2:16 9.2:8 10.2:8 7.1:16 9.1:16 10.1:16 9.1:16 7.1:8 10.2:8 | "Dm" 7.1:q. 10.2:8 7.2:16 9.2:16 10.2:16 7.1:16 10.1:8 r:8 |
+# Use the short rest to jump up to fret 14. The G sharp at fret 13 adds tension before the high theme.
+"F" 15.2:8 14.1:8 17.1:8 14.1:8 15.2:8t 17.2:8t 14.1:8t 16.1:8t 17.1:8t 16.1:8t | "E" 14.2:16 13.1:16 14.2:16 16.1:16 13.1:16 16.1:16 17.1:16 16.1:16 14.1:16 13.1:16 16.1:16 14.1:16 13.1:8 16.1:8 |
+# The top of the climb. Hold the high D for the whole bar and add a slow vibrato.
+@Summit
+"Am" {ff} 14.2:q 14.1:q. 16.1:8 17.1:q | "F" 17.1:8 14.1:8 15.2:8 14.1:8 17.1:16 14.1:16 17.1:16 16.1:16 17.1:8 16.1:8 |
+"Dm" 19.1:w | "E" {dim.} 19.1:8 17.1:8 16.1:8 13.1:8 (14.2 16.1):h |
+# Move back down to fret 7 after the held fifth. When a two-note chord skips a string, mute the one in between. Play the last chord with all your weight and let it ring.
+@Homecoming
+"Am" {f} (0.4 7.3):q (8.4 7.2):q. 9.2:8 (7.3 10.2):q | "F" 10.2:8 9.2:8 (8.4 7.2):q (5.4 8.3):h |
+"E" {rit.} (0.4 7.3 6.2):h (7.3 9.2):q (7.3 7.1):q | "Am" {fermata} (0.3 7.2 5.1):w |
