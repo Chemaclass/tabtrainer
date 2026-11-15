@@ -670,8 +670,8 @@ body:not(.library-view) .family-switch {
   filter: brightness(0.96);
 }
 .pick-up-btn:focus-visible {
-  outline: 2px solid var(--led);
-  outline-offset: 3px;
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
 }
 .progress-filters {
   display: flex;

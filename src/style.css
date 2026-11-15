@@ -831,9 +831,6 @@ fieldset.propose-group {
   stroke: #2766bb;
   stroke-dasharray: 6 3;
 }
-.bar-target.in-range.selected:not(:focus-visible) {
-  stroke: transparent;
-}
 .bar-target:hover {
   fill: #2766bb;
   fill-opacity: 0.08;
@@ -869,6 +866,9 @@ fieldset.propose-group {
   .bar-target.in-range {
     fill-opacity: 0.06;
   }
+  .bar-target.loops-selection:not(:focus-visible) {
+    stroke: transparent;
+  }
   .song-source a {
     display: inline-block;
   }
@@ -879,8 +879,9 @@ fieldset.propose-group {
     margin-block: calc(-1 * var(--space-3));
   }
   .propose-goto {
+    display: block;
+    width: fit-content;
     padding-block: 11px;
-    margin-block: -11px;
   }
 }
 .sr-only {

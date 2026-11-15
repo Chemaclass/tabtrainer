@@ -12,7 +12,7 @@ export function passageView(player: Player, passage: Passage, playback: PassageP
   function show() {
     const state = passage.snapshot();
     onShow();
-    score.markPassage({ selectedNote: playback.selectedNote?.key, selectedBar: state.selected, inPassage: bar => state.active && passage.includes(bar), isLoopEnd: bar => passage.isLoopEnd(bar) });
+    score.markPassage({ selectedNote: playback.selectedNote?.key, selectedBar: state.selected, inPassage: bar => state.active && passage.includes(bar), isLoopEnd: bar => passage.isLoopEnd(bar), loopsSelection: state.active && passage.loopsSelection() });
     controls.show({ ...state, loopsSelection: passage.loopsSelection() }, playback.summary(openSong.song?.bars ?? []));
   }
   function apply() {

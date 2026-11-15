@@ -20,6 +20,7 @@ interface PassageMarks {
   selectedBar: number;
   inPassage: (bar: number) => boolean;
   isLoopEnd: (bar: number) => boolean;
+  loopsSelection: boolean;
 }
 
 const targetOf = (event: Event, selector: string) => event.target instanceof Element ? event.target.closest<SVGElement>(selector) : null;
@@ -121,7 +122,7 @@ export function scoreView({ redraw, onBar, onBarNumber, onNote, onPlayNote }: Sc
     },
     forgetLine,
     clear() { lit.forEach(e => e.classList.remove('on')); lit = []; litKey = null; forgetLine(); bar = null; },
-    markPassage({ selectedNote, selectedBar, inPassage, isLoopEnd }: PassageMarks) {
+    markPassage({ selectedNote, selectedBar, inPassage, isLoopEnd, loopsSelection }: PassageMarks) {
       sheet.querySelectorAll<SVGElement>('.note-target').forEach(el => {
         const selected = el.dataset.key === selectedNote;
         el.classList.toggle('selected', selected);
@@ -131,6 +132,7 @@ export function scoreView({ redraw, onBar, onBarNumber, onNote, onPlayNote }: Sc
         const at = Number(el.dataset.bar);
         el.classList.toggle('in-range', inPassage(at));
         el.classList.toggle('selected', at === selectedBar);
+        el.classList.toggle('loops-selection', loopsSelection && at === selectedBar);
         el.setAttribute('aria-pressed', String(at === selectedBar));
       });
       sheet.querySelectorAll<SVGElement>('.loop-mark, .bar-no').forEach(el => el.classList.toggle('in-loop', inPassage(Number(el.dataset.bar))));
