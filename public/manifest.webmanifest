@@ -1,7 +1,7 @@
 {
   "name": "TabTrainer",
   "short_name": "TabTrainer",
-  "description": "Free bass tab and guitar tab player with notation. Slow a song down, loop the hard bars, and follow each note as it plays.",
+  "description": "Free bass tab and guitar tab player, with the rhythm drawn under the tab. Slow a song down, loop the hard bars, and follow each note as it plays.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

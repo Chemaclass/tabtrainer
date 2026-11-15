@@ -66,11 +66,6 @@ export function pitchClassOf(name: string): number | null {
   return pitchClass(pc + shift);
 }
 
-/** VexFlow key string ("eb/3") for a written MIDI pitch, spelled to suit the key signature. */
-export function vexKey(midi: number, key: string): string {
-  return `${pitchClassName(midi, key).toLowerCase()}/${Math.floor(midi / OCTAVE) - 1}`;
-}
-
 const VALID_KEYS = new Set(['C', 'G', 'D', 'A', 'E', 'B', 'F#', 'C#', 'F', 'Bb', 'Eb', 'Ab', 'Db', 'Gb', 'Cb',
   'Am', 'Em', 'Bm', 'F#m', 'C#m', 'G#m', 'D#m', 'A#m', 'Dm', 'Gm', 'Cm', 'Fm', 'Bbm', 'Ebm', 'Abm']);
 export const isKey = (k: string) => VALID_KEYS.has(k);

@@ -2,19 +2,18 @@ import { describe, expect, it } from 'vitest';
 import { barsPerLine, nextZoom, timeSignatureDigitHeight } from '../../src/app/sheetLayout';
 
 describe('bars per line', () => {
-  it('fits wider bars when notation is shown', () => {
-    expect(barsPerLine(1200, 1, true)).toBe(4);
-    expect(barsPerLine(1200, 1, false)).toBe(5);
-    expect(barsPerLine(1000, 1, true)).toBe(3);
+  it('fits a bar for every 240 pixels', () => {
+    expect(barsPerLine(1200, 1)).toBe(5);
+    expect(barsPerLine(1000, 1)).toBe(4);
   });
   it('fits fewer bars as the score zooms in', () => {
-    expect(barsPerLine(1200, 2, true)).toBe(2);
-    expect(barsPerLine(1200, 0.6, true)).toBe(7);
+    expect(barsPerLine(1200, 2)).toBe(3);
+    expect(barsPerLine(1200, 0.6)).toBe(8);
   });
   it('keeps between one and eight bars on a line', () => {
-    expect(barsPerLine(100, 1, true)).toBe(1);
-    expect(barsPerLine(0, 1, false)).toBe(1);
-    expect(barsPerLine(4000, 1, false)).toBe(8);
+    expect(barsPerLine(100, 1)).toBe(1);
+    expect(barsPerLine(0, 1)).toBe(1);
+    expect(barsPerLine(4000, 1)).toBe(8);
   });
 });
 

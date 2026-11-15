@@ -1,7 +1,7 @@
 export type ZoomStep = 'in' | 'out';
 
-export function barsPerLine(width: number, zoom: number, notation: boolean) {
-  return Math.max(1, Math.min(8, Math.round((width / zoom) / (notation ? 300 : 240))));
+export function barsPerLine(width: number, zoom: number) {
+  return Math.max(1, Math.min(8, Math.round((width / zoom) / 240)));
 }
 
 export function nextZoom(zoom: number, step: ZoomStep) {

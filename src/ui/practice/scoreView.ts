@@ -1,5 +1,5 @@
 import type { Song } from '../../core/model';
-import { renderSong } from '../../render/notation';
+import { renderSong } from '../../render/tab';
 import { pref, setPref } from '../../app/storage';
 import { barsPerLine, nextZoom, type ZoomStep } from '../../app/sheetLayout';
 import { byId } from '../dom';
@@ -32,7 +32,7 @@ function barAt(event: Event) {
 export function scoreView({ redraw, onBar, onNote, onPlayNote }: ScoreActions) {
   const sheet = byId('sheet'), frame = sheet.parentElement;
   if (!frame) throw new Error('#sheet has no parent');
-  let zoom = pref('zoom', 1), notation = pref('notation', false);
+  let zoom = pref('zoom', 1);
   let lit: Element[] = [], litKey: string | null = null;
   let line: Element | null = null, bar: number | null = null;
 
@@ -40,17 +40,9 @@ export function scoreView({ redraw, onBar, onNote, onPlayNote }: ScoreActions) {
   const lineOf = (at: number | null) => at === null ? null : [...sheet.querySelectorAll<HTMLElement>('.system')].find(system => at >= Number(system.dataset.first) && at <= Number(system.dataset.last)) ?? null;
   const forgetLine = () => { line?.classList.remove('cur'); line = null; };
 
-  const showNotation = () => {
-    byId('notaBtn').classList.toggle('on', notation); byId('tabBtn').classList.toggle('on', !notation);
-    byId('notaBtn').setAttribute('aria-pressed', String(notation)); byId('tabBtn').setAttribute('aria-pressed', String(!notation));
-  };
-  const setNotation = (on: boolean) => { notation = on; setPref('notation', on); showNotation(); redraw(); };
   const zoomBy = (step: ZoomStep) => { zoom = nextZoom(zoom, step); setPref('zoom', zoom); redraw(); };
-  byId('notaBtn').onclick = () => setNotation(true);
-  byId('tabBtn').onclick = () => setNotation(false);
   byId('zoomIn').onclick = () => zoomBy('in');
   byId('zoomOut').onclick = () => zoomBy('out');
-  showNotation();
 
   let resizeTimer = 0, lastWidth = window.innerWidth;
   window.addEventListener('resize', () => { if (Math.abs(window.innerWidth - lastWidth) < 60) return; lastWidth = window.innerWidth; clearTimeout(resizeTimer); resizeTimer = window.setTimeout(redraw, 250); });
@@ -81,7 +73,7 @@ export function scoreView({ redraw, onBar, onNote, onPlayNote }: ScoreActions) {
       const box = getComputedStyle(frame);
       const width = frame.clientWidth - parseFloat(box.paddingLeft) - parseFloat(box.paddingRight) - 12;
       sheet.style.setProperty('zoom', String(zoom));
-      renderSong(sheet, song, { barsPerLine: barsPerLine(width, zoom, notation), showNotation: notation, width: width / zoom });
+      renderSong(sheet, song, { barsPerLine: barsPerLine(width, zoom), width: width / zoom });
       lit = notesOf(litKey); lit.forEach(element => element.classList.add('on'));
       line = lineOf(bar); line?.classList.add('cur');
     },

@@ -18,7 +18,7 @@ interface Preview { title: string; description: string; canonical: string; url: 
 function previewPage({ title: plainTitle, description: plainDescription, canonical, url, local, type, data, link }: Preview, site: string): string {
   const title = escapeHtml(plainTitle), description = escapeHtml(plainDescription), image = `${site}og.png`;
   const structured = JSON.stringify(data).replaceAll('<', '\\u003c');
-  const imageAlt = 'TabTrainer: notation and tab for bass and guitar';
+  const imageAlt = 'TabTrainer: tab with rhythm for bass and guitar';
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -57,7 +57,7 @@ export function grooveMeta(text: string): GrooveMeta {
 export function sharePage(site: string, path: string, meta: SongMeta): string {
   const address = songAddress(site, path);
   return previewPage({
-    title: `${meta.title}, ${meta.family} tab and notation · TabTrainer`,
+    title: `${meta.title}, ${meta.family} tab with rhythm · TabTrainer`,
     description: meta.about || `Practise ${meta.title} on ${meta.family}: slow it down, loop the hard bars, and follow each note as it plays.`,
     canonical: address,
     url: `${site}${songSlug(path)}/`,

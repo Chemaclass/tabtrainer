@@ -86,7 +86,6 @@
 .version-help{margin:0;color:var(--mut);font-size:14px;line-height:20px}
 .versions .seg{padding-inline:18px;font-size:14px}
 @media(max-width:599px){
-  .view-opts .seg:not(.small):not(.big){padding-inline:7px}
   .versions .seg{padding-inline:10px}
   .version-details{gap:8px 12px}
   .version-label{flex-basis:100%}

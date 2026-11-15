@@ -1,17 +1,17 @@
 # TabTrainer
 
-Practise electric bass and guitar from tab and notation. Slow a song down, loop the bars you miss, and follow each note as it plays.
+Practise electric bass and guitar from tab with rhythm. Slow a song down, loop the bars you miss, and follow each note as it plays.
 
 TabTrainer is a free web app with no account and no server. Your songs stay in your browser.
 
 **Try it:** https://chemaclass.github.io/tabtrainer/
 
-![TabTrainer showing notation and tab for a bass exercise](docs/screenshot.png)
+![TabTrainer showing the tab with rhythm for a bass exercise](docs/screenshot.png)
 
 ## Features
 
 - **Library:** exercises and songs for bass (4, 5 or 6 strings) and guitar. Search them, filter by level, and pick up where you left off.
-- **Notation and tab** drawn together, note for note, with ties, triplets and chord names.
+- **Tab with rhythm:** stems, beams and rests under the frets, note for note, with ties, triplets and chord names.
 - **Playback:** set the speed from 30 to 130%, loop a range of bars, and raise the speed after a set number of loops. Add a metronome or a one-bar count-in.
 - **Start anywhere:** select a note or bar, then press Play. `Space` pauses and resumes. Stop goes back to your selection.
 - **Follow along:** the playing note turns red, and the page scrolls with it. Press `S` for continuous scrolling at your own speed.
