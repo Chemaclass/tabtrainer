@@ -117,6 +117,28 @@ body:not(.library-view) .library-nav,body:not(.library-view) .dropdown:has([data
 .reading-guide ol{list-style:none;counter-reset:guide;display:grid;gap:20px;margin:28px 8px 0;padding:0;font-size:14px;line-height:22px}
 .reading-guide li{display:flex;gap:12px;counter-increment:guide}
 .reading-guide li::before{content:counter(guide, decimal-leading-zero);width:24px;flex-shrink:0;color:var(--mut);font-family:var(--mono)}
+.practice-week{display:flex;flex-direction:column;gap:28px}
+.practice-week[hidden],.lately[hidden]{display:none}
+.week-now{display:flex;flex-direction:column;gap:14px}
+.week-kicker{margin:0;font-size:12px;line-height:16px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--mut)}
+.week-total{display:flex;align-items:baseline;gap:10px;margin:0;font-size:15px;line-height:20px;color:var(--mut)}
+.week-total strong{font:800 64px/60px var(--display);letter-spacing:-.04em;color:var(--ink)}
+.week-total #weekDays{display:block}
+.week-bars{display:flex;align-items:flex-end;gap:10px;height:72px;padding-top:8px}
+.week-day{display:flex;flex:1 1 0;flex-direction:column;align-items:center;gap:6px;min-width:0}
+.week-bar{width:100%;height:max(4px,calc(var(--share) * 44px));border-radius:2px;background:var(--ink)}
+.week-bar.empty{height:2px;border-radius:0;background:var(--rule)}
+.week-day.today .week-bar{background:var(--led)}
+.week-letter{font:400 11px/14px var(--mono);color:var(--mut)}
+.week-day.today .week-letter{font-weight:600;color:var(--ink)}
+.week-hint{margin:0;font-size:14px;line-height:20px;color:var(--mut)}
+.lately{display:flex;flex-direction:column;gap:12px;padding-top:14px;border-top:1px solid var(--ink)}
+.lately ul{display:grid;gap:12px;margin:0;padding:0;list-style:none}
+.lately li{display:flex;gap:12px;font-size:14px;line-height:20px}
+.lately-when{width:44px;flex-shrink:0;font:400 12px/20px var(--mono);color:var(--mut)}
+.week-backup{margin:0;font-size:13px;line-height:18px;color:var(--mut)}
+.week-read-tab{align-self:flex-start;min-height:44px;margin-top:-16px;padding:0;font-size:14px;font-weight:400;text-decoration:underline}
+.week-backup button{min-height:0;padding:12px 0;margin-block:-12px;font-size:inherit;font-weight:400;line-height:inherit;color:var(--ink);text-decoration:underline;vertical-align:baseline}
 .my-song-actions{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:24px}
 .song-templates{margin-bottom:40px}
 .templates-heading{display:flex;justify-content:flex-start;margin-bottom:12px}
@@ -206,6 +228,8 @@ body:not(.library-view) .site-footer{display:none}
   .library-aside{display:contents}
   .reading-guide{display:none}
   .share-panel{margin:0;order:1}
+  .practice-week{order:1;padding-top:8px;border-top:1px solid var(--rule)}
+  .week-read-tab{display:none}
   .template-list{grid-template-columns:repeat(2,minmax(0,1fr))}
   .mobile-tab-help{display:block;min-height:44px;margin-top:20px;padding:0;text-align:left;text-decoration:underline}
   .site-footer{padding:0 32px 32px}

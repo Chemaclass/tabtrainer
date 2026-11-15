@@ -2,7 +2,7 @@ import { byId } from '../dom';
 import { setSelectValue } from '../shell/dropdown';
 import { catalogueMatches, categoryCounts, difficultyLabel, isProgressFilter, progressCounts, type CatalogueEntry, type LibraryKind, type ProgressFilter } from '../../app/catalogue';
 import { songProgress, type SongProgress, type SongRecord } from '../../app/practiceLog';
-import { pickUp, pickUpAction, pickUpState, pickUpTitle, progressSummary, rowProgress, speedLadder, type PickUp, type RowProgress } from '../../app/practiceProgress';
+import { pickUp, pickUpAction, pickUpState, pickUpTitle, progressSummary, recentWins, rowProgress, speedLadder, weekSummary, weekUnit, type PickUp, type PracticeHistory, type RowProgress } from '../../app/practiceProgress';
 import { DEFAULT_TEMPLATE, SONG_TEMPLATES, templateInstruments, type SongTemplate, type SongTemplateId, type TemplateInstrument } from '../../app/songTemplates';
 import { INSTRUMENTS, isFamily } from '../../core/instruments';
 import { defaultSpeedPractice } from '../../core/speedPractice';
@@ -30,8 +30,8 @@ function checkMark() {
   icon.append(path); return icon;
 }
 
-export function libraryView(onPick: (value: string) => void, onContinue: (plan: PickUp) => void, onNew: () => void, onTemplate: (id: SongTemplateId, instrument: TemplateInstrument) => void, onOpen: () => void, onPropose: () => void, onExercises: () => void, onShare: (value: string, ready: boolean) => void) {
-  let shares = new Map<string, ShareState>();
+export function libraryView(onPick: (value: string) => void, onContinue: (plan: PickUp) => void, onNew: () => void, onTemplate: (id: SongTemplateId, instrument: TemplateInstrument) => void, onOpen: () => void, onPropose: () => void, onExercises: () => void, onShare: (value: string, ready: boolean) => void, onBackup: () => void) {
+  let shares = new Map<string, ShareState>(), history: PracticeHistory | null = null;
   let entries: CatalogueEntry[] = [], family = 'bass', kind: LibraryKind = 'exercises', expanded = false;
   let practice: Record<string, SongRecord> = {}, now = 0, increase = defaultSpeedPractice.increase, progressFilter: ProgressFilter = 'all';
   const search = byId('songSearch', HTMLInputElement), level = byId('songLevel', HTMLSelectElement);
@@ -45,6 +45,7 @@ export function libraryView(onPick: (value: string) => void, onContinue: (plan: 
   byId('emptyExercisesBtn').onclick = onExercises;
   byId('emptyWriteBtn').onclick = onNew; byId('emptyOpenBtn').onclick = onOpen;
   byId('closingWriteBtn').onclick = onNew; byId('libraryImportBtn').onclick = onOpen; byId('libraryProposeBtn').onclick = onPropose;
+  byId('weekBackupBtn').onclick = onBackup;
   byId('shareGuideBtn').onclick = () => byId('songsGuide', HTMLDialogElement).showModal();
   const templateInstrument = byId('templateInstrument', HTMLSelectElement);
   const instrumentChoices = () => templateInstruments(isFamily(family) ? family : 'bass');
@@ -122,7 +123,8 @@ export function libraryView(onPick: (value: string) => void, onContinue: (plan: 
     byId('libraryProposeBtn').hidden = emptyMine;
     byId('songTemplates').hidden = kind !== 'mine';
     byId('sharePanel').hidden = kind !== 'mine';
-    byId('readingGuide').hidden = kind === 'mine';
+    byId('readingGuide').hidden = kind === 'mine' || !!history;
+    showWeek(kind === 'mine' ? null : history);
     if (kind === 'mine') showTemplateInstruments();
     byId('libraryScreen').classList.toggle('empty-category', emptyMine || emptySongs);
     const [heading, description, placeholder] = intro[kind];
@@ -169,6 +171,26 @@ export function libraryView(onPick: (value: string) => void, onContinue: (plan: 
     byId('speedLadderText').textContent = plan.passSpeed === null ? '' : `${plan.passSpeed}% of 100%`;
     byId('pickUpBtn').onclick = () => onContinue(plan);
   }
+  function showWeek(shown: PracticeHistory | null) {
+    byId('practiceWeek').hidden = !shown;
+    if (!shown) return;
+    const summary = weekSummary(shown.week, now), [unit, days] = weekUnit(summary), wins = recentWins(shown.wins, entries, family, now);
+    byId('weekMinutes').textContent = String(summary.minutes);
+    byId('weekUnit').textContent = unit; byId('weekDays').textContent = days;
+    const bars = byId('weekBars');
+    bars.setAttribute('aria-label', summary.spoken);
+    bars.replaceChildren(...summary.bars.map(bar => {
+      const day = text('span', '', bar.today ? 'week-day today' : 'week-day'), fill = text('span', '', bar.share > 0 ? 'week-bar' : 'week-bar empty');
+      fill.style.setProperty('--share', String(bar.share));
+      day.append(fill, text('span', bar.letter, 'week-letter'));
+      return day;
+    }));
+    byId('weekHint').textContent = summary.hint;
+    byId('lately').hidden = wins.length === 0;
+    byId('latelyList').replaceChildren(...wins.map(win => {
+      const li = document.createElement('li'); li.append(text('span', win.when, 'lately-when'), text('span', win.text)); return li;
+    }));
+  }
   function showProgressChips(started: boolean, counts: Record<SongProgress, number>) {
     byId('progressFilters').hidden = !started;
     progressChips.forEach(chip => {
@@ -179,9 +201,9 @@ export function libraryView(onPick: (value: string) => void, onContinue: (plan: 
   }
   return {
     chooseTemplate() { byId('templateList').querySelector<HTMLButtonElement>('.template-card.default')?.focus(); },
-    show(all: CatalogueEntry[], instrument: string, category: LibraryKind, songs: Record<string, SongRecord>, time: number, shareStates: Map<string, ShareState>, climbIncrease: number) {
+    show(all: CatalogueEntry[], instrument: string, category: LibraryKind, songs: Record<string, SongRecord>, time: number, shareStates: Map<string, ShareState>, climbIncrease: number, practiceHistory: PracticeHistory | null) {
       if (kind !== category || family !== instrument) { search.value = ''; setSelectValue(level, ''); progressFilter = 'all'; expanded = false; }
-      entries = all; family = instrument; kind = category; practice = songs; now = time; shares = shareStates; increase = climbIncrease; render();
+      entries = all; family = instrument; kind = category; practice = songs; now = time; shares = shareStates; increase = climbIncrease; history = practiceHistory; render();
     },
   };
 }

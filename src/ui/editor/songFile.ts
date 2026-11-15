@@ -16,7 +16,8 @@ export function songFile(draftSession: DraftSession, backups: Backups, handlers:
   byId('newBtn').onclick = handlers.onNew;
   byId('saveBtn').onclick = handlers.onSave;
   byId('dlBtn').onclick = download;
-  byId('backupBtn').onclick = () => downloadFile(backups.text(), backups.fileName(Date.now()), 'application/json');
+  const backup = () => downloadFile(backups.text(), backups.fileName(Date.now()), 'application/json');
+  byId('backupBtn').onclick = backup;
   input.onchange = async () => {
     const file = input.files?.[0]; if (!file) return;
     const generation = draftSession.beginNavigation(); input.value = '';
@@ -40,5 +41,5 @@ export function songFile(draftSession: DraftSession, backups: Backups, handlers:
       if (!(error instanceof DOMException && error.name === 'AbortError')) handlers.announce(`Could not copy the link: ${url}`, true, false);
     }
   };
-  return { open, download };
+  return { open, download, backup };
 }
