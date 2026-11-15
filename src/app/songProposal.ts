@@ -1,6 +1,6 @@
 import { parseSong } from '../core/parser';
 import { familyOf, type Family } from '../core/instruments';
-import { headerLine, songName, songProblems, type SongGroup, type SongRule } from '../core/songRules';
+import { MIN_BARS, headerLine, songName, songProblems, type SongGroup, type SongRule } from '../core/songRules';
 import { savedRef } from './songRef';
 import type { Saved } from './storage';
 
@@ -8,6 +8,7 @@ export type ProposalGroup = SongGroup;
 export type ProposalCheck = SongRule | 'composer';
 export interface ProposalProblem { check: ProposalCheck; message: string; line: number | null }
 export interface ProposalCheckResult { check: ProposalCheck; label: string; problems: ProposalProblem[] }
+export interface ShareState { ready: boolean; left: number; longEnough: boolean }
 export interface Proposal {
   title: string;
   folder: string;
@@ -82,3 +83,12 @@ export function proposeSong(text: string, group: ProposalGroup, paths: readonly 
   ];
   return { title: parsed.song.meta.title, folder, fileName, text: sent, problems, checks: checklist(problems, group), url: carriesText ? filled : page, carriesText };
 }
+
+// The rights tick stays in the dialog: a song is ready when only the tick is left.
+export function shareState(text: string, paths: readonly string[]): ShareState {
+  const left = proposeSong(text, guessGroup(text), paths).checks.filter(check => check.problems.length > 0).length;
+  const longEnough = parseSong(text).song.versions.some(version => version.bars.length >= MIN_BARS);
+  return { ready: left === 0, left, longEnough };
+}
+
+export const shareLabel = ({ ready, left }: ShareState) => (ready ? 'Ready to share' : `${left} ${left === 1 ? 'thing' : 'things'} left to share`);

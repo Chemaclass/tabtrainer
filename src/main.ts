@@ -10,7 +10,7 @@ import { Backups } from './app/backup';
 import { songShareLink, songSource } from './app/songLink';
 import { bundledPath, savedRef } from './app/songRef';
 import { Songbook } from './app/songbook';
-import { withOpenDraft } from './app/songProposal';
+import { shareState, withOpenDraft } from './app/songProposal';
 import { templateText, titleRange, type SongTemplateId, type TemplateInstrument } from './app/songTemplates';
 import { OpenSong } from './app/openSong';
 import { Workspace, type Screen } from './app/workspace';
@@ -69,7 +69,8 @@ const practiceLog = new PracticeLog(practiceStore);
 const playTime = new PlayTime(practiceLog);
 
 const help = helpDialogs();
-const proposal = proposeSongDialog(songbook.paths, () => editor.text(), () => withOpenDraft(library(), workspace.picked, draftSession.hasChanges() ? editor.text() : null), { goToLine: showSongLine });
+const sharedSongs = () => withOpenDraft(library(), workspace.picked, draftSession.hasChanges() ? editor.text() : null);
+const proposal = proposeSongDialog(songbook.paths, () => editor.text(), sharedSongs, { goToLine: showSongLine });
 const view = screens(chooseFamily, () => showJam(jam.slug));
 const mixer = new Mixer(workspace.family);
 const jamFretboard = jamFretboardView(jam, mixer, new JamFretboardSettings(), loop);
@@ -82,7 +83,7 @@ const jamming = jamView(jam, loop, {
 });
 const mixing = mixerView(mixer, loop, chooseFamily);
 const grooveEditing = grooveEditor(jam, { played: showJamGroove, saved: keepSavedGroove, deleted: showAfterDelete });
-const saveView = saveState(draftSession, workspace, () => files.download(), () => { setScreen('practice', true); showLink(true); });
+const saveView = saveState(draftSession, workspace, () => files.download(), () => { setScreen('practice', true); showLink(true); }, { state: () => shareState(editor.text(), songbook.paths), propose: proposal.openEditorSong });
 const score = scoreView({
   redraw: draw,
   onBar: bar => passages.selectBar(bar),
@@ -91,7 +92,7 @@ const score = scoreView({
   onPlayNote: (key, bar) => { const chosen = passages.selectNote(key, bar) ? passagePlayback.selectedNote : null; if (chosen) player.play(chosen.beat); },
 });
 const header = songHeader(index => { if (openSong.choose(index)) showVersion(); });
-const songs = songList(songbook, workspace, openSong, { pick: pickSong, showLibrary, newSong: () => startNewSong(), startFrom: startFromTemplate, openFile: () => files.open(), shown: saveView.showShare, propose: () => proposal.open() });
+const songs = songList(songbook, workspace, openSong, { pick: pickSong, showLibrary, newSong: () => startNewSong(), startFrom: startFromTemplate, openFile: () => files.open(), shown: saveView.showShare, propose: () => proposal.open(), shared: sharedSongs, proposeSaved: proposal.openSaved });
 window.addEventListener('popstate', event => navigation.visit(event.state, (route, accept, cancel) => {
   const open = () => { accept(); openRoute(route); };
   if (route.screen === 'practice' && route.picked && route.picked !== workspace.picked && draftSession.hasChanges()) drafts.replace(open, cancel);

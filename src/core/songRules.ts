@@ -12,7 +12,7 @@ export interface SongProblem { rule: SongRule; message: string; line?: number; c
 export const HEADER_ORDER = ['title', 'artist', 'about', 'level', 'listen', 'instrument', 'tempo', 'key', 'time'];
 const OPTIONAL_HEADERS = ['listen'];
 const PLACEHOLDER_TITLES = ['new song', 'untitled'];
-const MIN_BARS = 4;
+export const MIN_BARS = 4;
 const MIN_CHALLENGE_BARS = 16;
 const TOP_LINE = 1;
 const SONG_PATH = /(?:^|\/)songs\/([^/]+)\/(exercises|songs)\/(\d+)-([^/]+)\.txt$/;

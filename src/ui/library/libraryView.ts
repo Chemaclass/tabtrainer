@@ -4,6 +4,7 @@ import { catalogueMatches, categoryCounts, difficultyLabel, recentEntries, type 
 import { DEFAULT_TEMPLATE, SONG_TEMPLATES, templateInstruments, type SongTemplate, type SongTemplateId, type TemplateInstrument } from '../../app/songTemplates';
 import { INSTRUMENTS, isFamily } from '../../core/instruments';
 import { pref, setPref } from '../../app/storage';
+import { shareLabel, type ShareState } from '../../app/songProposal';
 
 const labels = { exercises: 'exercises', songs: 'songs', mine: 'My songs' };
 const intro = {
@@ -18,7 +19,8 @@ const closing = {
 const text = (tag: string, value: string, className = '') => { const node = document.createElement(tag); node.textContent = value; node.className = className; return node; };
 const levelLabel = (entry: CatalogueEntry) => difficultyLabel(entry.levels);
 
-export function libraryView(onPick: (value: string) => void, onNew: () => void, onTemplate: (id: SongTemplateId, instrument: TemplateInstrument) => void, onOpen: () => void, onPropose: () => void, onExercises: () => void) {
+export function libraryView(onPick: (value: string) => void, onNew: () => void, onTemplate: (id: SongTemplateId, instrument: TemplateInstrument) => void, onOpen: () => void, onPropose: () => void, onExercises: () => void, onShare: (value: string, ready: boolean) => void) {
+  let shares = new Map<string, ShareState>();
   let entries: CatalogueEntry[] = [], family = 'bass', kind: LibraryKind = 'exercises', recent: string[] = [], expanded = false;
   const search = byId('songSearch', HTMLInputElement), level = byId('songLevel', HTMLSelectElement);
   const clear = byId('clearLevel', HTMLButtonElement), list = byId('catalogueList');
@@ -72,8 +74,17 @@ export function libraryView(onPick: (value: string) => void, onNew: () => void, 
     details.append(text('span', levelLabel(entry), 'catalogue-level'), text('span', `${entry.tempo} BPM`, 'catalogue-tempo'));
     button.append(details);
     if (versions) copy.append(text('span', versions, 'catalogue-arrangements'));
+    const share = shares.get(entry.value);
+    if (share) button.append(text('span', shareLabel(share), share.ready ? 'share-state ready' : 'share-state'));
     const arrow = text('span', '→', 'catalogue-arrow'); arrow.setAttribute('aria-hidden', 'true'); button.append(arrow);
-    button.onclick = () => onPick(entry.value); li.append(button); return li;
+    button.onclick = () => onPick(entry.value); li.append(button);
+    if (share) {
+      const action = text('button', share.ready ? 'Add to TabTrainer' : 'See what is left', share.ready ? 'share-action ready' : 'share-action toggle');
+      action.setAttribute('type', 'button'); action.setAttribute('aria-label', `${action.textContent}: ${entry.title}`);
+      action.onclick = () => onShare(entry.value, share.ready);
+      li.className = 'share-row'; li.append(action);
+    }
+    return li;
   }
   function render() {
     const counts = categoryCounts(entries, family);
@@ -123,9 +134,9 @@ export function libraryView(onPick: (value: string) => void, onNew: () => void, 
   }
   return {
     chooseTemplate() { byId('templateList').querySelector<HTMLButtonElement>('.template-card.default')?.focus(); },
-    show(all: CatalogueEntry[], instrument: string, category: LibraryKind, history: string[]) {
+    show(all: CatalogueEntry[], instrument: string, category: LibraryKind, history: string[], shareStates: Map<string, ShareState>) {
       if (kind !== category || family !== instrument) { search.value = ''; setSelectValue(level, ''); expanded = false; }
-      entries = all; family = instrument; kind = category; recent = history; render();
+      entries = all; family = instrument; kind = category; recent = history; shares = shareStates; render();
     },
   };
 }
