@@ -1152,9 +1152,9 @@ input[type="range"]::-moz-range-thumb {
 }
 @media (max-width: 599px) and (max-height: 599px) {
   .player {
-    --deck-key: 52px;
+    --deck-key: 48px;
     --deck-step: 48px;
-    --deck-play: 56px;
+    --deck-play: 52px;
   }
 }
 @media (max-width: 359px) {

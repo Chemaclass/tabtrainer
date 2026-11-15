@@ -368,7 +368,11 @@
   }
 }
 @media (max-width: 399px) {
-  .sheet .system:first-child .tempo-mark {
+  .sheet
+    :is(
+      .section-label:has(~ .bar-no[data-bar="1"]) > .tempo-mark,
+      .bar-no[data-bar="1"] + .tempo-mark
+    ) {
     display: none;
   }
 }
@@ -842,7 +846,14 @@
   }
   @media (max-height: 599px) {
     body:not(.is-playing) .viewer {
-      padding-top: var(--space-3);
+      padding-top: var(--space-2);
+    }
+    body:not(.is-playing) .viewer .sheet {
+      margin-top: var(--space-2);
+    }
+    body:not(.is-playing) .version-details {
+      padding-block: 0;
+      border-block: 0;
     }
     body:not(.is-playing) .practice-context {
       margin-bottom: var(--space-2);
@@ -853,13 +864,18 @@
       line-height: 28px;
     }
     body:not(.is-playing) .about {
-      margin-top: var(--space-2);
+      margin-top: var(--space-1);
       font-size: var(--text-s);
       line-height: 20px;
     }
-    body:not(.is-playing) .version-details {
-      order: 1;
-      margin-top: var(--space-4);
+    body:not(.is-playing) :is(.version-label, .version-help) {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      margin: -1px;
+      overflow: hidden;
+      clip-path: inset(50%);
+      white-space: nowrap;
     }
   }
   .passage:has(#rangeReset:disabled) {
