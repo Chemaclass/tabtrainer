@@ -84,24 +84,27 @@ describe('cache version', () => {
 const scope = 'https://example.com/tabtrainer/';
 const page = (body: string) => new Response(body);
 
+// A host that sends Vary: Origin, as vite preview does: a cached file stored without an Origin header misses unless Vary is ignored.
 class FakeCache {
   entries = new Map<string, Response>();
-  async match(request: { url: string } | string, options: { ignoreSearch?: boolean } = {}) {
+  constructor(private variesOnOrigin: boolean) {}
+  async match(request: { url: string } | string, options: { ignoreSearch?: boolean; ignoreVary?: boolean } = {}) {
     const url = new URL(typeof request === 'string' ? request : request.url);
+    if (this.variesOnOrigin && typeof request !== 'string' && !options.ignoreVary) return undefined;
     if (options.ignoreSearch) url.search = '';
     return this.entries.get(url.href)?.clone();
   }
   async addAll(requests: { url: string }[]) { for (const { url } of requests) this.entries.set(url, page(`cached ${url}`)); }
 }
 
-function runWorker(network: (url: string) => Promise<Response>) {
+function runWorker(network: (url: string) => Promise<Response>, variesOnOrigin = false) {
   const stores = new Map<string, FakeCache>();
   const listeners: Record<string, (event: object) => void> = {};
   const caches = {
-    open: async (name: string) => { if (!stores.has(name)) stores.set(name, new FakeCache()); return stores.get(name)!; },
+    open: async (name: string) => { if (!stores.has(name)) stores.set(name, new FakeCache(variesOnOrigin)); return stores.get(name)!; },
     keys: async () => [...stores.keys()],
     delete: async (name: string) => stores.delete(name),
-    match: async (request: { url: string }) => { for (const store of stores.values()) { const found = await store.match(request); if (found) return found; } },
+    match: async (request: { url: string }, options?: { ignoreVary?: boolean }) => { for (const store of stores.values()) { const found = await store.match(request, options); if (found) return found; } },
   };
   const self = {
     registration: { scope },
@@ -157,6 +160,18 @@ describe('service worker', () => {
     const worker = runWorker(offline);
     await worker.lifecycle('install');
     expect(await (await worker.request(`${scope}?song=bass%2Fode-to-joy`, { mode: 'navigate' }))!.text()).toBe(`cached ${scope}`);
+  });
+  it('opens a song, groove or library page from the cached app page when offline', async () => {
+    const worker = runWorker(offline);
+    await worker.lifecycle('install');
+    for (const path of ['bass/ode-to-joy/', 'jam/blues-shuffle/?key=E', 'library/bass/songs/']) {
+      expect(await (await worker.request(`${scope}${path}`, { mode: 'navigate' }))!.text()).toBe(`cached ${scope}`);
+    }
+  });
+  it('serves cached files offline from a host that varies on Origin', async () => {
+    const worker = runWorker(offline, true);
+    await worker.lifecycle('install');
+    expect(await (await worker.request(`${scope}assets/app.js`))!.text()).toBe(`cached ${scope}assets/app.js`);
   });
   it('falls back to the cached page when the network is too slow', async () => {
     vi.useFakeTimers();
