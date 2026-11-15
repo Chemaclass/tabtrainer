@@ -1,7 +1,18 @@
 import { advanceSpeedPractice, type SpeedPracticeConfig, type SpeedPracticeProgress } from '../core/speedPractice';
+import type { BarSpan } from '../core/timeline';
 
 export interface PracticePass { start: number; end: number; from: number; speed: number; eligible: boolean; id: number; progress: SpeedPracticeProgress }
 export interface LoopedPassage { from: number; to: number; tempo: number; seconds?: number }
+export interface PassEnd { firstBar: number; lastBar: number; whole: boolean; speed: number }
+
+const EPSILON = 1e-6;
+
+export function passEnd(bars: readonly BarSpan[], total: number, from: number, to: number, speed: number): PassEnd | null {
+  const first = bars.find(bar => from >= bar.start - EPSILON && from < bar.start + bar.length - EPSILON);
+  const last = [...bars].reverse().find(bar => to > bar.start + EPSILON && to <= bar.start + bar.length + EPSILON);
+  if (!first || !last || to - from <= EPSILON) return null;
+  return { firstBar: first.bar, lastBar: last.bar, whole: from <= EPSILON && to >= total - EPSILON, speed: Math.round(speed * 100) };
+}
 
 export class PracticePasses {
   private passes: PracticePass[] = [];

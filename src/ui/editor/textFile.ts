@@ -8,12 +8,14 @@ function fileNameOf(text: string): string {
   return plain.replace(/\s+/g, '-').toLowerCase() + '.txt';
 }
 
-/** Saves the text as a .txt file named after its title line. */
-export function downloadText(text: string) {
-  const blob = new Blob([text], { type: 'text/plain' });
+export function downloadFile(text: string, name: string, type: string) {
+  const blob = new Blob([text], { type });
   const link = document.createElement('a');
   link.href = URL.createObjectURL(blob);
-  link.download = fileNameOf(text);
+  link.download = name;
   link.click();
   setTimeout(() => URL.revokeObjectURL(link.href), URL_LIFETIME_MS);
 }
+
+/** Saves the text as a .txt file named after its title line. */
+export const downloadText = (text: string) => downloadFile(text, fileNameOf(text), 'text/plain');

@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { library, saveSong, savedGrooves, setPref } from '../../src/app/storage';
+import { library, practiceStore, saveSong, savedGrooves, setPref } from '../../src/app/storage';
+import { PracticeLog } from '../../src/app/practiceLog';
 
 afterEach(() => vi.unstubAllGlobals());
 describe('saving songs', () => {
@@ -133,5 +134,18 @@ describe('gradual speed settings', () => {
     expect(pref('speedPractice', fallback)).toEqual(valid);
     vi.stubGlobal('localStorage', { setItem: () => { throw Error('blocked'); } });
     expect(setPref('speedPractice', valid)).toBe(false);
+  });
+});
+
+describe('practice record storage', () => {
+  it('reads a missing record as empty and rejects one with the wrong shape without overwriting it', () => {
+    const values = new Map<string, string>();
+    vi.stubGlobal('localStorage', { getItem: (k: string) => values.get(k) ?? null, setItem: (k: string, v: string) => values.set(k, v) });
+    expect(practiceStore.read()).toBeNull();
+    const wrong = JSON.stringify({ songs: [], days: {}, wins: [] });
+    values.set('tabtrainer:practice', wrong);
+    expect(() => practiceStore.read()).toThrow();
+    expect(new PracticeLog(practiceStore).played('demo:a', 5, 0)).toBe(false);
+    expect(values.get('tabtrainer:practice')).toBe(wrong);
   });
 });

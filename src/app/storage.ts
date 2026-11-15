@@ -2,11 +2,12 @@ import { isSpeedPracticeConfig, type SpeedPracticeConfig } from '../core/speedPr
 import { isFamily, type Family } from '../core/instruments';
 import { isLibraryKind, type LibraryKind } from './catalogue';
 import { isTunings, type Tunings } from './tuning';
+import { isPracticeRecord, type PracticeRecord, type PracticeStore } from './practiceLog';
 import { isFretboardChoice, isFretboardInstruments, withFretboardDefaults, type FretboardChoice, type FretboardInstruments } from './fretboardSheet';
 
 export interface Saved { title: string; text: string; updated: number }
 
-function isSaved(value: unknown): value is Saved {
+export function isSaved(value: unknown): value is Saved {
   if (!value || typeof value !== 'object') return false;
   const { title, text, updated } = value as Partial<Record<keyof Saved, unknown>>;
   return typeof title === 'string' && typeof text === 'string' && typeof updated === 'number';
@@ -33,6 +34,18 @@ export class SavedTexts {
     try {
       const items = this.read();
       items[title] = { title, text, updated: Date.now() };
+      localStorage.setItem(this.key, JSON.stringify(items));
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  /** Adds the texts, keeping the newer of two with the same title. */
+  merge(texts: readonly Saved[]): boolean {
+    try {
+      const items = this.read();
+      for (const text of texts) if (!items[text.title] || items[text.title].updated < text.updated) items[text.title] = { title: text.title, text: text.text, updated: text.updated };
       localStorage.setItem(this.key, JSON.stringify(items));
       return true;
     } catch {
@@ -99,6 +112,7 @@ interface Preferences {
   jamMixer: MixerChoice;
   jamCountIn: boolean;
   jamFretboard: JamFretboardChoice;
+  practice: PracticeRecord;
 }
 const finiteBetween = (value: unknown, min: number, max: number): value is number => typeof value === 'number' && Number.isFinite(value) && value >= min && value <= max;
 const isBoolean = (value: unknown): value is boolean => typeof value === 'boolean';
@@ -129,6 +143,7 @@ const validators: { [K in keyof Preferences]: (value: unknown) => value is Prefe
   jamMixer: (value): value is MixerChoice => !!value && typeof value === 'object' && !Array.isArray(value),
   jamCountIn: isBoolean,
   jamFretboard: (value): value is JamFretboardChoice => !!value && typeof value === 'object' && !Array.isArray(value),
+  practice: isPracticeRecord,
 };
 const upgrades: { [K in keyof Preferences]?: (value: unknown) => unknown } = {
   fretboardSheet: withFretboardDefaults,
@@ -140,6 +155,14 @@ export function pref<K extends keyof Preferences>(key: K, fallback: Preferences[
   const stored = readPreference(key), upgrade = upgrades[key];
   const value = upgrade ? upgrade(stored) : stored;
   return validators[key](value) ? value : fallback;
+}
+// Throws on unreadable or invalid data, so a caller never writes over a value it could not read.
+function storedPref<K extends keyof Preferences>(key: K): Preferences[K] | null {
+  const stored = localStorage.getItem('tabtrainer:' + key);
+  if (stored === null) return null;
+  const value: unknown = JSON.parse(stored);
+  if (!validators[key](value)) throw Error(`Invalid tabtrainer:${key}`);
+  return value;
 }
 export function setPref<K extends keyof Preferences>(key: K, value: Preferences[K]): boolean {
   if (key === 'speedPractice') {
@@ -157,3 +180,4 @@ export function recordPractice(value: string) {
   if (value) setPref('recent', [value, ...recentPractice().filter(s => s !== value)].slice(0, 10));
 }
 
+export const practiceStore: PracticeStore = { read: () => storedPref('practice'), write: record => setPref('practice', record) };

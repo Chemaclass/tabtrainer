@@ -466,3 +466,80 @@ describe('audio clock', () => {
   });
 
 });
+
+describe('pass ends', () => {
+  afterEach(() => { vi.useRealTimers(); vi.unstubAllGlobals(); });
+  function setup() {
+    vi.useFakeTimers();
+    let now = 0;
+    const gain = { gain: { value: 1, setTargetAtTime: vi.fn() }, connect() {} };
+    class AudioContext { get currentTime() { return now; } resume() { return Promise.resolve(); } createGain() { return gain; } }
+    vi.stubGlobal('window', { AudioContext, setInterval, clearInterval });
+    const p = loaded(), ends: unknown[] = [];
+    p.onPassEnd(pass => ends.push(pass));
+    const jump = (time: number) => { now = time; vi.advanceTimersByTime(25); };
+    return { p, ends, jump, setNow: (time: number) => { now = time; } };
+  }
+  const bar = 60 / 90 * 4;
+  it('reports a whole song pass that played from the start', () => {
+    const { p, ends, jump } = setup();
+    p.setSpeed(0.8); p.play();
+    jump(0.08 + 2 * bar / 0.8 + 0.01);
+    expect(p.playing).toBe(false);
+    expect(ends).toEqual([{ firstBar: 1, lastBar: 2, whole: true, speed: 80 }]);
+  });
+  it('reports each loop of a passage but not a pass that started mid passage', () => {
+    const { p, ends, jump } = setup();
+    p.setRange([4, 8], true); p.seek(6); p.play();
+    jump(0.08 + bar / 2 + 0.01);
+    expect(ends).toEqual([]);
+    jump(0.08 + bar / 2 + 2 * bar + 0.01);
+    expect(ends).toEqual([{ firstBar: 2, lastBar: 2, whole: false, speed: 100 }, { firstBar: 2, lastBar: 2, whole: false, speed: 100 }]);
+  });
+  it('keeps a pass whole across a pause, and drops it after a speed change mid pass', () => {
+    const { p, ends, jump } = setup();
+    p.setRange([4, 8], true); p.play();
+    jump(0.08 + bar / 2); p.pause(); p.play();
+    jump(0.08 + bar / 2 + 0.16 + bar);
+    expect(ends).toHaveLength(1);
+    const changed = 0.08 + bar / 2 + 0.16 + bar;
+    p.setSpeed(0.5);
+    jump(changed + 0.08 + bar + 0.01);
+    expect(ends).toHaveLength(1);
+    jump(changed + 0.08 + 3 * bar + 0.02);
+    expect(ends).toHaveLength(2);
+    expect(ends[1]).toMatchObject({ speed: 50 });
+  });
+  it('drops a paused pass when the speed changes before it resumes', () => {
+    const { p, ends, jump } = setup();
+    p.setSpeed(0.5); p.play();
+    const paused = 0.08 + 1.9 * bar / 0.5;
+    jump(paused); p.pause(); p.setSpeed(1.3); p.play();
+    jump(paused + 0.08 + bar);
+    expect(p.playing).toBe(false);
+    expect(ends).toEqual([]);
+  });
+  it('keeps a paused pass whole when the speed is set to the same value', () => {
+    const { p, ends, jump } = setup();
+    p.play();
+    jump(0.08 + bar); p.pause(); p.setSpeed(1); p.play();
+    jump(0.08 + bar + 0.08 + bar + 0.1);
+    expect(ends).toHaveLength(1);
+  });
+  it('drops a paused pass when the passage changes before it resumes', () => {
+    const { p, ends, jump } = setup();
+    p.setRange([4, 8], true); p.play();
+    const paused = 0.08 + bar / 2;
+    jump(paused); p.pause(); p.setRange(null, false); p.play();
+    jump(paused + 0.08 + bar);
+    expect(p.playing).toBe(false);
+    expect(ends).toEqual([]);
+  });
+  it('reports a pass that ended just before a speed change', () => {
+    const { p, ends, jump, setNow } = setup();
+    p.setRange([4, 8], true); p.play();
+    jump(0.08 + bar - 0.01);
+    setNow(0.08 + bar + 0.005); p.setSpeed(0.5);
+    expect(ends).toEqual([{ firstBar: 2, lastBar: 2, whole: false, speed: 100 }]);
+  });
+});
