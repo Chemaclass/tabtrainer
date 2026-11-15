@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { addressOf, routeQuery } from '../../src/app/address';
+import { addressOf, isRootPath, routeQuery } from '../../src/app/address';
 
 const base = '/tabtrainer/';
 
@@ -15,6 +15,12 @@ describe('addresses', () => {
     expect(routeQuery('/tabtrainer/piano/x/', '?view=library', base)).toBe('view=library');
     expect(routeQuery('/tabtrainer/bass/a/b/', '', base)).toBe('');
     expect(routeQuery('/elsewhere/bass/orion/', '', base)).toBe('');
+    expect(routeQuery('/tabtrainer/jam/%zz/', '?view=library', base)).toBe('view=library');
+  });
+  it('treats the base and its index.html as the root', () => {
+    expect(isRootPath('/tabtrainer/', base)).toBe(true);
+    expect(isRootPath('/tabtrainer/index.html', base)).toBe(true);
+    expect(isRootPath('/tabtrainer/bass/orion/', base)).toBe(false);
   });
   it('writes a bundled song or groove as its path and the rest as the query', () => {
     expect(addressOf('song=bass/orion&version=easy', base)).toBe('/tabtrainer/bass/orion/?version=easy');

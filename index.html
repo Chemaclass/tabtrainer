@@ -35,13 +35,13 @@
     try { theme = JSON.parse(localStorage.getItem('tabtrainer:theme')); } catch { /* storage unavailable */ }
     document.documentElement.dataset.theme = theme === 'light' || theme === 'dark' ? theme : matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
     const query = new URLSearchParams(location.search);
-    const onRoot = location.pathname === '%BASE_URL%';
+    const onRoot = location.pathname === '%BASE_URL%' || location.pathname === '%BASE_URL%index.html';
     if (query.has('welcome') || (onRoot && !['song', 'view', 'kind', 'instrument', 'version'].some(key => query.has(key)))) document.documentElement.classList.add('landing');
   </script>
   <script async src="https://rum.cronitor.io/script.js"></script>
   <script>
     window.cronitor = window.cronitor || function () { (window.cronitor.q = window.cronitor.q || []).push(arguments); };
-    // Every screen is the same path with a different query, so keep the route keys. A groove of your own carries its title, which stays private:
+    // A song or bundled groove is in the path; other screens are the root with a query, so keep the route keys. A groove of your own carries its title, which stays private:
     // the title is sent unencoded and may hold & or #, so groove stays last and everything after its prefix is cut.
     cronitor('config', {
       clientKey: 'a225bb1865119c485e9d4544392452de',

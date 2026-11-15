@@ -9,7 +9,7 @@ const bundled = Object.fromEntries(Object.entries(import.meta.glob('../../songs/
   .map(([path, text]) => [path.replace(/^(\.\.\/)+/, './'), text]));
 byId('landingCount').textContent = String(Object.keys(bundled).length);
 
-if (onLanding()) history.replaceState(history.state, '', location.pathname);
+if (onLanding()) history.replaceState(history.state, '', import.meta.env.BASE_URL);
 
 one('.top').addEventListener('click', event => {
   if (event.target instanceof Element && event.target.closest('.library-nav button, #writeSongBtn')) leaveLanding();

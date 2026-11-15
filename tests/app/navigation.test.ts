@@ -11,6 +11,8 @@ describe('routes', () => {
     expect(isLandingAddress('?welcome&view=library')).toBe(true);
     expect(isLandingAddress('?view=library&kind=songs')).toBe(false);
     expect(isLandingAddress('?song=bass/ode-to-joy')).toBe(false);
+    expect(isLandingAddress('', false)).toBe(false);
+    expect(isLandingAddress('?welcome', false)).toBe(true);
   });
   it('opens the practice screen without a song link when no bundled song is picked', () => {
     for (const picked of ['', null]) {
