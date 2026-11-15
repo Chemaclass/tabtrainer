@@ -12,14 +12,9 @@ export function saveState(draftSession: DraftSession, workspace: Workspace, onDo
     byId('shareBtn').hidden = !bundled || draftSession.hasChanges();
     byId('proposeBtn').hidden = bundled;
   }
-  const strip = () => {
-    if (workspace.screen === 'jam') return false;
-    if (workspace.screen === 'library') return hasChanges() || feedback.classList.contains('bad');
-    return hasChanges() || feedback.textContent !== '';
-  };
   function show() {
     byId('returnDraftBtn').hidden = workspace.screen === 'practice' || !hasChanges();
-    one('.save-state').hidden = !strip();
+    one('.save-state').hidden = workspace.screen === 'jam' || (!hasChanges() && !feedback.textContent);
     showShare();
     byId('dirtyState').textContent = hasChanges() ? `Unsaved changes${draftSession.stored ? '' : ' (draft recovery unavailable)'}` : 'No unsaved changes';
   }

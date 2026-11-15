@@ -36,6 +36,7 @@ export function songList(songbook: Songbook, workspace: Workspace, openSong: Ope
       kind,
       next: nextExercise(entries, workspace.picked),
       practising: workspace.screen === 'practice',
+      song: workspace.picked,
       played: playedSong !== null && playedSong === workspace.picked,
     });
     actions.shown();

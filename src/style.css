@@ -82,8 +82,10 @@ kbd{font:600 12px var(--mono);padding:1px 5px;border:1px solid var(--rule);borde
 .note.on .vf-stem path{stroke:var(--playing)!important}
 .tip{margin:16px 0 0;font-size:13px;color:var(--mut)}
 .tip-link{min-height:0;padding:0;border:0;background:none;color:inherit;font:inherit;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+.touch-label{display:none}
 @media (hover:none){
   .tip .keys{display:none}
+  .tip .touch-label{display:inline}
 }
 dialog{width:min(680px,calc(100% - 24px));max-width:none;max-height:calc(100dvh - 24px);border:1px solid var(--rule);border-radius:12px;background:var(--page);color:var(--ink);padding:20px 16px}
 dialog::backdrop{background:rgba(0,0,0,.45)}
