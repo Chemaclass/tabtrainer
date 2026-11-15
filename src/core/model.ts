@@ -37,8 +37,9 @@ export interface Bar {
   tempo?: number;
   section?: string;
   events: NoteEvent[];
-  /** Source line of the bar's first token, for editor error reporting. */
+  /** Where the bar starts in the source: its first token after the previous bar, such as a chord or a duration. */
   line?: number;
+  col?: number;
 }
 
 export const LEVELS = ['easy', 'medium', 'hard'] as const;
@@ -64,6 +65,8 @@ export interface Version {
   bars: Bar[];
   /** Overrides the song's level for this version. */
   level?: Level;
+  /** Source line of its "== Name" line; absent for a song without one. */
+  line?: number;
 }
 
 export interface Song {

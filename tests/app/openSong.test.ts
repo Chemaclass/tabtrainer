@@ -90,7 +90,7 @@ describe('open song problems', () => {
   it('maps lines and problems to bars of the shown version', () => {
     const open = new OpenSong();
     open.read(`${header}:q 3.3 3.3 3.3 3.3 |\n:q 5.3 5.x |\n`, true);
-    expect(open.barAtLine(5)).toBe(2);
+    expect(open.barAt({ line: 5, col: 1 })).toBe(2);
     expect([...open.problemBars().keys()]).toEqual([2]);
   });
 });

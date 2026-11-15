@@ -1,5 +1,5 @@
 import { setPref } from '../../app/storage';
-import { nextIssue, positionAt } from '../../app/songProblems';
+import { nextIssue, positionAt, type TextPosition } from '../../app/songProblems';
 import { byId, one } from '../dom';
 import type { Song } from '../../core/model';
 import type { IssueSpan, ParseIssue } from '../../core/parseIssue';
@@ -40,13 +40,8 @@ export function editorPane(redraw: () => void) {
     onEdit(immediately: () => void, settled: () => void) {
       settling = settledInput(source, settled, immediately);
     },
-    /** Tells which source line the caret is on whenever it moves to another line. */
-    onCaretLine(moved: (line: number) => void) {
-      let line = 0;
-      const follow = () => {
-        const now = positionAt(source.value, source.selectionStart).line;
-        if (now !== line) { line = now; moved(now); }
-      };
+    onCaret(moved: (at: TextPosition) => void) {
+      const follow = () => moved(positionAt(source.value, source.selectionStart));
       ['keyup', 'pointerup', 'input', 'focus', 'select'].forEach(type => source.addEventListener(type, follow));
     },
     showIssues(found: ParseIssue[], song: Song) {

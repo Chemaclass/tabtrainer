@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { parseSong } from '../../src/core/parser';
 import type { ParseIssue } from '../../src/core/parseIssue';
-import { barAtLine, beatMeter, nextIssue, offsetOf, positionAt, problemBars, spanRange } from '../../src/app/songProblems';
+import { barAt, beatMeter, nextIssue, offsetOf, positionAt, problemBars, spanRange } from '../../src/app/songProblems';
 
 const issue = (line: number, col: number, length = 1): ParseIssue => ({ line, col, length, code: 'note-unreadable', message: 'x', severity: 'error' });
 
@@ -36,13 +36,29 @@ describe('song problems', () => {
 
   const song = parseSong('title: A\n:q 3.3 3.3 3.3 3.3 |\n# comment\n:q 5.3 5.3\n5.3 5.3 |\n== Two\n:q 7.3 7.3 7.3 7.3 |').song;
 
-  it('finds the bar a line belongs to in the shown version', () => {
-    expect(barAtLine(song.versions, 0, 1)).toBeNull();
-    expect(barAtLine(song.versions, 0, 2)).toBe(1);
-    expect(barAtLine(song.versions, 0, 3)).toBe(1);
-    expect(barAtLine(song.versions, 0, 5)).toBe(2);
-    expect(barAtLine(song.versions, 0, 7)).toBeNull();
-    expect(barAtLine(song.versions, 1, 7)).toBe(1);
+  const at = (line: number, col = 1) => ({ line, col });
+
+  it('finds the bar a position belongs to in the shown version', () => {
+    expect(barAt(song.versions, 0, at(1))).toBeNull();
+    expect(barAt(song.versions, 0, at(2))).toBe(1);
+    expect(barAt(song.versions, 0, at(3))).toBe(1);
+    expect(barAt(song.versions, 0, at(5))).toBe(2);
+    expect(barAt(song.versions, 0, at(7))).toBeNull();
+    expect(barAt(song.versions, 1, at(7))).toBe(1);
+  });
+
+  it('finds no bar past the "==" line of the next version', () => {
+    expect(barAt(song.versions, 0, at(6))).toBeNull();
+    expect(barAt(song.versions, 1, at(6))).toBeNull();
+  });
+
+  it('tells bars on one line apart by column', () => {
+    const text = ':q 3.4 3.4 3.4 3.4 3.4 | 3.4 3.4 3.4 3.4 | 3.4 3.4 3.4 3.4 |';
+    const { song: busy, issues } = parseSong(text);
+    expect(barAt(busy.versions, 0, at(1, 1))).toBe(1);
+    expect(barAt(busy.versions, 0, at(1, 26))).toBe(2);
+    expect(barAt(busy.versions, 0, at(1, 46))).toBe(3);
+    expect([...problemBars(busy.versions, 0, issues).keys()]).toEqual([1]);
   });
 
   it('keeps the first problem of each bar', () => {
@@ -55,5 +71,10 @@ describe('song problems', () => {
     expect(beatMeter({ beats: 2.5, expected: 4 })).toEqual({ summary: 'This bar has 2.5 beats. It needs 4.', segments: ['beat', 'beat', 'missing', 'missing'] });
     expect(beatMeter({ beats: 1, expected: 3 })?.summary).toBe('This bar has 1 beat. It needs 3.');
     expect(beatMeter({})).toBeNull();
+  });
+
+  it('measures a bar against a time signature with half beats', () => {
+    expect(beatMeter({ beats: 4, expected: 3.5 })?.segments).toEqual(['beat', 'beat', 'beat', 'extra']);
+    expect(beatMeter({ beats: 3, expected: 3.5 })?.segments).toEqual(['beat', 'beat', 'beat', 'missing']);
   });
 });

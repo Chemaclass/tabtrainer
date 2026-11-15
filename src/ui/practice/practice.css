@@ -39,16 +39,16 @@
 .gutter-mark,.mark-line{position:absolute;left:0;right:0;top:calc(var(--source-pad-y) + (var(--line) - 1) * var(--source-line));height:var(--source-line)}
 .gutter-mark{padding-right:10px;text-align:right;font-weight:600;color:var(--error);background:var(--problem-wash);box-shadow:inset 3px 0 var(--error)}
 .gutter-mark.warning{color:var(--led-text);background:var(--cur);box-shadow:inset 3px 0 var(--led)}
-.source-body{position:relative;display:flex;flex:1;min-width:0}
-.source-marks{position:absolute;inset:0;overflow:hidden;transform:translateY(var(--scroll-y));pointer-events:none}
+.source-body{position:relative;display:flex;flex:1;min-width:0;overflow:hidden}
+.source-marks{position:absolute;inset:0;transform:translateY(var(--scroll-y));pointer-events:none}
 .mark-line{background:var(--problem-wash)}
 .mark-line.warning{background:var(--cur)}
 .mark-text{display:block;padding-left:var(--source-pad-x);font:400 var(--source-size)/var(--source-line) var(--mono);font-variant-ligatures:none;tab-size:2;white-space:pre;color:transparent;transform:translateX(var(--scroll-x))}
 .squiggle{text-decoration:underline wavy var(--error) 1px;text-decoration-skip-ink:none;text-underline-offset:3px}
 .squiggle.warning{text-decoration-color:var(--led-text)}
 .source-frame .source-text{position:relative;flex:1;min-height:0;font:400 var(--source-size)/var(--source-line) var(--mono);font-variant-ligatures:none;padding:var(--source-pad-y) var(--source-pad-x);white-space:pre;overflow:auto}
-.layout:not(.noedit) .bar-target.edited{fill:#2766bb;fill-opacity:.06}
-.layout:not(.noedit) .bar-target.problem{fill:var(--error);fill-opacity:.1;stroke:var(--error);stroke-width:1.5}
+:where(.layout:not(.noedit) .bar-target).edited{fill:#2766bb;fill-opacity:.06}
+:where(.layout:not(.noedit) .bar-target).problem{fill:var(--error);fill-opacity:.1;stroke:var(--error);stroke-width:1.5}
 .format-strip{display:none;margin-top:24px;padding-top:14px;border-top:1px solid var(--ink)}
 .layout:not(.noedit) .format-strip{display:block}
 .format-strip-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:12px}

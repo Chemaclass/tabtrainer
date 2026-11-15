@@ -55,7 +55,13 @@ describe('parseSong', () => {
     expect(again.issues).toEqual([]);
     expect(again.song.meta.about).toBe(song.meta.about);
     expect(again.song.meta.listen).toBe(song.meta.listen);
-    expect(again.song.bars).toEqual(song.bars.map(b => ({ ...b, line: again.song.bars[b.index - 1].line })));
+    expect(again.song.bars).toEqual(song.bars.map(b => ({ ...b, line: again.song.bars[b.index - 1].line, col: again.song.bars[b.index - 1].col })));
+  });
+  it('records where each bar and version starts in the source', () => {
+    const { song } = parseSong('title: x\n"C" :q 3.4 3.4 3.4 3.4 | 5.4 5.4 5.4 5.4 |\n== Two\n:w 3.4 |');
+    expect(song.versions[0].bars.map(b => [b.line, b.col])).toEqual([[2, 1], [2, 26]]);
+    expect(song.versions[0].line).toBeUndefined();
+    expect(song.versions[1].line).toBe(3);
   });
   it('reports errors with line numbers', () => {
     const r = parseSong('title: x\n:q 3.9 |\n:q 3.4 3.4 3.4 3.4 3.4 |');

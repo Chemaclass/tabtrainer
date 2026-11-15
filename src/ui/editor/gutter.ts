@@ -55,7 +55,12 @@ export function sourceGutter(source: HTMLTextAreaElement) {
     frame.style.setProperty('--scroll-y', `${-source.scrollTop}px`);
     frame.style.setProperty('--scroll-x', `${-source.scrollLeft}px`);
   };
-  source.addEventListener('input', showNumbers);
+  source.addEventListener('input', () => {
+    const before = shownLines;
+    showNumbers();
+    // Marks sit on line numbers from the last parse: once lines move they would point at the wrong rows.
+    if (shownLines !== before) { marks.replaceChildren(); gutterMarks.replaceChildren(); }
+  });
   source.addEventListener('scroll', follow, { passive: true });
 
   return {

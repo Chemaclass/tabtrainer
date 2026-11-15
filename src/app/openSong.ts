@@ -2,7 +2,7 @@ import { parseSong } from '../core/parser';
 import type { ParseIssue } from '../core/parseIssue';
 import { withVersion, type Song, type Version } from '../core/model';
 import { versionSlug } from './songLink';
-import { barAtLine, problemBars } from './songProblems';
+import { barAt, problemBars, type TextPosition } from './songProblems';
 
 export class OpenSong {
   private whole: Song | null = null;
@@ -41,8 +41,8 @@ export class OpenSong {
     return slug === null ? this.versions.length <= 1 : this.versions.some(v => versionSlug(v.name) === slug);
   }
 
-  barAtLine(line: number): number | null {
-    return barAtLine(this.versions, this.index, line);
+  barAt(at: TextPosition): number | null {
+    return barAt(this.versions, this.index, at);
   }
 
   /** The first problem in each bar of the shown version. */

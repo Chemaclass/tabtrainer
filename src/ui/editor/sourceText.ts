@@ -28,12 +28,14 @@ function characterWidth(source: HTMLTextAreaElement): number {
 export const selectLine = (source: HTMLTextAreaElement, line: number) => selectSpan(source, { line, col: 1, length: 0 });
 
 /** Replaces text the way typing would, so undo takes the fix back and the editor hears an input event. */
-function applyFix(source: HTMLTextAreaElement, { edit }: SongFix) {
+function applyFix(source: HTMLTextAreaElement, { edit }: SongFix, madeFrom: string) {
+  // The fix points into the text it was made from; after more typing it waits for the next parse.
+  if (source.value !== madeFrom) return;
   const start = offsetOf(source.value, edit);
   source.focus();
   source.setSelectionRange(start, start + edit.length);
   // execCommand keeps the browser's undo history; setRangeText is the fallback where it is gone.
-  if (!document.execCommand('insertText', false, edit.text)) {
+  if (!document.execCommand(edit.text ? 'insertText' : 'delete', false, edit.text)) {
     source.setRangeText(edit.text, start, start + edit.length, 'end');
     source.dispatchEvent(new Event('input', { bubbles: true }));
   }
@@ -51,7 +53,7 @@ function meterOf(issue: ParseIssue): HTMLElement | null {
   return row;
 }
 
-function issueItem(issue: ParseIssue, source: HTMLTextAreaElement, fixes: readonly SongFix[]): HTMLLIElement {
+function issueItem(issue: ParseIssue, source: HTMLTextAreaElement, fixes: readonly SongFix[], madeFrom: () => string = () => source.value): HTMLLIElement {
   const item = document.createElement('li');
   const body = document.createElement('div');
   const button = document.createElement('button');
@@ -75,7 +77,7 @@ function issueItem(issue: ParseIssue, source: HTMLTextAreaElement, fixes: readon
     action.className = 'issue-fix';
     action.textContent = fix.label;
     action.setAttribute('aria-label', `${fix.label} on line ${issue.line}`);
-    action.addEventListener('click', () => applyFix(source, fix));
+    action.addEventListener('click', () => applyFix(source, fix, madeFrom()));
     actions.append(action);
   }
   return item;
@@ -88,13 +90,15 @@ export function showIssueList(list: HTMLElement, issues: readonly ParseIssue[], 
 
 /** Lists a song's issues with their quick fixes, and leaves the list alone when nothing changed so screen readers hear only news. */
 export function songIssueList(list: HTMLElement, source: HTMLTextAreaElement) {
-  let shown = '';
+  let shown = '', parsedText = '';
+  const madeFrom = () => parsedText;
   return (issues: readonly ParseIssue[]) => {
-    const fixes = issues.map(issue => songFixes(source.value, issue));
+    parsedText = source.value;
+    const fixes = issues.map(issue => songFixes(parsedText, issue));
     const key = JSON.stringify([issues, fixes]);
     if (key === shown) return;
     shown = key;
-    list.replaceChildren(...issues.map((issue, at) => issueItem(issue, source, fixes[at])));
+    list.replaceChildren(...issues.map((issue, at) => issueItem(issue, source, fixes[at], madeFrom)));
   };
 }
 

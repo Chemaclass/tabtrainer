@@ -34,10 +34,15 @@ export function nextIssue<T extends ParseIssue>(issues: readonly T[], caret: Tex
   return ordered.find(issue => after(issue, caret)) ?? ordered[0] ?? null;
 }
 
-/** The bar of the shown version that a source line belongs to: the last bar starting on or above it. */
-export function barAtLine(versions: readonly Version[], shown: number, line: number): number | null {
-  const starts = versions.flatMap((version, index) => version.bars.map(bar => ({ version: index, bar: bar.index, line: bar.line ?? Infinity })));
-  const found = starts.reduce<typeof starts[number] | null>((best, start) => start.line <= line && (!best || start.line >= best.line) ? start : best, null);
+interface SourceStart extends TextPosition { version: number; bar: number | null }
+
+/** The bar of the shown version that a source position belongs to: the last bar starting at or before it, and none past a version's "==" line. */
+export function barAt(versions: readonly Version[], shown: number, at: TextPosition): number | null {
+  const starts: SourceStart[] = versions.flatMap((version, index) => [
+    ...(version.line === undefined ? [] : [{ version: index, bar: null, line: version.line, col: 1 }]),
+    ...version.bars.filter(bar => bar.line !== undefined).map(bar => ({ version: index, bar: bar.index, line: bar.line ?? 0, col: bar.col ?? 1 })),
+  ]);
+  const found = starts.reduce<SourceStart | null>((best, start) => !after(start, at) && (!best || !after(best, start)) ? start : best, null);
   return found && found.version === shown ? found.bar : null;
 }
 
@@ -45,7 +50,7 @@ export function barAtLine(versions: readonly Version[], shown: number, line: num
 export function problemBars<T extends ParseIssue>(versions: readonly Version[], shown: number, issues: readonly T[]): Map<number, T> {
   const bars = new Map<number, T>();
   for (const issue of issues) {
-    const bar = barAtLine(versions, shown, issue.line);
+    const bar = barAt(versions, shown, issue);
     if (bar !== null && !bars.has(bar)) bars.set(bar, issue);
   }
   return bars;
@@ -59,7 +64,8 @@ const beatCount = (beats: number) => `${beats} beat${beats === 1 ? '' : 's'}`;
 /** How many beats a bar that is too long or too short holds against the beats it needs. */
 export function beatMeter({ beats, expected }: Pick<ParseIssue, 'beats' | 'expected'>): BeatMeter | null {
   if (beats === undefined || expected === undefined || beats === expected) return null;
-  const length = Math.max(Math.ceil(beats), expected);
-  const segments = Array.from({ length }, (_, at): BeatSegment => at >= expected ? 'extra' : at < Math.floor(beats) ? 'beat' : 'missing');
+  const long = beats > expected;
+  const segment = (at: number): BeatSegment => long ? (at + 1 > expected ? 'extra' : 'beat') : (at + 1 <= beats ? 'beat' : 'missing');
+  const segments = Array.from({ length: Math.ceil(Math.max(beats, expected)) }, (_, at) => segment(at));
   return { summary: `This bar has ${beatCount(beats)}. It needs ${expected}.`, segments };
 }

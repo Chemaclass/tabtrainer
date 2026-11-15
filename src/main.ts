@@ -158,7 +158,7 @@ const files = songFile(draftSession, new Backups(savedSongs, practiceLog), {
 });
 const editor = editorPane(draw);
 editor.onEdit(() => { if (passagePlayback.selectedNote) player.stop(); drafts.persist(); }, () => update(false));
-editor.onCaretLine(line => score.showEditedBar(openSong.barAtLine(line)));
+editor.onCaret(at => score.showEditedBar(openSong.barAt(at)));
 playerPanel(draw);
 theme();
 fretboardSheet(() => workspace.family);
