@@ -1,6 +1,8 @@
 import { byId } from '../dom';
 import { setSelectValue } from '../shell/dropdown';
-import { catalogueMatches, categoryCounts, difficultyLabel, recentEntries, type CatalogueEntry, type LibraryKind } from '../../app/catalogue';
+import { catalogueMatches, categoryCounts, difficultyLabel, isProgressFilter, progressCounts, type CatalogueEntry, type LibraryKind, type ProgressFilter } from '../../app/catalogue';
+import { songProgress, type SongProgress, type SongRecord } from '../../app/practiceLog';
+import { pickUp, pickUpAction, pickUpState, pickUpTitle, progressSummary, rowProgress, speedLadder, type PickUp, type RowProgress } from '../../app/practiceProgress';
 import { DEFAULT_TEMPLATE, SONG_TEMPLATES, templateInstruments, type SongTemplate, type SongTemplateId, type TemplateInstrument } from '../../app/songTemplates';
 import { INSTRUMENTS, isFamily } from '../../core/instruments';
 import { pref, setPref } from '../../app/storage';
@@ -18,14 +20,26 @@ const closing = {
 };
 const text = (tag: string, value: string, className = '') => { const node = document.createElement(tag); node.textContent = value; node.className = className; return node; };
 const levelLabel = (entry: CatalogueEntry) => difficultyLabel(entry.levels);
+const statusText = { 'not-started': 'Not started', 'in-progress': 'In progress', done: 'Done' };
+const SVG = 'http://www.w3.org/2000/svg';
+function checkMark() {
+  const icon = document.createElementNS(SVG, 'svg'), path = document.createElementNS(SVG, 'path');
+  icon.setAttribute('viewBox', '0 0 16 16'); icon.setAttribute('width', '16'); icon.setAttribute('height', '16');
+  path.setAttribute('d', 'M3 8.5l3.2 3L13 4.5');
+  icon.append(path); return icon;
+}
 
-export function libraryView(onPick: (value: string) => void, onNew: () => void, onTemplate: (id: SongTemplateId, instrument: TemplateInstrument) => void, onOpen: () => void, onPropose: () => void, onExercises: () => void, onShare: (value: string, ready: boolean) => void) {
+export function libraryView(onPick: (value: string) => void, onContinue: (plan: PickUp) => void, onNew: () => void, onTemplate: (id: SongTemplateId, instrument: TemplateInstrument) => void, onOpen: () => void, onPropose: () => void, onExercises: () => void, onShare: (value: string, ready: boolean) => void) {
   let shares = new Map<string, ShareState>();
-  let entries: CatalogueEntry[] = [], family = 'bass', kind: LibraryKind = 'exercises', recent: string[] = [], expanded = false;
+  let entries: CatalogueEntry[] = [], family = 'bass', kind: LibraryKind = 'exercises', expanded = false;
+  let practice: Record<string, SongRecord> = {}, now = 0, progressFilter: ProgressFilter = 'all';
   const search = byId('songSearch', HTMLInputElement), level = byId('songLevel', HTMLSelectElement);
   const clear = byId('clearLevel', HTMLButtonElement), list = byId('catalogueList');
-  function resetFilters() { search.value = ''; setSelectValue(level, ''); render(); search.focus(); }
+  const progressChips = [...byId('progressFilters').querySelectorAll<HTMLButtonElement>('[data-progress]')];
+  const progressOf = (value: string) => songProgress(practice[value] ?? null);
+  function resetFilters() { search.value = ''; setSelectValue(level, ''); progressFilter = 'all'; render(); search.focus(); }
   search.addEventListener('input', render); level.addEventListener('change', render);
+  progressChips.forEach(chip => { chip.onclick = () => { if (isProgressFilter(chip.dataset.progress)) { progressFilter = chip.dataset.progress; render(); } }; });
   clear.onclick = resetFilters; byId('emptyClearBtn').onclick = resetFilters;
   byId('emptyExercisesBtn').onclick = onExercises;
   byId('emptyWriteBtn').onclick = onNew; byId('emptyOpenBtn').onclick = onOpen;
@@ -58,24 +72,37 @@ export function libraryView(onPick: (value: string) => void, onNew: () => void, 
     showTemplates();
   }
   byId('exploreAllBtn').onclick = () => { expanded = true; render(); byId('catalogueHeading').focus(); };
+  function status(entry: CatalogueEntry, progress: SongProgress) {
+    const slot = text('span', '', `row-status ${progress}`), number = entries.filter(e => e.kind === entry.kind && e.family === family).indexOf(entry) + 1;
+    const mark = progress === 'done' ? checkMark() : text('span', String(number).padStart(2, '0'));
+    mark.setAttribute('aria-hidden', 'true');
+    slot.append(mark, text('span', statusText[progress], 'sr-only'));
+    return slot;
+  }
+  function progressLane(entry: CatalogueEntry, progress: RowProgress) {
+    const lane = text('span', '', `catalogue-progress ${progress.progress}`);
+    if (progress.progress === 'not-started') { lane.append(text('span', `Not started · ${entry.tempo} BPM`, 'progress-when')); return lane; }
+    lane.append(text('span', progress.label, 'progress-label'));
+    if (progress.best !== null) {
+      const bar = text('span', '', 'progress-bar'); bar.setAttribute('aria-hidden', 'true'); bar.style.setProperty('--best', `${progress.best}%`);
+      lane.append(bar);
+    } else if (progress.when) lane.append(text('span', progress.when, 'progress-when'));
+    return lane;
+  }
   function row(entry: CatalogueEntry) {
     const li = document.createElement('li'), button = document.createElement('button'); button.className = 'catalogue-row'; button.type = 'button'; button.dataset.value = entry.value;
-    if (kind === 'exercises') {
-      const number = entries.filter(e => e.kind === 'exercises' && e.family === family).indexOf(entry) + 1;
-      button.append(text('span', String(number).padStart(2, '0'), 'exercise-number'));
-    }
+    const progress = rowProgress(practice[entry.value] ?? null, now);
+    button.append(status(entry, progress.progress));
     const copy = text('span', '', 'catalogue-copy'); copy.append(text('strong', entry.title));
+    if (progress.progress !== 'not-started') copy.append(text('span', progressSummary(progress), `catalogue-progress-line ${progress.progress}`));
     const description = kind === 'exercises' ? entry.about : entry.artist;
     if (description) copy.append(text('span', description, 'catalogue-description'));
     const versions = entry.versions > 1 ? `${entry.versions} ${entry.practiceLevels ? 'practice levels' : 'arrangements'}` : '';
     const mobileMeta = `${levelLabel(entry)} · ${entry.tempo} BPM${versions ? ` · ${versions}` : ''}`;
     copy.append(text('span', mobileMeta, 'catalogue-mobile-meta')); button.append(copy);
-    const details = text('span', '', 'catalogue-details');
-    details.append(text('span', levelLabel(entry), 'catalogue-level'), text('span', `${entry.tempo} BPM`, 'catalogue-tempo'));
-    button.append(details);
-    if (versions) copy.append(text('span', versions, 'catalogue-arrangements'));
     const share = shares.get(entry.value);
-    if (share) button.append(text('span', shareLabel(share), share.ready ? 'share-state ready' : 'share-state'));
+    button.append(text('span', levelLabel(entry), 'catalogue-level'), share ? text('span', shareLabel(share), share.ready ? 'share-state ready' : 'share-state') : progressLane(entry, progress));
+    if (versions) copy.append(text('span', versions, 'catalogue-arrangements'));
     const arrow = text('span', '→', 'catalogue-arrow'); arrow.setAttribute('aria-hidden', 'true'); button.append(arrow);
     button.onclick = () => onPick(entry.value); li.append(button);
     if (share) {
@@ -101,20 +128,27 @@ export function libraryView(onPick: (value: string) => void, onNew: () => void, 
     byId('libraryContext').textContent = `${family} / ${labels[kind]}`;
     byId('libraryTitle').textContent = heading; byId('libraryDescription').textContent = description;
     search.placeholder = placeholder; search.setAttribute('aria-label', placeholder);
-    const matches = catalogueMatches(entries, kind, family, search.value, level.value);
-    const foundations = kind === 'exercises' && !search.value.trim() && !level.value && !expanded && matches.length > 4;
+    const plan = kind === 'mine' ? null : pickUp(practice, entries, family);
+    showPickUp(plan);
+    const progress = progressCounts(catalogueMatches(entries, kind, family, '', ''), progressOf);
+    const started = progress['in-progress'] + progress.done > 0;
+    if (!started) progressFilter = 'all';
+    showProgressChips(started, progress);
+    const matches = catalogueMatches(entries, kind, family, search.value, level.value, progressFilter, progressOf);
+    const filtered = !!search.value || !!level.value || progressFilter !== 'all';
+    const foundations = kind === 'exercises' && !search.value.trim() && !level.value && progressFilter === 'all' && !plan && !expanded && matches.length > 4;
     const shown = foundations ? matches.slice(0, 4) : matches;
     byId('catalogueHeading').textContent = foundations ? 'Start here' : kind === 'mine' ? 'Saved in this browser' : `All ${labels[kind]}`;
     byId('catalogueHeading').tabIndex = -1;
     byId('catalogueHint').textContent = foundations ? `4 essentials · ${matches.length} exercises available` : `${matches.length} ${kind === 'exercises' ? 'exercises' : 'songs'}`;
     byId('songResults').textContent = `${matches.length} ${kind === 'exercises' ? 'exercises' : 'songs'} found.`;
-    clear.hidden = !search.value && !level.value;
+    clear.hidden = !filtered;
     list.replaceChildren(...shown.map(row));
     const noMatch = matches.length === 0 && !emptyMine && !emptySongs;
     byId('catalogueEmpty').hidden = matches.length > 0 || emptyMine;
     byId('emptyTitle').textContent = emptySongs ? `No bundled ${family} songs yet.` : `No ${kind === 'exercises' ? 'exercises' : 'songs'} match`;
     byId('emptyDescription').textContent = emptySongs ? 'Browse exercises or open a song file to practise.' : `Try another search, clear the filters, or choose another instrument.`;
-    byId('emptyClearBtn').hidden = emptyMine || emptySongs || (!search.value && !level.value);
+    byId('emptyClearBtn').hidden = emptyMine || emptySongs || !filtered;
     byId('emptyWriteBtn').hidden = !noMatch || kind === 'mine'; byId('emptyOpenBtn').hidden = !emptySongs;
     byId('emptyExercisesBtn').hidden = !emptySongs || counts.exercises === 0;
     byId('emptyExercisesBtn').textContent = `Browse ${counts.exercises} ${family} exercises`;
@@ -123,20 +157,30 @@ export function libraryView(onPick: (value: string) => void, onNew: () => void, 
     byId('closingRow').hidden = kind === 'mine' || noMatch;
     const [closingText, closingAction] = closing[kind === 'exercises' ? 'exercises' : 'songs'];
     byId('closingText').textContent = closingText; byId('closingWriteBtn').textContent = closingAction;
-    const practised = recentEntries(entries, recent, family), first = practised[0];
-    byId('recentPanel').hidden = !first;
-    if (first) {
-      byId('recentTitle').textContent = first.title; byId('recentAbout').textContent = first.about ?? first.artist;
-      byId('recentMeta').textContent = `${levelLabel(first)} · ${first.tempo} BPM`;
-      byId('resumeBtn').onclick = () => onPick(first.value);
-      byId('otherRecent').replaceChildren(...practised.slice(1, 3).map(entry => { const b = text('button', entry.title); b.onclick = () => onPick(entry.value); return b; }));
-    }
+  }
+  function showPickUp(plan: PickUp | null) {
+    byId('pickUp').hidden = !plan;
+    if (!plan) return;
+    byId('pickUpTitle').textContent = pickUpTitle(plan);
+    byId('pickUpState').textContent = pickUpState(plan, now);
+    byId('pickUpAction').textContent = pickUpAction(plan);
+    byId('speedLadder').replaceChildren(...speedLadder(plan).map(mark => text('li', '', mark)));
+    byId('speedLadderText').textContent = plan.passSpeed === null ? '' : `${plan.passSpeed}% of 100%`;
+    byId('pickUpBtn').onclick = () => onContinue(plan);
+  }
+  function showProgressChips(started: boolean, counts: Record<SongProgress, number>) {
+    byId('progressFilters').hidden = !started;
+    progressChips.forEach(chip => {
+      const shows = chip.dataset.progress, count = chip.querySelector('.chip-count');
+      chip.setAttribute('aria-pressed', String(shows === progressFilter));
+      if (count && (shows === 'in-progress' || shows === 'done')) count.textContent = String(counts[shows]);
+    });
   }
   return {
     chooseTemplate() { byId('templateList').querySelector<HTMLButtonElement>('.template-card.default')?.focus(); },
-    show(all: CatalogueEntry[], instrument: string, category: LibraryKind, history: string[], shareStates: Map<string, ShareState>) {
-      if (kind !== category || family !== instrument) { search.value = ''; setSelectValue(level, ''); expanded = false; }
-      entries = all; family = instrument; kind = category; recent = history; shares = shareStates; render();
+    show(all: CatalogueEntry[], instrument: string, category: LibraryKind, songs: Record<string, SongRecord>, time: number, shareStates: Map<string, ShareState>) {
+      if (kind !== category || family !== instrument) { search.value = ''; setSelectValue(level, ''); progressFilter = 'all'; expanded = false; }
+      entries = all; family = instrument; kind = category; practice = songs; now = time; shares = shareStates; render();
     },
   };
 }

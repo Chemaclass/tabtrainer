@@ -105,7 +105,6 @@ interface Preferences {
   picked: string;
   last: string | null;
   draft: DraftSnapshot | null;
-  recent: string[];
   tunings: Tunings;
   templateInstruments: TemplateInstrumentChoice;
   fretboardSheet: FretboardChoice;
@@ -138,7 +137,6 @@ const validators: { [K in keyof Preferences]: (value: unknown) => value is Prefe
   picked: isString,
   last: (value): value is string | null => value === null || isString(value),
   draft: (value): value is DraftSnapshot | null => value === null || !!value && typeof value === 'object' && 'text' in value && isString(value.text) && 'base' in value && isString(value.base) && 'picked' in value && isString(value.picked),
-  recent: (value): value is string[] => Array.isArray(value) && value.every(isString),
   tunings: isTunings,
   templateInstruments: isTemplateInstrumentChoice,
   fretboardSheet: isFretboardChoice,
@@ -175,14 +173,6 @@ export function setPref<K extends keyof Preferences>(key: K, value: Preferences[
     try { localStorage.setItem('tabtrainer:' + key, JSON.stringify({ repetitions: value.repetitions, increase: value.increase, target: value.target })); return true; } catch { return false; }
   }
   try { localStorage.setItem('tabtrainer:' + key, JSON.stringify(value)); return true; } catch { return false; }
-}
-
-export function recentPractice(): string[] {
-  const stored = readPreference('recent');
-  return Array.isArray(stored) ? [...new Set(stored.filter((s): s is string => typeof s === 'string' && s.length > 0))].slice(0, 10) : [];
-}
-export function recordPractice(value: string) {
-  if (value) setPref('recent', [value, ...recentPractice().filter(s => s !== value)].slice(0, 10));
 }
 
 export const practiceStore: PracticeStore = { read: () => storedPref('practice'), write: record => setPref('practice', record) };

@@ -1,5 +1,6 @@
+import type { SongProgress } from '../../src/app/practiceLog';
 import { describe, expect, it } from 'vitest';
-import { catalogueMatches, categoryCounts, difficultyLabel, nextExercise, recentEntries, type CatalogueEntry } from '../../src/app/catalogue';
+import { catalogueMatches, categoryCounts, difficultyLabel, nextExercise, progressCounts, type CatalogueEntry } from '../../src/app/catalogue';
 
 const entry = (value: string, kind: CatalogueEntry['kind'] = 'exercises', family = 'bass'): CatalogueEntry => ({ value, title: value, artist: '', kind, family, tempo: 90, versions: 1, levels: ['easy'] });
 const entries = [entry('Open strings'), { ...entry('Scale'), about: 'One finger per fret', levels: ['medium', 'hard'] }, entry('Song', 'songs'), entry('Saved', 'mine'), entry('Guitar exercise', 'exercises', 'guitar')];
@@ -16,8 +17,17 @@ describe('practice catalogue', () => {
     expect(nextExercise(entries, 'Song')).toBeUndefined();
     expect(nextExercise(entries, 'missing')).toBeUndefined();
   });
-  it('ignores missing recent entries and other instruments without inventing progress', () => {
-    expect(recentEntries(entries, ['missing', 'Guitar exercise', 'Song', 'Song', 'Open strings'], 'bass').map(e => e.value)).toEqual(['Song', 'Open strings']);
+  describe('progress filters', () => {
+    const exercises = [entry('Open strings'), entry('Scale'), entry('Groove'), entry('Octaves')];
+    const progress: Record<string, SongProgress> = { 'Open strings': 'done', Scale: 'in-progress', Groove: 'in-progress' };
+    const progressOf = (value: string) => progress[value] ?? 'not-started';
+    const shown = (filter: 'all' | 'in-progress' | 'done', level = '') => catalogueMatches(exercises, 'exercises', 'bass', '', level, filter, progressOf).map(e => e.value);
+    it('shows every entry under All', () => expect(shown('all')).toEqual(['Open strings', 'Scale', 'Groove', 'Octaves']));
+    it('shows only started, unfinished entries under In progress', () => expect(shown('in-progress')).toEqual(['Scale', 'Groove']));
+    it('shows only entries played clean under Done', () => expect(shown('done')).toEqual(['Open strings']));
+    it('combines a progress filter with the level filter', () => expect(shown('done', 'hard')).toEqual([]));
+    it('treats every entry as not started without a practice record', () => expect(catalogueMatches(exercises, 'exercises', 'bass', '', '', 'done')).toEqual([]));
+    it('counts entries by progress', () => expect(progressCounts(exercises, progressOf)).toEqual({ 'not-started': 1, 'in-progress': 2, done: 1 }));
   });
 });
 

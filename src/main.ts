@@ -4,8 +4,9 @@ import { buildTimeline, onsetKey } from './core/timeline';
 import { familyOf, type Family } from './core/instruments';
 import { Player } from './audio/player';
 import { LoopEngine } from './audio/loopEngine';
-import { library, removeSong, pref, practiceStore, recordPractice, savedGrooves, savedSongs } from './app/storage';
+import { library, removeSong, pref, practiceStore, savedGrooves, savedSongs } from './app/storage';
 import { PlayTime, PracticeLog } from './app/practiceLog';
+import type { PickUp } from './app/practiceProgress';
 import { PracticeSession } from './app/practiceSession';
 import { Backups } from './app/backup';
 import { songShareLink, songSource } from './app/songLink';
@@ -96,7 +97,7 @@ const score = scoreView({
   onPlayNote: (key, bar) => { const chosen = passages.selectNote(key, bar) ? passagePlayback.selectedNote : null; if (chosen) player.play(chosen.beat); },
 });
 const header = songHeader(index => { if (openSong.choose(index)) showVersion(); });
-const songs = songList(songbook, workspace, openSong, { pick: pickSong, showLibrary, newSong: () => startNewSong(), startFrom: startFromTemplate, openFile: () => files.open(), shown: saveView.showShare, propose: () => proposal.open(), shared: sharedSongs, proposeSaved: proposal.openSaved });
+const songs = songList(songbook, workspace, openSong, practiceLog, { pick: pickSong, continue: continuePractice, showLibrary, newSong: () => startNewSong(), startFrom: startFromTemplate, openFile: () => files.open(), shown: saveView.showShare, propose: () => proposal.open(), shared: sharedSongs, proposeSaved: proposal.openSaved });
 window.addEventListener('popstate', event => navigation.visit(event.state, (route, accept, cancel) => {
   const open = () => { accept(); openRoute(route); };
   if (route.screen === 'practice' && route.picked && route.picked !== workspace.picked && draftSession.hasChanges()) drafts.replace(open, cancel);
@@ -132,7 +133,7 @@ practiceShortcuts(player, {
   showShortcuts: help.showShortcuts,
 });
 const playback = playbackView(player, { transport: transportView, score, follows: scrolling.follows }, {
-  started: () => { songs.started(); if (workspace.picked) { recordPractice(workspace.picked); songs.fill(); } },
+  started: () => songs.started(),
   stopped: () => { passagePlayback.deselect(); passages.show(); songs.stopped(); },
 });
 player.on(playback.show);
@@ -229,6 +230,16 @@ function showAfterDelete() {
 function pickSong(ref: string) {
   if (ref === workspace.picked) { setScreen('practice', true); showLink(true); }
   else drafts.replace(() => loadPickedSong(ref, true));
+}
+function continuePractice({ entry, version, loop, nextSpeed }: PickUp) {
+  const resume = () => {
+    if (entry.value === workspace.picked) { setScreen('practice', true); showLink(true); } else loadPickedSong(entry.value, true);
+    chooseVersionNamed(version);
+    if (loop) passage.setRange(loop[0], loop[1], true); else passage.clear();
+    passages.apply();
+    if (nextSpeed !== null) speed.set(nextSpeed);
+  };
+  if (entry.value === workspace.picked) resume(); else drafts.replace(resume);
 }
 function loadPickedSong(ref: string, push = false) {
   const text = songbook.text(ref);
