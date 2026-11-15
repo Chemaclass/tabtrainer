@@ -19,7 +19,7 @@ export function dismissHelpOnBackdrop(dialog: HTMLDialogElement) {
 
 export function helpDialogs() {
   const syntax = byId('help', HTMLDialogElement), tab = byId('tabHelp', HTMLDialogElement), shortcuts = byId('shortcuts', HTMLDialogElement);
-  [syntax, tab, shortcuts].forEach(dismissHelpOnBackdrop);
+  [syntax, tab, shortcuts, byId('songsGuide', HTMLDialogElement)].forEach(dismissHelpOnBackdrop);
   byId('readTabBtn').onclick = byId('readTabMobileBtn').onclick = () => tab.showModal();
   byId('syntaxHelpBtn').onclick = () => syntax.showModal();
   byId('shortcutsBtn').onclick = () => shortcuts.showModal();
