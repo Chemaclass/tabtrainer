@@ -1,21 +1,37 @@
 title: Greensleeves
 artist: Traditional (public domain)
-about: Root and fifth in long notes under an old English folk song in a minor key. It trains feeling 6/8 time as two big beats per bar.
+about: An old English tune in 6/8 that trains feeling two swaying beats per bar, with a long-short bass line and the melody itself.
 level: medium
 instrument: bass4
 tempo: 84
 key: Am
 time: 6/8
 
+# Each chord lasts half a bar: a long root, then a short fifth. Count "ONE two three FOUR five six".
+== Bass line
+level: easy
 @Verse
-"Am" :q. 0.3 2.2 | "C" 3.3 5.2 | "G" 3.4 5.3 | "Em" 0.4 2.3 |
-"Am" 0.3 2.2 | "F" 1.4 3.3 | "E" 0.4 2.3 | 0.4 2.3 |
-"Am" 0.3 2.2 | "C" 3.3 5.2 | "G" 3.4 5.3 | "Em" 0.4 2.3 |
-"Am" 0.3 2.2 | "E" 0.4 2.3 | "Am" 0.3 2.2 | 0.3 2.2 |
+"Am" :q 0.3 :8 2.2 "C" :q 3.3 :8 5.2 | "G" :q 3.4 :8 5.3 "Em" :q 0.4 :8 2.3 |
+"Am" :q 0.3 :8 2.2 "F" :q 1.4 :8 3.3 | "E" :q 0.4 :8 2.3 :q 0.4 :8 2.3 |
+"Am" :q 0.3 :8 2.2 "C" :q 3.3 :8 5.2 | "G" :q 3.4 :8 5.3 "Em" :q 0.4 :8 2.3 |
+"Am" :q 0.3 :8 2.2 "E" :q 0.4 :8 2.3 | "Am" :q 0.3 :8 2.2 :q. 0.3 |
 @Chorus
-"C" 3.3 5.2 | 3.3 5.2 | "G" 3.4 5.3 | "Em" 0.4 2.3 |
-"Am" 0.3 2.2 | "F" 1.4 3.3 | "E" 0.4 2.3 | 0.4 2.3 |
-"C" 3.3 5.2 | 3.3 5.2 | "G" 3.4 5.3 | "Em" 0.4 2.3 |
-"Am" 0.3 2.2 | "E" 0.4 2.3 | "Am" 0.3 2.2 | 0.3 2.2 |
-@Ending
-"Am" :h. 0.3 |
+"C" :q 3.3 :8 5.2 :q 3.3 :8 5.2 | "G" :q 3.4 :8 5.3 "Em" :q 0.4 :8 2.3 |
+"Am" :q 0.3 :8 2.2 "F" :q 1.4 :8 3.3 | "E" :q 0.4 :8 2.3 :q 0.4 :8 2.3 |
+"C" :q 3.3 :8 5.2 :q 3.3 :8 5.2 | "G" :q 3.4 :8 5.3 "Em" :q 0.4 :8 2.3 |
+"Am" :q 0.3 :8 2.2 "E" :q 0.4 :8 2.3 | "Am" :h. 0.3 |
+
+# Open position, one finger per fret from 1 to 4. F sharp and G sharp are the raised notes of the tune.
+== Melody
+level: medium
+@Verse
+:q. r :q r :8 0.3 |
+"Am" :q 3.3 :8 0.2 "C" :8. 2.2 :16 4.2 :8 2.2 | "G" :q 0.2 :8 2.3 "Em" :8. 3.4 :16 0.3 :8 2.3 |
+"Am" :q 3.3 :8 0.3 "F" :8. 0.3 :16 4.4 :8 0.3 | "E" :q 2.3 :8 4.4 :q 0.4 :8 0.3 |
+"Am" :q 3.3 :8 0.2 "C" :8. 2.2 :16 4.2 :8 2.2 | "G" :q 0.2 :8 2.3 "Em" :8. 3.4 :16 0.3 :8 2.3 |
+"Am" :8. 3.3 :16 2.3 :8 0.3 "E" :8. 4.4 :16 2.4 :8 4.4 | "Am" :h. 0.3 |
+@Chorus
+"C" :q. 0.1 :8. 0.1 :16 4.2 :8 2.2 | "G" :q 0.2 :8 2.3 "Em" :8. 3.4 :16 0.3 :8 2.3 |
+"Am" :q 3.3 :8 0.3 "F" :8. 0.3 :16 4.4 :8 0.3 | "E" :q 2.3 :8 4.4 :q. 0.4 |
+"C" :q. 0.1 :8. 0.1 :16 4.2 :8 2.2 | "G" :q 0.2 :8 2.3 "Em" :8. 3.4 :16 0.3 :8 2.3 |
+"Am" :8. 3.3 :16 2.3 :8 0.3 "E" :8. 4.4 :16 2.4 :8 4.4 | "Am" :h. 0.3 |
