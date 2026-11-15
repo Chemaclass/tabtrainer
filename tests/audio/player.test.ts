@@ -416,6 +416,15 @@ describe('audio clock', () => {
     p.setRange([0, 4], true); p.setSpeedPractice({ repetitions: 1, increase: 5, target: 110 }); p.setSpeed(0.8);
     expect(p.speed).toBe(0.8); expect(p.speedPracticeState.enabled).toBe(false);
   });
+  it('tells listeners once when a manual speed change ends practice', () => {
+    const { p } = setup(bars, 10);
+    const reasons: string[] = [];
+    p.onSpeedPractice((_, reason) => reasons.push(reason));
+    p.setRange([0, 4], true); p.setSpeedPractice({ repetitions: 4, increase: 5, target: 100 });
+    expect(p.speedPracticeState).toMatchObject({ repetitions: 4, increase: 5, target: 100 });
+    p.setSpeed(0.8); p.setSpeed(0.85);
+    expect(reasons).toEqual(['enabled', 'speed']);
+  });
   it('disables practice while counting in without scheduling an accelerated wrap', () => {
     const { p, sounds, advance } = setup(bars, 10);
     p.notes = [{ beat: 0, key: '0', bar: 1, string: 1, fret: 0, midi: 60, ring: 1 }];

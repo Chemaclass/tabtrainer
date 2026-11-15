@@ -297,6 +297,7 @@ tempo: 90
     <div class="loop">
       <label class="pill"><input id="loopChk" type="checkbox" /><svg width="16" height="14" viewBox="0 0 16 14" aria-hidden="true"><path d="M2 7a4 4 0 0 1 4-4h6M14 7a4 4 0 0 1-4 4H4M10 1l2 2-2 2M6 9l-2 2 2 2" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Loop bars</label>
       <input id="loopA" type="number" min="1" value="1" aria-label="Loop from bar" /><span class="arrow" aria-hidden="true">→</span><input id="loopB" type="number" min="1" value="1" aria-label="Loop to bar" />
+      <button id="climbBtn" class="pill climb" type="button" aria-pressed="false" aria-describedby="speedPracticeHelp" hidden></button>
     </div>
     <details class="timing">
       <summary>Timing</summary>
@@ -309,10 +310,9 @@ tempo: 90
       </div>
     </details>
     <details class="speed-practice">
-      <summary>Gradual speed</summary>
+      <summary>Climb settings</summary>
       <div class="speed-practice-controls">
-        <label class="pill"><input id="speedPracticeChk" type="checkbox" aria-describedby="speedPracticeHelp speedPracticeError" />Gradual speed</label>
-        <p id="speedPracticeHelp">Turn on Loop bars to enable gradual speed increases. Changing settings turns gradual speed off.</p>
+        <p id="speedPracticeHelp">Loop some bars first. Then the speed goes up by itself after each set of passes.</p>
         <label for="speedPracticeRepetitions">Repetitions per increase</label><input id="speedPracticeRepetitions" type="number" min="1" max="20" step="1" aria-describedby="speedPracticeError" />
         <label for="speedPracticeIncrease">Increase (percentage points)</label><input id="speedPracticeIncrease" type="number" min="1" max="20" step="1" aria-describedby="speedPracticeError" />
         <label for="speedPracticeTarget">Target speed (%)</label><input id="speedPracticeTarget" type="number" min="30" max="130" step="1" aria-describedby="speedPracticeError" />

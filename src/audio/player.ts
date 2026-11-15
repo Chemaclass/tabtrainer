@@ -4,8 +4,8 @@ import { TempoMap } from '../core/tempoMap';
 import { PracticePasses } from './practicePasses';
 import { isSpeedPracticeConfig, type SpeedPracticeConfig, type SpeedPracticeProgress } from '../core/speedPractice';
 
-export interface SpeedPracticeState { enabled: boolean; active: boolean; startingSpeed: number | null; speed: number; completed: number; repetitions: number; target: number; reached: boolean }
-export type SpeedPracticeReason = 'enabled' | 'progress' | 'increase' | 'target' | 'reset' | 'ended';
+export interface SpeedPracticeState { enabled: boolean; active: boolean; startingSpeed: number | null; speed: number; completed: number; repetitions: number; increase: number; target: number; reached: boolean }
+export type SpeedPracticeReason = 'enabled' | 'progress' | 'increase' | 'target' | 'reset' | 'ended' | 'speed';
 export interface LoopCompletion { time: number; traversal: number; full: boolean }
 
 export type PlayerPhase = 'stopped' | 'counting-in' | 'playing' | 'paused';
@@ -40,7 +40,7 @@ export class Player {
     this.endPractice(); this.stop(); this.notes = tl.notes; this.bars = tl.bars; this.total = tl.total; this.tempo = tempo; this.clock = new TempoMap(tl.bars, tempo);
   }
   get speedPracticeState(): SpeedPracticeState {
-    return { enabled: this.practice !== null, active: this.practiceActive, startingSpeed: this.baseline, speed: Math.round(this.speed * 100), completed: this.progress.completed, repetitions: this.practice?.repetitions ?? 0, target: this.practice?.target ?? 0, reached: this.practice !== null && Math.round(this.speed * 100) >= this.practice.target };
+    return { enabled: this.practice !== null, active: this.practiceActive, startingSpeed: this.baseline, speed: Math.round(this.speed * 100), completed: this.progress.completed, repetitions: this.practice?.repetitions ?? 0, increase: this.practice?.increase ?? 0, target: this.practice?.target ?? 0, reached: this.practice !== null && Math.round(this.speed * 100) >= this.practice.target };
   }
   onSpeedPractice(fn: (state: SpeedPracticeState, reason: SpeedPracticeReason) => void) { this.practiceListeners.push(fn); }
   onLoopComplete(fn: (event: LoopCompletion) => void) { this.loopListeners.push(fn); }
@@ -58,7 +58,7 @@ export class Player {
     }
     this.emitPractice('enabled'); return true;
   }
-  private endPractice() {
+  private endPractice(reason: 'ended' | 'speed' = 'ended') {
     if (!this.practice) return;
     this.reconcile();
     const beat = this.playing && this.synth.started ? this.position(this.synth.now) : null;
@@ -67,7 +67,7 @@ export class Player {
     if (beat !== null && this.synth.started && this.state === 'playing') {
       this.synth.cancelFuture(); this.from = beat; this.t0 = Math.max(this.synth.now, this.t0); this.rescheduleFrom(this.synth.now);
     } else if (this.playing && this.synth.started) { this.synth.cancelFuture(); this.rescheduleFrom(this.synth.now); }
-    this.emitPractice('ended');
+    this.emitPractice(reason);
   }
   on(fn: Listener) { this.listeners.push(fn); }
   private emit(beat: number | null) { const s = { playing: this.playing, beat, phase: this.phase, countInRemaining: this.countInRemaining }; this.listeners.forEach(f => f(s)); }
@@ -264,7 +264,7 @@ export class Player {
   toggle() { if (this.playing) this.pause(); else this.play(); }
   stop() { this.reconcile(); this.halt(); this.state = 'stopped'; this.paused = null; this.resumeMusic = false; this.passes.clear(); if (this.practice && this.baseline !== null) { this.speed = this.baseline / 100; this.progress = { speed: this.baseline, completed: 0 }; this.practiceActive = false; this.emitPractice('reset'); } this.emit(null); }
   setSpeed(s: number) {
-    this.endPractice();
+    this.endPractice('speed');
     const now = this.synth.now, beat = this.state === 'playing' ? this.position(now) : null;
     if (this.state === 'counting-in') {
       const oldSpb = this.spb(), elapsed = Math.max(0, (now - this.countStart) / oldSpb), lead = Math.max(0, this.countStart - now);

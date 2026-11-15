@@ -1,6 +1,8 @@
 export interface SpeedPracticeConfig { repetitions: number; increase: number; target: number }
 export interface SpeedPracticeProgress { speed: number; completed: number }
 
+export const defaultSpeedPractice: SpeedPracticeConfig = { repetitions: 4, increase: 5, target: 100 };
+
 export function isSpeedPracticeConfig(value: unknown): value is SpeedPracticeConfig {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
   const v = value as Record<string, unknown>;
@@ -13,5 +15,9 @@ export function advanceSpeedPractice(state: SpeedPracticeProgress, config: Speed
   if (state.speed >= config.target) return state;
   const completed = state.completed + 1;
   if (completed < config.repetitions) return { ...state, completed };
-  return { speed: Math.min(config.target, state.speed + config.increase), completed: 0 };
+  return { speed: nextSpeedPracticeSpeed(state.speed, config), completed: 0 };
+}
+
+export function nextSpeedPracticeSpeed(speed: number, config: Pick<SpeedPracticeConfig, 'increase' | 'target'>): number {
+  return Math.min(config.target, speed + config.increase);
 }

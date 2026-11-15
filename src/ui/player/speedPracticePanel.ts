@@ -1,17 +1,19 @@
-import { isSpeedPracticeConfig } from '../../core/speedPractice';
+import { defaultSpeedPractice, isSpeedPracticeConfig, nextSpeedPracticeSpeed } from '../../core/speedPractice';
 import { pref, setPref } from '../../app/storage';
 import type { Player } from '../../audio/player';
 import { closeOnOutside } from '../shell/disclosure';
 import { byId, one } from '../dom';
 
 export function speedPracticePanel(player: Player, canLoop: () => boolean, onSpeedChange: () => void) {
-  closeOnOutside(one('.speed-practice', HTMLDetailsElement));
-  const enabled = byId('speedPracticeChk', HTMLInputElement);
+  const settings = one('.speed-practice', HTMLDetailsElement);
+  closeOnOutside(settings);
+  const climb = byId('climbBtn', HTMLButtonElement);
   const repetitions = byId('speedPracticeRepetitions', HTMLInputElement);
   const increase = byId('speedPracticeIncrease', HTMLInputElement);
   const target = byId('speedPracticeTarget', HTMLInputElement);
   const error = byId('speedPracticeError');
-  const saved = pref('speedPractice', { repetitions: 4, increase: 5, target: Math.max(100, Math.round(player.speed * 100)) });
+  const status = byId('speedPracticeStatus');
+  const saved = pref('speedPractice', defaultSpeedPractice);
   repetitions.value = String(saved.repetitions); increase.value = String(saved.increase); target.value = String(saved.target);
   const config = () => ({ repetitions: repetitions.valueAsNumber, increase: increase.valueAsNumber, target: target.valueAsNumber });
   function validate() {
@@ -22,26 +24,25 @@ export function speedPracticePanel(player: Player, canLoop: () => boolean, onSpe
   }
   function show() {
     const state = player.speedPracticeState;
-    enabled.checked = state.enabled;
-    enabled.disabled = !canLoop();
+    climb.hidden = !canLoop();
+    climb.setAttribute('aria-pressed', String(state.enabled));
+    climb.textContent = `Climb to ${state.enabled ? state.target : target.value}%`;
     const progress = byId('speedPracticeProgress');
     progress.hidden = !state.enabled;
-    progress.textContent = state.reached ? `Target reached: ${state.speed}%` : `${state.speed}%, repetition ${state.completed + 1} of ${state.repetitions}, target ${state.target}%`;
+    progress.textContent = state.reached ? `Target reached: ${state.speed}%` : `pass ${state.completed + 1} of ${state.repetitions}, then ${nextSpeedPracticeSpeed(state.speed, state)}%`;
   }
   player.onSpeedPractice((state, reason) => {
     onSpeedChange(); show();
     if (reason === 'increase' || reason === 'target' || reason === 'reset') setPref('speed', Math.round(player.speed * 100));
-    if (reason === 'enabled' || reason === 'ended') byId('speedPracticeStatus').textContent = '';
-    if (reason === 'increase') byId('speedPracticeStatus').textContent = `Speed increased to ${state.speed}%.`;
-    if (reason === 'target') byId('speedPracticeStatus').textContent = `Target reached: ${state.speed}%.`;
+    if (reason === 'enabled' || reason === 'ended') status.textContent = '';
+    if (reason === 'speed') status.textContent = 'Climb stopped because you changed the speed.';
+    if (reason === 'increase') status.textContent = `Speed increased to ${state.speed}%.`;
+    if (reason === 'target') status.textContent = `Target reached: ${state.speed}%.`;
   });
-  enabled.onchange = () => {
-    if (!enabled.checked) { player.setSpeedPractice(null); show(); return; }
+  climb.onclick = () => {
+    if (player.speedPracticeState.enabled) { player.setSpeedPractice(null); show(); return; }
     const valid = validate();
-    if (!valid || !player.setSpeedPractice(valid)) {
-      if (valid) error.textContent = 'Turn on Loop bars to enable gradual speed increases.';
-      show(); return;
-    }
+    if (!valid || !player.setSpeedPractice(valid)) { settings.open = true; show(); return; }
     setPref('speedPractice', valid); show();
   };
   [repetitions, increase, target].forEach(input => input.addEventListener('input', () => {
