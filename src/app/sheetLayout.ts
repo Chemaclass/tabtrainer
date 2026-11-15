@@ -1,10 +1,11 @@
 export type ZoomStep = 'in' | 'out';
 
-const barWidth = 240, phoneBarWidth = 179, phoneSheetWidth = 480;
+const barWidth = 240, phoneBarWidth = 179, phoneBars = 2;
 
-export function barsPerLine(width: number, zoom: number) {
-  const perBar = width < phoneSheetWidth ? phoneBarWidth : barWidth;
-  return Math.max(1, Math.min(8, Math.round((width / zoom) / perBar)));
+export function barsPerLine(width: number, zoom: number, phone = false) {
+  const fitted = Math.round((width / zoom) / (phone ? phoneBarWidth : barWidth));
+  const bars = phone ? Math.min(fitted, Math.round(phoneBars / zoom)) : fitted;
+  return Math.max(1, Math.min(8, bars));
 }
 
 export function nextZoom(zoom: number, step: ZoomStep) {

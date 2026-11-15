@@ -95,7 +95,7 @@
 .head-back,.head-bar{display:none}
 @media(max-width:599px){
   .is-playing .top,.is-playing :is(.practice-context,.credit,.about,.version-details,.passage,.tip){display:none!important}
-  .is-playing .song-head{position:sticky;top:0;z-index:3;flex-wrap:nowrap;align-items:center;gap:8px;margin:-20px -16px 12px;padding:4px 16px 8px 4px;background:var(--page);border-bottom:1px solid var(--rule)}
+  .is-playing .song-head{position:sticky;top:var(--save-state-h,0px);z-index:3;flex-wrap:nowrap;align-items:center;gap:8px;margin:-20px -16px 12px;padding:4px 16px 8px 4px;background:var(--page);border-bottom:1px solid var(--rule)}
   .is-playing .head-back{display:grid;place-items:center;flex:none;width:44px;height:44px;padding:0;color:var(--ink)}
   .is-playing .song-id{flex:1;min-width:0}
   .is-playing .song-head h1{margin:0 0 2px;font-size:18px;line-height:22px;letter-spacing:-.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
