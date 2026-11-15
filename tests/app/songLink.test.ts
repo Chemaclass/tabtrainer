@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { readdirSync } from 'node:fs';
-import { findBySlug, normalizeSongReference, songShareLink, songSlug, versionSlug } from '../../src/app/songLink';
+import { findBySlug, normalizeSongReference, songShareLink, songSlug, songSource, versionSlug } from '../../src/app/songLink';
 
 describe('song links', () => {
   it('names a song by family and file name, without the order number', () => {
@@ -46,5 +46,21 @@ describe('share links', () => {
   });
   it('has no link for a saved song', () => {
     expect(songShareLink(root, 'lib:Mine', null, false)).toBeNull();
+  });
+});
+
+describe('source links', () => {
+  it('opens the file of a bundled song on GitHub', () => {
+    expect(songSource('demo:./songs/bass/songs/07-a-dawning.txt')).toEqual({ url: 'https://github.com/Chemaclass/tabtrainer/blob/main/src/songs/bass/songs/07-a-dawning.txt', exercise: false });
+  });
+  it('opens the GitHub editor for a bundled exercise', () => {
+    expect(songSource('demo:./songs/guitar/exercises/01-open-chords.txt')).toEqual({ url: 'https://github.com/Chemaclass/tabtrainer/edit/main/src/songs/guitar/exercises/01-open-chords.txt', exercise: true });
+  });
+  it('points every bundled song at its own file in the repository', () => {
+    const files = readdirSync('src/songs', { recursive: true, encoding: 'utf8' }).filter(f => f.endsWith('.txt'));
+    for (const f of files) expect(songSource(`demo:./songs/${f}`)?.url.endsWith(`/main/src/songs/${f}`)).toBe(true);
+  });
+  it('has no source for a saved song', () => {
+    expect(songSource('lib:Mine')).toBeNull();
   });
 });

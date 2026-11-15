@@ -5,7 +5,7 @@ import { familyOf, type Family } from './core/instruments';
 import { Player } from './audio/player';
 import { LoopEngine } from './audio/loopEngine';
 import { library, removeSong, pref, recordPractice, savedGrooves } from './app/storage';
-import { songShareLink } from './app/songLink';
+import { songShareLink, songSource } from './app/songLink';
 import { bundledPath } from './app/songRef';
 import { Songbook, newSongText } from './app/songbook';
 import { OpenSong } from './app/openSong';
@@ -221,7 +221,7 @@ function openRoute(route: Route) {
 function update(resetLoop: boolean) {
   const { song, issues } = openSong.read(editor.text(), resetLoop);
   passage.setSong(song.bars.length, resetLoop);
-  header.show(openSong);
+  header.show(openSong, songSource(workspace.picked));
   editor.showIssues(issues, song);
   if (workspace.followSong(familyOf(song.meta.instrument))) showFamily();
   transportView.showBarTotal(song.bars.length);
