@@ -6,6 +6,7 @@ import { Player } from './audio/player';
 import { LoopEngine } from './audio/loopEngine';
 import { library, removeSong, pref, practiceStore, recordPractice, savedGrooves, savedSongs } from './app/storage';
 import { PlayTime, PracticeLog } from './app/practiceLog';
+import { PracticeSession } from './app/practiceSession';
 import { Backups } from './app/backup';
 import { songShareLink, songSource } from './app/songLink';
 import { bundledPath, savedRef } from './app/songRef';
@@ -29,6 +30,7 @@ import { saveState } from './ui/editor/saveState';
 import { songFile } from './ui/editor/songFile';
 import { fretboardSheet } from './ui/fretboard/fretboardSheet';
 import { songList } from './ui/library/songList';
+import { clearedSheet } from './ui/player/clearedSheet';
 import { passageView } from './ui/player/passageView';
 import { playbackView } from './ui/player/playbackView';
 import { playerPanel } from './ui/player/playerPanel';
@@ -67,6 +69,7 @@ if (linkedRoute.screen === 'jam') jam.open(linkedRoute.groove, linkedRoute.setup
 const loop = new LoopEngine();
 const practiceLog = new PracticeLog(practiceStore);
 const playTime = new PlayTime(practiceLog);
+const practiceSession = new PracticeSession();
 
 const help = helpDialogs();
 const sharedSongs = () => withOpenDraft(library(), workspace.picked, draftSession.hasChanges() ? editor.text() : null);
@@ -107,6 +110,14 @@ const restart = () => { passagePlayback.stop(); passages.show(); player.play(); 
 const deck = thumbDeck(player, passage, { nudgeSpeed: speed.nudge, toggleLoop: () => { passage.toggleRepeat(); passages.apply(); }, restart });
 player.onSpeedPractice(deck.show);
 const passages = passageView(player, passage, passagePlayback, openSong, score, () => { speedPractice.show(); deck.show(); });
+const cleared = clearedSheet(player, {
+  next: ([first, last], startSpeed) => { passage.setRange(first, last, true); passages.apply(); speed.set(startSpeed); speedPractice.start(); practiceSession.restart(Date.now()); player.play(); },
+  wholeSong: () => { passage.clear(); passages.apply(); practiceSession.restart(Date.now()); player.play(0); },
+  nextExercise: songs.nextExercise,
+  pick: pickSong,
+  daysInARow: () => practiceLog.daysInARow(Date.now()),
+});
+player.onSpeedPractice((_, reason) => { if (reason === 'enabled' || reason === 'reset') practiceSession.restart(Date.now()); });
 const awake = screenWakeLock();
 player.on(state => awake.keep('player', state.playing));
 loop.on(state => awake.keep('jam', state.playing));
@@ -126,7 +137,12 @@ const playback = playbackView(player, { transport: transportView, score, follows
 player.on(playback.show);
 player.on(state => { if (state.playing) jamming.stop(); });
 player.on(state => playTime.update(workspace.picked || null, state.phase === 'playing', Date.now()));
-player.onPassEnd(pass => { if (workspace.picked) practiceLog.passEnded(workspace.picked, openSong.versionSlug(), pass, Date.now()); });
+player.on(state => practiceSession.playing(state.phase === 'playing', Date.now()));
+player.onPassEnd(pass => {
+  if (workspace.picked) practiceLog.passEnded(workspace.picked, openSong.versionSlug(), pass, Date.now());
+  const loop = practiceSession.passEnded(pass, player.speedPracticeState, passage.snapshot().count, Date.now());
+  if (loop) cleared.open(loop);
+});
 addEventListener('pagehide', () => playTime.update(null, false, Date.now()));
 document.addEventListener('visibilitychange', () => { if (document.hidden) playTime.update(null, false, Date.now()); });
 const drafts = draftFlow(draftSession, workspace, saveView, { saved: () => { songs.fill(); showLink(); }, stayed: () => showLink() });
@@ -253,6 +269,7 @@ function openRoute(route: Route) {
 function update(resetLoop: boolean) {
   const { song, issues } = openSong.read(editor.text(), resetLoop);
   passage.setSong(song.bars.length, resetLoop);
+  if (resetLoop) practiceSession.restart(Date.now());
   header.show(openSong, songSource(workspace.picked));
   editor.showIssues(issues, song);
   if (workspace.followSong(familyOf(song.meta.instrument))) showFamily();
@@ -268,6 +285,7 @@ function showVersion() {
   update(false); showLink();
   const song = openSong.song;
   if (song) { passage.setSong(song.bars.length, true); player.stop(); passages.apply(); }
+  practiceSession.restart(Date.now());
 }
 function draw() {
   const song = openSong.song;

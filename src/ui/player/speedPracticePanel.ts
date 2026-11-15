@@ -41,16 +41,19 @@ export function speedPracticePanel(player: Player, canLoop: () => boolean, onSpe
     if (reason === 'increase') status.textContent = `Speed increased to ${state.speed}%.`;
     if (reason === 'target') status.textContent = `Target reached: ${state.speed}%.`;
   });
+  function start() {
+    const valid = validate();
+    if (!valid || !player.setSpeedPractice(valid)) return false;
+    setPref('speedPractice', valid); show();
+    return true;
+  }
   climb.onclick = event => {
     if (player.speedPracticeState.enabled) { player.setSpeedPractice(null); show(); return; }
-    const valid = validate();
-    if (!valid || !player.setSpeedPractice(valid)) {
-      event.stopPropagation();
-      settings.open = true;
-      status.textContent = `Climb did not start. ${error.textContent || 'Turn on Loop bars first.'}`;
-      show(); return;
-    }
-    setPref('speedPractice', valid); show();
+    if (start()) return;
+    event.stopPropagation();
+    settings.open = true;
+    status.textContent = `Climb did not start. ${error.textContent || 'Turn on Loop bars first.'}`;
+    show();
   };
   byId('speed', HTMLInputElement).addEventListener('input', show);
   [repetitions, increase, target].forEach(input => input.addEventListener('input', () => {
@@ -61,5 +64,5 @@ export function speedPracticePanel(player: Player, canLoop: () => boolean, onSpe
     show();
   }));
   show();
-  return { show };
+  return { show, start };
 }
