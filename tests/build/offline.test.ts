@@ -1,6 +1,9 @@
-import { readdirSync } from 'node:fs';
-import { describe, expect, it } from 'vitest';
-import { cacheVersion, offlineUrls, serviceWorker } from '../../src/build/offline';
+import { mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { NETWORK_WAIT_MS, cacheVersion, offlineUrls, serviceWorker } from '../../src/build/offline';
+import { writeStaticFiles } from '../../src/build/staticFiles';
 import { songSlug } from '../../src/app/songLink';
 import { grooveSlug } from '../../src/app/jamLink';
 
@@ -9,6 +12,7 @@ const songPages = readdirSync('src/songs', { recursive: true, encoding: 'utf8' }
 const groovePages = readdirSync('src/grooves').filter(f => f.endsWith('.txt')).map(f => `jam/${grooveSlug(f)}/index.html`);
 const assets = ['assets/index-Dg53OQro.js', 'assets/index-CnGjdvXt.css', 'assets/inter-latin-400-normal-AbC.woff2'];
 const build = ['index.html', ...publicFiles, ...assets, ...songPages, ...groovePages, 'assets/index-Dg53OQro.js.map', 'assets/inter-latin-400-normal-XyZ.woff', 'sitemap.xml', 'robots.txt', 'sw.js'];
+const listedUrls = (source: string): string[] => JSON.parse(source.match(/^const URLS = (.*);$/m)![1]);
 
 describe('offline cache list', () => {
   const urls = offlineUrls(build);
@@ -33,6 +37,23 @@ describe('offline cache list', () => {
   });
 });
 
+describe('build output', () => {
+  let outDir = '';
+  afterEach(() => { if (outDir.startsWith(tmpdir())) rmSync(outDir, { recursive: true, force: true }); });
+
+  it('writes the worker after the share pages, so it caches them', () => {
+    outDir = mkdtempSync(join(tmpdir(), 'tabtrainer-build-'));
+    mkdirSync(join(outDir, 'assets'));
+    writeFileSync(join(outDir, 'index.html'), '<html>');
+    writeFileSync(join(outDir, 'assets/index-abc.js'), 'run()');
+    writeStaticFiles({ outDir, site: 'https://example.com/tabtrainer/', atHostRoot: false });
+    const urls = listedUrls(readFileSync(join(outDir, 'sw.js'), 'utf8'));
+    expect(urls).toEqual(expect.arrayContaining(['./', 'assets/index-abc.js']));
+    for (const page of [...songPages, ...groovePages]) expect(urls).toContain(page.replace(/index\.html$/, ''));
+    expect(urls).not.toContain('sitemap.xml');
+  });
+});
+
 describe('cache version', () => {
   const files = [{ path: './', content: '<html>' }, { path: 'assets/app.js', content: 'run()' }];
 
@@ -45,14 +66,104 @@ describe('cache version', () => {
   });
 });
 
-describe('service worker', () => {
-  const source = serviceWorker('abc123', ['./', 'assets/app.js']);
+const scope = 'https://example.com/tabtrainer/';
+const page = (body: string) => new Response(body);
 
-  it('is valid JavaScript', () => {
-    expect(() => new Function(source)).not.toThrow();
-  });
+class FakeCache {
+  entries = new Map<string, Response>();
+  async match(request: { url: string } | string, options: { ignoreSearch?: boolean } = {}) {
+    const url = new URL(typeof request === 'string' ? request : request.url);
+    if (options.ignoreSearch) url.search = '';
+    return this.entries.get(url.href)?.clone();
+  }
+  async addAll(requests: { url: string }[]) { for (const { url } of requests) this.entries.set(url, page(`cached ${url}`)); }
+}
+
+function runWorker(network: (url: string) => Promise<Response>) {
+  const stores = new Map<string, FakeCache>();
+  const listeners: Record<string, (event: object) => void> = {};
+  const caches = {
+    open: async (name: string) => { if (!stores.has(name)) stores.set(name, new FakeCache()); return stores.get(name)!; },
+    keys: async () => [...stores.keys()],
+    delete: async (name: string) => stores.delete(name),
+    match: async (request: { url: string }) => { for (const store of stores.values()) { const found = await store.match(request); if (found) return found; } },
+  };
+  const self = {
+    registration: { scope },
+    addEventListener: (type: string, listener: (event: object) => void) => { listeners[type] = listener; },
+    skipWaiting: async () => {},
+    clients: { claim: async () => {} },
+  };
+  class FakeRequest { constructor(public url: string) {} }
+  new Function('self', 'caches', 'fetch', 'Request', 'Response', serviceWorker('v2', ['./', 'assets/app.js']))(self, caches, (request: { url: string }) => network(request.url), FakeRequest, Response);
+  const lifecycle = async (type: string) => { let done: Promise<unknown> = Promise.resolve(); listeners[type]({ waitUntil: (work: Promise<unknown>) => { done = work; } }); await done; };
+  const request = (url: string, { method = 'GET', mode = 'cors' } = {}) => {
+    let response: Promise<Response> | null = null;
+    listeners.fetch({ request: { url, method, mode }, respondWith: (answer: Promise<Response>) => { response = answer; } });
+    return response as Promise<Response> | null;
+  };
+  return { stores, caches, lifecycle, request };
+}
+
+describe('service worker', () => {
+  afterEach(() => { vi.useRealTimers(); });
+  const offline = () => Promise.reject(new TypeError('Failed to fetch'));
+  const never = () => new Promise<Response>(() => {});
+
   it('names its cache after the build and lists what to keep', () => {
+    const source = serviceWorker('abc123', ['./', 'assets/app.js']);
     expect(source).toContain('const CACHE = "tabtrainer-abc123";');
-    expect(source).toContain('const URLS = ["./","assets/app.js"];');
+    expect(listedUrls(source)).toEqual(['./', 'assets/app.js']);
+  });
+  it('caches every listed file on install', async () => {
+    const worker = runWorker(offline);
+    await worker.lifecycle('install');
+    expect([...worker.stores.get('tabtrainer-v2')!.entries.keys()]).toEqual([scope, `${scope}assets/app.js`]);
+  });
+  it('removes only older TabTrainer caches when it takes over', async () => {
+    const worker = runWorker(offline);
+    await worker.caches.open('tabtrainer-v1');
+    await worker.caches.open('other-app');
+    await worker.lifecycle('install');
+    await worker.lifecycle('activate');
+    expect(await worker.caches.keys()).toEqual(['other-app', 'tabtrainer-v2']);
+  });
+  it('leaves POST and other sites to the browser', () => {
+    const worker = runWorker(offline);
+    expect(worker.request(`${scope}song`, { method: 'POST' })).toBeNull();
+    expect(worker.request('https://fonts.example.org/a.woff2')).toBeNull();
+  });
+  it('serves a fresh page when online', async () => {
+    const worker = runWorker(async () => page('fresh'));
+    await worker.lifecycle('install');
+    expect(await (await worker.request(`${scope}?song=bass%2Fode-to-joy`, { mode: 'navigate' }))!.text()).toBe('fresh');
+  });
+  it('opens a song link from the cached app page when offline', async () => {
+    const worker = runWorker(offline);
+    await worker.lifecycle('install');
+    expect(await (await worker.request(`${scope}?song=bass%2Fode-to-joy`, { mode: 'navigate' }))!.text()).toBe(`cached ${scope}`);
+  });
+  it('falls back to the cached page when the network is too slow', async () => {
+    vi.useFakeTimers();
+    const worker = runWorker(never);
+    await worker.lifecycle('install');
+    const response = worker.request(`${scope}?view=library`, { mode: 'navigate' })!;
+    await vi.advanceTimersByTimeAsync(NETWORK_WAIT_MS);
+    expect(await (await response).text()).toBe(`cached ${scope}`);
+  });
+  it('keeps waiting for a slow network when nothing is cached yet', async () => {
+    vi.useFakeTimers();
+    let answer: (response: Response) => void = () => {};
+    const worker = runWorker(() => new Promise(resolve => { answer = resolve; }));
+    const response = worker.request(`${scope}?view=library`, { mode: 'navigate' })!;
+    await vi.advanceTimersByTimeAsync(NETWORK_WAIT_MS * 2);
+    answer(page('late'));
+    expect(await (await response).text()).toBe('late');
+  });
+  it('serves assets from the cache, then the network', async () => {
+    const worker = runWorker(async url => page(`network ${url}`));
+    await worker.lifecycle('install');
+    expect(await (await worker.request(`${scope}assets/app.js`))!.text()).toBe(`cached ${scope}assets/app.js`);
+    expect(await (await worker.request(`${scope}assets/new.js`))!.text()).toBe(`network ${scope}assets/new.js`);
   });
 });
