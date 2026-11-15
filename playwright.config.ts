@@ -19,7 +19,7 @@ export default defineConfig({
     { name: 'desktop', use: { viewport: { width: 1440, height: 900 } } },
   ],
   webServer: {
-    command: `vite build && vite preview --port ${port} --strictPort`,
+    command: `${process.env.CI ? '' : 'vite build && '}vite preview --port ${port} --strictPort`,
     url: `http://localhost:${port}/tabtrainer/`,
   },
 });

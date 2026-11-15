@@ -25,11 +25,13 @@ test('the landing page loads with no console error', async ({ page }) => {
 });
 
 test('the library lists every bundled exercise and song', async ({ page }) => {
-  await page.goto('./?view=library&kind=exercises');
   const nav = page.locator('.library-nav');
-  await expect(nav.locator('[data-kind="exercises"] .nav-count')).toHaveText(String(bundledCount('bass', 'exercises')));
-  await expect(nav.locator('[data-kind="songs"] .nav-count')).toHaveText(String(bundledCount('bass', 'songs')));
-  await expect(page.locator('#catalogueList .catalogue-row').first()).toBeVisible();
+  for (const instrument of ['bass', 'guitar']) {
+    await page.goto(`./?view=library&kind=exercises&instrument=${instrument}`);
+    await expect(nav.locator('[data-kind="exercises"] .nav-count')).toHaveText(String(bundledCount(instrument, 'exercises')));
+    await expect(nav.locator('[data-kind="songs"] .nav-count')).toHaveText(String(bundledCount(instrument, 'songs')));
+    await expect(page.locator('#catalogueList .catalogue-row').first()).toBeVisible();
+  }
 });
 
 test('a song opens and renders its notes', async ({ page }) => {
