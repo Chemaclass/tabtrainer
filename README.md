@@ -118,7 +118,7 @@ The app uses TypeScript, Vite and [VexFlow](https://www.vexflow.com/). CI lints,
 
 ## Contributing
 
-Pull requests with new exercises or practice features are welcome. Only send songs you wrote or that are in the public domain.
+To add a song or change the code, read [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
 

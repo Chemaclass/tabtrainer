@@ -80,7 +80,7 @@
       </ol>
     </section>
     <section class="landing-promise">
-      <div><h2>Free, with no account. Your songs stay in your browser.</h2><p>Write your own songs in plain text, or start from the bundled exercises. Download a song to share it or move it to another device.</p></div>
+      <div><h2>Free, with no account. Your songs stay in your browser.</h2><p>Write your own songs in plain text, or start from the bundled exercises. Download a song to share it or move it to another device. Proud of one? <a href="https://github.com/Chemaclass/tabtrainer/blob/main/CONTRIBUTING.md" target="_blank" rel="noopener">Send it in</a> and it can join the songs on this site.</p></div>
       <ul class="landing-facts"><li>Bass · 4, 5 or 6 strings</li><li>Guitar · 6 strings</li><li>Built-in tuner</li><li><span id="landingCount">32</span> exercises and songs</li></ul>
     </section>
     <footer class="landing-footer"><span class="landing-brand"><svg width="18" height="18" viewBox="0 0 22 22" aria-hidden="true"><path d="M1 5h20M1 11h20M1 17h20" stroke="currentColor" stroke-width="1.5"/><circle cx="14" cy="11" r="4" fill="var(--playing)"/></svg>TabTrainer</span><span>Made by <a href="https://chemaclass.com" target="_blank" rel="noopener">Chemaclass</a> · <a href="https://github.com/Chemaclass/tabtrainer" target="_blank" rel="noopener">Source code on GitHub</a> · MIT licence</span></footer>
@@ -111,6 +111,7 @@
       <button id="saveBtn" class="ghost" title="Save to this browser's library">Save</button>
       <button id="dlBtn" class="ghost" title="Download the song as a text file">Download</button>
       <button id="shareBtn" class="ghost" title="Copy a link that opens this song">Copy link</button>
+      <button id="proposeBtn" class="ghost" title="Send this song to the TabTrainer website">Add to TabTrainer</button>
       <button id="syntaxHelpBtn" class="ghost">Song format help</button>
       </nav>
     </details>
@@ -126,7 +127,7 @@
   <main id="libraryScreen" class="library" aria-labelledby="libraryTitle">
     <div class="catalogue">
       <div class="library-intro"><div id="libraryContext" class="library-context">Bass / Exercises</div><h1 id="libraryTitle" tabindex="-1">Build a skill.</h1><p id="libraryDescription">Short exercises for your hands, timing, and fretboard knowledge.</p></div>
-      <div id="mySongActions" class="my-song-actions" hidden><button id="libraryNewBtn" class="toggle">New song</button><button id="libraryImportBtn" class="toggle">Open a file</button></div>
+      <div id="mySongActions" class="my-song-actions" hidden><button id="libraryNewBtn" class="toggle">New song</button><button id="libraryImportBtn" class="toggle">Open a file</button><button id="libraryProposeBtn" class="toggle">Add a song to TabTrainer</button></div>
       <div class="library-filters">
         <label class="library-search"><svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><circle cx="7.5" cy="7.5" r="5" stroke="currentColor" stroke-width="1.5" fill="none"/><path d="m11.5 11.5 4 4" stroke="currentColor" stroke-width="1.5"/></svg><input id="songSearch" type="search" aria-label="Search exercises or skills" placeholder="Search exercises or skills" autocomplete="off" /></label>
         <label for="songLevel" class="sr-only">Difficulty</label><select id="songLevel"><option value="">All levels</option><option value="easy">Easy</option><option value="medium">Medium</option><option value="hard">Hard</option><option value="unrated">Unrated</option></select>
@@ -387,6 +388,34 @@
       </details>
     </section>
   </dialog>
+  <dialog id="proposeDialog" class="propose" aria-labelledby="proposeTitle">
+    <form method="dialog"><button class="close round" aria-label="Close">✕</button></form>
+    <h2 id="proposeTitle">Add your song to TabTrainer</h2>
+    <p>When we accept your song, it appears on the website for everyone, with a link of its own.</p>
+    <h3>The rules</h3>
+    <ul>
+      <li>Send only music you wrote yourself, or music in the public domain (old enough that nobody owns it).</li>
+      <li>No copyrighted songs, not even a short riff. Keep those in My songs.</li>
+      <li>Say what the song trains in the <code>about:</code> line, in one sentence.</li>
+    </ul>
+    <h3>Your song</h3>
+    <div id="proposePickRow" class="propose-pick"><label for="proposePick">Song</label><select id="proposePick"></select></div>
+    <p class="propose-file">File: <code id="proposeFile"></code></p>
+    <fieldset class="propose-group"><legend>This is an:</legend><div class="propose-group-options"><label><input type="radio" name="proposeGroup" value="exercises" /><span>Exercise</span></label><label><input type="radio" name="proposeGroup" value="songs" /><span>Song</span></label></div></fieldset>
+    <p class="muted">The number sets the place in the list. We may change it when we review your song.</p>
+    <div id="proposeProblems" class="propose-problems"><h3>Fix these first</h3><ul id="proposeProblemList"></ul></div>
+    <label class="propose-rights"><input id="proposeRights" type="checkbox" /> <span>I wrote this music, or it is in the public domain, and I agree to share it under the MIT licence of TabTrainer.</span></label>
+    <p id="proposeLong" class="propose-long" hidden>Your song is too long to send in the link. "Open GitHub" also copies it. Paste it into the empty box on GitHub.</p>
+    <div class="propose-actions"><a id="proposeLink" class="primary" target="_blank" rel="noopener" aria-disabled="true">Open GitHub</a><button id="proposeDownload" type="button" class="toggle" hidden>Download</button></div>
+    <p id="proposeStatus" class="propose-status" role="status"></p>
+    <h3>What happens next</h3>
+    <ol>
+      <li>Sign in to GitHub. An account is free.</li>
+      <li>Press "Commit changes", then "Propose changes".</li>
+      <li>Press "Create pull request". We review it and write to you there.</li>
+    </ol>
+    <p><a href="https://github.com/Chemaclass/tabtrainer/blob/main/CONTRIBUTING.md" target="_blank" rel="noopener">Read the full guide</a></p>
+  </dialog>
   <dialog id="tabHelp" aria-labelledby="tabHelpTitle">
     <form method="dialog"><button class="close round" aria-label="Close">✕</button></form><h2 id="tabHelpTitle">Reading your first tab</h2>
     <p>Each horizontal line is a string. The top line is the highest-sounding string. A number tells you which fret to press. A zero means an open string.</p>
@@ -477,7 +506,7 @@ bass:  1 - 3 - 5 - 6 - | b7 - 6 - 5 - &gt;b1 -</pre>
       <tr><td><code># ...</code></td><td>comment, on its own line or after a space (<code>#IV</code> is a numeral)</td></tr>
     </table>
     <p>The steps in a bar set its grid. In 4/4 that is 8 for eighths, 12 for triplets or 16 for sixteenths. Swing moves the off beat eighths, or the off beat sixteenths when no part plays eighths. With another progression, each part repeats its bars over the new chords.</p>
-    <p class="muted">The app saves your songs in this browser. Use Download and Open to move a song to another device or share it.</p>
+    <p class="muted">The app saves your songs in this browser. Use Download and Open to move a song to another device or share it. Wrote something others should play? Open File and choose Add to TabTrainer.</p>
   </dialog>
   <script type="module" src="/src/main.ts"></script>
   <script type="module" src="/src/ui/landing/landing.ts"></script>

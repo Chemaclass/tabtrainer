@@ -16,13 +16,14 @@ interface SongListActions {
   newSong: () => void;
   openFile: () => void;
   shown: () => void;
+  propose: () => void;
 }
 
 export function songList(songbook: Songbook, workspace: Workspace, openSong: OpenSong, actions: SongListActions) {
   let entries: CatalogueEntry[] = [];
   const tabs = libraryNav(kind => actions.showLibrary(kind));
   const practice = practiceNav(kind => actions.showLibrary(kind), actions.pick);
-  const catalogue = libraryView(ref => actions.pick(ref), actions.newSong, () => actions.openFile(), () => { actions.showLibrary('exercises'); byId('libraryTitle').focus({ preventScroll: true }); });
+  const catalogue = libraryView(ref => actions.pick(ref), actions.newSong, () => actions.openFile(), () => actions.propose(), () => { actions.showLibrary('exercises'); byId('libraryTitle').focus({ preventScroll: true }); });
   byId('libraryOpenBtn').onclick = () => actions.openFile();
   function showNavigation() {
     tabs.show(categoryCounts(entries, workspace.family), workspace.screen === 'jam' ? null : workspace.kind);

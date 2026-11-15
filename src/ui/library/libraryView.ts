@@ -11,7 +11,7 @@ const intro = {
 const text = (tag: string, value: string, className = '') => { const node = document.createElement(tag); node.textContent = value; node.className = className; return node; };
 const levelLabel = (entry: CatalogueEntry) => difficultyLabel(entry.levels);
 
-export function libraryView(onPick: (value: string) => void, onNew: () => void, onOpen: () => void, onExercises: () => void) {
+export function libraryView(onPick: (value: string) => void, onNew: () => void, onOpen: () => void, onPropose: () => void, onExercises: () => void) {
   let entries: CatalogueEntry[] = [], family = 'bass', kind: LibraryKind = 'exercises', recent: string[] = [], expanded = false;
   const search = byId('songSearch', HTMLInputElement), level = byId('songLevel', HTMLSelectElement);
   const clear = byId('clearLevel', HTMLButtonElement), list = byId('catalogueList');
@@ -20,7 +20,7 @@ export function libraryView(onPick: (value: string) => void, onNew: () => void, 
   clear.onclick = resetFilters; byId('emptyClearBtn').onclick = resetFilters;
   byId('emptyExercisesBtn').onclick = onExercises;
   byId('emptyNewBtn').onclick = onNew; byId('emptyOpenBtn').onclick = onOpen;
-  byId('libraryNewBtn').onclick = onNew; byId('libraryImportBtn').onclick = onOpen;
+  byId('libraryNewBtn').onclick = onNew; byId('libraryImportBtn').onclick = onOpen; byId('libraryProposeBtn').onclick = onPropose;
   byId('exploreAllBtn').onclick = () => { expanded = true; render(); byId('catalogueHeading').focus(); };
   function row(entry: CatalogueEntry) {
     const li = document.createElement('li'), button = document.createElement('button'); button.className = 'catalogue-row'; button.type = 'button'; button.dataset.value = entry.value;

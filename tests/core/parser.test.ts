@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { parseSong, parseDuration } from '../../src/core/parser';
+import { headerKeys, parseSong, parseDuration } from '../../src/core/parser';
 import { serializeSong } from '../../src/core/serialize';
 import { buildTimeline } from '../../src/core/timeline';
 import { PPQ } from '../../src/core/model';
@@ -135,5 +135,21 @@ describe('bar tempo changes', () => {
   it('rejects a tempo change after notes in the same bar', () => {
     const result = parseSong(':q 0.4 [tempo=130] 0.4 0.4 0.4 |');
     expect(result.issues).toEqual([expect.objectContaining({ message: 'Put tempo changes before the first note of a bar' })]);
+  });
+});
+
+describe('header keys', () => {
+  it('finds header keys in any case, skipping blank and comment lines', () => {
+    expect(headerKeys('# my song\nTitle: A\n\nTEMPO: 80  # slow\nkey: C\n:q 3.3 |\n')).toEqual(new Set(['title', 'tempo', 'key']));
+  });
+  it('stops at the separator line and at the first body line', () => {
+    expect(headerKeys('title: A\n---\nartist: B\n')).toEqual(new Set(['title']));
+    expect(headerKeys('title: A\n@Verse\nartist: B\n')).toEqual(new Set(['title']));
+  });
+  it('ignores a level line under a version line', () => {
+    expect(headerKeys('title: A\n:q 3.3 3.3 3.3 3.3 |\n== Hard\nlevel: hard\n:q 3.3 3.3 3.3 3.3 |\n').has('level')).toBe(false);
+  });
+  it('leaves out a line with no value', () => {
+    expect(headerKeys('title: A\nabout:   # later\n')).toEqual(new Set(['title']));
   });
 });

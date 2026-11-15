@@ -20,6 +20,7 @@ import { JamFretboardSettings } from './app/jamFretboard';
 import { jamShareLink, type JamSetup } from './app/jamLink';
 import { draftFlow } from './ui/editor/draftFlow';
 import { editorPane } from './ui/editor/editorPane';
+import { proposeSongDialog } from './ui/editor/proposeSong';
 import { saveState } from './ui/editor/saveState';
 import { songFile } from './ui/editor/songFile';
 import { fretboardSheet } from './ui/fretboard/fretboardSheet';
@@ -60,6 +61,7 @@ if (linkedRoute.screen === 'jam') jam.open(linkedRoute.groove, linkedRoute.setup
 const loop = new LoopEngine();
 
 helpDialogs();
+const proposal = proposeSongDialog(songbook.paths, () => editor.text(), library);
 const view = screens(chooseFamily, () => showJam(jam.slug));
 const mixer = new Mixer(workspace.family);
 const jamFretboard = jamFretboardView(jam, mixer, new JamFretboardSettings(), loop);
@@ -80,7 +82,7 @@ const score = scoreView({
   onPlayNote: (key, bar) => { const chosen = passages.selectNote(key, bar) ? passagePlayback.selectedNote : null; if (chosen) player.play(chosen.beat); },
 });
 const header = songHeader(index => { if (openSong.choose(index)) showVersion(); });
-const songs = songList(songbook, workspace, openSong, { pick: pickSong, showLibrary, newSong: startNewSong, openFile: () => files.open(), shown: saveView.showShare });
+const songs = songList(songbook, workspace, openSong, { pick: pickSong, showLibrary, newSong: startNewSong, openFile: () => files.open(), shown: saveView.showShare, propose: () => proposal.open() });
 window.addEventListener('popstate', event => navigation.visit(event.state, (route, accept, cancel) => {
   const open = () => { accept(); openRoute(route); };
   if (route.screen === 'practice' && route.picked && route.picked !== workspace.picked && draftSession.hasChanges()) drafts.replace(open, cancel);

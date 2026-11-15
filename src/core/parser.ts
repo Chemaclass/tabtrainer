@@ -44,6 +44,18 @@ export function parseDuration(s: string): { ticks: number; value: string; dots: 
   return { ticks, value: r[1], dots, triplet };
 }
 
+// Leaves out a line with no value: it sets nothing a song can rely on.
+export function headerKeys(src: string): Set<string> {
+  const keys = new Set<string>();
+  for (const line of src.replace(/\r\n?/g, '\n').split('\n')) {
+    if (/^\s*(#.*)?$/.test(line)) continue;
+    const h = HEADER.exec(line);
+    if (!h) break;
+    if (h[2].replace(/(^|\s)#.*$/, '').trim()) keys.add(h[1].toLowerCase());
+  }
+  return keys;
+}
+
 export function parseSong(src: string): ParseResult {
   const issues: ParseIssue[] = [];
   const lines = src.replace(/\r\n?/g, '\n').split('\n');
