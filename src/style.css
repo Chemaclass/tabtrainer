@@ -66,7 +66,13 @@ kbd{font:600 12px var(--mono);padding:1px 5px;border:1px solid var(--rule);borde
 .seg.small,.seg.big{width:44px;min-width:44px;padding:8px 0;font-weight:600}
 .seg.small{font-size:12px}
 .seg.big{font-size:15px}
-.sheet{background:#fff;color:#000;overflow-x:auto}
+.sheet{--sheet-ink:#111;--sheet-mut:#5c5c5c;--sheet-line:#c4c4c4;background:#fff;color:#000;overflow-x:auto}
+.sheet :is(.bar-no,.time-sig,.tempo-mark,.chord-label,.section-label,.lyric){font-family:var(--ui);fill:var(--sheet-ink)}
+.chord-label{font-size:12px;font-weight:700}
+.section-label,.tempo-mark{font-size:11px;font-weight:700}
+.sheet .bar-no{font-size:9px;fill:var(--sheet-mut)}
+.time-sig{font-weight:800;text-anchor:middle}
+.sheet .lyric{font-size:13px;font-style:italic;fill:var(--sheet-mut)}
 [data-theme=dark] .sheet{filter:invert(.94) hue-rotate(180deg)}
 .system{border-radius:6px;transition:background .2s;margin-bottom:12px}
 .system.cur{background:var(--cur)}

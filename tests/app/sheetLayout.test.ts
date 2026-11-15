@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { barsPerLine, nextZoom } from '../../src/app/sheetLayout';
+import { barsPerLine, nextZoom, timeSignatureDigitHeight } from '../../src/app/sheetLayout';
 
 describe('bars per line', () => {
   it('fits wider bars when notation is shown', () => {
@@ -33,5 +33,16 @@ describe('next zoom', () => {
     expect(nextZoom(0.4, 'out')).toBe(0.6);
     expect(nextZoom(2, 'in')).toBe(1.8);
     expect(nextZoom(2, 'out')).toBe(1.9);
+  });
+});
+
+describe('time signature digit height', () => {
+  it('fills half the staff', () => {
+    expect(timeSignatureDigitHeight(4, 13)).toBe(19.5);
+    expect(timeSignatureDigitHeight(5, 13)).toBe(26);
+  });
+  it('stops at 2.2 string spaces on taller staffs', () => {
+    expect(timeSignatureDigitHeight(6, 13)).toBeCloseTo(28.6);
+    expect(timeSignatureDigitHeight(6, 10)).toBeCloseTo(22);
   });
 });

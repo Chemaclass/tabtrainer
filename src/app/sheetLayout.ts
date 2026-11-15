@@ -7,3 +7,7 @@ export function barsPerLine(width: number, zoom: number, notation: boolean) {
 export function nextZoom(zoom: number, step: ZoomStep) {
   return step === 'in' ? Math.min(1.8, +(zoom + 0.1).toFixed(2)) : Math.max(0.6, +(zoom - 0.1).toFixed(2));
 }
+
+export function timeSignatureDigitHeight(strings: number, stringSpace: number) {
+  return Math.min(((strings - 1) * stringSpace) / 2, 2.2 * stringSpace);
+}
