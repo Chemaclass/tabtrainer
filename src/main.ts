@@ -102,7 +102,7 @@ const speed = speedControls(player);
 const speedPractice = speedPracticePanel(player, () => passage.snapshot().repeat, speed.show);
 const timing = timingPanel(player);
 const restart = () => { passagePlayback.stop(); passages.show(); player.play(); };
-const deck = thumbDeck(player, () => passage.snapshot(), { nudgeSpeed: speed.nudge, toggleLoop: () => { passage.toggleRepeat(); passages.apply(); }, restart });
+const deck = thumbDeck(player, passage, { nudgeSpeed: speed.nudge, toggleLoop: () => { passage.toggleRepeat(); passages.apply(); }, restart });
 player.onSpeedPractice(deck.show);
 const passages = passageView(player, passage, passagePlayback, openSong, score, () => { speedPractice.show(); deck.show(); });
 const awake = screenWakeLock();

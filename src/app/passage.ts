@@ -41,6 +41,13 @@ export class Passage {
   endAtSelection() { if (this.selected) this.endAt(this.selected); }
   selectStart() { this.selected = this.first; }
   includes(bar: number) { return bar >= this.first && bar <= this.last; }
+  label() {
+    const range = this.range();
+    if (!range) return null;
+    const [first, last] = range;
+    if (first === last) return this.repeat ? `Loop ${first}` : `Bar ${first}`;
+    return this.repeat ? `Loop ${first}-${last}` : `Bars ${first}-${last}`;
+  }
   range(): [number, number] | null { return this.repeat || this.first > 1 || this.last < this.count ? [this.first, this.last] : null; }
   summary() {
     return `${this.selected ? `Selected bar ${this.selected}. ` : ''}${this.range() ? `Bars ${this.first}-${this.last}, ${this.repeat ? 'repeating' : 'play once'}.` : 'Whole song, play once.'}`;
