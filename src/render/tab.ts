@@ -1,7 +1,7 @@
 import { Barline, Beam, Dot, Formatter, Renderer, StaveNote, Stem, TabNote, TabStave, Tuplet, Voice, type StemmableNote, type TabNotePosition } from 'vexflow';
 import { PPQ, type Bar, type NoteEvent, type Song } from '../core/model';
 import { onsetKey } from '../core/timeline';
-import { timeSignatureDigitHeight } from '../app/sheetLayout';
+import { barWidths, labelRows, lineBreaks, timeSignatureDigitHeight } from '../app/sheetLayout';
 
 export interface RenderOptions { barsPerLine: number; width: number; touchSize: number }
 
@@ -53,13 +53,22 @@ export function renderSong(host: HTMLElement, song: Song, opt: RenderOptions): v
   const { tuning } = song.meta.instrument;
   let beat = 0; const barStart: Record<number, number> = {};
   for (const b of song.bars) { barStart[b.index] = beat; beat += (b.beats * 4) / b.beatValue; }
-  for (let i = 0; i < song.bars.length; i += opt.barsPerLine) {
-    const group = song.bars.slice(i, i + opt.barsPerLine);
+  const c: Ctx = { tuning, nStr: tuning.length, tempo: song.meta.tempo, opt, barStart };
+  const changes = song.bars.map((bar, i) => timeSignatureChanges(bar, song.bars[i - 1]));
+  const room = noteStartOffset(c);
+  const mins = song.bars.map((bar, i) => barMinWidth(bar, barNotes(bar, c).minWidth, changes[i], room, c));
+  let i = 0;
+  for (const count of lineBreaks(mins, sheetWidth(opt) - 12, opt.barsPerLine)) {
+    const group = song.bars.slice(i, i + count);
     const sys = document.createElement('div');
     sys.className = 'system'; sys.dataset.first = String(group[0].index); sys.dataset.last = String(group[group.length - 1].index);
     host.appendChild(sys);
-    try { drawSystem(sys, group, song.bars[i - 1], { tuning, nStr: tuning.length, tempo: song.meta.tempo, opt, barStart }); }
+    try {
+      const rows = drawSystem(sys, group, song.bars[i - 1], c, 1);
+      if (rows > 1) { sys.innerHTML = ''; drawSystem(sys, group, song.bars[i - 1], c, rows); }
+    }
     catch (e) { sys.textContent = `Bars ${group[0].index} to ${group[group.length - 1].index} could not be drawn: ${(e as Error).message}`; sys.classList.add('error'); }
+    i += count;
   }
 }
 
@@ -69,7 +78,7 @@ const SHEET_MUT = '#5c5c5c', SHEET_LINE = '#c4c4c4';
 const SVG_NS = 'http://www.w3.org/2000/svg';
 const DIGIT_CAP_HEIGHT = 0.73, DIGIT_WIDTH = 0.62;
 const ROW = { barNo: 0.4 * STRING_SPACE, label: 1.4 * STRING_SPACE, section: 2.8 * STRING_SPACE };
-const LOOP_MARK_HEIGHT = 3;
+const LOOP_MARK_HEIGHT = 3, LABEL_ROW = 1.1 * STRING_SPACE, LABEL_GAP = 6, NOTE_ROOM = 1.15, FORMAT_PAD = 12;
 
 function svgRect(className: string, x: number, y: number, width: number, height: number): SVGRectElement {
   const el = document.createElementNS(SVG_NS, 'rect');
@@ -85,10 +94,10 @@ function svgText(svg: SVGSVGElement, className: string, x: number, y: number, te
   return el;
 }
 
-function tabLineTop(bars: Bar[], firstSystem: boolean): number {
+function tabLineTop(bars: Bar[], firstSystem: boolean, lift: number): number {
   const [row, size] = firstSystem || bars.some(b => b.section || b.tempo !== undefined) ? [ROW.section, 11]
     : bars.some(b => b.events.some(e => e.chord || e.text)) ? [ROW.label, 12] : [ROW.barNo, 9];
-  return Math.round(row + size * DIGIT_CAP_HEIGHT + STRING_SPACE / 2);
+  return Math.round(row + size * DIGIT_CAP_HEIGHT + STRING_SPACE / 2 + lift);
 }
 
 const timeSignatureFontSize = (nStr: number) => 0.85 * timeSignatureDigitHeight(nStr, STRING_SPACE) / DIGIT_CAP_HEIGHT;
@@ -110,23 +119,74 @@ function drawTempo(svg: SVGSVGElement, section: SVGTextElement | null, x: number
   section.append(mark);
 }
 
-function drawSystem(div: HTMLDivElement, bars: Bar[], prev: Bar | undefined, c: Ctx) {
-  const W = Math.max(240, c.opt.width);
-  const top = tabLineTop(bars, !prev);
+interface BarNotes {
+  tn: TabTickable[]; targets: { note: TabTickable; event: NoteEvent }[]; labels: [TabTickable, NoteEvent][]; lyricAt: [TabTickable, string][];
+  voice: Voice; beams: Beam[]; tups: Tuplet[]; formatter: Formatter; minWidth: number;
+}
+
+function barNotes(bar: Bar, c: Ctx): BarNotes {
+  const tn: TabTickable[] = [];
+  const targets: { note: TabTickable; event: NoteEvent }[] = [];
+  const trip: TabTickable[][] = [];
+  let g: TabTickable[] = [];
+  const labels: [TabTickable, NoteEvent][] = [];
+  const lyricAt: [TabTickable, string][] = [];
+  for (const ev of bar.events) {
+    pieces(ev).forEach(([val, dots, isT], pi) => {
+      const sorted = [...ev.notes].sort((a, b) => (c.tuning[a.string - 1] + a.fret) - (c.tuning[b.string - 1] + b.fret));
+      const t = sorted.length
+        ? tabNote(sorted.map(n => ({ str: n.string, fret: (pi > 0 || n.tie) ? `(${n.fret})` : String(n.fret) })), val, dots)
+        : tabRest(val, dots, c.nStr);
+      if (dots) Dot.buildAndAttach([t]);
+      if (isT) { g.push(t); if (g.length === 3) { trip.push(g); g = []; } }
+      else if (g.length) { trip.push(g); g = []; }
+      if (pi === 0 && (ev.chord || ev.text)) labels.push([t, ev]);
+      if (pi === 0 && ev.lyric) lyricAt.push([t, ev.lyric]);
+      tn.push(t); targets.push({ note: t, event: ev });
+    });
+  }
+  if (g.length) trip.push(g);
+  const voice = new Voice({ num_beats: bar.beats, beat_value: bar.beatValue }).setMode(Voice.Mode.SOFT).addTickables(tn);
+  const beams = beamsFor(tn, trip, bar);
+  const tups = trip.map(grp => new Tuplet(grp, { num_notes: 3, notes_occupied: 2, location: Tuplet.LOCATION_BOTTOM, bracketed: grp.some(n => !n.hasBeam()) }));
+  tn.forEach(n => { if (n instanceof StaveNote) centreRest(n, c.nStr); });
+  const formatter = new Formatter().joinVoices([voice]);
+  return { tn, targets, labels, lyricAt, voice, beams, tups, formatter, minWidth: formatter.preCalculateMinTotalWidth([voice]) };
+}
+
+const sheetWidth = (opt: RenderOptions) => Math.max(240, opt.width);
+const tabOptionsFor = (c: Ctx) => ({ num_lines: c.nStr, space_above_staff_ln: 0, fill_style: SHEET_LINE });
+const noteStartOffset = (c: Ctx) => new TabStave(0, 0, 100, tabOptionsFor(c)).getNoteStartX();
+const timeSignatureChanges = (bar: Bar, prev: Bar | undefined) => !prev || prev.beats !== bar.beats || prev.beatValue !== bar.beatValue;
+const barMinWidth = (bar: Bar, notesWidth: number, tsChange: boolean, noteStart: number, c: Ctx) =>
+  notesWidth * NOTE_ROOM + noteStart + FORMAT_PAD + (tsChange ? timeSignatureWidth(bar, c.nStr) + STRING_SPACE / 2 : 0);
+
+function labelWidth(el: SVGTextElement): number {
+  try { const w = el.getComputedTextLength(); if (w > 0) return w; } catch { /* not laid out */ }
+  return (el.textContent ?? '').length * 7;
+}
+
+function drawSystem(div: HTMLDivElement, bars: Bar[], prev: Bar | undefined, c: Ctx, rows: number): number {
+  const W = sheetWidth(c.opt);
+  const lift = (rows - 1) * LABEL_ROW;
+  const top = tabLineTop(bars, !prev, lift);
   const H = top + 40 + c.nStr * 13 + 30; // provisional; resized to the real tab bottom below
   const r = new Renderer(div, Renderer.Backends.SVG); r.resize(W, H); const ctx = r.getContext();
   const svg = div.querySelector('svg')!;
-  const weight = bars.map(b => 3 + b.events.length);
-  const tw = weight.reduce((a, b) => a + b, 0);
+  const tabOptions = tabOptionsFor(c);
+  const noteStart = noteStartOffset(c);
+  const tsChanges = bars.map((bar, bi) => timeSignatureChanges(bar, bi === 0 ? prev : bars[bi - 1]));
+  const notes = bars.map(bar => barNotes(bar, c));
+  const mins = notes.map((n, bi) => barMinWidth(bars[bi], n.minWidth, tsChanges[bi], noteStart, c));
   let x = 6; const avail = W - 12; let bottom = 0;
+  const widths = barWidths(avail, bars.map(b => 3 + b.events.length), mins);
   const lyrics: [number, string][] = [];
+  const allLabels: SVGTextElement[] = [];
   const hits: SVGRectElement[] = [], loopMarks: SVGRectElement[] = [];
-  const tabOptions = { num_lines: c.nStr, space_above_staff_ln: 0, fill_style: SHEET_LINE };
   bars.forEach((bar, bi) => {
-    const prevBar = bi === 0 ? prev : bars[bi - 1];
-    const bw = (avail * weight[bi]) / tw;
+    const bw = widths[bi];
     const tab = new TabStave(x, top, bw, tabOptions);
-    const tsChange = !prevBar || prevBar.beats !== bar.beats || prevBar.beatValue !== bar.beatValue;
+    const tsChange = tsChanges[bi];
     tab.getModifiers().forEach(m => { if (m instanceof Barline) m.setStyle({ fillStyle: SHEET_MUT }); });
     tab.setContext(ctx);
     const timeSigLeft = tab.getNoteStartX();
@@ -135,37 +195,13 @@ function drawSystem(div: HTMLDivElement, bars: Bar[], prev: Bar | undefined, c: 
     tab.setNoteStartX(nsx);
     tab.draw(); bottom = Math.max(bottom, tab.getYForLine(c.nStr - 1));
     if (tsChange) drawTimeSignature(svg, tab, timeSigLeft, bar, c.nStr);
-    const tn: TabTickable[] = [];
-    const targets: { note: TabTickable; event: NoteEvent }[] = [];
-    const trip: TabTickable[][] = [];
-    let g: TabTickable[] = [];
-    const labels: [TabTickable, NoteEvent][] = [];
-    const lyricAt: [TabTickable, string][] = [];
-    for (const ev of bar.events) {
-      pieces(ev).forEach(([val, dots, isT], pi) => {
-        const sorted = [...ev.notes].sort((a, b) => (c.tuning[a.string - 1] + a.fret) - (c.tuning[b.string - 1] + b.fret));
-        const t = sorted.length
-          ? tabNote(sorted.map(n => ({ str: n.string, fret: (pi > 0 || n.tie) ? `(${n.fret})` : String(n.fret) })), val, dots)
-          : tabRest(val, dots, c.nStr);
-        if (dots) Dot.buildAndAttach([t]);
-        if (isT) { g.push(t); if (g.length === 3) { trip.push(g); g = []; } }
-        else if (g.length) { trip.push(g); g = []; }
-        if (pi === 0 && (ev.chord || ev.text)) labels.push([t, ev]);
-        if (pi === 0 && ev.lyric) lyricAt.push([t, ev.lyric]);
-        tn.push(t); targets.push({ note: t, event: ev });
-      });
-    }
-    if (g.length) trip.push(g);
-    const tv = new Voice({ num_beats: bar.beats, beat_value: bar.beatValue }).setMode(Voice.Mode.SOFT).addTickables(tn);
-    const beams = beamsFor(tn, trip, bar);
-    const tups = trip.map(grp => new Tuplet(grp, { num_notes: 3, notes_occupied: 2, location: Tuplet.LOCATION_BOTTOM, bracketed: grp.some(n => !n.hasBeam()) }));
-    tn.forEach(n => { if (n instanceof StaveNote) centreRest(n, c.nStr); });
-    new Formatter().joinVoices([tv]).format([tv], bw - (nsx - x) - 12);
+    const { tn, targets, labels, lyricAt, voice: tv, beams, tups, formatter } = notes[bi];
+    formatter.format([tv], bw - (nsx - x) - FORMAT_PAD);
     tv.draw(ctx, tab);
     beams.forEach(b => b.setContext(ctx).draw()); tups.forEach(t => t.setContext(ctx).draw());
     bottom = Math.max(bottom, rhythmBottom(tn, tups));
-    labels.forEach(([n, ev]) => svgText(svg, 'chord-label', n.getAbsoluteX() - 2, top - ROW.label, [ev.chord, ev.text].filter(Boolean).join('  ')));
-    const sectionY = top - ROW.section;
+    labels.forEach(([n, ev]) => allLabels.push(svgText(svg, 'chord-label', n.getAbsoluteX() - 2, top - ROW.label, [ev.chord, ev.text].filter(Boolean).join('  '))));
+    const sectionY = top - ROW.section - lift;
     const section = bar.section ? svgText(svg, 'section-label', x + 4, sectionY, bar.section.toUpperCase()) : null;
     svgText(svg, 'bar-no', x + 2, top - ROW.barNo, String(bar.index)).dataset.bar = String(bar.index);
     const loopMark = svgRect('loop-mark', x, 0, bw, LOOP_MARK_HEIGHT);
@@ -210,4 +246,13 @@ function drawSystem(div: HTMLDivElement, bars: Bar[], prev: Bar | undefined, c: 
   svg.prepend(...loopMarks);
   svg.append(...hits);
   r.resize(W, end);
+  const spans = allLabels.map(el => {
+    const width = labelWidth(el);
+    const left = Math.max(2, Math.min(Number(el.getAttribute('x')), W - 2 - width));
+    el.setAttribute('x', String(left));
+    return { left, width };
+  });
+  const placed = labelRows(spans, LABEL_GAP);
+  placed.forEach((row, i) => allLabels[i].setAttribute('y', String(top - ROW.label - row * LABEL_ROW)));
+  return Math.max(1, ...placed.map(row => row + 1));
 }

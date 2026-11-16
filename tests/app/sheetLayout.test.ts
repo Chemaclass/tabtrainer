@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { barsPerLine, nextZoom, timeSignatureDigitHeight } from '../../src/app/sheetLayout';
+import { barWidths, barsPerLine, labelRows, lineBreaks, nextZoom, timeSignatureDigitHeight } from '../../src/app/sheetLayout';
 
 describe('bars per line', () => {
   it('fits a bar for every 240 pixels', () => {
@@ -68,5 +68,38 @@ describe('time signature digit height', () => {
   it('stops at 2.2 string spaces on taller staffs', () => {
     expect(timeSignatureDigitHeight(6, 13)).toBeCloseTo(28.6);
     expect(timeSignatureDigitHeight(6, 10)).toBeCloseTo(22);
+  });
+});
+
+describe('bar widths', () => {
+  it('shares the line by weight when every bar fits', () => {
+    expect(barWidths(400, [1, 3], [50, 50])).toEqual([100, 300]);
+  });
+  it('gives a dense bar the width its notes need', () => {
+    expect(barWidths(400, [1, 1, 2], [50, 200, 50])).toEqual([200 / 3, 200, 400 / 3]);
+  });
+  it('scales the needed widths down when the line is too short', () => {
+    expect(barWidths(300, [1, 1], [200, 400])).toEqual([100, 200]);
+  });
+});
+
+describe('label rows', () => {
+  it('keeps labels that fit on the first row', () => {
+    expect(labelRows([{ left: 0, width: 40 }, { left: 50, width: 40 }], 6)).toEqual([0, 0]);
+  });
+  it('lifts a label that would touch the one before it', () => {
+    expect(labelRows([{ left: 0, width: 80 }, { left: 50, width: 40 }, { left: 100, width: 40 }], 6)).toEqual([0, 1, 0]);
+  });
+});
+
+describe('line breaks', () => {
+  it('fills each line up to the bar limit', () => {
+    expect(lineBreaks([10, 10, 10, 10, 10], 100, 2)).toEqual([2, 2, 1]);
+  });
+  it('starts a new line before a bar that would not fit', () => {
+    expect(lineBreaks([30, 30, 80, 20], 100, 4)).toEqual([2, 2]);
+  });
+  it('keeps a bar wider than the line on a line of its own', () => {
+    expect(lineBreaks([150, 20], 100, 4)).toEqual([1, 1]);
   });
 });
