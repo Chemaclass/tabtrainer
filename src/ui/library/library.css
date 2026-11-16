@@ -336,6 +336,11 @@ body:not(.library-view) .family-switch {
   text-align: left;
   background: var(--page);
 }
+a.catalogue-row {
+  font: 500 var(--text-s)/20px var(--ui);
+  color: var(--ink);
+  text-decoration: none;
+}
 .catalogue-row:hover {
   background: var(--wash);
 }

@@ -194,8 +194,8 @@ function showTitle() {
   const path = screen === 'practice' ? bundledPath(workspace.picked) : null;
   if (onLanding()) view.showTitle(SITE_TITLE, site);
   else if (screen === 'library') view.showTitle(libraryPage(kind, family).title, libraryAddress(site, kind, family));
-  else if (screen === 'jam') view.showTitle(jamPageTitle(jam.groove.title), isMineGroove(jam.slug) ? site : jamAddress(site, jam.slug));
-  else view.showTitle(openSong.song ? songPageTitle(openSong.song.meta.title) : SITE_TITLE, path ? songAddress(site, path) : site);
+  else if (screen === 'jam') view.showTitle(jamPageTitle(jam.groove.title, jam.groove.genre), isMineGroove(jam.slug) ? site : jamAddress(site, jam.slug));
+  else view.showTitle(openSong.song ? songPageTitle(openSong.song.meta.title, familyOf(openSong.song.meta.instrument), openSong.song.meta.artist) : SITE_TITLE, path ? songAddress(site, path) : site);
 }
 function setScreen(next: Screen, focus = false) {
   if (next !== 'practice') { player.stop(); scrolling.stopContinuous(); }

@@ -2,8 +2,19 @@ import type { Family } from '../core/instruments';
 import type { LibraryKind } from './catalogue';
 
 export const SITE_TITLE = 'TabTrainer: bass and guitar tab player and tab editor';
-export const songPageTitle = (title: string) => `${title} · TabTrainer`;
-export const jamPageTitle = (title: string) => `${title} · Jam · TabTrainer`;
+const UNCREDITED = new Set(['tabtrainer', 'traditional']);
+
+// The artist a search would name: no public domain note, and none for the app's own exercises or folk tunes.
+export function creditedArtist(artist: string | undefined): string {
+  const name = (artist ?? '').replace(/\s*\(public domain\)\s*$/i, '').trim();
+  return UNCREDITED.has(name.toLowerCase()) ? '' : name;
+}
+
+export function songPageTitle(title: string, family: Family, artist?: string): string {
+  const by = creditedArtist(artist);
+  return `${title}${by ? ` by ${by}` : ''}, ${family} tab with rhythm · TabTrainer`;
+}
+export const jamPageTitle = (title: string, genre: string) => `${title}, ${genre} backing groove · TabTrainer`;
 
 export interface LibraryPage { title: string; description: string }
 const FOLLOW = 'Slow each one down, loop the hard bars, and follow each note as it plays.';

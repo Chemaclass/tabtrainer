@@ -21,7 +21,7 @@ export function writeStaticFiles({ outDir, site, atHostRoot }: StaticSite) {
     const file = join(outDir, songSlug(path), 'index.html');
     mkdirSync(dirname(file), { recursive: true });
     const text = readFileSync(join('src', path), 'utf8'), meta = songMeta(path, text);
-    writeFileSync(file, withPageMeta(app, songPageMeta(site, path, meta)));
+    writeFileSync(file, withPageMeta(app, songPageMeta(site, path, meta), meta.title));
     writeCard(dirname(file), songCard(parseSong(text).song, meta.family));
   }
   const grooves = readdirSync('src/grooves').filter(f => f.endsWith('.txt')).sort();

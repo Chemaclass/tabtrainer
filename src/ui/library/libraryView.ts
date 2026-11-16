@@ -1,4 +1,6 @@
-import { byId } from '../dom';
+import { byId, isPlainClick } from '../dom';
+import { bundledPath } from '../../app/songRef';
+import { songAddress } from '../../app/songLink';
 import { setSelectValue } from '../shell/dropdown';
 import { catalogueMatches, categoryCounts, difficultyLabel, isProgressFilter, progressCounts, type CatalogueEntry, type LibraryKind, type ProgressFilter } from '../../app/catalogue';
 import { songProgress, type SongProgress, type SongRecord } from '../../app/practiceLog';
@@ -92,7 +94,10 @@ export function libraryView(onPick: (value: string) => void, onContinue: (plan: 
     return lane;
   }
   function row(entry: CatalogueEntry) {
-    const li = document.createElement('li'), button = document.createElement('button'); button.className = 'catalogue-row'; button.type = 'button'; button.dataset.value = entry.value;
+    const li = document.createElement('li'), path = bundledPath(entry.value);
+    const button = document.createElement(path === null ? 'button' : 'a'); button.className = 'catalogue-row'; button.dataset.value = entry.value;
+    if (button instanceof HTMLAnchorElement && path !== null) button.href = songAddress(import.meta.env.BASE_URL, path);
+    else button.setAttribute('type', 'button');
     const progress = rowProgress(practice[entry.value] ?? null, now);
     button.append(status(entry, progress.progress));
     const copy = text('span', '', 'catalogue-copy'); copy.append(text('strong', entry.title));
@@ -106,7 +111,7 @@ export function libraryView(onPick: (value: string) => void, onContinue: (plan: 
     button.append(text('span', levelLabel(entry), 'catalogue-level'), share ? text('span', shareLabel(share), share.ready ? 'share-state ready' : 'share-state') : progressLane(entry, progress));
     if (versions) copy.append(text('span', versions, 'catalogue-arrangements'));
     const arrow = text('span', '→', 'catalogue-arrow'); arrow.setAttribute('aria-hidden', 'true'); button.append(arrow);
-    button.onclick = () => onPick(entry.value); li.append(button);
+    button.onclick = event => { if (path !== null && !isPlainClick(event)) return; event.preventDefault(); onPick(entry.value); }; li.append(button);
     if (share) {
       const action = text('button', share.ready ? 'Add to TabTrainer' : 'See what is left', share.ready ? 'share-action ready' : 'share-action toggle');
       action.setAttribute('type', 'button'); action.setAttribute('aria-label', `${action.textContent}: ${entry.title}`);

@@ -26,3 +26,8 @@ export function textSpan(className: string, text: string): HTMLSpanElement {
 }
 
 export const fillRange = (range: HTMLInputElement) => range.style.setProperty('--fill', `${((+range.value - +range.min) / (+range.max - +range.min)) * 100}%`);
+
+export function isPlainClick(event: MouseEvent): boolean {
+  const modified = event.metaKey || event.ctrlKey || event.shiftKey || event.altKey;
+  return !modified && event.button === 0;
+}

@@ -47,7 +47,7 @@ describe('build output', () => {
   it('writes each song and groove page as the app with its own head, and a 404 page', () => {
     outDir = mkdtempSync(join(tmpdir(), 'tabtrainer-build-'));
     mkdirSync(join(outDir, 'assets'));
-    writeFileSync(join(outDir, 'index.html'), '<head><!-- page meta --><title>App</title><!-- /page meta --></head><script src="/tabtrainer/assets/index-abc.js"></script>');
+    writeFileSync(join(outDir, 'index.html'), '<head><!-- page meta --><title>App</title><!-- /page meta --></head><h1 id="title" tabindex="-1"></h1><script src="/tabtrainer/assets/index-abc.js"></script>');
     writeFileSync(join(outDir, 'assets/index-abc.js'), 'run()');
     writeStaticFiles({ outDir, site: 'https://example.com/tabtrainer/', atHostRoot: false });
     const urls = listedUrls(readFileSync(join(outDir, 'sw.js'), 'utf8'));
@@ -55,7 +55,8 @@ describe('build output', () => {
     expect(urls).not.toContain('sitemap.xml');
     expect(readFileSync(join(outDir, '404.html'), 'utf8')).toBe(readFileSync(join(outDir, 'index.html'), 'utf8'));
     const orion = readFileSync(join(outDir, 'bass/orion/index.html'), 'utf8');
-    expect(orion).toContain('<title>Orion (bass solo), bass tab with rhythm · TabTrainer</title>');
+    expect(orion).toContain('<title>Orion (bass solo) by Metallica, bass tab with rhythm · TabTrainer</title>');
+    expect(orion).toContain('<h1 id="title" tabindex="-1">Orion (bass solo)</h1>');
     expect(orion).toContain('<script src="/tabtrainer/assets/index-abc.js"></script>');
     expect(orion).not.toContain('<title>App</title>');
     expect(readFileSync(join(outDir, 'library/guitar/mine/index.html'), 'utf8')).toContain('<title>My guitar songs · TabTrainer</title>');

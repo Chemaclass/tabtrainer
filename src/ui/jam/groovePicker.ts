@@ -1,15 +1,10 @@
 import { addressOf } from '../../app/address';
 import type { Jam, JamGroove } from '../../app/jam';
-import { byId, textSpan } from '../dom';
+import { byId, isPlainClick, textSpan } from '../dom';
 
 interface GrooveOption { slug: string; link: HTMLAnchorElement }
 
 const FOCUS_STEP: Readonly<Record<string, number>> = { ArrowDown: 1, ArrowUp: -1 };
-
-function isPlainClick(event: MouseEvent): boolean {
-  const modified = event.metaKey || event.ctrlKey || event.shiftKey || event.altKey;
-  return !modified && event.button === 0;
-}
 
 function grooveHref(slug: string): string {
   return addressOf(new URLSearchParams({ view: 'jam', groove: slug }).toString(), import.meta.env.BASE_URL);
