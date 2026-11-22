@@ -57,7 +57,7 @@ test('technique marks draw without a problem', async ({ page }, testInfo) => {
   const phone = testInfo.project.name === 'phone';
   await openFirstExercise(page);
   await page.locator('#editBtn').click();
-  await page.locator('#src').fill('title: Marks\ninstrument: guitar6\ntempo: 90\nkey: C\ntime: 4/4\n\n:q 3.5 x.5 2.4 0.3 | :8 _0.6 _0.6 _(0.6 2.5) _0.6 :q 2.4 h4.4 | p2.4 (0.3 2.2) (h2.3 p0.2) 0.3 |\n');
+  await page.locator('#src').fill('title: Marks\ninstrument: guitar6\ntempo: 90\nkey: C\ntime: 4/4\n\n:q 3.5 x.5 /4.4 \\2.4 | :8 _0.6 _0.6 _(0.6 2.5) _0.6 :q 2.4 h4.4 | p2.4 (0.3 2.2) (h2.3 p0.2) 0.3 |\n');
   if (phone) await page.locator('#scoreTab').click();
   await expect(page.locator('#issues li')).toHaveCount(0);
   await expect(page.locator('.system.error')).toHaveCount(0);
@@ -65,9 +65,9 @@ test('technique marks draw without a problem', async ({ page }, testInfo) => {
   await expect(page.locator('.note:has(path):not(:has(text))')).toHaveCount(1);
   await expect(page.locator('.technique-label.pm')).toHaveText(['P.M.']);
   await expect(page.locator('.technique-label.pm')).toBeVisible();
-  // On a phone the pull-off from bar 2 to bar 3 crosses the system break, so it is drawn as two halves
+  // On a phone the pull-off from bar 2 to bar 3 crosses the system break, so it is drawn as two halves. Bar 1 adds a slide into a note and a slide down.
   await expect(page.locator('.system')).toHaveCount(phone ? 2 : 1);
-  await expect(page.locator('.vf-join')).toHaveCount(phone ? 5 : 4);
+  await expect(page.locator('.vf-join')).toHaveCount(phone ? 7 : 6);
   // A chord with a hammer-on and a pull-off shows both letters once, side by side
   await expect(page.locator('.technique-label:not(.pm)')).toHaveText(['H', 'P', 'H P']);
   await expect(page.locator('.technique-label:not(.pm)').first()).toBeVisible();

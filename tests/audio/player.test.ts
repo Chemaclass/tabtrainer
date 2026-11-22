@@ -600,3 +600,20 @@ describe('hammer-ons and pull-offs', () => {
     expect(looped).not.toContain(0.2);
   });
 });
+
+describe('slides', () => {
+  afterEach(() => { vi.useRealTimers(); vi.unstubAllGlobals(); });
+  it('glide over beats, so a slower speed slows the glide down', () => {
+    const glideEnd = (speed: number) => {
+      const { sources, advance } = fakeAudio();
+      const p = new Player();
+      p.load(buildTimeline(parseSong('instrument: guitar6\ntempo: 60\n:w /7.3 |').song), 60);
+      p.setSpeed(speed); p.play(); advance(0.2);
+      const [start, end] = [sources[0].start.mock.calls[0][0] as number, sources[0].detune.linearRampToValueAtTime.mock.calls[0][1] as number];
+      vi.useRealTimers(); vi.unstubAllGlobals();
+      return end - start;
+    };
+    expect(glideEnd(1)).toBeCloseTo(0.25);
+    expect(glideEnd(0.5)).toBeCloseTo(0.5);
+  });
+});

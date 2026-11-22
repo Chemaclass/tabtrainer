@@ -1,11 +1,13 @@
 import { INSTRUMENTS, customInstrument, type Instrument } from './instruments';
 import { LEVELS, PPQ, barTicks, type Approach, type Bar, type Level, type Note, type NoteEvent, type Song, type Version } from './model';
-import { APPROACH_MARK, approachOf, sourceOf } from './technique';
+import { APPROACH_MARK, OPPOSITE, RISES, approachOf, isSlide, sourceOf } from './technique';
 import { NO_TOKEN, hinted, spanOf, valueSpan, type IssueSpan, type ParseIssue, type SongIssueCode } from './parseIssue';
 
 export interface ParseResult { song: Song; issues: ParseIssue[] }
 
 const VALUES: Record<string, number> = { w: 4 * PPQ, h: 2 * PPQ, q: PPQ, '8': PPQ / 2, '16': PPQ / 4, '32': PPQ / 8 };
+const WRONG_WAY: Record<Approach, string> = { hammer: 'A hammer-on goes to a higher fret', pull: 'A pull-off goes to a lower fret', 'slide-up': '"/" slides up', 'slide-down': '"\\" slides down' };
+const FIX_NAME: Record<Approach, string> = { hammer: 'for a hammer-on', pull: 'for a pull-off', 'slide-up': 'to slide up', 'slide-down': 'to slide down' };
 const HEADER = /^\s*(title|artist|about|level|listen|instrument|tuning|tempo|key|time|clef)\s*:\s*(.*?)\s*$/i;
 
 interface Tok { text: string; line: number; col: number }
@@ -138,23 +140,28 @@ export function parseSong(src: string): ParseResult {
     st.cur = null; st.startAt = null;
   };
   const parseNote = (s: string, at: IssueSpan): Note | null => {
-    const r = /^([~hp]?)(\d{1,2}|[xX])\.(\d{1,2})$/.exec(s);
+    const r = /^([~hp/\\]?)(\d{1,2}|[xX])\.(\d{1,2})$/.exec(s);
     const dead = /^[xX]$/.test(r?.[2] ?? '');
     if (!r || (dead && r[1])) { report('error', 'note-unreadable', at, hinted(`Can't read "${s}".`, 'Notes are fret.string, e.g. 3.4 (fret 3 on string 4)')); return null; }
     const fret = dead ? 0 : +r[2], string = +r[3];
     if (string < 1 || string > strings) { report('error', 'string-missing', at, `String ${string} doesn't exist on this ${strings}-string instrument`); return null; }
     if (fret > meta.instrument.maxFret) { report('error', 'fret-high', at, `Fret ${fret} is above the instrument's ${meta.instrument.maxFret} frets`); return null; }
     const approach = approachOf(r[1]);
-    const joined = approach && legatoFits(approach, fret, string, s, at) ? { approach } : {};
+    const joined = approach && joinFits(approach, fret, string, s, at) ? { approach } : {};
     return { string, fret, ...(r[1] === '~' ? { tie: true } : {}), ...joined, ...(dead ? { dead: true } : {}) };
   };
-  const legatoFits = (approach: Approach, fret: number, string: number, s: string, at: IssueSpan): boolean => {
+  const joinFits = (approach: Approach, fret: number, string: number, s: string, at: IssueSpan): boolean => {
     const source = sourceOf(bars.at(-1)?.events.at(-1), { string });
     const target = `${fret}.${string}`;
-    if (!source) report('error', 'legato-source', at, hinted(`"${s}" has no note on string ${string} right before it.`, 'A hammer-on or pull-off starts from the note before, on the same string'));
+    const other = OPPOSITE[approach];
+    if (isSlide(approach) && (fret === 0 || source?.fret === 0)) report('error', 'slide-open', at, hinted(`A slide can't start or end on an open string.`, 'Use h or p with an open string'));
+    else if (!source) {
+      // A slide with nothing before it slides into the note from a few frets away
+      if (isSlide(approach)) return true;
+      report('error', 'legato-source', at, hinted(`"${s}" has no note on string ${string} right before it.`, 'A hammer-on or pull-off starts from the note before, on the same string'));
+    }
     else if (source.fret === fret) report('error', 'legato-direction', at, hinted(`"${s}" stays on fret ${fret}.`, `Use ~${target} to hold the note`));
-    else if (approach === 'hammer' && fret < source.fret) report('error', 'legato-direction', at, hinted(`A hammer-on goes to a higher fret, but "${s}" comes from fret ${source.fret}.`, `Use ${APPROACH_MARK.pull}${target} for a pull-off`));
-    else if (approach === 'pull' && fret > source.fret) report('error', 'legato-direction', at, hinted(`A pull-off goes to a lower fret, but "${s}" comes from fret ${source.fret}.`, `Use ${APPROACH_MARK.hammer}${target} for a hammer-on`));
+    else if (RISES[approach] !== fret > source.fret) report('error', 'legato-direction', at, hinted(`${WRONG_WAY[approach]}, but "${s}" comes from fret ${source.fret}.`, `Use ${APPROACH_MARK[other]}${target} ${FIX_NAME[other]}`));
     else return true;
     return false;
   };

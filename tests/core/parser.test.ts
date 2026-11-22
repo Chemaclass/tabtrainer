@@ -274,6 +274,45 @@ describe('hammer-ons and pull-offs', () => {
   });
 });
 
+describe('slides', () => {
+  const guitar = (body: string) => parseSong(`instrument: guitar6\n${body}`);
+  it('joins two notes on a string, up or down, across a bar line and inside a chord', () => {
+    const { song, issues } = guitar(':q 5.3 /7.3 \\5.3 7.3 | \\5.3 (/7.3 5.2) :h /9.3 |');
+    expect(issues).toEqual([]);
+    expect(song.bars.flatMap(b => b.events.map(e => e.notes[0].approach))).toEqual([undefined, 'slide-up', 'slide-down', undefined, 'slide-down', 'slide-up', 'slide-up']);
+    expect(song.bars[1].events[1].notes[1]).toEqual({ string: 2, fret: 5 });
+  });
+  it('slides into a note with nothing before it', () => {
+    const { song, issues } = guitar(':q /7.3 r \\5.2 x.1 |\n:w /3.1 |');
+    expect(issues).toEqual([]);
+    expect(song.bars.map(b => b.events.filter(e => e.notes.length && !e.notes[0].dead).map(e => e.notes[0].approach))).toEqual([['slide-up', 'slide-down'], ['slide-up']]);
+  });
+  it('keeps slides off open strings', () => {
+    const codes = (body: string) => guitar(body).issues.map(i => [i.code, i.hint]);
+    const open = ['slide-open', 'Use h or p with an open string'];
+    expect(codes(':q 0.3 /2.3 2.3 2.3 |')).toEqual([open]);
+    expect(codes(':q 2.3 \\0.3 2.3 2.3 |')).toEqual([open]);
+    expect(codes(':q /0.3 \\0.3 2.3 2.3 |')).toEqual([open, open]);
+  });
+  it('keeps the note and drops a slide that goes the wrong way', () => {
+    const { song, issues } = guitar(':q 7.3 /5.3 \\7.3 /7.3 |');
+    expect(issues.map(i => [i.message, i.hint])).toEqual([
+      ['"/" slides up, but "/5.3" comes from fret 7. Use \\5.3 to slide down', 'Use \\5.3 to slide down'],
+      ['"\\" slides down, but "\\7.3" comes from fret 5. Use /7.3 to slide up', 'Use /7.3 to slide up'],
+      ['"/7.3" stays on fret 7. Use ~7.3 to hold the note', 'Use ~7.3 to hold the note'],
+    ]);
+    expect(song.bars[0].events[1].notes).toEqual([{ string: 3, fret: 5 }]);
+  });
+  it('survives a round trip with its backslash', () => {
+    const { song } = guitar(':8 /7.3 \\5.3 /9.3 _\\7.3 (\\5.3 3.2) /7.3 :q 7.3 | \\5.3 /7.3 :h \\3.3 |');
+    const text = serializeSong(song);
+    expect(text).toContain(':8 /7.3 \\5.3 /9.3 _\\7.3 (\\5.3 3.2) /7.3 :q 7.3 | \\5.3 /7.3 :h \\3.3 |');
+    const again = parseSong(text);
+    expect(again.issues).toEqual([]);
+    expect(again.song.bars.map(b => b.events)).toEqual(song.bars.map(b => b.events));
+  });
+});
+
 describe('issue codes', () => {
   const CASES: Record<SongIssueCode, [string, Partial<ParseIssue>]> = {
     'level-unknown': ['level: brutal\n:w 3.4 |', { line: 1, col: 8, length: 6 }],
@@ -292,6 +331,7 @@ describe('issue codes', () => {
     'palm-mute-place': [':q (_0.4 2.3) 3.4 3.4 3.4 |', { line: 1, col: 5, length: 4 }],
     'legato-source': [':q 3.4 h5.3 3.4 3.4 |', { line: 1, col: 8, length: 4 }],
     'legato-direction': [':q 7.3 h5.3 3.4 3.4 |', { line: 1, col: 8, length: 4 }],
+    'slide-open': [':q 0.3 /5.3 3.4 3.4 |', { line: 1, col: 8, length: 4 }],
     'bar-short': ['title: x\n:q 3.4 5.4 3.3 |', { line: 2, col: 4, length: 11, beats: 3, expected: 4 }],
     'bar-long': [':q 3.4 3.4 3.4 3.4 3.4 |', { line: 1, col: 20, length: 3, beats: 5, expected: 4, hint: '(missing a "|"?)' }],
     'version-duplicate': ['== A\n:w 3.4 |\n== A\n:w 3.4 |', { line: 3, col: 1, length: 4 }],

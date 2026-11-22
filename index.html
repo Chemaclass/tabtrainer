@@ -578,7 +578,7 @@ time: 4/4
 "C" :q 3.3 3.3 :8 5.2 5.2 :q 3.3 |
 (3.3 5.2):h r:h |      # two notes together, then a rest
 [3/4] :8t 3.3 5.3 7.3 :q ~7.3 r |
-:8 5.3 h7.3 p5.3 x.3 _5.3 _5.3 |   # h, p: hammer-on, pull-off; x: dead note; _: palm mute</pre>
+:8 5.3 h7.3 p5.3 /9.3 x.3 _5.3 |   # h, p: hammer-on, pull-off; /: slide; x: dead note; _: palm mute</pre>
     <table>
       <tr><td><code>artist:</code></td><td>who wrote the song, shown as "by ...". Separate several names with commas</td></tr>
       <tr><td><code>about:</code></td><td>one line on what the song trains, shown under the title</td></tr>
@@ -592,6 +592,8 @@ time: 4/4
       <tr><td><code>~5.3</code></td><td>tie: keep the note ringing without picking it again</td></tr>
       <tr><td><code>5.3 h7.3</code></td><td>hammer-on: pick fret 5, then press fret 7 on the same string without picking again</td></tr>
       <tr><td><code>7.3 p5.3</code></td><td>pull-off: pick fret 7, then lift that finger so fret 5 sounds without picking again</td></tr>
+      <tr><td><code>5.3 /7.3</code> <code>7.3 \5.3</code></td><td>slide: pick the first note, then slide the same finger up (<code>/</code>) or down (<code>\</code>) the string to the second without picking again</td></tr>
+      <tr><td><code>/7.3</code> <code>\5.3</code></td><td>slide into the note from two frets lower or higher, and pick it as usual</td></tr>
       <tr><td><code>x.3</code></td><td>dead note on string 3: mute the string with the fretting hand and pick it, for a click with no pitch</td></tr>
       <tr><td><code>_0.6</code> <code>_(0.6 2.5)</code></td><td>palm mute: rest the side of the picking hand on the strings near the bridge, for a short, dark note or chord</td></tr>
       <tr><td><code>"Am7"</code></td><td>chord name above the next note</td></tr>

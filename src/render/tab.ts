@@ -1,7 +1,7 @@
-import { Barline, Beam, Dot, Formatter, Renderer, StaveNote, Stem, TabNote, TabStave, TabTie, Tuplet, Voice, type RenderContext, type StemmableNote, type TabNotePosition } from 'vexflow';
-import { PPQ, type Bar, type Note, type NoteEvent, type Song } from '../core/model';
+import { Barline, Beam, Dot, Formatter, Renderer, StaveNote, Stem, TabNote, TabSlide, TabStave, TabTie, Tuplet, Voice, type RenderContext, type StemmableNote, type TabNotePosition } from 'vexflow';
+import { PPQ, type Approach, type Bar, type Note, type NoteEvent, type Song } from '../core/model';
 import { onsetKey } from '../core/timeline';
-import { eventsInOrder, sourceOf } from '../core/technique';
+import { eventsInOrder, isSlide, sourceOf } from '../core/technique';
 import { barWidths, labelRows, lineBreaks, markRoom, timeSignatureDigitHeight } from '../app/sheetLayout';
 
 export interface RenderOptions { barsPerLine: number; width: number; touchSize: number }
@@ -146,19 +146,31 @@ function drawPalmMutes(svg: SVGSVGElement, targets: Target[], top: number) {
   }
 }
 
-const JOIN_LETTER = { hammer: 'H', pull: 'P' } as const;
-const HALF_JOIN_LETTER_LEFT = 8;
+const JOIN_LETTER: Partial<Record<Approach, string>> = { hammer: 'H', pull: 'P' };
+const HALF_JOIN_LETTER_LEFT = 8, SLIDE_IN_WIDTH = 9, SLIDE_RISE = 3;
 
-/** Arcs for hammer-ons and pull-offs. One that crosses a system break is drawn as two halves, and only the half that ends on the note gets the letters. A chord shows each of its letters once. */
+// TabSlide always prints "sl." in the row the app keeps for chord names
+class SilentSlide extends TabSlide { renderText() {} }
+
+const slideDirection = (approach: Approach) => approach === 'slide-up' ? TabSlide.SLIDE_UP : TabSlide.SLIDE_DOWN;
+
+/** Arcs for hammer-ons and pull-offs, lines for slides. A join that crosses a system break is drawn as two halves, and only the half that ends on the note gets the letters. A chord shows each of its letters once. A slide with no note before it gets a short line into the note. */
 function drawJoins(ctx: RenderContext, svg: SVGSVGElement, targets: Target[], next: Bar | undefined, c: Ctx, top: number) {
   const first = new Map<NoteEvent, Target>(), last = new Map<NoteEvent, Target>();
   for (const target of targets) { if (!first.has(target.event)) first.set(target.event, target); last.set(target.event, target); }
-  const arc = (from: Target | undefined, fromIndex: number, to: Target | undefined, toIndex: number) => {
-    ctx.openGroup('join');
-    new TabTie({
+  const arc = (approach: Approach, from: Target | undefined, fromIndex: number, to: Target | undefined, toIndex: number) => {
+    const notes = {
       first_note: from?.note ?? null, last_note: to?.note ?? null,
       first_indices: [from ? fromIndex : toIndex], last_indices: [to ? toIndex : fromIndex],
-    }).setContext(ctx).draw();
+    };
+    ctx.openGroup('join');
+    (isSlide(approach) ? new SilentSlide(notes, slideDirection(approach)) : new TabTie(notes)).setContext(ctx).draw();
+    ctx.closeGroup();
+  };
+  const slideIn = (approach: Approach, to: Target, index: number) => {
+    const x = to.note.getTieLeftX(), y = to.note.getYs()[index], rise = SLIDE_RISE * slideDirection(approach);
+    ctx.openGroup('join');
+    ctx.beginPath(); ctx.moveTo(x - SLIDE_IN_WIDTH, y + rise); ctx.lineTo(x, y - rise); ctx.stroke();
     ctx.closeGroup();
   };
   for (const [event, to] of first) {
@@ -166,10 +178,12 @@ function drawJoins(ctx: RenderContext, svg: SVGSVGElement, targets: Target[], ne
     const from = before && last.get(before);
     const letters = new Set<string>();
     for (const note of event.notes) {
-      const source = note.approach && sourceOf(before, note);
-      if (!note.approach || !source) continue;
-      arc(from, from?.placed.indexOf(source) ?? 0, to, to.placed.indexOf(note));
-      letters.add(JOIN_LETTER[note.approach]);
+      if (!note.approach) continue;
+      const source = sourceOf(before, note);
+      if (source) arc(note.approach, from, from?.placed.indexOf(source) ?? 0, to, to.placed.indexOf(note));
+      else if (isSlide(note.approach)) slideIn(note.approach, to, to.placed.indexOf(note));
+      const letter = source && JOIN_LETTER[note.approach];
+      if (letter) letters.add(letter);
     }
     if (!letters.size) continue;
     const x = from ? (from.note.getTieRightX() + to.note.getTieLeftX()) / 2 : to.note.getTieLeftX() - HALF_JOIN_LETTER_LEFT;
@@ -179,8 +193,8 @@ function drawJoins(ctx: RenderContext, svg: SVGSVGElement, targets: Target[], ne
   const from = lastEvent && last.get(lastEvent);
   if (!after || !from || c.before.get(after) !== lastEvent) return;
   for (const note of after.notes) {
-    const source = note.approach && sourceOf(lastEvent, note);
-    if (source) arc(from, from.placed.indexOf(source), undefined, 0);
+    const source = sourceOf(lastEvent, note);
+    if (note.approach && source) arc(note.approach, from, from.placed.indexOf(source), undefined, 0);
   }
 }
 
@@ -259,7 +273,7 @@ function labelWidth(el: SVGTextElement): number {
 function drawSystem(div: HTMLDivElement, bars: Bar[], { prev, next }: { prev?: Bar; next?: Bar }, c: Ctx, rows: number): number {
   const W = sheetWidth(c.opt);
   const lift = (rows - 1) * LABEL_ROW;
-  const joins = bars.some(bar => bar.events.some(e => e.notes.some(n => n.approach)));
+  const joins = bars.some(bar => bar.events.some(e => e.notes.some(n => n.approach && JOIN_LETTER[n.approach])));
   const room = markRoom({ joins, palmMute: bars.some(bar => bar.events.some(e => e.palmMute)) }, STRING_SPACE);
   const top = tabLineTop(bars, !prev, lift) + room;
   const labelTop = top - room;

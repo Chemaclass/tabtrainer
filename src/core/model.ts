@@ -3,7 +3,7 @@ import type { Instrument } from './instruments';
 /** Ticks per quarter note. 48 divides evenly into 16ths (12), 8th-triplets (16), 32nds (6) and 16th-triplets (8). */
 export const PPQ = 48;
 
-export const APPROACHES = ['hammer', 'pull'] as const;
+export const APPROACHES = ['hammer', 'pull', 'slide-up', 'slide-down'] as const;
 export type Approach = typeof APPROACHES[number];
 
 export interface Note {

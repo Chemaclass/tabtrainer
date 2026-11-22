@@ -30,7 +30,7 @@ function removeToken(text: string, issue: IssueSpan): TextEdit {
   return { line: issue.line, col: issue.col - leading, length: issue.length + leading + trailing, text: '' };
 }
 
-const SWAPPED_JOIN: Record<string, string> = { h: 'p', p: 'h' };
+const SWAPPED_JOIN: Record<string, string> = { h: 'p', p: 'h', '/': '\\', '\\': '/' };
 
 function legatoFix(text: string, issue: IssueSpan): SongFix[] {
   const token = tokenOf(text, issue);

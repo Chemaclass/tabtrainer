@@ -174,7 +174,9 @@ export class Player {
       // A hammer-on whose first note comes before this pass, after a seek or at a loop start, has nothing to hammer from, so it is picked
       const legato = n.legato === true && before !== undefined && before >= passFrom - 1e-6;
       if (n.dead) this.synth.thud(when, n.midi, LEVEL.dead);
-      else this.synth.voice(when, n.midi, Math.max(0.15, this.duration(n.beat, n.beat + n.ring, speed)), n.soft ? LEVEL.tied : legato ? LEVEL.legato : LEVEL.picked, undefined, 'instrument', { muted: n.muted, legato });
+      else this.synth.voice(when, n.midi, Math.max(0.15, this.duration(n.beat, n.beat + n.ring, speed)), n.soft ? LEVEL.tied : legato ? LEVEL.legato : LEVEL.picked, undefined, 'instrument', {
+        muted: n.muted, legato, pitch: n.pitch?.map(point => ({ after: this.duration(n.beat, n.beat + point.at, speed), cents: point.cents })),
+      });
     }
     if (!this.metronome) return;
     for (const b of this.bars) for (let i = 0; i < b.beats; i++) {
