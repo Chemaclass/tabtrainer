@@ -184,11 +184,11 @@ const MOOD_ENTRIES: readonly MoodEntry[] = [
     loops: [
       {
         bars: TWELVE_BAR_BLUES,
-        jobs: ['Home, already restless.', 'A quick move away.', 'Back home.', 'Home, getting ready to move.', 'The first big change.', 'Stays away.', 'Back home.', 'Home a little longer.', 'Climbs to the peak.', 'Steps down from the peak.', 'Back home.', 'Turns around to start again.'],
+        jobs: ['Home, already restless.', 'A quick move away.', 'Back home.', 'Home, getting ready to move.', 'Moves away for longer.', 'Stays away.', 'Back home.', 'Home a little longer.', 'Climbs to the peak.', 'Steps down from the peak.', 'Back home.', 'Turns around to start again.'],
       },
       {
         bars: presetBars(MINOR_BLUES),
-        jobs: ['Home. Minor and restless.', 'A quick move away.', 'Back home.', 'Home, getting ready to move.', 'The first big change.', 'Stays away.', 'Back home.', 'Home a little longer.', 'Sets up the big pull.', 'Pulls hard back home.', 'Back home.', 'Turns around to start again.'],
+        jobs: ['Home. Minor and restless.', 'A quick move away.', 'Back home.', 'Home, getting ready to move.', 'Moves away for longer.', 'Stays away.', 'Back home.', 'Home a little longer.', 'Sets up the big pull.', 'Pulls hard back home.', 'Back home.', 'Turns around to start again.'],
       },
     ],
     tempo: { min: 60, max: 130, word: 'Medium', outside: 'Faster and it turns into rock and roll' },

@@ -22,7 +22,7 @@ const groovesGenres = readdirSync('src/grooves')
 const BORROWED: Partial<Record<MoodId, readonly string[]>> = {
   // The minor iv brings the flat sixth into a major key: that is the mood
   melancholic: ['iv'],
-  // Blues chords are all dominant sevenths, whose major thirds rub against the blues scale
+  // Every blues chord is a seventh chord with a tone the blues scale lacks
   bluesy: ['I7', 'IV7', 'V7', 'iv7', 'bVI7'],
 };
 
@@ -229,6 +229,9 @@ describe('mood notes', () => {
     expect(moodNoteText(moodById('tense'), 'A').sentence).toBe('G# is the tense note. One fret below A, so it pulls up into it.');
     expect(moodNoteText(moodById('bluesy'), 'A').sentence).toBe('Eb is the blue note. Six frets above A, one fret below the fifth.');
     expect(moodNoteText(moodById('melancholic'), 'C').sentence).toBe('Ab is the melancholic note. Four frets below C, not three, and it comes with the minor chord.');
+    expect(moodNoteText(moodById('exciting'), 'E').sentence).toBe('D is the exciting note. Two frets below E, not one.');
+    expect(moodNoteText(moodById('epic'), 'E').sentence).toBe('C is the epic note. Four frets below E, not three.');
+    expect(moodNoteText(moodById('dreamy'), 'C').sentence).toBe('F# is the dreamy note. Six frets above C, not five.');
     expect(moodNoteText(moodById('funky'), 'E').name).toBe('C#');
     expect(moodNoteText(moodById('dark'), 'Eb').name).toBe('Fb');
   });
