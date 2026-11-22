@@ -8,6 +8,8 @@ import { downloadText } from '../editor/textFile';
 import { settledInput, showIssueList } from '../editor/sourceText';
 import { askChoice, askSaveConflict } from '../shell/askDialog';
 
+const MOOD_OFF = 'Mood off. The groove plays the chords you wrote.';
+
 interface GrooveEditorHandlers {
   played: () => void;
   saved: (slug: string) => void;
@@ -91,7 +93,9 @@ export function grooveEditor(jam: Jam, { played, saved, deleted }: GrooveEditorH
     const { playable, issues: found } = playableGroove(source.value);
     showIssues(found);
     if (!playable) return;
+    const hadMood = jam.mood !== null;
     jam.preview(playable);
+    if (hadMood && !jam.mood) announce(MOOD_OFF);
     played();
   }
 

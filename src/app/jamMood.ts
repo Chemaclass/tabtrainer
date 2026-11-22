@@ -1,8 +1,8 @@
-import { jamProgression, moodNoteText, type Mood } from '../core/moods';
+import { jamProgression, moodFits, moodNoteText, type Mood } from '../core/moods';
 import { scaleById, type ScaleId } from '../core/scales';
 import { isMinorKey, keyRootName, pitchClass } from '../core/theory';
 import { keyTonic } from '../core/harmony';
-import type { Jam } from './jam';
+import type { Jam, JamGroove } from './jam';
 import { SUMMARY_SEPARATOR } from './jamSummary';
 
 export const MOOD_QUESTION = 'How do you want it to feel?';
@@ -78,9 +78,14 @@ export function moodBars(jam: MoodJam): MoodBar[] | null {
   return chords.map((numeral, bar) => ({ numeral: numeral.text, job: jobs[bar] ?? '' }));
 }
 
-export interface MoodLegend { pitchClass: number; name: string; sentence: string }
+export interface MoodLegend {
+  /** Where the fretboard marks the mood note, or null when the chosen scale leaves it out. */
+  pitchClass: number | null;
+  name: string;
+  sentence: string;
+}
 
-/** A note borrowed from outside the mood scale shows only with its chord; a scale without the mood note gets no legend. */
+/** A note borrowed from outside the mood scale shows only with its chord; a scale without the mood note says it leaves it out. */
 export function moodLegend(mood: Mood | null, key: string, scale: ScaleId): MoodLegend | null {
   if (!mood) return null;
   const tonic = keyTonic(key) ?? 0;
@@ -88,6 +93,30 @@ export function moodLegend(mood: Mood | null, key: string, scale: ScaleId): Mood
   const semitones = pitchClass(note.pitchClass - tonic);
   const borrowed = !scaleById(mood.scale).intervals.includes(semitones);
   const onScale = scaleById(scale).intervals.includes(semitones);
-  if (!onScale && !borrowed) return null;
-  return note;
+  if (onScale || borrowed) return note;
+  return { pitchClass: null, name: note.name, sentence: `This scale leaves out ${note.name}, ${mood.note.label}.` };
+}
+
+export interface ScaleGroup { label: string | null; scales: ScaleId[] }
+
+/** With a mood on, the scales that carry its note come first, then the others that fit the chords. */
+export function scaleGroups(mood: Mood | null, scales: readonly ScaleId[]): ScaleGroup[] {
+  if (!mood) return [{ label: null, scales: [...scales] }];
+  const carriers: readonly ScaleId[] = [mood.scale, ...mood.alsoScales];
+  return [
+    { label: 'Carries the mood', scales: scales.filter(id => carriers.includes(id)) },
+    { label: 'Also fits these chords', scales: scales.filter(id => !carriers.includes(id)) },
+  ].filter(group => group.scales.length > 0);
+}
+
+export interface GrooveGroups { fitting: JamGroove[]; other: JamGroove[] }
+
+/** The bundled grooves, those whose genre fits the mood first; with no mood all of them are "other". */
+export function grooveGroups(list: readonly JamGroove[], mood: Mood | null): GrooveGroups {
+  const bundled = list.filter(entry => !entry.mine);
+  if (!mood) return { fitting: [], other: bundled };
+  return {
+    fitting: bundled.filter(entry => moodFits(mood, entry.groove.genre)),
+    other: bundled.filter(entry => !moodFits(mood, entry.groove.genre)),
+  };
 }

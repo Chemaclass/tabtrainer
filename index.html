@@ -194,7 +194,7 @@ tempo: 90
           <div id="jamPicker" class="jam-picker">
             <h1 id="jamTitle" tabindex="-1"><span id="jamMoodName" class="jam-mood-name" hidden></span><button id="jamPickerButton" class="jam-picker-button" type="button" aria-expanded="false" aria-controls="jamGrooves" aria-describedby="jamPickerHint"><span id="jamTitleText"></span><svg class="jam-picker-chevron" viewBox="0 0 22 22" aria-hidden="true"><path d="M5 8l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button></h1>
             <span id="jamPickerHint" hidden>Choose another groove</span>
-            <nav id="jamGrooves" class="jam-grooves" aria-label="Grooves" hidden><ul id="jamGrooveList" class="jam-groove-list" aria-label="Bundled grooves"></ul><p id="jamMineHeading" class="jam-groove-group">Mine</p><ul id="jamMineList" class="jam-groove-list" aria-labelledby="jamMineHeading"></ul><p id="jamMineEmpty" class="jam-groove-empty">Grooves you save appear here.</p></nav>
+            <nav id="jamGrooves" class="jam-grooves" aria-label="Grooves" hidden><p id="jamFitHeading" class="jam-groove-group" hidden></p><ul id="jamFitList" class="jam-groove-list" aria-labelledby="jamFitHeading" hidden></ul><p id="jamOtherHeading" class="jam-groove-group" hidden>Bundled grooves</p><ul id="jamGrooveList" class="jam-groove-list" aria-labelledby="jamOtherHeading"></ul><p id="jamMineHeading" class="jam-groove-group">Mine</p><ul id="jamMineList" class="jam-groove-list" aria-labelledby="jamMineHeading"></ul><p id="jamMineEmpty" class="jam-groove-empty">Grooves you save appear here.</p></nav>
           </div>
           <p id="jamMoodWhy" class="jam-mood-why sr-only" aria-live="polite"></p>
         </div>
@@ -229,7 +229,7 @@ tempo: 90
         <div class="jam-fretboard-head">
           <p class="jam-now"><span id="jamFretboardChord" aria-live="polite"></span><span class="jam-now-details"> · <span class="jam-now-next"><span id="jamFretboardNext"></span> · </span><span id="jamFretboardJob" class="jam-now-job"></span><span id="jamFretboardScale"></span></span></p>
           <div class="jam-fretboard-controls">
-            <div class="jam-field jam-field-inline"><label for="jamScale">Scale</label><select id="jamScale"></select></div>
+            <div class="jam-field jam-field-inline"><label for="jamScale">Scale</label><select id="jamScale" aria-describedby="jamMoodLegend"></select></div>
             <div id="jamStringsField" class="jam-field jam-field-inline"><label for="jamStrings">Bass</label><select id="jamStrings"><option value="bass4">4 strings</option><option value="bass5">5 strings</option><option value="bass6">6 strings</option></select></div>
             <button id="jamDegrees" class="toggle" type="button" aria-pressed="false">Show degrees</button>
           </div>

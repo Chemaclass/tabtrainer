@@ -22,12 +22,29 @@ function enhance(select: HTMLSelectElement) {
   if (label) list.setAttribute('aria-label', label);
   wrapper.append(button, list);
   let active = select.selectedIndex, query = '', queryTimer = 0;
+  let items: HTMLElement[] = [];
   const options = () => Array.from(select.options);
+  /** Options inside an optgroup sit in a labelled group, as the native list shows them. */
+  function grouped(): HTMLElement[] {
+    const rows: HTMLElement[] = [];
+    let group: HTMLElement | null = null, groupSource: HTMLOptGroupElement | null = null;
+    for (const [index, option] of options().entries()) {
+      const parent = option.parentElement instanceof HTMLOptGroupElement ? option.parentElement : null;
+      if (!parent) { rows.push(items[index]); group = groupSource = null; continue; }
+      if (parent !== groupSource) {
+        group = document.createElement('div'); group.className = 'dropdown-group'; group.setAttribute('role', 'group'); group.setAttribute('aria-label', parent.label);
+        const heading = document.createElement('div'); heading.className = 'dropdown-group-label'; heading.setAttribute('aria-hidden', 'true'); heading.textContent = parent.label;
+        group.append(heading); rows.push(group); groupSource = parent;
+      }
+      group!.append(items[index]);
+    }
+    return rows;
+  }
   function sync() {
     button.textContent = select.selectedOptions[0]?.textContent ?? '';
     button.disabled = select.disabled;
     if (select.disabled) close();
-    list.replaceChildren(...options().map((option, index) => {
+    items = options().map((option, index) => {
       const item = document.createElement('div');
       item.id = `${select.id}-option-${index}`; item.className = 'dropdown-option'; item.setAttribute('role', 'option');
       item.setAttribute('aria-selected', String(option.selected));
@@ -35,12 +52,13 @@ function enhance(select: HTMLSelectElement) {
       item.textContent = option.textContent;
       item.addEventListener('click', () => { if (item.getAttribute('aria-disabled') !== 'true') choose(index); });
       return item;
-    }));
+    });
+    list.replaceChildren(...grouped());
     if (!list.hidden) markActive();
   }
   function markActive() {
-    Array.from(list.children).forEach((item, index) => item.classList.toggle('active', index === active));
-    const item = list.children[active] as HTMLElement | undefined;
+    items.forEach((item, index) => item.classList.toggle('active', index === active));
+    const item = items[active] as HTMLElement | undefined;
     if (item) { button.setAttribute('aria-activedescendant', item.id); item.scrollIntoView({ block: 'nearest' }); }
     else button.removeAttribute('aria-activedescendant');
   }
@@ -50,7 +68,7 @@ function enhance(select: HTMLSelectElement) {
     const above = window.innerHeight - rect.bottom < height + gap && rect.top > window.innerHeight - rect.bottom;
     const available = above ? rect.top - gap - margin : window.innerHeight - rect.bottom - gap - margin;
     list.style.maxHeight = `${Math.max(0, available)}px`;
-    list.style.width = `${Math.min(Math.max(rect.width, 160), window.innerWidth - margin * 2)}px`;
+    list.style.width = `${Math.min(Math.max(rect.width, 200), window.innerWidth - margin * 2)}px`;
     list.style.left = `${Math.max(margin, Math.min(rect.left, window.innerWidth - list.offsetWidth - margin))}px`;
     list.style.top = above ? 'auto' : `${rect.bottom + gap}px`;
     list.style.bottom = above ? `${window.innerHeight - rect.top + gap}px` : 'auto';
@@ -69,7 +87,7 @@ function enhance(select: HTMLSelectElement) {
   function move(direction: number) {
     const all = options();
     for (let i = active + direction; i >= 0 && i < all.length; i += direction) {
-      if (list.children[i]?.getAttribute('aria-disabled') !== 'true') { active = i; markActive(); break; }
+      if (items[i]?.getAttribute('aria-disabled') !== 'true') { active = i; markActive(); break; }
     }
   }
   button.addEventListener('click', () => { if (list.hidden) open(); else close(); });
@@ -82,11 +100,11 @@ function enhance(select: HTMLSelectElement) {
       else if (event.key === 'End') { active = options().length; move(-1); }
       else move(event.key === 'ArrowDown' ? 1 : -1);
     } else if (event.key === 'Enter' || event.key === ' ') {
-      event.preventDefault(); if (list.hidden) open(); else if (active >= 0 && list.children[active]?.getAttribute('aria-disabled') !== 'true') choose(active);
+      event.preventDefault(); if (list.hidden) open(); else if (active >= 0 && items[active]?.getAttribute('aria-disabled') !== 'true') choose(active);
     } else if (event.key.length === 1 && !event.ctrlKey && !event.metaKey && !event.altKey) {
       query += event.key.toLocaleLowerCase(); window.clearTimeout(queryTimer); queryTimer = window.setTimeout(() => { query = ''; }, 700);
       if (list.hidden) open();
-      const index = options().findIndex((option, i) => option.textContent?.trim().toLocaleLowerCase().startsWith(query) && list.children[i]?.getAttribute('aria-disabled') !== 'true');
+      const index = options().findIndex((option, i) => option.textContent?.trim().toLocaleLowerCase().startsWith(query) && items[i]?.getAttribute('aria-disabled') !== 'true');
       if (index >= 0) { active = index; markActive(); }
     }
   });

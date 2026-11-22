@@ -163,10 +163,14 @@ export class Jam {
     return moodFits(moodById(id), this.groove.genre);
   }
 
-  /** The groove a mood plays on: this one when its genre fits, otherwise the first that fits best. */
+  /**
+   * The groove a mood plays on: the first groove of its best genre, so a mood sounds the same whatever was open.
+   * The player's own groove or an unsaved draft stays when its genre fits, and so does a groove of the best genre.
+   */
   grooveFor(id: MoodId): string {
     const mood = moodById(id);
-    if (this.fitsMood(id)) return this.slug;
+    const ownWork = this.entry.mine || this.previewing;
+    if (this.groove.genre === mood.genres[0] || (ownWork && this.fitsMood(id))) return this.slug;
     for (const genre of mood.genres) {
       const fitting = this.grooves.find(entry => entry.groove.genre === genre);
       if (fitting) return fitting.slug;
@@ -255,14 +259,17 @@ export class Jam {
     if (this.slug !== slug) return moved;
     const { mood, key, tempo, progression, swing } = setup;
     const chords = this.linkedChords(mood, progression);
+    const linkedTempo = within(tempo, JAM_TEMPO);
     const changes = [
       chords !== null && this.playProgression(chords),
       key !== undefined && this.setKey(this.keyWithTonicOf(key)),
-      within(tempo, JAM_TEMPO) && this.placeTempo(tempo, false),
+      linkedTempo && this.placeTempo(tempo, false),
       within(swing, JAM_SWING) && this.setSwing(swing),
       mood !== undefined && this.labelMood(mood),
     ];
-    return moved || changes.includes(true);
+    const { mood: linkedMood } = this;
+    const startsMood = !linkedTempo && linkedMood !== null && linkedMood.id === mood && this.placeTempo(linkedMood.tempo.start, false);
+    return moved || changes.includes(true) || startsMood;
   }
 
   setKey(key: string): boolean {

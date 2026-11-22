@@ -1076,6 +1076,9 @@ fieldset.jam-plays {
   background: var(--led);
   transform: translateY(1px);
 }
+.jam-mood-legend[data-missing] .jam-mood-dot {
+  background: none;
+}
 .jam-fretboard .fretboard-board {
   order: 2;
 }
@@ -1201,5 +1204,39 @@ fieldset.jam-plays {
   }
   .jam.mood-on .jam-now-job:not(:empty) {
     display: inline;
+  }
+}
+@media (min-width: 600px) {
+  .jam.mood-on .jam-bars[data-count="12"] .jam-bar-job {
+    display: none;
+  }
+  .jam.mood-on:has(.jam-bars[data-count="12"]) .jam-now-details {
+    display: inline;
+  }
+  .jam.mood-on:has(.jam-bars[data-count="12"])
+    .jam-now:has(.jam-now-job:not(:empty))
+    :is(.jam-now-next, #jamFretboardScale) {
+    display: none;
+  }
+  .jam.mood-on:has(.jam-bars[data-count="12"]) .jam-now-job:not(:empty) {
+    display: inline;
+  }
+}
+@media (max-width: 599px) {
+  .jam.mood-on .jam-bars[data-count="12"] li {
+    min-height: 0;
+    padding-block: 2px;
+  }
+  .jam.mood-on .jam-bars[data-count="12"] li[aria-current] {
+    padding-block: 0;
+  }
+  .jam.mood-on .jam-bars[data-count="12"] .jam-chord {
+    line-height: 20px;
+  }
+}
+@media (min-width: 600px) {
+  /* The now line wraps its own text before the controls drop to a row of their own */
+  .jam-now {
+    flex: 1 1 240px;
   }
 }
