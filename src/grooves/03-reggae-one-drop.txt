@@ -5,7 +5,7 @@ tempo: 74
 key: Am
 time: 4/4
 swing: 58
-progression: i7 iv7 i7 bVII | i7 iv7 bVI bVII
+progression: i7 iv7 i7 bVII | i7 iv7 bVImaj7 bVII
 kit: reggae
 
 # sixteen steps per bar: 1 e & a 2 e & a 3 e & a 4 e & a
