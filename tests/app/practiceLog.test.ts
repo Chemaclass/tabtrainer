@@ -5,10 +5,10 @@ const at = (day: number, hour = 12, minute = 0) => new Date(2026, 10, day, hour,
 const whole = (speed: number) => ({ firstBar: 1, lastBar: 8, whole: true, speed });
 const loop = (speed: number) => ({ firstBar: 5, lastBar: 8, whole: false, speed });
 
-function memory(initial: PracticeRecord | null = null) {
+function memory(initial: PracticeRecord | null = null, paths: string[] = []) {
   let stored = initial;
   const store: PracticeStore = { read: () => stored, write: record => { stored = structuredClone(record); return true; } };
-  return { log: new PracticeLog(store), stored: () => stored };
+  return { log: new PracticeLog(store, paths), stored: () => stored };
 }
 
 describe('practice log passes', () => {
@@ -194,6 +194,51 @@ describe('level names from song files', () => {
     log.passEnded('demo:a', null, whole(80), at(1));
     expect(log.merge({ songs: { 'demo:a': { bestSpeed: 90, cleanAt: null, lastPlayed: at(2), seconds: Number.NaN, lastLoop: null, lastSpeed: 90, version: null } }, days: {}, wins: [] })).toBe(false);
     expect(isPracticeRecord(stored())).toBe(true);
+  });
+});
+
+describe('renumbered bundled songs', () => {
+  const OLD = 'demo:./songs/guitar/songs/02-house.txt', NEW = 'demo:./songs/guitar/songs/07-house.txt';
+  const paths = ['./songs/guitar/songs/07-house.txt', './songs/bass/songs/01-walk.txt'];
+  const song = { bestSpeed: 80, cleanAt: null, lastPlayed: at(2), seconds: 30, lastLoop: null, lastSpeed: 80, version: null };
+  const record = (songs: PracticeRecord['songs'], wins: PracticeRecord['wins'] = []): PracticeRecord => ({ songs, days: {}, wins });
+
+  it('finds progress saved under the old number', () => {
+    const { log } = memory(record({ [OLD]: { ...song, doneAt: at(3) } }), paths);
+    expect(log.song(NEW)).toMatchObject({ bestSpeed: 80, doneAt: at(3) });
+    expect(log.progress(NEW)).toBe('done');
+    expect(Object.keys(log.record.songs)).toEqual([NEW]);
+  });
+  it('merges progress saved under the old and the new number', () => {
+    const { log } = memory(record({ [OLD]: { ...song, markedLevels: { learn: at(1) } }, [NEW]: { ...song, bestSpeed: 90, lastPlayed: at(4), seconds: 10 } }), paths);
+    expect(log.song(NEW)).toMatchObject({ bestSpeed: 90, lastPlayed: at(4), seconds: 30, markedLevels: { learn: at(1) } });
+    expect(Object.keys(log.record.songs)).toEqual([NEW]);
+  });
+  it('moves wins to the current number', () => {
+    const { log } = memory(record({}, [{ song: OLD, speed: 80, loop: null, at: at(2) }]), paths);
+    expect(log.wins()).toEqual([{ song: NEW, speed: 80, loop: null, at: at(2) }]);
+  });
+  it('saves the current number on the next change', () => {
+    const { log, stored } = memory(record({ [OLD]: song }), paths);
+    log.played(NEW, 5, at(3));
+    expect(Object.keys(stored()!.songs)).toEqual([NEW]);
+    expect(stored()!.songs[NEW].seconds).toBe(35);
+  });
+  it('renumbers a merged record too', () => {
+    const { log } = memory(record({ [NEW]: song }), paths);
+    log.merge(record({ [OLD]: { ...song, bestSpeed: 95 } }, [{ song: OLD, speed: 95, loop: null, at: at(5) }]));
+    expect(Object.keys(log.record.songs)).toEqual([NEW]);
+    expect(log.song(NEW)!.bestSpeed).toBe(95);
+    expect(log.wins()[0].song).toBe(NEW);
+  });
+  it('leaves saved songs, removed songs and odd names as they are', () => {
+    const removed = 'demo:./songs/guitar/songs/03-gone.txt';
+    const songs: PracticeRecord['songs'] = Object.create(null);
+    for (const ref of ['lib:My song', removed, '__proto__', 'constructor', 'lib:__proto__']) songs[ref] = song;
+    const { log } = memory(record(songs), paths);
+    expect(Object.keys(log.record.songs).sort()).toEqual(['__proto__', 'constructor', removed, 'lib:My song', 'lib:__proto__'].sort());
+    expect(log.song('toString')).toBeNull();
+    expect(Object.getPrototypeOf(log.record.songs)).toBeNull();
   });
 });
 

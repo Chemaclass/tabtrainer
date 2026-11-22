@@ -75,7 +75,7 @@ const jam = new Jam(bundledGrooves(import.meta.glob('./grooves/*.txt', { query: 
 const linkedRoute = readRoute(navigation.search(), songbook.paths);
 if (linkedRoute.screen === 'jam') jam.open(linkedRoute.groove, linkedRoute.setup);
 const loop = new LoopEngine();
-const practiceLog = new PracticeLog(practiceStore);
+const practiceLog = new PracticeLog(practiceStore, songbook.paths);
 const playTime = new PlayTime(practiceLog);
 const practiceSession = new PracticeSession();
 

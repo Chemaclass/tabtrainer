@@ -1,5 +1,6 @@
 import type { PassEnd } from '../audio/practicePasses';
 import { PRACTICE_LEVELS } from './practiceLevels';
+import { normalizeSongReference } from './songLink';
 
 export type BarLoop = [number, number];
 export interface SongRecord { bestSpeed: number; cleanAt: number | null; lastPlayed: number; seconds: number; lastLoop: BarLoop | null; lastSpeed: number; version: string | null; levels?: Record<string, number>; doneAt?: number | null; markedLevels?: Record<string, number> }
@@ -115,9 +116,19 @@ function mergeSong(mine: SongRecord | undefined, theirs: SongRecord): SongRecord
   return merged;
 }
 
+// Bundled song numbers change when songs are inserted, so progress follows each song to its current file.
+function renumbered(record: PracticeRecord, paths: string[]): PracticeRecord {
+  const songs: Record<string, SongRecord> = Object.create(null);
+  for (const [ref, song] of Object.entries(record.songs)) {
+    const current = normalizeSongReference(ref, paths);
+    songs[current] = mergeSong(Object.hasOwn(songs, current) ? songs[current] : undefined, song);
+  }
+  return { songs, days: Object.assign(Object.create(null), record.days), wins: record.wins.map(win => ({ ...win, song: normalizeSongReference(win.song, paths) })) };
+}
+
 /** What the player has played through, per song and per day, kept in this browser. */
 export class PracticeLog {
-  constructor(private readonly store: PracticeStore) {}
+  constructor(private readonly store: PracticeStore, private readonly paths: string[] = []) {}
 
   get record(): PracticeRecord {
     try { return this.read(); } catch { return emptyRecord(); }
@@ -207,10 +218,11 @@ export class PracticeLog {
   }
 
   merge(other: PracticeRecord): boolean {
+    const theirs = renumbered(other, this.paths);
     return this.update(record => {
-      for (const [ref, song] of Object.entries(other.songs)) record.songs[ref] = mergeSong(record.songs[ref], song);
-      for (const [day, seconds] of Object.entries(other.days)) record.days[day] = Math.max(record.days[day] ?? 0, seconds);
-      const wins = new Map([...record.wins, ...other.wins].map(win => [`${win.song} ${win.at}`, win]));
+      for (const [ref, song] of Object.entries(theirs.songs)) record.songs[ref] = mergeSong(record.songs[ref], song);
+      for (const [day, seconds] of Object.entries(theirs.days)) record.days[day] = Math.max(record.days[day] ?? 0, seconds);
+      const wins = new Map([...record.wins, ...theirs.wins].map(win => [`${win.song} ${win.at}`, win]));
       record.wins = [...wins.values()].sort((a, b) => b.at - a.at).slice(0, KEPT_WINS);
       return true;
     }) ?? false;
@@ -224,10 +236,10 @@ export class PracticeLog {
   }
 
   // Throws on unreadable or corrupt data, so a write never replaces a record it could not read.
+  // Renumbers on every read rather than once, so a failed write loses nothing.
   private read(): PracticeRecord {
     const stored = this.store.read();
-    if (!stored) return emptyRecord();
-    return { songs: Object.assign(Object.create(null), stored.songs), days: Object.assign(Object.create(null), stored.days), wins: [...stored.wins] };
+    return stored ? renumbered(stored, this.paths) : emptyRecord();
   }
 }
 
