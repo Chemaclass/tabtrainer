@@ -1,6 +1,6 @@
 import { INSTRUMENTS, customInstrument, type Instrument } from './instruments';
 import { LEVELS, PPQ, barTicks, type Approach, type Bar, type Level, type Note, type NoteEvent, type Song, type Version } from './model';
-import { APPROACH_MARK, BENDS, OPPOSITE, RISES, approachOf, heldBend, isSlide, sourceOf } from './technique';
+import { APPROACH_MARK, BENDS, OPPOSITE, RISES, approachOf, holdBends, isSlide, sourceOf } from './technique';
 import { NO_TOKEN, hinted, spanOf, valueSpan, type IssueSpan, type ParseIssue, type SongIssueCode } from './parseIssue';
 
 export interface ParseResult { song: Song; issues: ParseIssue[] }
@@ -158,9 +158,13 @@ export function parseSong(src: string): ParseResult {
     const bend = BENDS.find(b => b.written === m[1]);
     if (!bend) report('error', 'bend-amount', at, hinted(`Can't read the bend in "${s}".`, 'Use ^1/4, ^1/2, ^1, ^3/2 or ^2: ^1 is a whole step, two frets'));
     else if (fret === 0) report('error', 'bend-open', at, `An open string can't be bent`);
-    else if (tie && heldBends.has(string)) report('error', 'bend-held', at, hinted(`String ${string} is already bent here.`, `Write ~${fret}.${string} to hold the bend`));
+    else if (tie && heldBends.has(string) && !(m[2] && heldBends.get(string) === bend.steps)) report('error', 'bend-held', at, heldHint(heldBends.get(string)!, fret, string));
     else return { bend: bend.steps, ...(m[2] ? { release: true } : {}) };
     return {};
+  };
+  const heldHint = (held: number, fret: number, string: number) => {
+    const written = BENDS.find(b => b.steps === held)?.written;
+    return hinted(`String ${string} is already bent here.`, `Write ~${fret}.${string} to hold the bend, or ~${fret}.${string}^${written}r to let it down`);
   };
   const joinFits = (approach: Approach, fret: number, string: number, s: string, at: IssueSpan): boolean => {
     const source = sourceOf(bars.at(-1)?.events.at(-1), { string });
@@ -194,7 +198,7 @@ export function parseSong(src: string): ParseResult {
     // A tie keeps the palm mute of the note it holds, so the held part does not ring out.
     if (palmMute || (notes.length > 0 && notes.every(n => n.tie && palmStrings.has(n.string)))) ev.palmMute = true;
     for (const n of notes) { if (ev.palmMute) palmStrings.add(n.string); else palmStrings.delete(n.string); }
-    for (const n of notes) { const held = heldBend(heldBends.get(n.string), n); if (held) heldBends.set(n.string, held); else heldBends.delete(n.string); }
+    holdBends(heldBends, notes);
     pendingChord = pendingText = pendingLyric = undefined;
     st.cur.events.push(ev); t += dur.ticks;
   };

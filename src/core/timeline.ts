@@ -1,5 +1,5 @@
 import { PPQ, barTicks, type Song } from './model';
-import { eventsInOrder, heldBend, pitchPlan, sourceOf, type PitchPoint } from './technique';
+import { eventsInOrder, holdBends, pitchPlan, sourceOf, type PitchPoint } from './technique';
 
 export interface TimedNote {
   /** Absolute position in quarter-note beats from the start of the song. */
@@ -42,12 +42,10 @@ export function buildTimeline(song: Song): { notes: TimedNote[]; bars: BarSpan[]
       const beat = pos + e.start / PPQ;
       for (const n of e.notes) {
         const source = n.approach && sourceOf(before.get(e), n);
-        const held = heldBends.get(n.string);
-        const pitch = pitchPlan(n, source, held, e.dur / PPQ);
-        const stillHeld = heldBend(held, n);
-        if (stillHeld) heldBends.set(n.string, stillHeld); else heldBends.delete(n.string);
+        const pitch = pitchPlan(n, source, heldBends.get(n.string), e.dur / PPQ);
         notes.push({ beat, ring: e.dur / PPQ, midi: tuning[n.string - 1] + n.fret + tr, string: n.string, fret: n.fret, bar: b.index, key: onsetKey(beat), ...(n.tie ? { soft: true } : {}), ...(n.dead ? { dead: true } : {}), ...(e.palmMute ? { muted: true } : {}), ...(source ? { legato: true } : {}), ...(pitch ? { pitch } : {}) });
       }
+      holdBends(heldBends, e.notes);
     }
     pos += len;
   }

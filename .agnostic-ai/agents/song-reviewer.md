@@ -12,7 +12,7 @@ You review one song file under `src/songs/`. You never edit files.
 2. Run `npx vitest run tests/songs.test.ts` and report any failure for this file first.
 3. Check what the tests cannot:
    - Licensing: a song is public domain, or an exercise is original. Flag any recognisable copyrighted riff.
-   - Pitch: work out each note from `fret.string` and the tuning. Flag notes outside the `key:` that the music does not explain, and wrong chord names above notes. A bent note sounds `bend * 2` frets higher (`^1` is two frets); a dead note (`x.3`) has no pitch. Flag a bend of a whole step or more below fret 5 on strings 4 to 6 as hard to play.
+   - Pitch: work out each note from `fret.string` and the tuning. Flag notes outside the `key:` that the music does not explain, and wrong chord names above notes. A bent note sounds `bend * 2` frets higher (`^1` is two frets); a dead note (`x.3`) has no pitch. For a bend of a whole step or more below fret 5 on strings 4 to 6, check that it is playable at that tempo and level.
    - Playability: jumps of more than about five frets between quick notes, or two notes on one string at once.
    - Teaching: the `about:` line matches what the bars train, and the tempo suits the level.
 

@@ -87,6 +87,18 @@ it('bends, holds a bend through ties, and lets it down', () => {
   expect(notes.map(n => n.soft)).toEqual([undefined, true, true, undefined, undefined, undefined]);
 });
 
+it('lets a bend go when a rest or another string comes between it and a tie', () => {
+  const pitches = (body: string) => buildTimeline(parseSong(`instrument: guitar6\n${body}`).song).notes.map(n => n.pitch);
+  expect(pitches(':q 7.3^1 r ~7.3 r |')[1]).toBeUndefined();
+  expect(pitches(':q 7.3^1 5.2 ~7.3 r |')[2]).toBeUndefined();
+});
+
+it('slides out of a held bend and lets a held bend down', () => {
+  const { notes } = buildTimeline(parseSong('instrument: guitar6\n:q 7.3^1 /9.3 7.3^1 ~7.3^1r |').song);
+  expect(notes[1].pitch).toEqual([{ at: 0, cents: 0 }, { at: 0.25, cents: 0 }]);
+  expect(notes[3].pitch).toEqual([{ at: 0, cents: 200 }, { at: 0.5, cents: 200 }, { at: 5 / 6, cents: 0 }]);
+});
+
 it('slides into a note and then bends it', () => {
   const { notes } = buildTimeline(parseSong('instrument: guitar6\n:q 5.3 :h. /7.3^1 |').song);
   expect(notes[1]).toMatchObject({ legato: true, pitch: [{ at: 0, cents: -200 }, { at: 0.25, cents: 0 }, { at: 0.75, cents: 200 }] });

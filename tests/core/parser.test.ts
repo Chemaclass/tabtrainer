@@ -334,6 +334,18 @@ describe('bends', () => {
     expect(song.bars[0].events.map(e => e.notes[0].bend)).toEqual([undefined, undefined, 1, undefined]);
     expect(song.bars[1].events[1].notes[0].bend).toBe(1);
   });
+  it('lets go of a bend at a rest, so a tie after it may bend again', () => {
+    expect(guitar(':q 7.3^1 r ~7.3^1 r |').issues).toEqual([]);
+  });
+  it('lets a held bend down on a tie with a release of the same amount', () => {
+    const { song, issues } = guitar(':q 7.3^1 ~7.3^1r ~7.3^1 r |');
+    expect(issues).toEqual([]);
+    expect(song.bars[0].events[1].notes[0]).toEqual({ string: 3, fret: 7, tie: true, bend: 1, release: true });
+    expect(serializeSong(song)).toContain(':q 7.3^1 ~7.3^1r ~7.3^1 r |');
+  });
+  it('tells how to hold or let down a bend when a tie bends it again', () => {
+    expect(guitar(':q 7.3^1 ~7.3^1/2r r r |').issues.map(i => [i.code, i.hint])).toEqual([['bend-held', 'Write ~7.3 to hold the bend, or ~7.3^1r to let it down']]);
+  });
   it('rejects a bend on a dead note', () => {
     expect(guitar(':q x.3^1 5.3 5.3 5.3 5.3 |').issues.map(i => i.code)).toEqual(['note-unreadable']);
   });

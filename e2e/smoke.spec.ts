@@ -75,6 +75,22 @@ test('technique marks draw without a problem', async ({ page }, testInfo) => {
   await expect(page.locator('.note text', { hasText: 'full' })).toBeVisible();
 });
 
+test('a bar full of bends fits the sheet, and a chord bent alike shows one bend', async ({ page }, testInfo) => {
+  await openFirstExercise(page);
+  await page.locator('#editBtn').click();
+  await page.locator('#src').fill(`title: Bends\ninstrument: guitar6\ntempo: 90\nkey: C\ntime: 4/4\n\n:8${' 7.3^3/2r'.repeat(8)} | :q (7.3^1 8.2^1) (7.3^1 8.2^1r) 7.3^1 ~7.3^1r |\n`);
+  if (testInfo.project.name === 'phone') await page.locator('#scoreTab').click();
+  await expect(page.locator('#issues li')).toHaveCount(0);
+  await expect(page.locator('.system.error')).toHaveCount(0);
+  const overflow = await page.locator('#sheet .system svg').evaluateAll(svgs => svgs.map(svg => {
+    let right = 0;
+    svg.querySelectorAll('.note path, .note text').forEach(el => { const box = (el as SVGGraphicsElement).getBBox(); right = Math.max(right, box.x + box.width); });
+    return right - Number(svg.getAttribute('width'));
+  }));
+  expect(overflow.every(over => over <= 0)).toBe(true);
+  await expect(page.locator('.note text', { hasText: 'full' })).toHaveCount(4);
+});
+
 test('the player reaches the playing state and lights the current note', async ({ page }) => {
   await openFirstExercise(page);
   await page.locator('#playBtn').click();

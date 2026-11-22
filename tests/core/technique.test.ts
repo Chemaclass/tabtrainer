@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { parseSong } from '../../src/core/parser';
 import { APPROACHES, type Note } from '../../src/core/model';
-import { APPROACH_MARK, BENDS, OPPOSITE, RISES, approachOf, eventsInOrder, heldBend, pitchPlan, sourceOf } from '../../src/core/technique';
+import { APPROACH_MARK, BENDS, OPPOSITE, RISES, approachOf, eventsInOrder, heldBend, holdBends, pitchPlan, sourceOf } from '../../src/core/technique';
 
 const bars = (body: string) => parseSong(`instrument: guitar6\n${body}`).song.bars;
 
@@ -73,6 +73,13 @@ describe('pitch plan', () => {
     expect(pitchPlan({ string: 3, fret: 7 }, undefined, 1, 2)).toBeUndefined();
     expect(pitchPlan(bent(1, { tie: true }), undefined, undefined, 2)).toEqual([{ at: 0, cents: 0 }, { at: 0.5, cents: 200 }]);
   });
+  it('slides out of a held bend from the pitch the string sounds', () => {
+    expect(pitchPlan(note('slide-up', 9), { string: 3, fret: 7, bend: 1 }, 1, 1)).toEqual([{ at: 0, cents: 0 }, { at: 0.25, cents: 0 }]);
+    expect(pitchPlan(note('slide-down', 5), { string: 3, fret: 7, bend: 0.5 }, 0.5, 1)).toEqual([{ at: 0, cents: 300 }, { at: 0.25, cents: 0 }]);
+  });
+  it('lets a held bend down on a tie with a release', () => {
+    expect(pitchPlan(bent(1, { tie: true, release: true }), undefined, 1, 3)).toEqual([{ at: 0, cents: 200 }, { at: 1.5, cents: 200 }, { at: 2.5, cents: 0 }]);
+  });
   it('glides first, then bends over the rest of the note', () => {
     expect(pitchPlan(bent(1, { approach: 'slide-up' }), { string: 3, fret: 5 }, undefined, 1.25)).toEqual([{ at: 0, cents: -200 }, { at: 0.25, cents: 0 }, { at: 0.75, cents: 200 }]);
     expect(pitchPlan(bent(1, { approach: 'hammer' }), { string: 3, fret: 5 }, undefined, 2)).toEqual([{ at: 0, cents: 0 }, { at: 0.5, cents: 200 }]);
@@ -87,5 +94,18 @@ describe('held bend', () => {
     expect(heldBend(undefined, { string: 3, fret: 7, bend: 1, release: true })).toBeUndefined();
     expect(heldBend(1, { string: 3, fret: 7, tie: true })).toBe(1);
     expect(heldBend(1, { string: 3, fret: 7 })).toBeUndefined();
+  });
+});
+
+describe('hold bends', () => {
+  it('keeps the bends of the strings an event holds and lets go of the others, rests included', () => {
+    const held = new Map([[3, 1], [2, 0.5]]);
+    holdBends(held, [{ string: 3, fret: 7, tie: true }, { string: 1, fret: 5, bend: 2 }]);
+    expect([...held]).toEqual([[3, 1], [1, 2]]);
+    holdBends(held, [{ string: 3, fret: 7, tie: true, bend: 1, release: true }]);
+    expect([...held]).toEqual([]);
+    holdBends(held, [{ string: 3, fret: 7, bend: 1 }]);
+    holdBends(held, []);
+    expect([...held]).toEqual([]);
   });
 });

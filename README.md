@@ -66,6 +66,7 @@ time: 4/4
 | `7.3^1` `7.3^1/2` | bend: push the string until the note sounds a whole step (two frets) or a half step (one fret) higher. Also `^1/4`, `^3/2` and `^2` |
 | `7.3^1r` | bend, then let the string back down within the same note |
 | `7.3^1 ~7.3` | bend and hold: the tie keeps the bend |
+| `7.3^1 ~7.3^1r` | bend, hold, then let it down on the tie |
 | `x.3` | dead note on string 3: mute the string with the fretting hand and pick it, for a click with no pitch |
 | `_0.6` `_(0.6 2.5)` | palm mute: rest the side of the picking hand on the strings near the bridge, for a short, dark note or chord |
 | `"Am7"` | chord name above the next note |
