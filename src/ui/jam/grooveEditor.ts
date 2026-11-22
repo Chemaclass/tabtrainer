@@ -9,6 +9,7 @@ import { settledInput, showIssueList } from '../editor/sourceText';
 import { askChoice, askSaveConflict } from '../shell/askDialog';
 
 const MOOD_OFF = 'Mood off. The groove plays the chords you wrote.';
+const EDITING_NOTE = 'Groove text is open';
 
 interface GrooveEditorHandlers {
   played: () => void;
@@ -126,6 +127,8 @@ export function grooveEditor(jam: Jam, { played, saved, deleted }: GrooveEditorH
   function showEditing(editing: boolean) {
     more.toggleAttribute('data-editing', editing);
     editingNote.hidden = !editing;
+    // A hidden description is still read, so the words go when the editor closes
+    editingNote.textContent = editing ? EDITING_NOTE : '';
   }
 
   function close() {
@@ -242,5 +245,10 @@ export function grooveEditor(jam: Jam, { played, saved, deleted }: GrooveEditorH
     return slug === jam.slug || mayDiscard();
   }
 
-  return { follow, mayChoose, mayDiscard, moodOn: forgetMoodOff };
+  /** Unchanged text closes with the drawer, so the Jam leaves draft mode and saves its setup and share link again. */
+  function closeUnchanged() {
+    if (isOpen() && !draft.hasChanges()) close();
+  }
+
+  return { follow, mayChoose, mayDiscard, closeUnchanged, moodOn: forgetMoodOff };
 }

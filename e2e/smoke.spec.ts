@@ -339,6 +339,7 @@ test('Mix and more opens a drawer that keeps the page playing, and keeps the gro
   const drawer = page.getByRole('dialog', { name: 'Mix and more' });
   await more.click();
   await expect(drawer).toBeFocused();
+  await expect(more).not.toHaveAccessibleDescription(/Groove text is open/);
   const box = (await drawer.boundingBox())!;
   const viewport = page.viewportSize()!;
   if (viewport.width >= 600) expect(Math.round(box.width)).toBe(380);
@@ -353,7 +354,7 @@ test('Mix and more opens a drawer that keeps the page playing, and keeps the gro
   await page.keyboard.press('Escape');
   await expect(drawer).toBeHidden();
   await expect(more).toBeFocused();
-  await expect(page.locator('#jamEditingNote')).toBeAttached();
+  await expect(more).toHaveAccessibleDescription(/Groove text is open/);
   await expect(more).toHaveAttribute('data-editing', '');
   await page.getByRole('group', { name: 'How do you want it to feel?' }).getByRole('button', { name: 'Funky', exact: true }).click();
   const ask = page.locator('#askDialog');
@@ -363,6 +364,39 @@ test('Mix and more opens a drawer that keeps the page playing, and keeps the gro
   await expect(source).toHaveValue(/# changed$/);
   await more.click();
   await expect(source).toBeVisible();
+});
+
+test('closing the drawer closes unchanged groove text, so key and tempo are saved and shared again', async ({ page }) => {
+  await page.goto('./jam/rock-straight-eighths/?mood=sad');
+  await openMore(page);
+  await page.locator('#grooveEdit').click();
+  await page.keyboard.press('Escape');
+  await expect(page.locator('#grooveEditor')).toBeHidden();
+  const more = page.getByRole('button', { name: 'Mix and more', exact: true });
+  await expect(more).not.toHaveAttribute('data-editing');
+  await page.locator('[data-select="jamKey"]').click();
+  await page.locator('#jamKey-options').getByRole('option', { name: 'A minor' }).click();
+  await page.locator('#jamTempoButton').click();
+  await page.locator('#jamTempo').fill('80');
+  await expect(page).toHaveURL(/\?mood=sad&key=Am&tempo=80&/);
+  await page.keyboard.press('Escape');
+  await openMore(page);
+  await expect(page.locator('#jamShare')).toBeVisible();
+});
+
+test('a wide drawer pushes the page and stays open for presses on it; a narrower one closes and lets the press through', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name === 'phone', 'The phone sheet covers the page');
+  await page.goto('./jam/rock-straight-eighths/?mood=sad');
+  const drawer = page.getByRole('dialog', { name: 'Mix and more' });
+  const funky = page.getByRole('group', { name: 'How do you want it to feel?' }).getByRole('button', { name: 'Funky', exact: true });
+  await openMore(page);
+  await funky.click();
+  await expect(funky).toHaveAttribute('aria-pressed', 'true');
+  await expect(drawer).toBeVisible();
+  await page.setViewportSize({ width: 1024, height: 768 });
+  await page.locator('[data-select="jamKey"]').click();
+  await expect(drawer).toBeHidden();
+  await expect(page.locator('#jamKey-options')).toBeVisible();
 });
 
 test('the now line under the bars names the playing chord, its job and the mood note', async ({ page }) => {

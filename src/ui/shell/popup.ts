@@ -3,7 +3,9 @@ interface PopupOptions {
   focus?: () => HTMLElement;
   /** Presses and focus on these elements leave the panel open. */
   keepOpenFor?: readonly HTMLElement[];
-  opened?: () => void;
+  /** While true, presses and focus elsewhere on the page leave the panel open; Esc and close() still close it. */
+  pinned?: () => boolean;
+  closed?: () => void;
 }
 
 export interface Popup {
@@ -27,11 +29,11 @@ document.addEventListener('keydown', event => {
 
 /**
  * A panel a button opens over the page without making the rest of it inert, so Play and the chips keep working.
- * Esc, a press outside or focus moving away closes it.
+ * Esc, a click outside or focus moving away closes it.
  */
-export function popup(button: HTMLButtonElement, panel: HTMLElement, { focus, keepOpenFor = [], opened }: PopupOptions = {}): Popup {
+export function popup(button: HTMLButtonElement, panel: HTMLElement, { focus, keepOpenFor = [], pinned = () => false, closed }: PopupOptions = {}): Popup {
   const keepsOpen = (target: EventTarget | null) =>
-    target instanceof Node && (panel.contains(target) || button.contains(target) || keepOpenFor.some(element => element.contains(target)) || inDialog(target));
+    pinned() || (target instanceof Node && (panel.contains(target) || button.contains(target) || keepOpenFor.some(element => element.contains(target)) || inDialog(target)));
 
   const handle: Popup = {
     open() {
@@ -39,7 +41,6 @@ export function popup(button: HTMLButtonElement, panel: HTMLElement, { focus, ke
       panel.hidden = false;
       button.setAttribute('aria-expanded', 'true');
       openPopups.push(handle);
-      opened?.();
       (focus?.() ?? panel).focus();
     },
     close(returnFocus = false) {
@@ -48,6 +49,7 @@ export function popup(button: HTMLButtonElement, panel: HTMLElement, { focus, ke
       button.setAttribute('aria-expanded', 'false');
       openPopups.splice(openPopups.indexOf(handle), 1);
       if (returnFocus) button.focus();
+      closed?.();
     },
     get isOpen() { return !panel.hidden; },
   };
@@ -56,7 +58,8 @@ export function popup(button: HTMLButtonElement, panel: HTMLElement, { focus, ke
     if (handle.isOpen) handle.close();
     else handle.open();
   });
-  document.addEventListener('pointerdown', event => {
+  // On click rather than pointerdown, so the press that closes the panel still reaches what it pressed
+  document.addEventListener('click', event => {
     if (handle.isOpen && !keepsOpen(event.target)) handle.close();
   });
   panel.addEventListener('focusout', event => {

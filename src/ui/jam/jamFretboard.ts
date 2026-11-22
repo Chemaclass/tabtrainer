@@ -90,6 +90,9 @@ export function jamFretboardView(jam: Jam, mixer: Pick<Mixer, 'plays'>, settings
     nextChordLine.hidden = !now.showNext;
     nowChord.textContent = drawing.chordName;
     nowNotes.textContent = drawing.chordNotes;
+    // The notes belong to the playing chord, so with Free they come before the next chord's name
+    if (now.showNext) nextChordLine.before(nowNotes);
+    else jobLine.after(nowNotes);
     announceOnce(chordLine, drawing.chordText);
     const svg = fretboardSvg({
       openNames: drawing.openNames,

@@ -99,6 +99,7 @@ const jamming = jamView(jam, loop, {
   chordsChanged: bars => jamFretboard.show(bars),
   shareLink: () => jamShareLink(site, jam.slug, jam.setup),
   moodPicked: chooseMood,
+  drawerClosed: () => grooveEditing.closeUnchanged(),
 });
 const mixing = mixerView(mixer, loop, chooseFamily);
 const grooveEditing = grooveEditor(jam, { played: showJamGroove, saved: keepSavedGroove, deleted: showAfterDelete });

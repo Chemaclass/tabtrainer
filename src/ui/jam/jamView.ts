@@ -19,8 +19,11 @@ interface JamViewHandlers {
   chordsChanged: (bars: readonly GrooveBar[]) => void;
   shareLink: () => string;
   moodPicked: (id: MoodId | null) => void;
+  drawerClosed: () => void;
 }
 
+// Keep in step with the width in jam.css from which the open drawer pushes the stage aside
+const DRAWER_PUSHES = '(min-width: 1280px)';
 const COUNT_IN_BAR = 'bar';
 const COUNT_IN_OFF = 'off';
 const SHARE_HINT = 'Key, tempo, chords and swing';
@@ -51,7 +54,7 @@ function barItem({ bar, chord }: GrooveBar, moodBar: MoodBar | undefined): HTMLL
   return item;
 }
 
-export function jamView(jam: Jam, engine: LoopEngine, { active, choose, changed, chordsChanged, shareLink, moodPicked }: JamViewHandlers) {
+export function jamView(jam: Jam, engine: LoopEngine, { active, choose, changed, chordsChanged, shareLink, moodPicked, drawerClosed }: JamViewHandlers) {
   const play = byId('jamPlay', HTMLButtonElement);
   const playLabel = byId('jamPlayLabel');
   const bpm = byId('jamBpm');
@@ -74,7 +77,9 @@ export function jamView(jam: Jam, engine: LoopEngine, { active, choose, changed,
   const picker = groovePicker(jam, choose);
   const moods = moodStageView(jam, { pick: moodPicked });
   popup(tempoButton, tempoPanel, { focus: () => tempo });
-  const drawerPopup = popup(more, drawer, { keepOpenFor: [play, tempoButton, tempoPanel] });
+  const pushes = window.matchMedia(DRAWER_PUSHES);
+  // While the drawer pushes the stage aside the page stays usable, so a press there must not close it and move what was pressed
+  const drawerPopup = popup(more, drawer, { keepOpenFor: [play, tempoButton, tempoPanel], pinned: () => pushes.matches, closed: drawerClosed });
   byId('jamDrawerClose').onclick = () => drawerPopup.close(true);
   let playing: boolean | null = null;
   let current: number | null = null;

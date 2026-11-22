@@ -361,6 +361,9 @@
 .jam-now-next[hidden] {
   display: none;
 }
+.jam-now-notes + .jam-now-next {
+  margin-left: 8px;
+}
 .jam-now-notes {
   margin-left: 4px;
   font: 400 13px/24px var(--mono);
@@ -871,10 +874,6 @@ fieldset.jam-plays {
 }
 
 @media (min-width: 1024px) {
-  /* The open drawer pushes the stage aside, so Play and the bars stay in reach */
-  .jam:has(.jam-drawer:not([hidden])) {
-    padding-right: var(--jam-drawer-width);
-  }
   .jam-fretboard .fretboard-board {
     width: clamp(
       min(714px, 100%),
@@ -888,6 +887,10 @@ fieldset.jam-plays {
   }
 }
 @media (min-width: 1280px) {
+  /* The open drawer pushes the stage aside, so Play and the bars stay in reach; narrower, it lays over the page */
+  .jam:has(.jam-drawer:not([hidden])) {
+    padding-right: var(--jam-drawer-width);
+  }
   .jam-bars[data-count="12"] {
     --jam-bar-columns: 12;
   }
@@ -975,7 +978,8 @@ fieldset.jam-plays {
   }
   .jam-transport {
     position: fixed;
-    z-index: 7;
+    /* Above the sheet, so the tempo panel it opens shows over it */
+    z-index: 9;
     right: 0;
     bottom: 0;
     left: 0;
