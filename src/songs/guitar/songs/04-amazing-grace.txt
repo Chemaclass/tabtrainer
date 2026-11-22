@@ -1,0 +1,37 @@
+title: Amazing Grace
+artist: Traditional (public domain)
+about: Count in three with the tune of Amazing Grace and its dotted rhythms, then strum a waltz and play the tune over a held bass note.
+level: easy
+instrument: guitar6
+tempo: 84
+key: G
+time: 3/4
+
+== Melody
+level: easy
+# Open position. The tune starts on beat 3 with the open D string.
+@Melody
+:h r :q 0.4 | "G" :h 0.3 :8 0.2 0.3 | :h 0.2 :q 2.3 | "C" :h 0.3 :q 2.4 | "G" :h 0.4 :q 0.4 |
+:h 0.3 :8 0.2 0.3 | :h 0.2 :q 2.3 | "D" :h. 3.2 | :h ~3.2 :q 0.2 |
+"G" :q. 3.2 :8 0.2 3.2 0.2 | :h 0.3 :q 0.4 | "C" :q. 2.4 :8 0.3 0.3 2.4 | "G" :h 0.4 :q 0.4 |
+:h 0.3 :8 0.2 0.3 | "D" :h 0.2 :q 2.3 | "G" :h. 0.3 | :h ~0.3 :q r |
+
+== Chords
+level: easy
+# Hold the whole chord shape. Bass note on beat 1, the top three strings on beats 2 and 3.
+@Waltz strum
+"G" :q 3.6 (0.3 0.2 3.1) (0.3 0.2 3.1) | 3.6 (0.3 0.2 3.1) (0.3 0.2 3.1) | "C" 3.5 (0.3 1.2 0.1) (0.3 1.2 0.1) | "G" 3.6 (0.3 0.2 3.1) (0.3 0.2 3.1) |
+3.6 (0.3 0.2 3.1) (0.3 0.2 3.1) | 3.6 (0.3 0.2 3.1) (0.3 0.2 3.1) | "D" 0.4 (2.3 3.2 2.1) (2.3 3.2 2.1) | 0.4 (2.3 3.2 2.1) (2.3 3.2 2.1) |
+"G" 3.6 (0.3 0.2 3.1) (0.3 0.2 3.1) | 3.6 (0.3 0.2 3.1) (0.3 0.2 3.1) | "C" 3.5 (0.3 1.2 0.1) (0.3 1.2 0.1) | "G" 3.6 (0.3 0.2 3.1) (0.3 0.2 3.1) |
+3.6 (0.3 0.2 3.1) (0.3 0.2 3.1) | "D" 0.4 (2.3 3.2 2.1) (2.3 3.2 2.1) | "G" 3.6 (0.3 0.2 3.1) (0.3 0.2 3.1) | 3.6 (0.3 0.2 3.1) (0.3 0.2 3.1) |
+@Ending
+"G" :h. (3.6 2.5 0.4 0.3 0.2 3.1) |
+
+== Melody and bass
+level: medium
+# The chord's lowest note rings under the tune for the whole bar; the tie (~) keeps it sounding.
+@Melody and bass
+:h r :q 0.4 | "G" :h (3.6 0.3) :8 (~3.6 0.2) (~3.6 0.3) | :h (3.6 0.2) :q (~3.6 2.3) | "C" :h (3.5 0.3) :q (~3.5 2.4) | "G" :h (3.6 0.4) :q (~3.6 0.4) |
+:h (3.6 0.3) :8 (~3.6 0.2) (~3.6 0.3) | :h (3.6 0.2) :q (~3.6 2.3) | "D" :h. (0.4 3.2) | :h (~0.4 ~3.2) :q (~0.4 0.2) |
+"G" :q. (3.6 3.2) :8 (~3.6 0.2) (~3.6 3.2) (~3.6 0.2) | :h (3.6 0.3) :q (~3.6 0.4) | "C" :q. (3.5 2.4) :8 (~3.5 0.3) (~3.5 0.3) (~3.5 2.4) | "G" :h (3.6 0.4) :q (~3.6 0.4) |
+:h (3.6 0.3) :8 (~3.6 0.2) (~3.6 0.3) | "D" :h (0.4 0.2) :q (~0.4 2.3) | "G" :h. (3.6 0.3) | :h (~3.6 ~0.3) :q r |

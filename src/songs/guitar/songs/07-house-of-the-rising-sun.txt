@@ -1,0 +1,37 @@
+title: House of the Rising Sun
+artist: Traditional (public domain)
+about: Change open chords in 6/8, counted as two groups of three: first with two strums a bar, then with a steady six-note picking pattern.
+level: easy
+instrument: guitar6
+tempo: 108
+key: Am
+time: 6/8
+
+== Chords
+level: easy
+# Strum down on counts 1 and 4, and let each chord ring for three counts. F is the small shape on the top four strings: lay your index finger flat across the top two strings at fret 1.
+@Verse
+"Am" :q. (0.5 2.4 2.3 1.2 0.1) (0.5 2.4 2.3 1.2 0.1) | "C" (3.5 2.4 0.3 1.2 0.1) (3.5 2.4 0.3 1.2 0.1) |
+"D" (0.4 2.3 3.2 2.1) (0.4 2.3 3.2 2.1) | "F" (3.4 2.3 1.2 1.1) (3.4 2.3 1.2 1.1) |
+"Am" (0.5 2.4 2.3 1.2 0.1) (0.5 2.4 2.3 1.2 0.1) | "C" (3.5 2.4 0.3 1.2 0.1) (3.5 2.4 0.3 1.2 0.1) |
+"E" (0.6 2.5 2.4 1.3 0.2 0.1) (0.6 2.5 2.4 1.3 0.2 0.1) | (0.6 2.5 2.4 1.3 0.2 0.1) (0.6 2.5 2.4 1.3 0.2 0.1) |
+"Am" (0.5 2.4 2.3 1.2 0.1) (0.5 2.4 2.3 1.2 0.1) | "C" (3.5 2.4 0.3 1.2 0.1) (3.5 2.4 0.3 1.2 0.1) |
+"D" (0.4 2.3 3.2 2.1) (0.4 2.3 3.2 2.1) | "F" (3.4 2.3 1.2 1.1) (3.4 2.3 1.2 1.1) |
+"Am" (0.5 2.4 2.3 1.2 0.1) (0.5 2.4 2.3 1.2 0.1) | "E" (0.6 2.5 2.4 1.3 0.2 0.1) (0.6 2.5 2.4 1.3 0.2 0.1) |
+"Am" (0.5 2.4 2.3 1.2 0.1) (0.5 2.4 2.3 1.2 0.1) | "E" (0.6 2.5 2.4 1.3 0.2 0.1) (0.6 2.5 2.4 1.3 0.2 0.1) |
+@Ending
+"Am" :h. (0.5 2.4 2.3 1.2 0.1) |
+== Picking
+level: medium
+# Thumb on the bass note, then up to the top string and back down. Hold each chord shape for the whole bar.
+@Verse
+"Am" :8 0.5 2.3 1.2 0.1 1.2 2.3 | "C" 3.5 0.3 1.2 0.1 1.2 0.3 |
+"D" 0.4 2.3 3.2 2.1 3.2 2.3 | "F" 3.4 2.3 1.2 1.1 1.2 2.3 |
+"Am" 0.5 2.3 1.2 0.1 1.2 2.3 | "C" 3.5 0.3 1.2 0.1 1.2 0.3 |
+"E" 0.6 1.3 0.2 0.1 0.2 1.3 | 0.6 1.3 0.2 0.1 0.2 1.3 |
+"Am" 0.5 2.3 1.2 0.1 1.2 2.3 | "C" 3.5 0.3 1.2 0.1 1.2 0.3 |
+"D" 0.4 2.3 3.2 2.1 3.2 2.3 | "F" 3.4 2.3 1.2 1.1 1.2 2.3 |
+"Am" 0.5 2.3 1.2 0.1 1.2 2.3 | "E" 0.6 1.3 0.2 0.1 0.2 1.3 |
+"Am" 0.5 2.3 1.2 0.1 1.2 2.3 | "E" 0.6 1.3 0.2 0.1 0.2 1.3 |
+@Ending
+"Am" :h. (0.5 2.4 2.3 1.2 0.1) |

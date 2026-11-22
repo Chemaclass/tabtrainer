@@ -1,0 +1,26 @@
+title: Lágrima
+artist: Francisco Tárrega (public domain)
+about: Move a melody and a bass line up the neck together while an open string rings between them.
+level: hard
+instrument: guitar6
+tempo: 72
+key: E
+time: 3/4
+
+# Tárrega's notes for the E major part, the first eight bars.
+# The slides Lágrima is known for come in its E minor second part, which is left out here because a slide cannot be written in this tab.
+@First phrase
+# Tune on the top string, bass on the fourth string, both moving up together. The open B string rings between them on every off beat.
+:8 (4.1 2.4) 0.2 (5.1 4.4) 0.2 (7.1 6.4) 0.2 |
+# A B7 shape at the second fret: hold it for the whole bar.
+:8 (2.1 1.4) 0.2 2.3 0.2 2.5 0.2 |
+:8 (4.1 2.4) 0.2 (5.1 4.4) 0.2 (7.1 6.4) 0.2 |
+:8 (2.1 1.4) 0.2 2.3 0.2 2.5 0.2 |
+@Second phrase
+# Jump to the ninth fret: little finger on the 12th fret, first finger lies across the ninth fret for beat 3.
+:8 (12.1 11.4) 9.3 (11.1 9.4) 9.3 (9.1 12.5) 11.3 |
+# Start at the seventh fret, then move down to the fifth fret on beat 2.
+:8 (7.1 9.4) 9.2 6.3 5.2 7.2 5.1 |
+# Fourth fret on beat 1, then a barre at the second fret for beats 2 and 3. The tie (~) holds the top note while the bass plays.
+:8 (4.1 4.3) 5.2 (2.2 3.3) 2.1 (2.5 ~2.1) (4.2 2.3) |
+:q (0.1 1.3 2.4) 0.6 r |

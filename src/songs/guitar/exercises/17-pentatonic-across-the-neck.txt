@@ -1,0 +1,49 @@
+title: Pentatonic Across the Neck
+artist: TabTrainer
+about: Join the five shapes of A minor pentatonic so you can play the scale anywhere on the neck.
+level: medium
+instrument: guitar6
+tempo: 80
+key: Am
+time: 4/4
+
+# Every note is A, C, D, E or G. Each shape fits under one hand position; the rests give you time to move.
+# Shape 1 starts at fret 5, shape 2 at fret 7, shape 3 at fret 9 or 10, shape 4 at fret 12, shape 5 at fret 2 (and again at 14).
+== Learn
+level: medium
+# Shape 1: index on fret 5. Shape 2: index on fret 7, little finger on fret 10.
+@Shape 1 up, shape 2 down
+"Am" :8 5.6 8.6 5.5 7.5 5.4 7.4 5.3 7.3 | 5.2 8.2 5.1 8.1 :q r :8 10.1 8.1 |
+10.2 8.2 9.3 7.3 10.4 7.4 10.5 7.5 | 10.6 8.6 7.5 10.5 :h 7.4 |
+
+== Develop
+level: hard
+# Shape 3: index on fret 10, but reach back to fret 9 on string 3. Shape 4: index on fret 12, little finger on fret 15.
+@Shapes 3 and 4
+"Am" :8 10.6 12.6 10.5 12.5 10.4 12.4 9.3 12.3 | 10.2 13.2 10.1 12.1 :q r :8 15.1 12.1 |
+15.2 13.2 14.3 12.3 14.4 12.4 15.5 12.5 | 15.6 12.6 :q 12.5 :h r |
+# Shape 5: index on fret 2, little finger on fret 5. Then shift back to shape 1.
+@Shape 5
+:8 3.6 5.6 3.5 5.5 2.4 5.4 2.3 5.3 | 3.2 5.2 3.1 5.1 :q r :8 8.1 5.1 |
+8.2 5.2 7.3 5.3 7.4 5.4 7.5 5.5 | 8.6 5.6 :h. 5.6 |
+
+== Challenge
+level: hard
+# Two notes per string, one shape at a time. Slide your whole hand up every four notes.
+@Along two strings
+"Am" :8 3.2 5.2 3.1 5.1 5.2 8.2 5.1 8.1 | 8.2 10.2 8.1 10.1 10.2 13.2 10.1 12.1 |
+13.2 15.2 12.1 15.1 12.1 10.1 13.2 10.2 | 10.1 8.1 10.2 8.2 :q 8.1 5.1 |
+# Three notes per string on strings 6 to 3, then two on strings 2 and 1. Move your hand up a little on each new string.
+# Use index, middle and little finger where the wider gap comes second (strings 6 and 5), index, ring and little finger where it comes first (strings 4 and 3).
+@Diagonal run
+:8t 3.6 5.6 8.6 5.5 7.5 10.5 7.4 10.4 12.4 9.3 12.3 14.3 | 13.2 15.2 12.1 15.1 12.1 15.2 13.2 14.3 12.3 :q 12.5 |
+:8t 14.3 12.3 9.3 12.4 10.4 7.4 10.5 7.5 5.5 8.6 5.6 3.6 | :q 5.6 3.6 :h 5.6 |
+# Groups of four: four notes up the scale, then start again one note higher.
+@Sequences in sixteenths
+:16 5.6 8.6 5.5 7.5 8.6 5.5 7.5 5.4 5.5 7.5 5.4 7.4 7.5 5.4 7.4 5.3 | 5.4 7.4 5.3 7.3 7.4 5.3 7.3 5.2 5.3 7.3 5.2 8.2 5.1 8.1 :8 r |
+:16 10.1 8.1 10.2 8.2 8.1 10.2 8.2 9.3 10.2 8.2 9.3 7.3 8.2 9.3 7.3 10.4 | 9.3 7.3 10.4 7.4 7.3 10.4 7.4 10.5 10.4 7.4 10.5 7.5 :q 7.4 |
+# The same short lick in shapes 1, 2, 3 and 4. Move up during each last note, then land on A.
+@Lick in every shape
+:8 5.3 7.3 :16 5.2 8.2 5.2 r :8 7.3 5.3 :q 7.4 | :8 8.2 10.2 :16 8.1 10.1 8.1 r :8 10.2 8.2 :q 9.3 |
+:8 9.3 12.3 :16 10.2 13.2 10.2 r :8 12.3 9.3 :q 12.4 | :8 14.3 13.2 :16 15.2 12.1 15.2 r :8 13.2 14.3 :q 12.3 |
+:w 12.5 |

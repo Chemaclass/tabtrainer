@@ -1,0 +1,64 @@
+title: Für Elise
+artist: Ludwig van Beethoven (public domain)
+about: Play the opening of Für Elise, moving between a quick melody on the top strings and broken chords on the lower strings.
+level: hard
+instrument: guitar6
+tempo: 60
+key: Am
+time: 3/8
+
+# Arranged from Beethoven's piano score: the right hand's notes an octave lower, with the left hand's bass note under them.
+# It plays the whole opening section with both repeats written out, through the second ending.
+# Count three eighth notes per bar. The tune starts with two short notes before the first full bar.
+@Theme
+:q r :16 0.1 4.2 |
+:16 0.1 4.2 0.1 0.2 3.2 1.2 |
+:8 (0.5 2.3) :16 r 3.5 2.4 2.3 |
+:8 (0.6 0.2) :16 r 2.4 1.3 0.2 |
+:8 (0.5 1.2) :16 r 2.4 0.1 4.2 |
+:16 0.1 4.2 0.1 0.2 3.2 1.2 |
+:8 (0.5 2.3) :16 r 3.5 2.4 2.3 |
+:8 (0.6 0.2) :16 r 2.4 1.2 0.2 |
+:q (0.5 2.3) :16 0.1 4.2 |
+@Theme again
+:16 0.1 4.2 0.1 0.2 3.2 1.2 |
+:8 (0.5 2.3) :16 r 3.5 2.4 2.3 |
+:8 (0.6 0.2) :16 r 2.4 1.3 0.2 |
+:8 (0.5 1.2) :16 r 2.4 0.1 4.2 |
+:16 0.1 4.2 0.1 0.2 3.2 1.2 |
+:8 (0.5 2.3) :16 r 3.5 2.4 2.3 |
+:8 (0.6 0.2) :16 r 2.4 1.2 0.2 |
+:8 (0.5 2.3) :16 r 0.2 1.2 3.2 |
+@Middle
+:8. (3.5 0.1) :16 0.3 1.1 0.1 |
+:8. (3.6 3.2) :16 3.4 0.1 3.2 |
+:8. (0.5 1.2) :16 2.4 3.2 1.2 |
+:8 (0.6 0.2) :16 r 2.4 0.1 2.4 |
+# The high E is at the 12th fret. Reach it with one finger, then let the rest and the open string give you time to come back down.
+:16 0.1 0.1 12.1 r 0.1 4.2 |
+:16 0.1 4.2 0.1 4.2 0.1 4.2 |
+:16 0.1 4.2 0.1 0.2 3.2 1.2 |
+@Theme returns
+:8 (0.5 2.3) :16 r 3.5 2.4 2.3 |
+:8 (0.6 0.2) :16 r 2.4 1.3 0.2 |
+:8 (0.5 1.2) :16 r 2.4 0.1 4.2 |
+:16 0.1 4.2 0.1 0.2 3.2 1.2 |
+:8 (0.5 2.3) :16 r 3.5 2.4 2.3 |
+:8 (0.6 0.2) :16 r 2.4 1.2 0.2 |
+:8 (0.5 2.3) :16 r 0.2 1.2 3.2 |
+@Middle again
+:8. (3.5 0.1) :16 0.3 1.1 0.1 |
+:8. (3.6 3.2) :16 3.4 0.1 3.2 |
+:8. (0.5 1.2) :16 2.4 3.2 1.2 |
+:8 (0.6 0.2) :16 r 2.4 0.1 2.4 |
+:16 0.1 0.1 12.1 r 0.1 4.2 |
+:16 0.1 4.2 0.1 4.2 0.1 4.2 |
+:16 0.1 4.2 0.1 0.2 3.2 1.2 |
+@Theme ending
+:8 (0.5 2.3) :16 r 3.5 2.4 2.3 |
+:8 (0.6 0.2) :16 r 2.4 1.3 0.2 |
+:8 (0.5 1.2) :16 r 2.4 0.1 4.2 |
+:16 0.1 4.2 0.1 0.2 3.2 1.2 |
+:8 (0.5 2.3) :16 r 3.5 2.4 2.3 |
+:8 (0.6 0.2) :16 r 2.4 1.2 0.2 |
+:8 (0.5 2.3) r r |
