@@ -111,12 +111,12 @@ function uniqueBySlug(entries: readonly ProgressionEntry[]): ProgressionEntry[] 
   });
 }
 
-/** The picked mood's progressions first, then the scale family's, then those of every other mood on the scale. */
+/** The picked mood's progressions, then the scale family's; with no mood picked, every mood on the scale adds its own. */
 function entriesFor(id: ScaleId, mood: Mood | null): ProgressionEntry[] {
   const picked = mood ? moodEntries(mood) : [];
   const family = SCALE_FAMILIES[id];
   const familyEntries = family ? PROGRESSIONS[family] : [];
-  const moodsOnScale = MOODS.filter(m => m.scale === id).flatMap(moodEntries);
+  const moodsOnScale = mood ? [] : MOODS.filter(m => m.scale === id).flatMap(moodEntries);
   return uniqueBySlug([...picked, ...familyEntries, ...moodsOnScale]);
 }
 
