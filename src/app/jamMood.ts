@@ -111,12 +111,12 @@ export function scaleGroups(mood: Mood | null, scales: readonly ScaleId[]): Scal
 
 export interface GrooveGroups { fitting: JamGroove[]; other: JamGroove[] }
 
-/** The bundled grooves, those whose genre fits the mood first; with no mood all of them are "other". */
+/** The bundled grooves, those whose genre fits the mood first, best genre first; with no mood all of them are "other". */
 export function grooveGroups(list: readonly JamGroove[], mood: Mood | null): GrooveGroups {
   const bundled = list.filter(entry => !entry.mine);
   if (!mood) return { fitting: [], other: bundled };
   return {
-    fitting: bundled.filter(entry => moodFits(mood, entry.groove.genre)),
+    fitting: mood.genres.flatMap(genre => bundled.filter(entry => entry.groove.genre === genre)),
     other: bundled.filter(entry => !moodFits(mood, entry.groove.genre)),
   };
 }

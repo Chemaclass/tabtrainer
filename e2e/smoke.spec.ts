@@ -292,11 +292,12 @@ test('the open controls say when they leave the mood, and the groove list puts f
   await page.locator('[data-select="jamScale"]').click();
   await expect(page.locator('#jamScale-options [role="group"]').first()).toHaveAttribute('aria-label', 'Carries the mood');
   await page.locator('#jamScale-options').getByRole('option', { name: 'Major pentatonic' }).click();
-  await expect(page.locator('#jamMoodLegend')).toHaveText('This scale leaves out D, the exciting note.');
+  await expect(page.locator('#jamMoodLegend')).toHaveText('This scale leaves out G, the exciting note.');
   await expect(page.locator('#jamFretboardBoard .fb-mark[data-mood]')).toHaveCount(0);
   await page.locator('#jamPickerButton').click();
   await expect(page.locator('#jamFitHeading')).toHaveText('Fits Exciting');
-  await expect(page.locator('#jamFitList a')).toHaveCount(2);
+  await expect(page.locator('#jamFitList a')).toHaveCount(3);
+  await expect(page.locator('#jamFitList .jam-groove-title').first()).toHaveText('Driving hard rock in A');
   await expect(page.locator('#jamOtherHeading')).toHaveText('Other grooves');
   await page.keyboard.press('Escape');
   await page.locator('#grooveEdit').click();

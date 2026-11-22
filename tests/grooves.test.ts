@@ -14,8 +14,8 @@ const files = readdirSync('src/grooves').filter(f => f.endsWith('.txt'));
 const read = (file: string) => readFileSync(`src/grooves/${file}`, 'utf8');
 
 describe('bundled grooves', () => {
-  it('ships eight grooves, one per genre', () => {
-    expect(files.map(f => parseGroove(read(f)).groove.genre)).toEqual(['blues', 'rock', 'reggae', 'funk', 'jazz', 'bossa', 'metal', 'ballad']);
+  it('ships nine grooves, one per genre', () => {
+    expect(files.map(f => parseGroove(read(f)).groove.genre)).toEqual(['blues', 'rock', 'reggae', 'funk', 'jazz', 'bossa', 'metal', 'ballad', 'hardrock']);
   });
 
   it('fails a groove whose grid does not fit its bar', () => {

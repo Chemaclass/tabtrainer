@@ -109,11 +109,12 @@ describe('mood note legend', () => {
     ]);
     expect(scaleGroups(moodById('exciting'), ['mixolydian'])).toEqual([{ label: 'Carries the mood', scales: ['mixolydian'] }]);
   });
-  it('lists the bundled grooves that fit the mood first', () => {
+  it('lists the bundled grooves that fit the mood first, in the order of its genres', () => {
     const jam = new Jam(bundledGrooves(files));
     const slugs = (entries: readonly { slug: string }[]) => entries.map(entry => entry.slug);
     const sad = grooveGroups(jam.list, moodById('sad'));
-    expect(slugs(sad.fitting)).toEqual(['rock-straight-eighths', 'slow-ballad']);
+    expect(slugs(sad.fitting)).toEqual(['slow-ballad', 'rock-straight-eighths']);
+    expect(slugs(grooveGroups(jam.list, moodById('exciting')).fitting)).toEqual(['driving-hard-rock', 'rock-straight-eighths', 'metal-gallop']);
     expect(sad.other).toHaveLength(jam.list.length - 2);
     expect(grooveGroups(jam.list, null)).toEqual({ fitting: [], other: jam.list });
   });
