@@ -1,0 +1,40 @@
+title: Fingerpicking Patterns
+artist: TabTrainer
+about: Pick chords with thumb and three fingers, first one string at a time, then with the thumb keeping its own steady beat.
+level: easy
+instrument: guitar6
+tempo: 72
+key: Am
+time: 4/4
+
+# Hold the whole chord shape and pick it without a pick. p is the thumb, on the bass strings 4 to 6.
+# i, m and a are the index, middle and ring fingers. They stay on strings 3, 2 and 1.
+== Learn
+level: easy
+@Thumb then fingers
+"Am" :q {p} 0.5 {i} 2.3 {m} 1.2 {a} 0.1 | "C" 3.5 0.3 1.2 0.1 |
+"G" 3.6 0.3 0.2 3.1 | "Em" 0.6 0.3 0.2 0.1 |
+
+# The index finger comes back between each of the other notes: p i m i a i m i.
+== Develop
+level: medium
+@Rolling pattern
+"Am" :8 {p} 0.5 {i} 2.3 {m} 1.2 {i} 2.3 {a} 0.1 {i} 2.3 {m} 1.2 {i} 2.3 | "C" 3.5 0.3 1.2 0.3 0.1 0.3 1.2 0.3 |
+"G" 3.6 0.3 0.2 0.3 3.1 0.3 0.2 0.3 | "Em" 0.6 0.3 0.2 0.3 0.1 0.3 0.2 0.3 |
+
+# A pinch is the thumb and ring finger plucking at the same time, squeezing toward each other.
+# With the alternating thumb, the thumb plays every beat and swaps between two bass strings. Keep it even and let the fingers fit between.
+== Challenge
+level: hard
+@Pinch
+"Am" :8 {p+a} (0.5 0.1) {i} 2.3 {m} 1.2 {i} 2.3 {p+a} (0.5 0.1) {i} 2.3 {m} 1.2 {i} 2.3 | "C" (3.5 0.1) 0.3 1.2 0.3 (3.5 0.1) 0.3 1.2 0.3 |
+"G" (3.6 3.1) 0.3 0.2 0.3 (3.6 3.1) 0.3 0.2 0.3 | "Em" (0.6 0.1) 0.3 0.2 0.3 (0.6 0.1) 0.3 0.2 0.3 |
+@Alternating thumb
+"Am" {p} 0.5 {i} 2.3 {p} 2.4 {m} 1.2 {p} 0.5 {i} 2.3 {p} 2.4 {m} 1.2 | "C" 3.5 0.3 2.4 1.2 3.5 0.3 2.4 1.2 |
+"G" 3.6 0.3 0.4 0.2 3.6 0.3 0.4 0.2 | "Em" 0.6 0.3 2.4 0.2 0.6 0.3 2.4 0.2 |
+@Thumb and pinch
+"Am" {p+a} (0.5 0.1) {i} 2.3 {p} 2.4 {m} 1.2 {p} 0.5 {i} 2.3 {p} 2.4 {m} 1.2 | "C" (3.5 0.1) 0.3 2.4 1.2 3.5 0.3 2.4 1.2 |
+"G" (3.6 3.1) 0.3 0.4 0.2 3.6 0.3 0.4 0.2 | "Em" (0.6 0.1) 0.3 2.4 0.2 0.6 0.3 2.4 0.2 |
+@Two chords a bar
+"Am" (0.5 0.1) 2.3 2.4 1.2 "C" (3.5 0.1) 0.3 2.4 1.2 | "G" (3.6 3.1) 0.3 0.4 0.2 "Em" (0.6 0.1) 0.3 2.4 0.2 |
+"Am" (0.5 0.1) 2.3 2.4 1.2 "C" (3.5 0.1) 0.3 2.4 1.2 | "G" (3.6 3.1) 0.3 0.4 0.2 "Am" :h (0.5 2.4 2.3 1.2 0.1) |
