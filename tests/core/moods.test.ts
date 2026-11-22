@@ -53,6 +53,12 @@ describe('mood table', () => {
     expect(moodById('dreamy').scale).toBe('lydian');
     expect(() => moodById('angry' as MoodId)).toThrow();
   });
+  it('explains every mood without theory terms, counting distances in frets', () => {
+    for (const mood of MOODS) {
+      const texts = [mood.why, mood.tempo.outside, ...mood.loops.flatMap(l => l.jobs)];
+      for (const text of texts) expect(text, mood.id).not.toMatch(/\b(root|second|third|fourth|fifth|sixth|seventh|half step|whole step|raised|flat|vamp|resolve)/i);
+    }
+  });
   it('writes no dashes other than a hyphen in any mood text', () => {
     for (const mood of MOODS) {
       const texts = [mood.name, mood.why, mood.tempo.outside, mood.note.label, mood.note.contrast, ...mood.loops.flatMap(l => l.jobs)];

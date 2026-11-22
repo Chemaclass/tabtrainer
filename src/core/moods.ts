@@ -65,7 +65,7 @@ const MOOD_ENTRIES: readonly MoodEntry[] = [
     tempo: { min: 100, max: 140, word: 'Medium', outside: 'Slower and it turns calm' },
     genres: ['rock', 'bossa'],
     note: { degree: '3', label: 'the happy note', contrast: 'not three' },
-    why: 'The major third above the root sounds bright and settled.',
+    why: 'The note four frets above home sounds bright, so the tune feels open and settled.',
   },
   {
     id: 'sad',
@@ -81,7 +81,7 @@ const MOOD_ENTRIES: readonly MoodEntry[] = [
     tempo: { min: 56, max: 88, word: 'Slow', outside: 'Faster and it turns restless' },
     genres: ['rock'],
     note: { degree: 'b3', label: 'the sad note', contrast: 'not four' },
-    why: 'The minor third above the root sounds soft and low.',
+    why: 'The note three frets above home, one fret lower than in a happy tune, makes it sound soft and low.',
   },
   {
     id: 'melancholic',
@@ -112,7 +112,7 @@ const MOOD_ENTRIES: readonly MoodEntry[] = [
     tempo: { min: 120, max: 176, word: 'Fast', outside: 'Slower and it loses its push' },
     genres: ['rock', 'metal'],
     note: { degree: 'b7', label: 'the exciting note', contrast: 'not one' },
-    why: 'The major third sounds bright and the flat seventh adds grit. The major chord two frets below home keeps pushing back to it.',
+    why: 'Bright like a happy tune, with a gritty note two frets below home. The chord built on that note keeps pushing back toward home.',
   },
   {
     id: 'epic',
@@ -128,7 +128,7 @@ const MOOD_ENTRIES: readonly MoodEntry[] = [
     tempo: { min: 120, max: 180, word: 'Fast', outside: 'Slower and it turns sad' },
     genres: ['metal', 'rock'],
     note: { degree: 'b6', label: 'the epic note', contrast: 'not three' },
-    why: 'Big major chords on the flat sixth and seventh climb back to a minor root.',
+    why: 'Home is a dark minor chord. Big bright chords built four and two frets below home climb back up to it.',
   },
   {
     id: 'dark',
@@ -143,7 +143,7 @@ const MOOD_ENTRIES: readonly MoodEntry[] = [
     tempo: { min: 80, max: 130, word: 'Medium', outside: 'Faster and it turns frantic' },
     genres: ['metal', 'rock'],
     note: { degree: 'b2', label: 'the dark note', contrast: 'not two' },
-    why: 'The note a half step above the root pulls down hard.',
+    why: 'One note sits just one fret above home and keeps pulling back down to it.',
   },
   {
     id: 'tense',
@@ -152,13 +152,13 @@ const MOOD_ENTRIES: readonly MoodEntry[] = [
     alsoScales: [],
     progressions: ['i iv V7'],
     loops: [
-      { bars: 'i iv V7 i', jobs: ['Home. Minor and uneasy.', 'Sinks deeper.', 'Pulls hard back home.', 'Resolves home.'] },
-      { bars: 'i bVI V7 i', jobs: ['Home. Minor and uneasy.', 'A warm major chord.', 'Pulls hard back home.', 'Resolves home.'] },
+      { bars: 'i iv V7 i', jobs: ['Home. Minor and uneasy.', 'Sinks deeper.', 'Pulls hard back home.', 'Lands home, and the pull lets go.'] },
+      { bars: 'i bVI V7 i', jobs: ['Home. Minor and uneasy.', 'A warm major chord.', 'Pulls hard back home.', 'Lands home, and the pull lets go.'] },
     ],
     tempo: { min: 90, max: 140, word: 'Medium', outside: 'Slower and the pull home fades' },
     genres: ['bossa', 'rock'],
     note: { degree: '7', label: 'the tense note', contrast: 'so it pulls up into it' },
-    why: 'The raised seventh sits a half step under the root and begs to resolve.',
+    why: 'One note sits one fret below home and begs to step up into it, so the chord before home pulls hard.',
   },
   {
     id: 'dreamy',
@@ -173,7 +173,7 @@ const MOOD_ENTRIES: readonly MoodEntry[] = [
     tempo: { min: 70, max: 110, word: 'Slow', outside: 'Faster and it stops floating' },
     genres: ['bossa', 'reggae'],
     note: { degree: '#4', label: 'the dreamy note', contrast: 'not five' },
-    why: 'The raised fourth floats over the root and never settles.',
+    why: 'One note sits six frets above home, one fret higher than usual. It floats and never quite settles.',
   },
   {
     id: 'bluesy',
@@ -194,7 +194,7 @@ const MOOD_ENTRIES: readonly MoodEntry[] = [
     tempo: { min: 60, max: 130, word: 'Medium', outside: 'Faster and it turns into rock and roll' },
     genres: ['blues', 'rock'],
     note: { degree: 'b5', label: 'the blue note', contrast: 'one fret below the fifth' },
-    why: 'The flat fifth rubs against the fifth, and every chord is a restless seventh.',
+    why: 'A rough note six frets above home rubs against its neighbour, and every chord carries an extra restless note.',
   },
   {
     id: 'funky',
@@ -209,7 +209,7 @@ const MOOD_ENTRIES: readonly MoodEntry[] = [
     tempo: { min: 88, max: 116, word: 'Medium', outside: 'Slower and it loses its bounce' },
     genres: ['funk', 'reggae'],
     note: { degree: '6', label: 'the funky note', contrast: 'not four' },
-    why: 'The major sixth brightens a minor chord, so a two chord vamp keeps moving.',
+    why: 'A bright note three frets below home lifts the minor home chord, so two chords are enough to keep it moving.',
   },
 ];
 
