@@ -1,0 +1,28 @@
+title: Scarborough Fair
+artist: Traditional (public domain)
+about: Play a tune in three that uses the brighter sixth note of the Dorian scale, then add a bass note on beat 1.
+level: easy
+instrument: guitar6
+tempo: 96
+key: Am
+time: 3/4
+
+# The tune is in A Dorian: A minor with F sharp instead of F. The F sharp in bar 7 is meant, not a mistake.
+# For the high A at fret 5, move the hand up one fret from bar 5 to bar 11: index finger on fret 2, little finger on fret 5.
+== Melody
+level: easy
+@Verse
+"Am" :h 2.3 :q 2.3 | :h 0.1 :q 0.1 | "G" :q. 0.2 :8 1.2 :q 0.2 | "Am" :h. 2.3 |
+:q ~2.3 0.1 3.1 | :h 5.1 :q 3.1 | "D" 0.1 2.1 3.2 | "Em" :h. 0.1 |
+:h ~0.1 :q 5.1 | "Am" :h 5.1 :q 5.1 | "G" :h 3.1 :q 0.1 | "Am" 0.1 3.2 1.2 |
+"G" 0.2 :h 0.3 | :h. ~0.3 | "Am" :h 2.3 :q 0.1 | "D" :h 3.2 :q 1.2 |
+"G" 0.2 2.3 0.3 | "Am" :h. 2.3 | :h. ~2.3 |
+== Melody and bass
+level: medium
+# The thumb plays an open bass string on beat 1 and lets it ring; the G bass is fret 3 on the low E string.
+@Verse
+"Am" :h (0.5 2.3) :q 2.3 | :h (0.5 0.1) :q 0.1 | "G" :q. (3.6 0.2) :8 1.2 :q 0.2 | "Am" :h. (0.5 2.3) |
+:q (0.5 ~2.3) 0.1 3.1 | :h (0.5 5.1) :q 3.1 | "D" (0.4 0.1) 2.1 3.2 | "Em" :h. (0.6 0.1) |
+:h (0.6 ~0.1) :q 5.1 | "Am" :h (0.5 5.1) :q 5.1 | "G" :h (3.6 3.1) :q 0.1 | "Am" (0.5 0.1) 3.2 1.2 |
+"G" (3.6 0.2) :h 0.3 | :h. (3.6 ~0.3) | "Am" :h (0.5 2.3) :q 0.1 | "D" :h (0.4 3.2) :q 1.2 |
+"G" (3.6 0.2) 2.3 0.3 | "Am" :h. (0.5 2.3) | :h. (0.5 ~2.3) |
