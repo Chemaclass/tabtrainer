@@ -668,6 +668,9 @@ input[type="range"]::-moz-range-thumb {
   #practiceScreen {
     margin-right: var(--player-w);
   }
+  .cleared-beside #practiceScreen {
+    margin-right: max(var(--player-w), 300px);
+  }
   .layout {
     --editor-height: calc(
       100dvh - var(--top-h, 64px) - var(--save-state-h, 0px)

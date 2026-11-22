@@ -20,7 +20,8 @@ export function clearedSheet(player: Pick<Player, 'playing' | 'pause'>, actions:
   const exerciseButton = byId('clearedExerciseBtn', HTMLButtonElement), levelButton = byId('clearedLevelBtn', HTMLButtonElement);
   // Beside the score the sheet leaves the score and the level picker usable.
   const beside = matchMedia('(min-width: 900px)');
-  let shown: ClearedLoop | null = null;
+  let shown: ClearedLoop | null = null, generation = 0;
+  sheet.addEventListener('close', () => document.body.classList.remove('cleared-beside'));
   document.addEventListener('keydown', event => {
     if (event.key !== 'Escape' || !sheet.open || sheet.matches(':modal') || document.querySelector('dialog:modal')) return;
     event.preventDefault(); sheet.close();
@@ -75,13 +76,17 @@ export function clearedSheet(player: Pick<Player, 'playing' | 'pause'>, actions:
     const actionButtons = [nextButton, levelButton, exerciseButton, wholeButton];
     const primary = actionButtons.find(button => !button.hidden) ?? wholeButton;
     for (const button of actionButtons) button.classList.toggle('primary', button === primary);
-    if (beside.matches) sheet.show(); else sheet.showModal();
+    if (beside.matches) { document.body.classList.add('cleared-beside'); sheet.show(); } else sheet.showModal();
     primary.focus();
   }
 
   // A pass ends inside the player's own update, so pause and open once that update is done.
   return {
-    open: (cleared: ClearedLoop) => queueMicrotask(() => show(cleared)),
-    close: () => { if (sheet.open) sheet.close(); },
+    open: (cleared: ClearedLoop) => {
+      const opened = generation;
+      queueMicrotask(() => { if (opened === generation) show(cleared); });
+    },
+    // A sheet still waiting to open belongs to the song or level that was playing, so it is dropped too.
+    close: () => { generation++; if (sheet.open) sheet.close(); },
   };
 }

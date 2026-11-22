@@ -90,6 +90,36 @@ describe('practice levels', () => {
   });
 });
 
+describe('level names from song files', () => {
+  it('treats a version named like an object property as a plain level', () => {
+    const { log } = memory();
+    log.passEnded('demo:a', 'constructor', whole(100), at(2));
+    expect(log.song('demo:a')!.levels).toEqual({ constructor: at(2) });
+    expect(songProgress(log.song('demo:a'), ['constructor'])).toBe('done');
+    expect(log.levelDone('demo:a', 'constructor')).toBe(true);
+    expect(log.levelDone('demo:a', 'toString')).toBe(false);
+  });
+  it('restores a backup with such a level and keeps the record readable', () => {
+    const base = { bestSpeed: 100, cleanAt: at(1), lastPlayed: at(1), seconds: 0, lastLoop: null, lastSpeed: 100 };
+    const { log, stored } = memory({ songs: { 'demo:a': { ...base, version: 'duet', levels: { duet: at(1) } } }, days: {}, wins: [] });
+    expect(log.merge({ songs: { 'demo:a': { ...base, version: 'constructor' } }, days: {}, wins: [] })).toBe(true);
+    expect(isPracticeRecord(stored())).toBe(true);
+    expect(log.song('demo:a')!.levels).toEqual({ duet: at(1), constructor: at(1) });
+  });
+  it('merges two older records, keeping each level with its own date', () => {
+    const base = { bestSpeed: 100, seconds: 0, lastLoop: null, lastSpeed: 100 };
+    const { log } = memory({ songs: { 'demo:a': { ...base, version: 'learn', cleanAt: at(1), lastPlayed: at(1) } }, days: {}, wins: [] });
+    log.merge({ songs: { 'demo:a': { ...base, version: 'develop', cleanAt: at(3), lastPlayed: at(3) } }, days: {}, wins: [] });
+    expect(log.song('demo:a')!.levels).toEqual({ learn: at(1), develop: at(3) });
+  });
+  it('never writes a record it would not read back', () => {
+    const { log, stored } = memory();
+    log.passEnded('demo:a', null, whole(80), at(1));
+    expect(log.merge({ songs: { 'demo:a': { bestSpeed: 90, cleanAt: null, lastPlayed: at(2), seconds: Number.NaN, lastLoop: null, lastSpeed: 90, version: null } }, days: {}, wins: [] })).toBe(false);
+    expect(isPracticeRecord(stored())).toBe(true);
+  });
+});
+
 describe('practice log time', () => {
   it('adds seconds to the song and to the local day', () => {
     const { log } = memory();

@@ -1,6 +1,6 @@
 import { defaultSpeedPractice, nextSpeedPracticeSpeed, type PassMark } from '../core/speedPractice';
 import type { CatalogueEntry } from './catalogue';
-import { CLEAN_SPEED, dayKey, levelsDone, songProgress, type BarLoop, type PracticeDay, type SongProgress, type SongRecord, type Win } from './practiceLog';
+import { CLEAN_SPEED, dayKey, levelsDone, songProgress, timeOf, type BarLoop, type PracticeDay, type SongProgress, type SongRecord, type Win } from './practiceLog';
 
 export interface PickUp { entry: CatalogueEntry; loop: BarLoop | null; version: string | null; passSpeed: number | null; nextSpeed: number | null; lastPlayed: number }
 export interface RowProgress { progress: SongProgress; label: string; when: string | null; best: number | null; share: number | null; date: string | null }
@@ -83,7 +83,7 @@ export function rowProgress(song: SongRecord | null, now: number, levels: readon
   const row = { progress, when: null, best: null, share: null, date: null };
   if (!song) return { ...row, label: 'Not started' };
   const done = levelsDone(song);
-  const finished = slugs.map((slug, i) => ({ name: levels[i].trim(), at: done[slug] })).filter((level): level is { name: string; at: number } => level.at !== undefined);
+  const finished = slugs.map((slug, i) => ({ name: levels[i].trim(), at: timeOf(done, slug) })).filter((level): level is { name: string; at: number } => level.at !== undefined);
   if (finished.length > 0) {
     const latest = finished.reduce((a, b) => b.at > a.at ? b : a);
     const label = finished.length === slugs.length ? `All ${slugs.length} levels done` : finished.length === 1 ? `${latest.name} done` : `${finished.length} of ${slugs.length} levels · ${latest.name} done`;
