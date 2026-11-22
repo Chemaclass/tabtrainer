@@ -57,8 +57,8 @@ A mood decides the chords; the key, tempo, scale and groove stay yours. While a 
 | Happy | major | `I V vi IV \| I V IV V`, `I IV I V \| vi IV I V`, `I vi IV V \| I vi ii V` | 100 to 140 | 120 | rock, bossa |
 | Sad | natural minor | `i bVI bIII bVII \| i bVI iv v`, `i iv i v \| bVI bIII iv v`, `i bVII bVI bVII \| i bVII bVI v` | 56 to 88 | 66 | ballad, rock |
 | Melancholic | major, with the minor iv | `I iii IV iv \| I vi IV iv`, `I IV iv I \| vi IV iv V`, `Imaj7 vi7 IV iv \| Imaj7 iii IV iv` | 60 to 96 | 72 | ballad, bossa |
-| Exciting | Mixolydian | `I I bVII IV \| I I IV bVII`, `I bVII IV I \| I bVII IV bVII`, `I IV bVII IV \| I IV bVII bVII` | 120 to 176 | 148 | rock, metal |
-| Epic | natural minor | `i i bVI bVII \| i bIII bVI bVII`, `i bVII bVI bVII \| bIII bVII bVI bVII`, `i i bVI bVI \| bIII bIII bVII bVII` | 120 to 180 | 160 | metal, rock |
+| Exciting | Mixolydian | `I I bVII IV \| I I IV bVII`, `I bVII IV I \| I bVII IV bVII`, `I IV bVII IV \| I IV bVII bVII` | 120 to 176 | 148 | hardrock, rock, metal |
+| Epic | natural minor | `i i bVI bVII \| i bIII bVI bVII`, `i bVII bVI bVII \| bIII bVII bVI bVII`, `i i bVI bVI \| bIII bIII bVII bVII` | 120 to 180 | 160 | metal, hardrock, rock |
 | Dark | Phrygian | `i bII i bII \| i bII bIII bII`, `i bII bvii i \| iv bIII bII bII`, `i i bII bII \| i i bvii bII` | 80 to 130 | 100 | metal, rock |
 | Tense | harmonic minor | `i iv V7 i \| bVI iv V7 V7`, `i bVI V7 i \| iv iim7b5 V7 V7`, `i V7 i V7 \| iv iv V7 V7` | 90 to 140 | 112 | rock, bossa |
 | Dreamy | Lydian | `Imaj7 Imaj7 II II \| Imaj7 Imaj7 vi II`, `Imaj7 II Imaj7 II \| vi II Imaj7 II`, `Imaj7 II iii II \| Imaj7 II vii II` | 70 to 110 | 76 | ballad, bossa, reggae |

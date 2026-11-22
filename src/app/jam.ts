@@ -14,7 +14,7 @@ export const JAM_TEMPO = { min: 40, max: 220 } as const;
 export const JAM_SWING = { min: 50, max: 66 } as const;
 const MAJOR_KEYS: readonly string[] = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B'];
 const MINOR_KEYS: readonly string[] = ['Cm', 'C#m', 'Dm', 'Ebm', 'Em', 'Fm', 'F#m', 'Gm', 'G#m', 'Am', 'Bbm', 'Bm'];
-const BLUESY_GENRES: ReadonlySet<string> = new Set(['blues', 'rock']);
+const BLUESY_GENRES: ReadonlySet<string> = new Set(['blues', 'rock', 'hardrock']);
 
 export const NEW_GROOVE_TEXT = `title: My groove
 genre: rock

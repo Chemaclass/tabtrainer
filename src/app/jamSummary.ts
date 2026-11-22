@@ -1,3 +1,4 @@
+import { genreName } from '../core/groove';
 import { OWN_PROGRESSION, PROGRESSION_PRESETS } from '../core/harmony';
 import { MOODS, barRows, type Mood, type MoodLoop } from '../core/moods';
 import { MIXER_PARTS, type Mixer } from './jam';
@@ -36,7 +37,7 @@ function barCountText(barCount: number): string {
 }
 
 export function grooveContext(genre: string, barCount: number): string {
-  const parts = [genre, barCountText(barCount)];
+  const parts = [genreName(genre), barCountText(barCount)];
   return parts.filter(Boolean).join(SUMMARY_SEPARATOR);
 }
 

@@ -4,7 +4,7 @@ import { createRequire } from 'node:module';
 import { inflateSync } from 'node:zlib';
 import { Resvg } from '@resvg/resvg-js';
 import type { Note, Song } from '../core/model';
-import type { Groove } from '../core/groove';
+import { genreName, type Groove } from '../core/groove';
 import { chordAt } from '../core/harmony';
 import { escapeHtml } from './sharePages';
 
@@ -46,7 +46,7 @@ export function songCard(song: Song, family: string): Card {
 const CHART_BARS = 8;
 export function grooveCard(groove: Groove): Card {
   return {
-    kicker: `${groove.genre} groove`,
+    kicker: `${genreName(groove.genre)} groove`,
     title: groove.title,
     details: [`Key ${groove.key}`, `${groove.tempo} BPM`, groove.time.join('/')],
     staff: { chords: Array.from({ length: CHART_BARS }, (_, bar) => chordAt(groove.progression, groove.key, bar).name) },
