@@ -5,7 +5,7 @@ tempo: 170
 key: Em
 time: 4/4
 swing: 50
-progression: i5 i5 bVI5 bVII5
+progression: i5 i5 bVI5 bVII5 | i5 i5 bIII5 bVII5
 voice: drive
 kit: metal
 fill: on

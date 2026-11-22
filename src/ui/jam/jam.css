@@ -278,6 +278,10 @@
   padding: 0;
   list-style: none;
 }
+/* Eight bars read as two phrases of four, twelve as two rows of six */
+.jam-bars[data-count="8"] {
+  --jam-bar-columns: 4;
+}
 .jam-bars li {
   position: relative;
   display: flex;
@@ -873,8 +877,8 @@ fieldset.jam-plays {
   color: var(--page);
   font-weight: 600;
 }
-/* The fretboard stays in view under eight bars, so a mood packs the stage tighter */
-.jam.mood-on .jam-stage {
+/* The fretboard stays in view under eight or twelve bars, so the stage packs tight */
+.jam .jam-stage {
   gap: 12px;
   padding-top: 16px;
 }
@@ -1156,13 +1160,13 @@ fieldset.jam-plays {
     line-height: 21px;
   }
   /* The pinned Play bar leaves little room, so the board comes before its settings */
-  .jam.mood-on .jam-fretboard-head {
+  .jam .jam-fretboard-head {
     display: contents;
   }
-  .jam.mood-on .jam-now {
+  .jam .jam-now {
     margin-bottom: 12px;
   }
-  .jam.mood-on .jam-fretboard-controls {
+  .jam .jam-fretboard-controls {
     order: 4;
     margin-top: 12px;
   }
@@ -1227,14 +1231,14 @@ fieldset.jam-plays {
   }
 }
 @media (max-width: 599px) {
-  .jam.mood-on .jam-bars[data-count="12"] li {
+  .jam .jam-bars[data-count="12"] li {
     min-height: 0;
     padding-block: 2px;
   }
-  .jam.mood-on .jam-bars[data-count="12"] li[aria-current] {
+  .jam .jam-bars[data-count="12"] li[aria-current] {
     padding-block: 0;
   }
-  .jam.mood-on .jam-bars[data-count="12"] .jam-chord {
+  .jam .jam-bars[data-count="12"] .jam-chord {
     line-height: 20px;
   }
 }

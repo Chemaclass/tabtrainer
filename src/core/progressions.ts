@@ -18,13 +18,13 @@ function jamPreset(slug: string): ProgressionEntry {
 const PROGRESSIONS: Record<Family, readonly ProgressionEntry[]> = {
   major: [
     { slug: 'major-i-iv-v', name: 'I IV V', bars: 'I IV V' },
-    jamPreset('i-v-vi-iv'),
-    jamPreset('ii-v-i'),
+    { slug: 'i-v-vi-iv', name: 'I V vi IV', bars: 'I V vi IV' },
+    { slug: 'ii-v-i', name: 'ii V I', bars: 'ii7 V7 Imaj7 Imaj7' },
     { slug: 'major-i-vi-iv-v', name: 'I vi IV V', bars: 'I vi IV V' },
   ],
   minor: [
     { slug: 'minor-i-iv-v', name: 'i iv v', bars: 'i iv v' },
-    jamPreset('i-bvii-bvi-bvii'),
+    { slug: 'i-bvii-bvi-bvii', name: 'i bVII bVI bVII', bars: 'i bVII bVI bVII' },
     { slug: 'minor-i-bvi-biii-bvii', name: 'i bVI bIII bVII', bars: 'i bVI bIII bVII' },
     { slug: 'minor-ii-v-i', name: 'ii m7b5 V7 i', bars: 'iim7b5 V7 i' },
   ],

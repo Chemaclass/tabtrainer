@@ -31,7 +31,7 @@ bass:  1 - 3 - 5 - 6 - | b7 - 6 - 5 - >b1 -
 | `genre:` | the style shown in the groove list, such as `blues`, `rock`, `reggae` or `funk` |
 | `about:` | one line on what the groove practises, shown under the title |
 | `swing:` | how late the off beat notes land: `50` is straight, `66` is a triplet, up to `75`. The Jam screen starts from this value, and its swing slider stops at the triplet |
-| `progression:` | the chords the groove plays by default. The Jam screen can swap them for another progression |
+| `progression:` | the chords the groove plays by default, one per bar. The bundled grooves use at least eight, with a second half of their own and a last bar that leads home. The Jam screen can swap them for another progression; its presets have eight bars too, apart from the twelve bar blues. A grid shorter than the progression repeats, so its length should divide the number of bars |
 | `voice:` | the sound of the keys part: `keys` (electric piano, the default), `organ`, or `drive`, a distorted voice for power chords |
 | `kit:` | the drum sound and feel: `rock` (the default), `blues`, `funk`, `reggae`, `jazz`, `metal` or `electronic`. Each kit tunes the drums and how loosely they sit on the beat |
 | `fill:` | `on` plays a tom fill over the last two beats of the progression, in place of the drum lines there. `off` is the default |

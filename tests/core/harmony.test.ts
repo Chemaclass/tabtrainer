@@ -101,17 +101,26 @@ describe('progression presets', () => {
     expect(preset(OWN_PROGRESSION).map(n => n.text)).toEqual(['I7', 'IV7']);
     expect(presetProgression('polka', progression('I'))).toBeNull();
   });
-  it('spells ii V I in Bb as Cm7, F7 and Bbmaj7', () => {
-    expect(chordNames(preset('ii-v-i'), 'Bb')).toEqual(['Cm7', 'F7', 'Bbmaj7', 'Bbmaj7']);
+  it('spells ii V I in Bb as Cm7, F7 and Bbmaj7, turning back through Gm7', () => {
+    expect(chordNames(preset('ii-v-i'), 'Bb')).toEqual(['Cm7', 'F7', 'Bbmaj7', 'Bbmaj7', 'Cm7', 'F7', 'Bbmaj7', 'Gm7']);
   });
   it('spells the blues and minor presets in their keys', () => {
     expect(chordNames(preset('12-bar-blues'), 'A')).toEqual(['A7', 'D7', 'A7', 'A7', 'D7', 'D7', 'A7', 'A7', 'E7', 'D7', 'A7', 'E7']);
     expect(chordNames(preset('minor-blues'), 'Am').slice(8)).toEqual(['F7', 'E7', 'Am7', 'E7']);
-    expect(chordNames(preset('i-bvii-bvi-bvii'), 'Em')).toEqual(['Em', 'D', 'C', 'D']);
-    expect(chordNames(preset('i-v-vi-iv'), 'G')).toEqual(['G', 'D', 'Em', 'C']);
+    expect(chordNames(preset('i-bvii-bvi-bvii'), 'Em')).toEqual(['Em', 'D', 'C', 'D', 'C', 'C', 'D', 'D']);
+    expect(chordNames(preset('i-v-vi-iv'), 'G')).toEqual(['G', 'D', 'Em', 'C', 'Em', 'C', 'G', 'D']);
+    expect(chordNames(preset('i-iv-v'), 'C')).toEqual(['C', 'F', 'C', 'G', 'F', 'F', 'C', 'G']);
   });
-  it('vamps on the first chord of the groove for four bars', () => {
-    expect(preset('one-chord', progression('i7 IV7')).map(n => n.text)).toEqual(['i7', 'i7', 'i7', 'i7']);
+  it('vamps on the first chord of the groove for eight bars', () => {
+    expect(preset('one-chord', progression('i7 IV7')).map(n => n.text)).toEqual(Array(8).fill('i7'));
+  });
+  it('gives every preset at least eight bars, a second half of its own and a last bar away from home', () => {
+    for (const { slug } of PROGRESSION_PRESETS.filter(p => p.slug !== 'one-chord')) {
+      const bars = preset(slug).map(n => n.text);
+      expect(bars.length, slug).toBeGreaterThanOrEqual(8);
+      expect(bars.slice(4, 8), slug).not.toEqual(bars.slice(0, 4));
+      expect(bars.at(-1), slug).not.toBe(bars[0]);
+    }
   });
   it('tells a minor progression from its first chord', () => {
     expect(isMinorProgression(preset('minor-blues'))).toBe(true);

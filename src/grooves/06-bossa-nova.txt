@@ -5,7 +5,7 @@ tempo: 140
 key: D
 time: 4/4
 swing: 50
-progression: Imaj7 vi7 ii7 V7
+progression: Imaj7 vi7 ii7 V7 | iii7 vi7 ii7 V7
 kit: jazz
 
 # eight straight eighths per bar: 1 & 2 & 3 & 4 &

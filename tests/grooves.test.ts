@@ -18,6 +18,22 @@ describe('bundled grooves', () => {
     expect(files.map(f => parseGroove(read(f)).groove.genre)).toEqual(['blues', 'rock', 'reggae', 'funk', 'jazz', 'bossa', 'metal', 'ballad', 'hardrock']);
   });
 
+  it('gives every groove at least eight chords of its own, a second half of its own and a last bar that leads home', () => {
+    for (const file of files) {
+      const bars = parseGroove(read(file)).groove.progression.map(n => n.text);
+      expect(bars.length, file).toBeGreaterThanOrEqual(8);
+      expect(bars.slice(4, 8), file).not.toEqual(bars.slice(0, 4));
+      expect(bars.at(-1), file).not.toBe(bars[0]);
+    }
+  });
+
+  it('repeats every grid a whole number of times over its own chords, so the patterns line up', () => {
+    for (const file of files) {
+      const { groove } = parseGroove(read(file));
+      for (const grid of groove.grids) expect(groove.progression.length % grid.bars.length, `${file} ${grid.part}`).toBe(0);
+    }
+  });
+
   it('fails a groove whose grid does not fit its bar', () => {
     const broken = read(files[0]).replace(/^hat:.*$/m, 'hat: xoxoxoxoxo');
     expect(grooveProblems(broken).map(problem => problem.message)).toEqual(expect.arrayContaining([expect.stringMatching(/"hat:".*10 steps/)]));
@@ -94,8 +110,11 @@ describe('jazz, bossa and metal grooves', () => {
     const { groove } = parseGroove(read('06-bossa-nova.txt'));
     for (const key of MAJOR_KEYS) {
       const t = buildGrooveTimeline(groove, key);
-      const last = t.bass.filter(h => h.bar === 3).at(-1)!.midi[0];
-      expect(Math.abs(last - t.bass[0].midi[0]), key).toBe(1);
+      for (const bar of [3, 7]) {
+        const last = t.bass.filter(h => h.bar === bar).at(-1)!.midi[0];
+        const next = t.bass.find(h => h.bar === (bar + 1) % t.bars.length)!.midi[0];
+        expect(Math.abs(last - next), `${key} bar ${bar + 1}`).toBe(1);
+      }
     }
   });
 

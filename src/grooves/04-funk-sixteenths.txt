@@ -1,11 +1,11 @@
 title: Sixteenth funk in E minor
 genre: funk
-about: A tight sixteenth note funk vamp in E minor to practise muted, syncopated lines over i7 and IV7.
+about: A tight sixteenth note funk vamp in E minor to practise muted, syncopated lines over i7, IV7 and bVII7.
 tempo: 98
 key: Em
 time: 4/4
 swing: 54
-progression: i7 i7 i7 IV7
+progression: i7 i7 i7 IV7 | i7 i7 bVII7 IV7
 kit: funk
 
 # sixteen steps per bar: 1 e & a 2 e & a 3 e & a 4 e & a

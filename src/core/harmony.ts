@@ -91,13 +91,13 @@ export const TWELVE_BAR_BLUES = 'I7 IV7 I7 I7 IV7 IV7 I7 I7 V7 IV7 I7 V7';
 const PRESETS: readonly (ProgressionPreset & { text: string })[] = [
   { slug: '12-bar-blues', name: '12 bar blues', text: TWELVE_BAR_BLUES },
   { slug: 'minor-blues', name: 'Minor blues', text: 'i7 iv7 i7 i7 iv7 iv7 i7 i7 bVI7 V7 i7 V7' },
-  { slug: 'i-iv-v', name: 'I IV V', text: 'I IV I V' },
-  { slug: 'i-v-vi-iv', name: 'I V vi IV', text: 'I V vi IV' },
-  { slug: 'i-bvii-bvi-bvii', name: 'i bVII bVI bVII', text: 'i bVII bVI bVII' },
-  { slug: 'ii-v-i', name: 'ii V I', text: 'ii7 V7 Imaj7 Imaj7' },
+  { slug: 'i-iv-v', name: 'I IV V', text: 'I IV I V IV IV I V' },
+  { slug: 'i-v-vi-iv', name: 'I V vi IV', text: 'I V vi IV vi IV I V' },
+  { slug: 'i-bvii-bvi-bvii', name: 'i bVII bVI bVII', text: 'i bVII bVI bVII bVI bVI bVII bVII' },
+  { slug: 'ii-v-i', name: 'ii V I', text: 'ii7 V7 Imaj7 Imaj7 ii7 V7 Imaj7 vi7' },
   { slug: 'one-chord', name: 'One chord vamp', text: '' },
 ];
-const VAMP_BARS = 4;
+const VAMP_BARS = 8;
 
 export const PROGRESSION_PRESETS: readonly ProgressionPreset[] = PRESETS.map(({ slug, name }) => ({ slug, name }));
 
