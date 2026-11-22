@@ -22,6 +22,12 @@ describe('share card', () => {
     expect(card.staff).toMatchObject({ columns: [{ notes: [{ fret: 3 }] }, { notes: [{ fret: 3, tie: true }] }, 'bar'] });
     expect(cardSvg(card, 'example.com')).toContain('>(3)</text>');
   });
+  it('shows a dead note as x, not as an open string', () => {
+    const card = songCard(song('', ':q x.4 3.4 x.3 3.4 |'), 'bass');
+    expect(card.staff).toMatchObject({ columns: [{ notes: [{ string: 4, dead: true }] }, {}, {}, {}, 'bar'] });
+    expect(cardSvg(card, 'example.com')).toContain('>x</text>');
+    expect(cardSvg(card, 'example.com')).not.toContain('>0</text>');
+  });
   it('moves a chord written on a rest to the next note', () => {
     expect(songCard(song('', '"Am" :q r 5.3 "D7" 5.2 |'), 'bass').staff).toMatchObject({ columns: [{ chord: 'Am' }, { chord: 'D7' }, 'bar'] });
   });

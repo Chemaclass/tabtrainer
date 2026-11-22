@@ -161,6 +161,36 @@ describe('header keys', () => {
   });
 });
 
+describe('dead notes', () => {
+  const guitar = (body: string) => parseSong(`instrument: guitar6\n${body}`);
+  it('reads x.3 and X.3 as a dead note on that string', () => {
+    const { song, issues } = guitar(':q x.3 X.3 (x.4 x.3) 5.3 |');
+    expect(issues).toEqual([]);
+    expect(song.bars[0].events.map(e => e.notes)).toEqual([
+      [{ string: 3, fret: 0, dead: true }],
+      [{ string: 3, fret: 0, dead: true }],
+      [{ string: 4, fret: 0, dead: true }, { string: 3, fret: 0, dead: true }],
+      [{ string: 3, fret: 5 }],
+    ]);
+  });
+  it('rejects a mark on a dead note and a missing string', () => {
+    expect(guitar(':q hx.3 ~x.3 3.4 3.4 |').issues.map(i => i.code)).toEqual(['note-unreadable', 'note-unreadable', 'bar-short']);
+    expect(parseSong('instrument: bass4\n:h x.9 x.4 x.4 |').issues.map(i => i.code)).toEqual(['string-missing']);
+  });
+  it('rejects a tie that would hold a dead note', () => {
+    expect(guitar(':q x.3 ~5.3 5.3 ~5.3 |').issues.map(i => i.code)).toEqual(['tie-dead']);
+    expect(guitar(':q x.3 5.2 ~5.2 x.3 |\n== Other\n:q ~5.3 5.3 5.3 5.3 |').issues.map(i => i.code)).toEqual([]);
+  });
+  it('writes a dead note back in lower case and survives a round trip', () => {
+    const { song } = guitar(':8 X.6 0.6 (x.4 x.3 x.2 x.1) 3.1 :q x.5 x.5 | :h (3.6 x.5) x.4 |');
+    const text = serializeSong(song);
+    expect(text).toContain(':8 x.6 0.6 (x.4 x.3 x.2 x.1) 3.1 :q x.5 x.5 |');
+    const again = parseSong(text);
+    expect(again.issues).toEqual([]);
+    expect(again.song.bars.map(b => b.events)).toEqual(song.bars.map(b => b.events));
+  });
+});
+
 describe('issue codes', () => {
   const CASES: Record<SongIssueCode, [string, Partial<ParseIssue>]> = {
     'level-unknown': ['level: brutal\n:w 3.4 |', { line: 1, col: 8, length: 6 }],
@@ -174,6 +204,7 @@ describe('issue codes', () => {
     'string-missing': [':q 3.4 (3.4 3.9) 3.4 3.4 |', { line: 1, col: 13, length: 3 }],
     'fret-high': [':h 3.4 30.4 3.4 |', { line: 1, col: 8, length: 4 }],
     'string-twice': [':q (3.4 5.4):h r:h |', { line: 1, col: 4, length: 11 }],
+    'tie-dead': [':q x.4 ~3.4 3.4 3.4 |', { line: 1, col: 8, length: 4 }],
     'duration-unknown': [':q 3.4:x 3.4 3.4 3.4 3.4 |', { line: 1, col: 7, length: 2 }],
     'bar-short': ['title: x\n:q 3.4 5.4 3.3 |', { line: 2, col: 4, length: 11, beats: 3, expected: 4 }],
     'bar-long': [':q 3.4 3.4 3.4 3.4 3.4 |', { line: 1, col: 20, length: 3, beats: 5, expected: 4, hint: '(missing a "|"?)' }],

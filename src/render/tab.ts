@@ -1,5 +1,5 @@
 import { Barline, Beam, Dot, Formatter, Renderer, StaveNote, Stem, TabNote, TabStave, Tuplet, Voice, type StemmableNote, type TabNotePosition } from 'vexflow';
-import { PPQ, type Bar, type NoteEvent, type Song } from '../core/model';
+import { PPQ, type Bar, type Note, type NoteEvent, type Song } from '../core/model';
 import { onsetKey } from '../core/timeline';
 import { barWidths, labelRows, lineBreaks, timeSignatureDigitHeight } from '../app/sheetLayout';
 
@@ -18,6 +18,11 @@ function pieces(e: NoteEvent): [string, number, boolean][] {
 }
 
 type TabTickable = TabNote | StaveNote;
+
+const fretLabel = (n: Note, continued: boolean) => {
+  const fret = n.dead ? 'X' : String(n.fret);
+  return continued || n.tie ? `(${fret})` : fret;
+};
 const STRING_SPACE = 13, RHYTHM_GLYPH_SCALE = 26;
 
 function tabNote(positions: TabNotePosition[], duration: string, dots: number): TabNote {
@@ -135,7 +140,7 @@ function barNotes(bar: Bar, c: Ctx): BarNotes {
     pieces(ev).forEach(([val, dots, isT], pi) => {
       const sorted = [...ev.notes].sort((a, b) => (c.tuning[a.string - 1] + a.fret) - (c.tuning[b.string - 1] + b.fret));
       const t = sorted.length
-        ? tabNote(sorted.map(n => ({ str: n.string, fret: (pi > 0 || n.tie) ? `(${n.fret})` : String(n.fret) })), val, dots)
+        ? tabNote(sorted.map(n => ({ str: n.string, fret: fretLabel(n, pi > 0) })), val, dots)
         : tabRest(val, dots, c.nStr);
       if (dots) Dot.buildAndAttach([t]);
       if (isT) { g.push(t); if (g.length === 3) { trip.push(g); g = []; } }

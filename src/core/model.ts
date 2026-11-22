@@ -6,9 +6,12 @@ export const PPQ = 48;
 export interface Note {
   /** 1 = highest-pitched string (standard tab numbering). */
   string: number;
+  /** 0 on a dead note. */
   fret: number;
   /** Tied from the previous note on this string: keep it ringing, don't pick again. */
   tie?: boolean;
+  /** Muted by the fretting hand: a click with no pitch. */
+  dead?: boolean;
 }
 
 export interface NoteEvent {

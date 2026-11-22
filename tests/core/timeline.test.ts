@@ -44,3 +44,11 @@ it('retains the written meter for each bar', () => {
   const timeline = buildTimeline(song);
   expect(timeline.bars[0]).toMatchObject({ beats: song.bars[0].beats, beatValue: song.bars[0].beatValue });
 });
+
+it('plays a dead note at the open string and ends the note before it', () => {
+  const { notes } = buildTimeline(parseSong('instrument: guitar6\n:q 5.3 x.3 (x.2 x.1) 3.1 |').song);
+  expect(notes[1]).toMatchObject({ beat: 1, midi: 55, fret: 0, dead: true });
+  expect(notes[2]).toMatchObject({ string: 2, midi: 59, dead: true });
+  expect(notes[0].ring).toBe(1);
+  expect(notes[0].dead).toBeUndefined();
+});

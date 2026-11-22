@@ -576,7 +576,8 @@ time: 4/4
 @Verse                 # section name
 "C" :q 3.3 3.3 :8 5.2 5.2 :q 3.3 |
 (3.3 5.2):h r:h |      # two notes together, then a rest
-[3/4] :8t 3.3 5.3 7.3 :q ~7.3 r |</pre>
+[3/4] :8t 3.3 5.3 7.3 :q ~7.3 r |
+:8 5.3 x.3 5.3 x.3 :q (x.4 x.3) |   # x is a dead note</pre>
     <table>
       <tr><td><code>artist:</code></td><td>who wrote the song, shown as "by ...". Separate several names with commas</td></tr>
       <tr><td><code>about:</code></td><td>one line on what the song trains, shown under the title</td></tr>
@@ -588,6 +589,7 @@ time: 4/4
       <tr><td><code>(3.4 5.3)</code></td><td>notes played together</td></tr>
       <tr><td><code>r</code></td><td>rest</td></tr>
       <tr><td><code>~5.3</code></td><td>tie: keep the note ringing without picking it again</td></tr>
+      <tr><td><code>x.3</code></td><td>dead note on string 3: mute the string with the fretting hand and pick it, for a click with no pitch</td></tr>
       <tr><td><code>"Am7"</code></td><td>chord name above the next note</td></tr>
       <tr><td><code>{let ring}</code></td><td>text above the next note (dynamics, tips)</td></tr>
       <tr><td><code>&lt;la la la&gt;</code></td><td>words to sing, below the tab from the next note</td></tr>

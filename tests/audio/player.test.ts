@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { Player } from '../../src/audio/player';
+import { fakeAudio } from './fakeAudio';
 
 const loaded = () => {
   const p = new Player();
@@ -541,5 +542,25 @@ describe('pass ends', () => {
     jump(0.08 + bar - 0.01);
     setNow(0.08 + bar + 0.005); p.setSpeed(0.5);
     expect(ends).toEqual([{ firstBar: 2, lastBar: 2, whole: false, speed: 100 }]);
+  });
+});
+
+describe('dead notes', () => {
+  afterEach(() => { vi.useRealTimers(); vi.unstubAllGlobals(); });
+  const play = (mute: number[]) => {
+    const audio = fakeAudio();
+    const p = loaded();
+    p.notes = [{ beat: 0, key: '0', bar: 1, string: 3, fret: 0, midi: 55, ring: 1, dead: true }];
+    mute.forEach(s => p.mute.add(s));
+    p.play(); audio.advance(0.2);
+    return audio;
+  };
+  it('play a short thud with no pitched voice', () => {
+    const { sources } = play([]);
+    expect(sources.map(s => s.type)).toEqual(['sawtooth']);
+    expect(sources[0].detune.linearRampToValueAtTime).toHaveBeenCalled();
+  });
+  it('stay silent on a muted string', () => {
+    expect(play([3]).sources).toEqual([]);
   });
 });

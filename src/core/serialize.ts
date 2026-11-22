@@ -7,7 +7,7 @@ const midiName = (m: number) => NAMES[m % 12] + (Math.floor(m / 12) - 1);
 function durToken(e: NoteEvent): string {
   return e.value + '.'.repeat(e.dots) + (e.triplet ? 't' : '');
 }
-const noteTok = (n: Note) => (n.tie ? '~' : '') + `${n.fret}.${n.string}`;
+const noteTok = (n: Note) => n.dead ? `x.${n.string}` : (n.tie ? '~' : '') + `${n.fret}.${n.string}`;
 
 /** Turn a song back into the text format (stable, round-trips through parseSong). */
 export function serializeSong(song: Song, barsPerLine = 2): string {

@@ -109,6 +109,7 @@ export function parseSong(src: string): ParseResult {
     return made;
   };
   let bars: Bar[] = [];
+  const mutedStrings = new Set<number>();
   const st = { cur: null as Bar | null, notesAt: NO_TOKEN, startAt: null as Tok | null }; let t = 0;
   let dur = parseDuration('q')!;
   let pendingTempo: number | undefined;
@@ -135,13 +136,14 @@ export function parseSong(src: string): ParseResult {
     st.cur = null; st.startAt = null;
   };
   const parseNote = (s: string, at: IssueSpan): Note | null => {
-    const tie = s.startsWith('~'); const body = tie ? s.slice(1) : s;
-    const r = /^(\d{1,2})\.(\d{1,2})$/.exec(body);
+    const dead = /^[xX]\.(\d{1,2})$/.exec(s);
+    const tie = !dead && s.startsWith('~'); const body = tie ? s.slice(1) : s;
+    const r = dead ? ['', '0', dead[1]] : /^(\d{1,2})\.(\d{1,2})$/.exec(body);
     if (!r) { report('error', 'note-unreadable', at, hinted(`Can't read "${s}".`, 'Notes are fret.string, e.g. 3.4 (fret 3 on string 4)')); return null; }
     const fret = +r[1], string = +r[2];
     if (string < 1 || string > strings) { report('error', 'string-missing', at, `String ${string} doesn't exist on this ${strings}-string instrument`); return null; }
     if (fret > meta.instrument.maxFret) { report('error', 'fret-high', at, `Fret ${fret} is above the instrument's ${meta.instrument.maxFret} frets`); return null; }
-    return { string, fret, ...(tie ? { tie: true } : {}) };
+    return { string, fret, ...(tie ? { tie: true } : {}), ...(dead ? { dead: true } : {}) };
   };
   const pushEvent = (notes: Note[], tok: Tok) => {
     if (!st.cur) st.cur = newBar(tok);
@@ -153,6 +155,8 @@ export function parseSong(src: string): ParseResult {
     }
     const strs = notes.map(n => n.string);
     if (new Set(strs).size !== strs.length) report('error', 'string-twice', spanOf(tok), 'Two notes on the same string in one chord');
+    if (notes.some(n => n.tie && mutedStrings.has(n.string))) report('error', 'tie-dead', spanOf(tok), "A tie can't hold a dead note. Write the dead note again, such as x.3");
+    for (const n of notes) { if (n.dead) mutedStrings.add(n.string); else mutedStrings.delete(n.string); }
     const ev: NoteEvent = { start: t, dur: dur.ticks, notes, value: dur.value, dots: dur.dots, triplet: dur.triplet };
     if (pendingChord) ev.chord = pendingChord; if (pendingText) ev.text = pendingText; if (pendingLyric) ev.lyric = pendingLyric;
     pendingChord = pendingText = pendingLyric = undefined;
@@ -169,7 +173,7 @@ export function parseSong(src: string): ParseResult {
       const name = s.replace(/^=+/, '').trim() || `Version ${versions.length + 1}`;
       if (bars.length || versionLine) versions.push(version());
       else if (versions.length === 0 && pendingSection) { /* section before the first version applies to it */ }
-      bars = []; st.startAt = null; versionName = name; versionLine = tok.line; versionAt = spanOf(tok); versionLevel = undefined;
+      bars = []; mutedStrings.clear(); st.startAt = null; versionName = name; versionLine = tok.line; versionAt = spanOf(tok); versionLevel = undefined;
       pendingTempo = undefined;
       time = [headerTime[0], headerTime[1]]; dur = parseDuration('q')!; pendingChord = pendingText = pendingLyric = undefined;
       if (versions.some(v => v.name === name)) report('warning', 'version-duplicate', spanOf(tok), `There is already a version called "${name}"`);

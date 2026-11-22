@@ -48,6 +48,7 @@ time: 4/4
 "C" :q 3.3 3.3 :8 5.2 5.2 :q 3.3 |
 (3.3 5.2):h r:h |      # two notes together, then a rest
 [3/4] :8t 3.3 5.3 7.3 :q ~7.3 r |
+:8 5.3 x.3 5.3 x.3 :q (x.4 x.3) |   # x is a dead note
 ```
 
 | Syntax | Meaning |
@@ -58,6 +59,7 @@ time: 4/4
 | `(3.4 5.3)` | notes played together |
 | `r` | rest |
 | `~5.3` | tie: let the note ring without picking it again |
+| `x.3` | dead note on string 3: mute the string with the fretting hand and pick it, for a click with no pitch |
 | `"Am7"` | chord name above the next note |
 | `{let ring}` | text above the next note |
 | `[3/4]` | time signature from this bar on |

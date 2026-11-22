@@ -11,6 +11,8 @@ export type PlayerPhase = 'stopped' | 'counting-in' | 'playing' | 'paused';
 export interface PlayerState { playing: boolean; beat: number | null; phase: PlayerPhase; countInRemaining: number | null }
 type Listener = (s: PlayerState) => void;
 
+const LEVEL = { picked: 0.28, tied: 0.14, dead: 0.2 };
+
 export class Player {
   private clock = new TempoMap([], 90);
   private practice: SpeedPracticeConfig | null = null;
@@ -165,7 +167,9 @@ export class Player {
     for (const n of this.notes) {
       if (n.beat < passFrom - 1e-6 || n.beat >= this.to - 1e-6) continue;
       const when = passStart + this.duration(passFrom, n.beat, speed);
-      if (when >= musicFrom && when < end && !this.mute.has(n.string)) this.synth.voice(when, n.midi, Math.max(0.15, this.duration(n.beat, n.beat + n.ring, speed)), n.soft ? 0.14 : 0.28);
+      if (when < musicFrom || when >= end || this.mute.has(n.string)) continue;
+      if (n.dead) this.synth.thud(when, n.midi, LEVEL.dead);
+      else this.synth.voice(when, n.midi, Math.max(0.15, this.duration(n.beat, n.beat + n.ring, speed)), n.soft ? LEVEL.tied : LEVEL.picked);
     }
     if (!this.metronome) return;
     for (const b of this.bars) for (let i = 0; i < b.beats; i++) {
