@@ -58,3 +58,10 @@ it('marks every note of a palm-muted event as muted', () => {
   expect(notes.map(n => n.muted)).toEqual([true, true, undefined, true]);
   expect(notes[3].dead).toBe(true);
 });
+
+it('plays a hammer-on or pull-off without a pick, in its own voice', () => {
+  const { notes } = buildTimeline(parseSong('instrument: guitar6\n:h 5.3 h7.3 | :q p5.3 r :h 3.3 |').song);
+  expect(notes.map(n => n.legato)).toEqual([undefined, true, true, undefined]);
+  expect(notes.map(n => n.key)).toEqual(['0', '2000', '4000', '6000']);
+  expect(notes[0].ring).toBe(2);
+});

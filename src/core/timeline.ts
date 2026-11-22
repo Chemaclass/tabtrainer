@@ -1,4 +1,5 @@
 import { PPQ, barTicks, type Song } from './model';
+import { eventsInOrder, sourceOf } from './technique';
 
 export interface TimedNote {
   /** Absolute position in quarter-note beats from the start of the song. */
@@ -17,6 +18,8 @@ export interface TimedNote {
   dead?: boolean;
   /** Palm muted: short and dark. */
   muted?: boolean;
+  /** Reached by a hammer-on or pull-off: sounds without a pick attack. */
+  legato?: boolean;
 }
 
 export interface BarSpan { bar: number; start: number; length: number; beats: number; beatValue: number; tempo?: number }
@@ -26,6 +29,7 @@ export const onsetKey = (beat: number) => String(Math.round(beat * 1000));
 export function buildTimeline(song: Song): { notes: TimedNote[]; bars: BarSpan[]; total: number } {
   const notes: TimedNote[] = []; const bars: BarSpan[] = [];
   const tuning = song.meta.instrument.tuning; const tr = song.meta.instrument.transpose;
+  const before = new Map(eventsInOrder(song.bars).map(({ event, before: previous }) => [event, previous]));
   let pos = 0;
   for (const b of song.bars) {
     const len = barTicks(b) / PPQ;
@@ -34,7 +38,7 @@ export function buildTimeline(song: Song): { notes: TimedNote[]; bars: BarSpan[]
     for (const e of b.events) {
       const beat = pos + e.start / PPQ;
       for (const n of e.notes) {
-        notes.push({ beat, ring: e.dur / PPQ, midi: tuning[n.string - 1] + n.fret + tr, string: n.string, fret: n.fret, bar: b.index, key: onsetKey(beat), ...(n.tie ? { soft: true } : {}), ...(n.dead ? { dead: true } : {}), ...(e.palmMute ? { muted: true } : {}) });
+        notes.push({ beat, ring: e.dur / PPQ, midi: tuning[n.string - 1] + n.fret + tr, string: n.string, fret: n.fret, bar: b.index, key: onsetKey(beat), ...(n.tie ? { soft: true } : {}), ...(n.dead ? { dead: true } : {}), ...(e.palmMute ? { muted: true } : {}), ...(n.approach && sourceOf(before.get(e), n) ? { legato: true } : {}) });
       }
     }
     pos += len;

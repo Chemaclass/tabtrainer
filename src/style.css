@@ -415,6 +415,10 @@ kbd {
 .technique-label {
   font-size: 10px;
   font-style: italic;
+  text-anchor: middle;
+}
+.technique-label.pm {
+  text-anchor: start;
 }
 .technique-line {
   stroke: var(--sheet-ink);

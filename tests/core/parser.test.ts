@@ -231,6 +231,49 @@ describe('palm mute', () => {
   });
 });
 
+describe('hammer-ons and pull-offs', () => {
+  const guitar = (body: string) => parseSong(`instrument: guitar6\n${body}`);
+  const codes = (body: string) => guitar(body).issues.map(i => i.code);
+  it('joins a note to the one before it on the same string, in a bar and across a bar line', () => {
+    const { song, issues } = guitar(':q 5.3 h7.3 p5.3 7.3 | p5.3 h7.3:h h9.3:q |');
+    expect(issues).toEqual([]);
+    expect(song.bars.flatMap(b => b.events.map(e => e.notes[0].approach))).toEqual([undefined, 'hammer', 'pull', undefined, 'pull', 'hammer', 'hammer']);
+    expect(song.bars[1].events[1].dur).toBe(2 * PPQ);
+  });
+  it('joins one note of a chord and picks the others', () => {
+    const { song, issues } = guitar(':h (5.3 3.2) (h7.3 5.2) |');
+    expect(issues).toEqual([]);
+    expect(song.bars[0].events[1].notes).toEqual([{ string: 3, fret: 7, approach: 'hammer' }, { string: 2, fret: 5 }]);
+  });
+  it('allows open strings at either end', () => {
+    expect(guitar(':q 0.3 h2.3 3.1 p0.1 |').issues).toEqual([]);
+  });
+  it('needs a note on the same string right before it', () => {
+    expect(codes(':q h5.3 5.3 5.3 5.3 |')).toEqual(['legato-source']);
+    expect(codes(':q 5.3 r h7.3 7.3 |')).toEqual(['legato-source']);
+    expect(codes(':q x.3 h7.3 7.3 7.3 |')).toEqual(['legato-source']);
+    expect(codes(':q 5.3 0.1 h7.3 7.3 |')).toEqual(['legato-source']);
+    expect(codes(':w 5.3 |\n== Two\n:w h7.3 |')).toEqual(['legato-source']);
+  });
+  it('keeps the note and drops a join that cannot be played', () => {
+    const { song, issues } = guitar(':q 7.3 h5.3 p7.3 ~7.3 |');
+    expect(issues.map(i => [i.code, i.hint])).toEqual([['legato-direction', 'Use p5.3 for a pull-off'], ['legato-direction', 'Use h7.3 for a hammer-on']]);
+    expect(song.bars[0].events[1].notes).toEqual([{ string: 3, fret: 5 }]);
+    expect(guitar(':q 5.3 h5.3 5.3 5.3 |').issues.map(i => i.hint)).toEqual(['Use ~5.3 to hold the note']);
+  });
+  it('rejects a join with another mark', () => {
+    expect(codes(':q 5.3 ~h7.3 hx.3 5.3 5.3 5.3 |')).toEqual(['note-unreadable', 'note-unreadable']);
+  });
+  it('survives a round trip, across a bar line and inside a chord', () => {
+    const { song } = guitar(':8 5.3 h7.3 p5.3 7.4 h9.4 p7.4 _5.3 _h7.3 | p5.3 (h7.3 5.2) :q 0.1 h3.1 p0.1 |');
+    const text = serializeSong(song);
+    expect(text).toContain(':8 5.3 h7.3 p5.3 7.4 h9.4 p7.4 _5.3 _h7.3 | p5.3 (h7.3 5.2) :q 0.1 h3.1 p0.1 |');
+    const again = parseSong(text);
+    expect(again.issues).toEqual([]);
+    expect(again.song.bars.map(b => b.events)).toEqual(song.bars.map(b => b.events));
+  });
+});
+
 describe('issue codes', () => {
   const CASES: Record<SongIssueCode, [string, Partial<ParseIssue>]> = {
     'level-unknown': ['level: brutal\n:w 3.4 |', { line: 1, col: 8, length: 6 }],
@@ -247,6 +290,8 @@ describe('issue codes', () => {
     'tie-dead': [':q x.4 ~3.4 3.4 3.4 |', { line: 1, col: 8, length: 4 }],
     'duration-unknown': [':q 3.4:x 3.4 3.4 3.4 3.4 |', { line: 1, col: 7, length: 2 }],
     'palm-mute-place': [':q (_0.4 2.3) 3.4 3.4 3.4 |', { line: 1, col: 5, length: 4 }],
+    'legato-source': [':q 3.4 h5.3 3.4 3.4 |', { line: 1, col: 8, length: 4 }],
+    'legato-direction': [':q 7.3 h5.3 3.4 3.4 |', { line: 1, col: 8, length: 4 }],
     'bar-short': ['title: x\n:q 3.4 5.4 3.3 |', { line: 2, col: 4, length: 11, beats: 3, expected: 4 }],
     'bar-long': [':q 3.4 3.4 3.4 3.4 3.4 |', { line: 1, col: 20, length: 3, beats: 5, expected: 4, hint: '(missing a "|"?)' }],
     'version-duplicate': ['== A\n:w 3.4 |\n== A\n:w 3.4 |', { line: 3, col: 1, length: 4 }],

@@ -323,9 +323,10 @@
   font-size: 13px;
   color: var(--ink);
 }
+/* Each column fits the widest code, such as ":q :8 :16", so the codes never run into each other */
 .format-strip dl {
   display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(6rem, 1fr));
   gap: 12px 24px;
   margin: 0;
 }
@@ -339,16 +340,6 @@
   font-size: 13px;
   line-height: 18px;
   color: var(--mut);
-}
-@media (max-width: 1199px) {
-  .format-strip dl {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-}
-@media (max-width: 599px) {
-  .format-strip dl {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
 }
 @media (hover: none), (max-width: 599px) {
   .next-problem-hint {

@@ -11,7 +11,7 @@ export type PlayerPhase = 'stopped' | 'counting-in' | 'playing' | 'paused';
 export interface PlayerState { playing: boolean; beat: number | null; phase: PlayerPhase; countInRemaining: number | null }
 type Listener = (s: PlayerState) => void;
 
-const LEVEL = { picked: 0.28, tied: 0.14, dead: 0.2 };
+const LEVEL = { picked: 0.28, tied: 0.14, legato: 0.2, dead: 0.2 };
 
 export class Player {
   private clock = new TempoMap([], 90);
@@ -164,12 +164,17 @@ export class Player {
     return length > 0 ? this.clock.advance(a, ((elapsed - firstLength) % length) * this.speed) : this.to;
   }
   private schedulePass(passStart: number, passFrom: number, speed: number, musicFrom: number, clickFrom: number, end: number) {
+    const lastOnString = new Map<number, number>();
     for (const n of this.notes) {
+      const before = lastOnString.get(n.string);
+      lastOnString.set(n.string, n.beat);
       if (n.beat < passFrom - 1e-6 || n.beat >= this.to - 1e-6) continue;
       const when = passStart + this.duration(passFrom, n.beat, speed);
       if (when < musicFrom || when >= end || this.mute.has(n.string)) continue;
+      // A hammer-on whose first note comes before this pass, after a seek or at a loop start, has nothing to hammer from, so it is picked
+      const legato = n.legato === true && before !== undefined && before >= passFrom - 1e-6;
       if (n.dead) this.synth.thud(when, n.midi, LEVEL.dead);
-      else this.synth.voice(when, n.midi, Math.max(0.15, this.duration(n.beat, n.beat + n.ring, speed)), n.soft ? LEVEL.tied : LEVEL.picked, undefined, 'instrument', { muted: n.muted });
+      else this.synth.voice(when, n.midi, Math.max(0.15, this.duration(n.beat, n.beat + n.ring, speed)), n.soft ? LEVEL.tied : legato ? LEVEL.legato : LEVEL.picked, undefined, 'instrument', { muted: n.muted, legato });
     }
     if (!this.metronome) return;
     for (const b of this.bars) for (let i = 0; i < b.beats; i++) {
