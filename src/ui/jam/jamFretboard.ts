@@ -1,6 +1,7 @@
 import type { Jam, Mixer } from '../../app/jam';
 import { barChords, isBassInstrument, jamFretboard, type JamFretboardSettings } from '../../app/jamFretboard';
 import { FIRST_FRET, LAST_FRET } from '../../app/fretboardMarks';
+import { moodBars, moodLegend } from '../../app/jamMood';
 import type { LoopEngine } from '../../audio/loopEngine';
 import type { GrooveBar } from '../../core/grooveTimeline';
 import { isScaleId, scaleById } from '../../core/scales';
@@ -15,7 +16,7 @@ function announceOnce(liveElement: HTMLElement, text: string) {
   if (liveElement.textContent !== text) liveElement.textContent = text;
 }
 
-export function jamFretboardView(jam: Jam, mixer: Pick<Mixer, 'plays'>, settings: JamFretboardSettings, engine: Pick<LoopEngine, 'on'>) {
+export function jamFretboardView(jam: Jam, mixer: Pick<Mixer, 'plays'>, settings: JamFretboardSettings, engine: Pick<LoopEngine, 'on'>, scaleChanged: () => void) {
   const scaleSelect = byId('jamScale', HTMLSelectElement);
   const bassSelect = byId('jamStrings', HTMLSelectElement);
   const bassField = byId('jamStringsField');
@@ -24,13 +25,17 @@ export function jamFretboardView(jam: Jam, mixer: Pick<Mixer, 'plays'>, settings
   const scaleLine = byId('jamFretboardScale');
   const nextChordLine = byId('jamFretboardNext');
   const board = byId('jamFretboardBoard');
+  const jobLine = byId('jamFretboardJob');
+  const legend = byId('jamMoodLegend');
+  const legendNote = byId('jamMoodLegendNote');
+  const legendRest = byId('jamMoodLegendRest');
   let bars: readonly GrooveBar[] = [];
   let playingBar = FIRST_BAR;
 
   scaleSelect.onchange = () => {
     const scale = scaleSelect.value;
     if (!isScaleId(scale) || !jam.setScale(scale)) return;
-    show();
+    scaleChanged();
   };
   bassSelect.onchange = () => {
     const bass = bassSelect.value;
@@ -60,6 +65,7 @@ export function jamFretboardView(jam: Jam, mixer: Pick<Mixer, 'plays'>, settings
   function draw() {
     if (!bars.length) return;
     const { chord, nextChord } = barChords(bars, playingBar);
+    const moodNote = moodLegend(jam.mood, jam.key, jam.scale);
     const drawing = jamFretboard({
       instrument: settings.instrumentFor(mixer.plays),
       key: jam.key,
@@ -67,7 +73,10 @@ export function jamFretboardView(jam: Jam, mixer: Pick<Mixer, 'plays'>, settings
       labels: settings.labels,
       chord,
       nextChord,
+      moodNote: moodNote?.pitchClass ?? null,
     });
+    showMoodNote(moodNote?.sentence ?? null);
+    jobLine.textContent = moodBars(jam)?.[playingBar % bars.length]?.job ?? '';
     announceOnce(chordLine, drawing.chordText);
     scaleLine.textContent = drawing.scaleText;
     nextChordLine.textContent = drawing.nextChordText;
@@ -78,6 +87,15 @@ export function jamFretboardView(jam: Jam, mixer: Pick<Mixer, 'plays'>, settings
       marks: drawing.marks,
       label: drawing.description,
     }));
+  }
+
+  /** The first sentence names the note in bold, the rest says where it sits. */
+  function showMoodNote(sentence: string | null) {
+    legend.hidden = sentence === null;
+    if (sentence === null) return;
+    const split = sentence.indexOf('. ') + 1;
+    legendNote.textContent = sentence.slice(0, split);
+    legendRest.textContent = sentence.slice(split + 1);
   }
 
   /** Redraws for a new groove, key, progression, scale, instrument or label choice. */

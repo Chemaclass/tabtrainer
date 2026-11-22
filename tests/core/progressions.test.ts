@@ -54,6 +54,12 @@ describe('progressions of a key', () => {
     expect(names(0, 'lydian', 'dreamy-imaj7-ii')).toEqual(['Cmaj7', 'D']);
     expect(names(7, 'mixolydian', 'mixolydian-i-bvii-iv')).toEqual(['G', 'F', 'C']);
   });
+  it('lists no other mood progressions once a mood is picked', () => {
+    const happy = progressions(0, 'major', MOODS.find(m => m.id === 'happy')!).map(p => p.name);
+    expect(happy).toEqual(['I V vi IV', 'I IV V', 'ii V I', 'I vi IV V']);
+    const melancholic = progressions(0, 'major', MOODS.find(m => m.id === 'melancholic')!).map(p => p.name);
+    expect(melancholic.slice(0, 2)).toEqual(['I IV iv', 'I iii IV iv']);
+  });
   it('finds a key signature for every root of every scale', () => {
     for (const scale of SCALES) {
       for (let root = 0; root < 12; root++) {

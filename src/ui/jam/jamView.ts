@@ -1,12 +1,15 @@
 import { JAM_SWING, type Jam } from '../../app/jam';
-import { PROGRESSION_CHOICES, SUMMARY_SEPARATOR, grooveContext, grooveSummary, progressionName } from '../../app/jamSummary';
+import { keyLabel, moodBars, type MoodBar } from '../../app/jamMood';
+import { SUMMARY_SEPARATOR, grooveContext, grooveSummary, progressionChoices, progressionName } from '../../app/jamSummary';
 import { playbackShortcut } from '../../app/playbackShortcut';
 import { pref, setPref } from '../../app/storage';
 import type { LoopEngine } from '../../audio/loopEngine';
 import type { GrooveBar } from '../../core/grooveTimeline';
+import type { MoodId } from '../../core/moods';
 import { byId, fillRange, textSpan } from '../dom';
 import { setSelectValue } from '../shell/dropdown';
 import { groovePicker } from './groovePicker';
+import { moodStageView } from './moodStage';
 
 interface JamViewHandlers {
   active: () => boolean;
@@ -14,11 +17,13 @@ interface JamViewHandlers {
   changed: () => void;
   chordsChanged: (bars: readonly GrooveBar[]) => void;
   shareLink: () => string;
+  moodPicked: (id: MoodId) => void;
 }
 
 const COUNT_IN_BAR = 'bar';
 const COUNT_IN_OFF = 'off';
 const SHARE_HINT = 'Key, tempo, chords and swing';
+const MOOD_SHARE_HINT = 'Mood, key, tempo and chords';
 const NO_SHARE_HINT = 'Links open bundled grooves as written. Download a file to share your own.';
 
 interface SwingTexts { shown: string; spoken: string }
@@ -29,7 +34,7 @@ function swingTexts(swing: number): SwingTexts {
   return { shown: `${swing}%`, spoken: `${swing}% swing` };
 }
 
-function barItem({ bar, chord }: GrooveBar): HTMLLIElement {
+function barItem({ bar, chord }: GrooveBar, moodBar: MoodBar | undefined): HTMLLIElement {
   const item = document.createElement('li');
   const number = document.createElement('span');
   const name = document.createElement('span');
@@ -38,6 +43,9 @@ function barItem({ bar, chord }: GrooveBar): HTMLLIElement {
   name.className = 'jam-chord';
   name.textContent = chord.name;
   item.append(number, name);
+  if (!moodBar) return item;
+  number.append(textSpan('jam-bar-numeral', moodBar.numeral), textSpan('sr-only', ', '));
+  if (moodBar.job) item.append(textSpan('jam-bar-job', moodBar.job));
   return item;
 }
 
@@ -50,7 +58,7 @@ function enableSectionToggles() {
   }
 }
 
-export function jamView(jam: Jam, engine: LoopEngine, { active, choose, changed, chordsChanged, shareLink }: JamViewHandlers) {
+export function jamView(jam: Jam, engine: LoopEngine, { active, choose, changed, chordsChanged, shareLink, moodPicked }: JamViewHandlers) {
   const play = byId('jamPlay', HTMLButtonElement);
   const playLabel = byId('jamPlayLabel');
   const bpm = byId('jamBpm');
@@ -70,6 +78,7 @@ export function jamView(jam: Jam, engine: LoopEngine, { active, choose, changed,
   const context = byId('jamContext');
   const about = byId('jamAbout');
   const picker = groovePicker(jam, choose);
+  const moods = moodStageView(jam, { pick: moodPicked, nextLoop: playNextLoop });
   let playing: boolean | null = null;
   let current: number | null = null;
 
@@ -84,7 +93,6 @@ export function jamView(jam: Jam, engine: LoopEngine, { active, choose, changed,
   share.onclick = copyShareLink;
   swing.min = String(JAM_SWING.min);
   swing.max = String(JAM_SWING.max);
-  progression.replaceChildren(...PROGRESSION_CHOICES.map(slug => new Option(progressionName(slug), slug)));
   setSelectValue(countIn, pref('jamCountIn', false) ? COUNT_IN_BAR : COUNT_IN_OFF);
   engine.setCountIn(countIn.value === COUNT_IN_BAR);
   engine.on(state => {
@@ -115,18 +123,25 @@ export function jamView(jam: Jam, engine: LoopEngine, { active, choose, changed,
     if (jam.setTempo(+tempo.value)) engine.setTempo(jam.tempo);
     showTempo();
     showSummary();
+    moods.show();
   }
 
   function changeKey() {
     if (!jam.setKey(key.value)) return;
     showChords();
+    moods.show();
     changed();
   }
 
   function changeProgression() {
     if (!jam.setProgression(progression.value)) return;
-    showKeys();
-    showChords();
+    showHarmony();
+    changed();
+  }
+
+  function playNextLoop() {
+    if (!jam.nextMoodLoop()) return;
+    showHarmony();
     changed();
   }
 
@@ -152,7 +167,9 @@ export function jamView(jam: Jam, engine: LoopEngine, { active, choose, changed,
   }
 
   function showSummary() {
-    summary.textContent = grooveSummary(jam.setup);
+    summary.textContent = jam.mood
+      ? [jam.groove.title, keyLabel(jam.key), `${jam.tempo} bpm`].join(SUMMARY_SEPARATOR)
+      : grooveSummary(jam.setup);
   }
 
   function showTempo() {
@@ -172,8 +189,15 @@ export function jamView(jam: Jam, engine: LoopEngine, { active, choose, changed,
   }
 
   function showKeys() {
-    key.replaceChildren(...jam.keys.map(name => new Option(name, name)));
+    const label = jam.mood ? keyLabel : (name: string) => name;
+    key.replaceChildren(...jam.keys.map(name => new Option(label(name), name)));
     setSelectValue(key, jam.key);
+  }
+
+  function showProgressions() {
+    const { mood } = jam;
+    progression.replaceChildren(...progressionChoices(mood, jam.progression).map(slug => new Option(progressionName(slug, mood), slug)));
+    setSelectValue(progression, jam.progression);
   }
 
   function showPlaying(now: boolean) {
@@ -192,7 +216,9 @@ export function jamView(jam: Jam, engine: LoopEngine, { active, choose, changed,
 
   function showBars(timelineBars: readonly GrooveBar[]) {
     chordsChanged(timelineBars);
-    bars.replaceChildren(...timelineBars.map(barItem));
+    const moodBarList = moodBars(jam);
+    bars.dataset.count = String(timelineBars.length);
+    bars.replaceChildren(...timelineBars.map((bar, index) => barItem(bar, moodBarList?.[index])));
     bars.children[current ?? -1]?.setAttribute('aria-current', 'true');
   }
 
@@ -212,7 +238,8 @@ export function jamView(jam: Jam, engine: LoopEngine, { active, choose, changed,
   function showShare() {
     const shareable = !jam.entry.mine && !jam.previewing;
     share.hidden = !shareable;
-    shareHint.textContent = shareable ? SHARE_HINT : NO_SHARE_HINT;
+    const hint = jam.mood ? MOOD_SHARE_HINT : SHARE_HINT;
+    shareHint.textContent = shareable ? hint : NO_SHARE_HINT;
   }
 
   function showGroove() {
@@ -222,14 +249,24 @@ export function jamView(jam: Jam, engine: LoopEngine, { active, choose, changed,
     about.hidden = !groove.about;
   }
 
+  /** Redraws what follows the chords: the mood can clear, and the key list can switch mode. */
+  function showHarmony() {
+    showProgressions();
+    showKeys();
+    showChords();
+    moods.show();
+    showShare();
+  }
+
   function show() {
     showGroove();
-    setSelectValue(progression, jam.progression);
+    showProgressions();
     showKeys();
     showTempo();
     showSwing();
     showChords();
     picker.show();
+    moods.show();
     showShare();
     shareStatus.textContent = '';
     engine.setTempo(jam.tempo);

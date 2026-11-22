@@ -2,6 +2,7 @@ import './styles';
 import { enhanceDropdowns } from './ui/shell/dropdown';
 import { buildTimeline, onsetKey } from './core/timeline';
 import { familyOf, type Family } from './core/instruments';
+import type { MoodId } from './core/moods';
 import { Player } from './audio/player';
 import { LoopEngine } from './audio/loopEngine';
 import { library, removeSong, pref, practiceStore, savedGrooves, savedSongs } from './app/storage';
@@ -90,13 +91,14 @@ feedbackDialog(
 );
 const view = screens(chooseFamily, () => showJam(jam.slug));
 const mixer = new Mixer(workspace.family);
-const jamFretboard = jamFretboardView(jam, mixer, new JamFretboardSettings(), loop);
+const jamFretboard = jamFretboardView(jam, mixer, new JamFretboardSettings(), loop, () => jamming.show());
 const jamming = jamView(jam, loop, {
   active: () => workspace.screen === 'jam',
   choose: chooseGroove,
   changed: () => showLink(),
   chordsChanged: bars => jamFretboard.show(bars),
   shareLink: () => jamShareLink(site, jam.slug, jam.setup),
+  moodPicked: chooseMood,
 });
 const mixing = mixerView(mixer, loop, chooseFamily);
 const grooveEditing = grooveEditor(jam, { played: showJamGroove, saved: keepSavedGroove, deleted: showAfterDelete });
@@ -233,7 +235,33 @@ function showJam(slug: string, push = true, setup: JamSetup = {}) {
   setScreen('jam', arriving); showLink(push);
 }
 function chooseGroove(slug: string) {
-  void grooveEditing.mayChoose(slug).then(chosen => { if (chosen) showJam(slug); });
+  void grooveEditing.mayChoose(slug).then(chosen => {
+    if (!chosen) return;
+    if (jam.pickGroove(slug)) {
+      grooveEditing.follow();
+      jamming.show();
+    }
+    showJam(slug);
+  });
+}
+function chooseMood(id: MoodId) {
+  if (jam.mood?.id === id) {
+    jam.clearMood();
+    showJamGroove();
+    return;
+  }
+  const slug = jam.grooveFor(id);
+  // A draft whose genre does not fit gives way to a groove that does, so its changes are asked about first
+  const fits = jam.fitsMood(id);
+  const allowed = fits ? Promise.resolve(true) : grooveEditing.mayDiscard();
+  void allowed.then(chosen => {
+    if (!chosen) return;
+    const moved = jam.choose(slug) || (!fits && jam.endPreview());
+    if (moved) grooveEditing.follow();
+    jam.applyMood(id);
+    jamming.show();
+    showLink(moved);
+  });
 }
 function showJamGroove() {
   jamming.show();

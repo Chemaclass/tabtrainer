@@ -51,6 +51,7 @@ export function fretboardSvg({ openNames, firstFret, lastFret, marks, label }: F
     const group = el('g', { class: 'fb-mark', 'data-role': mark.role });
     if (mark.dimmed) group.dataset.dimmed = '';
     if (mark.order) group.dataset.order = String(mark.order);
+    if (mark.mood) group.dataset.mood = '';
     group.append(mark.role === 'root'
       ? el('rect', { x: cx - MARK, y: cy - MARK, width: MARK * 2, height: MARK * 2, rx: 3 })
       : el('circle', { cx, cy, r: MARK }));

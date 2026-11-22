@@ -65,6 +65,7 @@ export interface JamFretboardInput {
   labels: FretLabels;
   chord: Chord;
   nextChord: Chord;
+  moodNote?: number | null;
 }
 
 export interface JamFretboard {
@@ -94,13 +95,13 @@ function spelledNotes(key: string, scale: ScaleId, chord: Chord): SpelledNotes {
 }
 
 /** Scale notes of the key across the neck, with the tones of the chord that is playing marked stronger. */
-export function jamFretboard({ instrument, key, scale, labels, chord, nextChord }: JamFretboardInput): JamFretboard {
+export function jamFretboard({ instrument, key, scale, labels, chord, nextChord, moodNote = null }: JamFretboardInput): JamFretboard {
   const spelled = spelledNotes(key, scale, chord);
   const notes = notesByPitchClass(spelled.chord, spelled.scale);
   const positions = markedPositions(instrument, notes);
   return {
     openNames: openStringNames(instrument, spelled.flats),
-    marks: fretMarks(positions, { notes, chord, labels }),
+    marks: fretMarks(positions, { notes, chord, labels, moodNote }),
     chordText: `${chord.name}: ${noteNames(spelled.chord)}`,
     scaleText: `Scale: ${spelled.scaleTitle}, ${noteNames(spelled.scale)}`,
     nextChordText: `Next: ${nextChord.name}`,

@@ -4,7 +4,7 @@ export interface FretPosition { stringIndex: number; fret: number; midi: number;
 
 export type MarkRole = 'root' | 'tone' | 'scale';
 
-export interface FretMark { stringIndex: number; fret: number; label: string; role: MarkRole; dimmed?: boolean; order?: number }
+export interface FretMark { stringIndex: number; fret: number; label: string; role: MarkRole; dimmed?: boolean; order?: number; mood?: boolean }
 
 /** Every fret from firstFret to lastFret whose pitch class is wanted, string 1 (tuning[0]) first. */
 export function fretboardPositions(tuning: readonly number[], pitchClasses: readonly number[], firstFret: number, lastFret: number): FretPosition[] {

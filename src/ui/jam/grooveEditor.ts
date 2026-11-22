@@ -222,5 +222,5 @@ export function grooveEditor(jam: Jam, { played, saved, deleted }: GrooveEditorH
     return slug === jam.slug || mayDiscard();
   }
 
-  return { follow, mayChoose };
+  return { follow, mayChoose, mayDiscard };
 }

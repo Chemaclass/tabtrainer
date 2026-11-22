@@ -45,3 +45,28 @@ bass:  1 - 3 - 5 - 6 - | b7 - 6 - 5 - >b1 -
 | `# ...` | comment, on its own line or after a space (`#IV` is a numeral) |
 
 The steps in a bar set its grid. In 4/4 that is 8 for eighths, 12 for triplets or 16 for sixteenths. Swing moves the off beat eighths, or the off beat sixteenths when no part plays eighths. With another progression, each part repeats its bars over the new chords.
+
+## Moods
+
+The Jam opens with a question: "How do you want it to feel?" Each mood chip sets chords, a key, a tempo range and a scale that carry that feeling. One sentence says why it sounds that way, in frets rather than theory words. The note that gives the mood its colour shows in amber on the fretboard.
+
+A mood stays on while one of its loops plays. Change the key, tempo or scale and it stays. Pick other chords and it turns off. Tap the pressed chip to turn it off and keep what it set.
+
+| Mood | Scale | Loops | Tempo | Grooves |
+| --- | --- | --- | --- | --- |
+| Happy | major | `I V vi IV`, `I IV I V`, `I vi IV V` | 100 to 140 | rock, bossa |
+| Sad | natural minor | `i bVI bIII bVII`, `i iv i v`, `i iv bVI v` | 56 to 88 | rock |
+| Melancholic | major, with the minor iv | `I IV iv I`, `I iii IV iv`, `Imaj7 vi7 IV iv` | 60 to 96 | bossa |
+| Exciting | Mixolydian | `I bVII IV I`, `I IV bVII IV` | 120 to 176 | rock, metal |
+| Epic | natural minor | `i bVI bVII i`, `i bVII bVI bVII`, `i i bVI bVII` | 120 to 180 | metal, rock |
+| Dark | Phrygian | `i bII i bII`, `i bII bvii i` | 80 to 130 | metal, rock |
+| Tense | harmonic minor | `i iv V7 i`, `i bVI V7 i` | 90 to 140 | bossa, rock |
+| Dreamy | Lydian | `Imaj7 II Imaj7 II`, `Imaj7 Imaj7 II II` | 70 to 110 | bossa, reggae |
+| Bluesy | blues | 12 bar blues, minor blues | 60 to 130 | blues, rock |
+| Funky | Dorian | `i7 i7 i7 IV7`, `i7 IV7 i7 IV7` | 88 to 116 | funk, reggae |
+
+A groove fits a mood by its `genre:`, so a groove you write with `genre: funk` fits Funky too. Picking a mood moves to a groove that fits when the current one does not. Choosing a groove by hand keeps the mood, even on a groove that does not fit.
+
+`tests/core/moodFit.test.ts` checks every pair in the Grooves column. It plays every loop over every bundled groove of that genre, in all twelve keys. Each bass note must be a tone of its chord or a note of the mood scale. A new groove that fails a mood comes out of that mood's list.
+
+A shared link carries the mood as `?mood=sad`, before the key, tempo, chords and swing. When the linked chords are not one of the mood's loops, the link opens the chords with no mood.
