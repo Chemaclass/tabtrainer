@@ -1,0 +1,29 @@
+title: Aura Lee
+artist: George R. Poulton (public domain)
+about: Read a slow melody in open position that stays on the top three strings, then add a bass note under it.
+level: easy
+instrument: guitar6
+tempo: 88
+key: C
+time: 4/4
+
+# Poulton's 1861 tune, moved from G to C with every note value doubled. His small grace note in bar 15 is left out.
+== Melody
+level: easy
+# Open position: index finger on fret 1, middle on fret 2, ring on fret 3.
+@Verse
+"C" :q. 0.3 :8 1.2 :q 0.2 1.2 | "D7" 3.2 2.3 :h 3.2 | "G7" :q 1.2 0.2 2.3 0.2 | "C" :h. 1.2 :q r |
+"C" :q. 0.3 :8 1.2 :q 0.2 1.2 | "D7" 3.2 2.3 :h 3.2 | "G7" :q 1.2 0.2 2.3 0.2 | "C" :w 1.2 |
+@Chorus
+"E7" :q 0.1 0.1 :h 0.1 | "Am" :q 0.1 0.1 :h 0.1 | "F" :q. 0.1 :8 3.2 :q 1.2 3.2 | "E7" :w 0.1 |
+"C" :q 0.1 0.1 :q. 1.1 :8 0.1 | "G7" :q 3.2 2.3 :q. 3.2 :8 3.2 | :8 1.2 :q. 0.2 0.1 :8 3.2 | "C" :h. 1.2 :q r |
+== Melody and bass
+level: medium
+# The thumb plays the chord's root on beats 1 and 3, on the three low strings. A tie (~) holds the tune's note while the bass sounds again.
+# Ring finger on the bass at fret 3; when the tune also needs fret 3, the little finger takes it.
+@Verse
+"C" :q. (3.5 0.3) :8 1.2 :q (3.5 0.2) 1.2 | "D7" (0.4 3.2) 2.3 :h (0.4 3.2) | "G7" :q (3.6 1.2) 0.2 (3.6 2.3) 0.2 | "C" :h (3.5 1.2) :q (3.5 ~1.2) r |
+"C" :q. (3.5 0.3) :8 1.2 :q (3.5 0.2) 1.2 | "D7" (0.4 3.2) 2.3 :h (0.4 3.2) | "G7" :q (3.6 1.2) 0.2 (3.6 2.3) 0.2 | "C" :h (3.5 1.2) (3.5 ~1.2) |
+@Chorus
+"E7" :q (0.6 0.1) 0.1 :h (0.6 0.1) | "Am" :q (0.5 0.1) 0.1 :h (0.5 0.1) | "F" :q. (3.4 0.1) :8 3.2 :q (3.4 1.2) 3.2 | "E7" :h (0.6 0.1) (0.6 ~0.1) |
+"C" :q (3.5 0.1) 0.1 :q. (3.5 1.1) :8 0.1 | "G7" :q (3.6 3.2) 2.3 :q. (3.6 3.2) :8 3.2 | :8 (3.6 1.2) :q. 0.2 (3.6 0.1) :8 3.2 | "C" :h (3.5 1.2) :q (3.5 ~1.2) r |
