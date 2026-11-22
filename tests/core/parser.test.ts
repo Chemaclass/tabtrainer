@@ -191,6 +191,42 @@ describe('dead notes', () => {
   });
 });
 
+describe('palm mute', () => {
+  const guitar = (body: string) => parseSong(`instrument: guitar6\n${body}`);
+  it('marks a note or a chord, with or without its own length', () => {
+    const { song, issues } = guitar(':q _0.6 _(0.6 2.5) _0.6:8 _x.5:8 0.6:q |');
+    expect(issues).toEqual([]);
+    const events = song.bars[0].events;
+    expect(events.map(e => e.palmMute)).toEqual([true, true, true, true, undefined]);
+    expect(events[1].notes).toEqual([{ string: 6, fret: 0 }, { string: 5, fret: 2 }]);
+    expect(events[2].dur).toBe(PPQ / 2);
+    expect(events[3].notes).toEqual([{ string: 5, fret: 0, dead: true }]);
+  });
+  it('keeps the chord and drops the mark when it is inside the brackets', () => {
+    const { song, issues } = guitar(':q (0.6 _2.5) 0.6 0.6 0.6 |');
+    expect(issues).toEqual([expect.objectContaining({ code: 'palm-mute-place', col: 9, length: 4, hint: 'e.g. _(0.6 2.5)' })]);
+    expect(song.bars[0].events[0]).toMatchObject({ notes: [{ string: 6, fret: 0 }, { string: 5, fret: 2 }] });
+    expect(song.bars[0].events[0].palmMute).toBeUndefined();
+  });
+  it('rejects a palm mute on a rest or on nothing', () => {
+    const { song, issues } = guitar(':q _r _ 0.6 0.6 0.6 |');
+    expect(issues.map(i => [i.code, i.col, i.length])).toEqual([['palm-mute-place', 4, 2], ['palm-mute-place', 7, 1]]);
+    expect(song.bars[0].events[0]).toMatchObject({ notes: [] });
+    expect(song.bars[0].events).toHaveLength(4);
+  });
+  it('points a problem in a muted note at the note', () => {
+    expect(guitar(':q _3.9 0.6 0.6 0.6 0.6 |').issues).toEqual([expect.objectContaining({ code: 'string-missing', col: 5, length: 3 })]);
+  });
+  it('survives a round trip', () => {
+    const { song } = guitar(':8 _0.6 _0.6 (3.6 5.5) _(3.6 5.5) _x.6 _0.6 :q _~0.6 | _(0.6 x.5) 0.6 _0.6:h |');
+    const text = serializeSong(song);
+    expect(text).toContain(':8 _0.6 _0.6 (3.6 5.5) _(3.6 5.5) _x.6 _0.6 :q _~0.6 | _(0.6 x.5) 0.6 :h _0.6 |');
+    const again = parseSong(text);
+    expect(again.issues).toEqual([]);
+    expect(again.song.bars.map(b => b.events)).toEqual(song.bars.map(b => b.events));
+  });
+});
+
 describe('issue codes', () => {
   const CASES: Record<SongIssueCode, [string, Partial<ParseIssue>]> = {
     'level-unknown': ['level: brutal\n:w 3.4 |', { line: 1, col: 8, length: 6 }],
@@ -206,6 +242,7 @@ describe('issue codes', () => {
     'string-twice': [':q (3.4 5.4):h r:h |', { line: 1, col: 4, length: 11 }],
     'tie-dead': [':q x.4 ~3.4 3.4 3.4 |', { line: 1, col: 8, length: 4 }],
     'duration-unknown': [':q 3.4:x 3.4 3.4 3.4 3.4 |', { line: 1, col: 7, length: 2 }],
+    'palm-mute-place': [':q (_0.4 2.3) 3.4 3.4 3.4 |', { line: 1, col: 5, length: 4 }],
     'bar-short': ['title: x\n:q 3.4 5.4 3.3 |', { line: 2, col: 4, length: 11, beats: 3, expected: 4 }],
     'bar-long': [':q 3.4 3.4 3.4 3.4 3.4 |', { line: 1, col: 20, length: 3, beats: 5, expected: 4, hint: '(missing a "|"?)' }],
     'version-duplicate': ['== A\n:w 3.4 |\n== A\n:w 3.4 |', { line: 3, col: 1, length: 4 }],

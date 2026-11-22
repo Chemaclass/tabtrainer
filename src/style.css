@@ -390,7 +390,15 @@ kbd {
   overflow-x: auto;
 }
 .sheet
-  :is(.bar-no, .time-sig, .tempo-mark, .chord-label, .section-label, .lyric) {
+  :is(
+    .bar-no,
+    .time-sig,
+    .tempo-mark,
+    .chord-label,
+    .section-label,
+    .lyric,
+    .technique-label
+  ) {
   font-family: var(--ui);
   fill: var(--sheet-ink);
   stroke: none;
@@ -403,6 +411,18 @@ kbd {
 .tempo-mark {
   font-size: 11px;
   font-weight: 700;
+}
+.technique-label {
+  font-size: 10px;
+  font-style: italic;
+}
+.technique-line {
+  stroke: var(--sheet-ink);
+  stroke-width: 1;
+  stroke-dasharray: 3 3;
+}
+.technique-line.end {
+  stroke-dasharray: none;
 }
 .sheet .bar-no {
   font-size: 9px;

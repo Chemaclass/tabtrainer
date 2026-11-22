@@ -43,7 +43,7 @@ export function serializeSong(song: Song, barsPerLine = 2): string {
         if (e.lyric) parts.push(`<${e.lyric}>`);
         const d = durToken(e);
         if (d !== dur) { parts.push(`:${d}`); dur = d; }
-        parts.push(!e.notes.length ? 'r' : e.notes.length === 1 ? noteTok(e.notes[0]) : `(${e.notes.map(noteTok).join(' ')})`);
+        parts.push(!e.notes.length ? 'r' : (e.palmMute ? '_' : '') + (e.notes.length === 1 ? noteTok(e.notes[0]) : `(${e.notes.map(noteTok).join(' ')})`));
       }
       line.push(parts.join(' ') + ' |');
       if ((i + 1) % barsPerLine === 0) flush();

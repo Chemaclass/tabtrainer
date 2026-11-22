@@ -52,3 +52,9 @@ it('plays a dead note at the open string and ends the note before it', () => {
   expect(notes[0].ring).toBe(1);
   expect(notes[0].dead).toBeUndefined();
 });
+
+it('marks every note of a palm-muted event as muted', () => {
+  const { notes } = buildTimeline(parseSong('instrument: guitar6\n:q _(0.6 2.5) 0.6 _x.6 r |').song);
+  expect(notes.map(n => n.muted)).toEqual([true, true, undefined, true]);
+  expect(notes[3].dead).toBe(true);
+});

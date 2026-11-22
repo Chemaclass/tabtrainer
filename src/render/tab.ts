@@ -1,7 +1,7 @@
 import { Barline, Beam, Dot, Formatter, Renderer, StaveNote, Stem, TabNote, TabStave, Tuplet, Voice, type StemmableNote, type TabNotePosition } from 'vexflow';
 import { PPQ, type Bar, type Note, type NoteEvent, type Song } from '../core/model';
 import { onsetKey } from '../core/timeline';
-import { barWidths, labelRows, lineBreaks, timeSignatureDigitHeight } from '../app/sheetLayout';
+import { barWidths, labelRows, lineBreaks, markRoom, timeSignatureDigitHeight } from '../app/sheetLayout';
 
 export interface RenderOptions { barsPerLine: number; width: number; touchSize: number }
 
@@ -84,6 +84,7 @@ const SVG_NS = 'http://www.w3.org/2000/svg';
 const DIGIT_CAP_HEIGHT = 0.73, DIGIT_WIDTH = 0.62;
 const ROW = { barNo: 0.4 * STRING_SPACE, label: 1.4 * STRING_SPACE, section: 2.8 * STRING_SPACE };
 const LOOP_MARK_HEIGHT = 3, LABEL_ROW = 1.1 * STRING_SPACE, LABEL_GAP = 6, NOTE_ROOM = 1.15, FORMAT_PAD = 12;
+const MARK = { baseline: 10, lineLift: 3, tick: 4, gap: 4, labelLeft: 2 };
 
 function svgRect(className: string, x: number, y: number, width: number, height: number): SVGRectElement {
   const el = document.createElementNS(SVG_NS, 'rect');
@@ -97,6 +98,47 @@ function svgText(svg: SVGSVGElement, className: string, x: number, y: number, te
   el.setAttribute('class', className); el.setAttribute('x', String(x)); el.setAttribute('y', String(y));
   el.textContent = text; svg.append(el);
   return el;
+}
+
+function svgLine(svg: SVGSVGElement, className: string, x1: number, y1: number, x2: number, y2: number) {
+  const el = document.createElementNS(SVG_NS, 'line');
+  el.setAttribute('class', className);
+  [['x1', x1], ['y1', y1], ['x2', x2], ['y2', y2]].forEach(([name, value]) => el.setAttribute(String(name), String(value)));
+  svg.append(el);
+}
+
+type Target = { note: TabTickable; event: NoteEvent };
+
+/** Neighbouring palm-muted events, as their drawn pieces. A rest or an unmuted note ends a run. */
+function palmMuteRuns(targets: Target[]): Target[][] {
+  const runs: Target[][] = [];
+  let run: Target[] = [];
+  for (const target of targets) {
+    if (target.event.palmMute && target.event.notes.length) { run.push(target); continue; }
+    if (run.length) runs.push(run);
+    run = [];
+  }
+  if (run.length) runs.push(run);
+  return runs;
+}
+
+function drawPalmMutes(svg: SVGSVGElement, targets: Target[], top: number) {
+  const y = top - MARK.baseline;
+  let labelEnd = -Infinity;
+  for (const run of palmMuteRuns(targets)) {
+    const left = run[0].note.getAbsoluteX() - MARK.labelLeft;
+    const right = run[run.length - 1].note.getTieRightX();
+    let lineFrom = left;
+    if (left >= labelEnd + MARK.gap) {
+      const label = svgText(svg, 'technique-label pm', left, y, 'P.M.');
+      labelEnd = left + labelWidth(label);
+      if (new Set(run.map(target => target.event)).size < 2) continue;
+      lineFrom = labelEnd + MARK.gap;
+    }
+    const lineY = y - MARK.lineLift;
+    svgLine(svg, 'technique-line', lineFrom, lineY, right, lineY);
+    svgLine(svg, 'technique-line end', right, lineY, right, lineY + MARK.tick);
+  }
 }
 
 function tabLineTop(bars: Bar[], firstSystem: boolean, lift: number): number {
@@ -125,13 +167,13 @@ function drawTempo(svg: SVGSVGElement, section: SVGTextElement | null, x: number
 }
 
 interface BarNotes {
-  tn: TabTickable[]; targets: { note: TabTickable; event: NoteEvent }[]; labels: [TabTickable, NoteEvent][]; lyricAt: [TabTickable, string][];
+  tn: TabTickable[]; targets: Target[]; labels: [TabTickable, NoteEvent][]; lyricAt: [TabTickable, string][];
   voice: Voice; beams: Beam[]; tups: Tuplet[]; formatter: Formatter; minWidth: number;
 }
 
 function barNotes(bar: Bar, c: Ctx): BarNotes {
   const tn: TabTickable[] = [];
-  const targets: { note: TabTickable; event: NoteEvent }[] = [];
+  const targets: Target[] = [];
   const trip: TabTickable[][] = [];
   let g: TabTickable[] = [];
   const labels: [TabTickable, NoteEvent][] = [];
@@ -174,7 +216,9 @@ function labelWidth(el: SVGTextElement): number {
 function drawSystem(div: HTMLDivElement, bars: Bar[], prev: Bar | undefined, c: Ctx, rows: number): number {
   const W = sheetWidth(c.opt);
   const lift = (rows - 1) * LABEL_ROW;
-  const top = tabLineTop(bars, !prev, lift);
+  const room = markRoom({ letters: bars.some(bar => bar.events.some(e => e.palmMute)) }, STRING_SPACE);
+  const top = tabLineTop(bars, !prev, lift) + room;
+  const labelTop = top - room;
   const H = top + 40 + c.nStr * 13 + 30; // provisional; resized to the real tab bottom below
   const r = new Renderer(div, Renderer.Backends.SVG); r.resize(W, H); const ctx = r.getContext();
   const svg = div.querySelector('svg')!;
@@ -205,8 +249,8 @@ function drawSystem(div: HTMLDivElement, bars: Bar[], prev: Bar | undefined, c: 
     tv.draw(ctx, tab);
     beams.forEach(b => b.setContext(ctx).draw()); tups.forEach(t => t.setContext(ctx).draw());
     bottom = Math.max(bottom, rhythmBottom(tn, tups));
-    labels.forEach(([n, ev]) => allLabels.push(svgText(svg, 'chord-label', n.getAbsoluteX() - 2, top - ROW.label, [ev.chord, ev.text].filter(Boolean).join('  '))));
-    const sectionY = top - ROW.section - lift;
+    labels.forEach(([n, ev]) => allLabels.push(svgText(svg, 'chord-label', n.getAbsoluteX() - 2, labelTop - ROW.label, [ev.chord, ev.text].filter(Boolean).join('  '))));
+    const sectionY = labelTop - ROW.section - lift;
     const section = bar.section ? svgText(svg, 'section-label', x + 4, sectionY, bar.section.toUpperCase()) : null;
     svgText(svg, 'bar-no', x + 2, top - ROW.barNo, String(bar.index)).dataset.bar = String(bar.index);
     const loopMark = svgRect('loop-mark', x, 0, bw, LOOP_MARK_HEIGHT);
@@ -245,6 +289,7 @@ function drawSystem(div: HTMLDivElement, bars: Bar[], prev: Bar | undefined, c: 
     });
     x += bw;
   });
+  drawPalmMutes(svg, notes.flatMap(n => n.targets), top);
   lyrics.forEach(([px, words]) => svgText(svg, 'lyric', px, bottom + STRING_SPACE + 11, words));
   const end = Math.ceil(bottom + (lyrics.length ? STRING_SPACE + 18 : 14));
   hits.forEach(hit => { if (hit.classList.contains('bar-target')) hit.setAttribute('height', String(Math.min(bottom + 24, end))); });
@@ -258,6 +303,6 @@ function drawSystem(div: HTMLDivElement, bars: Bar[], prev: Bar | undefined, c: 
     return { left, width };
   });
   const placed = labelRows(spans, LABEL_GAP);
-  placed.forEach((row, i) => allLabels[i].setAttribute('y', String(top - ROW.label - row * LABEL_ROW)));
+  placed.forEach((row, i) => allLabels[i].setAttribute('y', String(labelTop - ROW.label - row * LABEL_ROW)));
   return Math.max(1, ...placed.map(row => row + 1));
 }

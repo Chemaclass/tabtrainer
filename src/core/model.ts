@@ -31,6 +31,8 @@ export interface NoteEvent {
   text?: string;
   /** Words sung from this event on, shown below the tab. */
   lyric?: string;
+  /** The picking hand rests on the strings near the bridge. */
+  palmMute?: boolean;
 }
 
 export interface Bar {

@@ -564,3 +564,16 @@ describe('dead notes', () => {
     expect(play([3]).sources).toEqual([]);
   });
 });
+
+describe('palm mute', () => {
+  afterEach(() => { vi.useRealTimers(); vi.unstubAllGlobals(); });
+  it('plays a muted note short, however long it rings', () => {
+    const { sources, advance } = fakeAudio();
+    const p = loaded();
+    p.notes = [{ beat: 0, key: '0', bar: 1, string: 6, fret: 0, midi: 40, ring: 4, muted: true }];
+    p.play(); advance(0.2);
+    const stops = sources.map(s => (s.stop.mock.calls[0][0] as number) - (s.start.mock.calls[0][0] as number));
+    expect(stops).toHaveLength(2);
+    stops.forEach(length => expect(length).toBeCloseTo(0.17));
+  });
+});

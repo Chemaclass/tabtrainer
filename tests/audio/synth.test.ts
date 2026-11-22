@@ -54,6 +54,18 @@ describe('Synth', () => {
     expect(sources.filter(s => s.start.mock.calls[0][0] === 1).every(s => s.type === 'sawtooth')).toBe(true);
     expect(sources).toHaveLength(12);
   });
+  it('cuts a palm-muted note short and starts it darker', () => {
+    const { sources, filters, gains } = fakeAudio();
+    const synth = new Synth(); synth.ensure();
+    synth.voice(1, 52, 2, 0.28, undefined, 'instrument', { muted: true });
+    synth.voice(3, 52, 2, 0.28);
+    const [muted, open] = [filters[0], filters[1]] as unknown as { frequency: { setValueAtTime: { mock: { calls: number[][] } }; exponentialRampToValueAtTime: { mock: { calls: number[][] } } } }[];
+    expect(sources[0].stop).toHaveBeenCalledWith(1 + 0.12 + 0.05);
+    expect(sources[2].stop).toHaveBeenCalledWith(3 + 2 + 0.05);
+    expect(gains[1].gain.exponentialRampToValueAtTime).toHaveBeenLastCalledWith(0.0008, 1.12);
+    expect(muted.frequency.setValueAtTime.mock.calls[0][0]).toBeLessThan(open.frequency.setValueAtTime.mock.calls[0][0]);
+    expect(muted.frequency.exponentialRampToValueAtTime.mock.calls[0][1]).toBeCloseTo(1.05);
+  });
   it('plays a dead note as one short falling sawtooth through a dark low pass', () => {
     const { sources, filters, gains } = fakeAudio();
     const synth = new Synth(); synth.ensure();

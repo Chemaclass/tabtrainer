@@ -15,6 +15,8 @@ export interface TimedNote {
   /** A tied note: written as held, played again quietly so the synth's fading note stays audible. */
   soft?: boolean;  /** A dead note: a click, `midi` is the open string. */
   dead?: boolean;
+  /** Palm muted: short and dark. */
+  muted?: boolean;
 }
 
 export interface BarSpan { bar: number; start: number; length: number; beats: number; beatValue: number; tempo?: number }
@@ -32,7 +34,7 @@ export function buildTimeline(song: Song): { notes: TimedNote[]; bars: BarSpan[]
     for (const e of b.events) {
       const beat = pos + e.start / PPQ;
       for (const n of e.notes) {
-        notes.push({ beat, ring: e.dur / PPQ, midi: tuning[n.string - 1] + n.fret + tr, string: n.string, fret: n.fret, bar: b.index, key: onsetKey(beat), ...(n.tie ? { soft: true } : {}), ...(n.dead ? { dead: true } : {}) });
+        notes.push({ beat, ring: e.dur / PPQ, midi: tuning[n.string - 1] + n.fret + tr, string: n.string, fret: n.fret, bar: b.index, key: onsetKey(beat), ...(n.tie ? { soft: true } : {}), ...(n.dead ? { dead: true } : {}), ...(e.palmMute ? { muted: true } : {}) });
       }
     }
     pos += len;

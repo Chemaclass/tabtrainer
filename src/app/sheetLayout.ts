@@ -16,6 +16,9 @@ export function timeSignatureDigitHeight(strings: number, stringSpace: number) {
   return Math.min(((strings - 1) * stringSpace) / 2, 2.2 * stringSpace);
 }
 
+/** Height of the band above the tab lines that holds technique marks such as "P.M.". */
+export const markRoom = (marks: { letters: boolean }, stringSpace: number) => marks.letters ? 1.5 * stringSpace : 0;
+
 export function barWidths(avail: number, weights: number[], mins: number[]): number[] {
   const minSum = mins.reduce((a, b) => a + b, 0);
   if (minSum >= avail) return mins.map(m => (avail * m) / minSum);

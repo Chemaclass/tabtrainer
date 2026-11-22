@@ -1,6 +1,7 @@
 import { frequencyOf } from '../core/pitch';
 
 export type SourceKind = 'instrument' | 'count-in' | 'metronome' | 'backing';
+export interface VoiceShape { muted?: boolean }
 type Scheduled = { node: AudioScheduledSourceNode; kind: SourceKind; start: number; end: number };
 
 const MASTER_LEVEL = 0.8;
@@ -18,6 +19,12 @@ const VOICE = {
   closedRatio: 2,
   closedMin: 180,
   sweepTime: 0.4,
+};
+// The picking hand damps the string, so the note stops early and its low pass starts nearly closed
+const PALM = {
+  length: 0.12,
+  openRatio: 3,
+  sweepTime: 0.05,
 };
 const KEYS = {
   attack: 0.004,
@@ -119,8 +126,10 @@ export class Synth {
   }
 
   /** A sawtooth through a closing low pass with a sine under it, for single notes. */
-  voice(when: number, midi: number, dur: number, vel: number, out: AudioNode = this.master!, kind: SourceKind = 'instrument') {
+  voice(when: number, midi: number, written: number, vel: number, out: AudioNode = this.master!, kind: SourceKind = 'instrument', shape: VoiceShape = {}) {
     const frequency = frequencyOf(midi);
+    const dur = shape.muted ? Math.min(written, PALM.length) : written;
+    const tone = shape.muted ? PALM : VOICE;
     const end = when + dur + VOICE.tail;
     const saw = this.oscillator('sawtooth', frequency, when, end, kind);
     const sine = this.oscillator('sine', frequency, when, end, kind);
@@ -130,8 +139,9 @@ export class Synth {
     envelope.gain.exponentialRampToValueAtTime(VOICE.releaseLevel, when + dur);
     const lowPass = this.ctx!.createBiquadFilter();
     lowPass.type = 'lowpass';
-    lowPass.frequency.setValueAtTime(Math.min(VOICE.openMax, frequency * VOICE.openRatio), when);
-    lowPass.frequency.exponentialRampToValueAtTime(Math.max(VOICE.closedMin, frequency * VOICE.closedRatio), when + VOICE.sweepTime);
+    const closed = Math.max(VOICE.closedMin, frequency * VOICE.closedRatio);
+    lowPass.frequency.setValueAtTime(Math.max(closed, Math.min(VOICE.openMax, frequency * tone.openRatio)), when);
+    lowPass.frequency.exponentialRampToValueAtTime(closed, when + tone.sweepTime);
     const sineLevel = this.ctx!.createGain();
     sineLevel.gain.value = VOICE.sineLevel;
     saw.connect(lowPass);

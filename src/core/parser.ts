@@ -18,7 +18,7 @@ function tokenize(src: string, firstLine: number): Tok[] {
     if (/^\s*@/.test(text)) { toks.push({ text: text.trim(), line, col: text.indexOf('@') + 1 }); return; }
     if (/^\s*level\s*:/i.test(text)) { toks.push({ text: text.trim(), line, col: text.search(/\S/) + 1 }); return; }
     if (/^\s*==/.test(text)) { toks.push({ text: text.trim(), line, col: text.indexOf('=') + 1 }); return; }
-    const re = /"[^"]*"|\{[^}]*\}|<[^>]*>|\([^)]*\)(:[^\s|]+)?|\[[^\]]*\]|\||[^\s|]+/g;
+    const re = /"[^"]*"|\{[^}]*\}|<[^>]*>|_?\([^)]*\)(:[^\s|]+)?|\[[^\]]*\]|\||[^\s|]+/g;
     let mt: RegExpExecArray | null;
     while ((mt = re.exec(text))) toks.push({ text: mt[0], line, col: mt.index + 1 });
   });
@@ -145,7 +145,7 @@ export function parseSong(src: string): ParseResult {
     if (fret > meta.instrument.maxFret) { report('error', 'fret-high', at, `Fret ${fret} is above the instrument's ${meta.instrument.maxFret} frets`); return null; }
     return { string, fret, ...(tie ? { tie: true } : {}), ...(dead ? { dead: true } : {}) };
   };
-  const pushEvent = (notes: Note[], tok: Tok) => {
+  const pushEvent = (notes: Note[], tok: Tok, palmMute = false) => {
     if (!st.cur) st.cur = newBar(tok);
     else if (tok.line === st.notesAt.line) st.notesAt = { ...st.notesAt, length: tok.col + tok.text.length - st.notesAt.col };
     const full = barTicks(st.cur);
@@ -159,6 +159,7 @@ export function parseSong(src: string): ParseResult {
     for (const n of notes) { if (n.dead) mutedStrings.add(n.string); else mutedStrings.delete(n.string); }
     const ev: NoteEvent = { start: t, dur: dur.ticks, notes, value: dur.value, dots: dur.dots, triplet: dur.triplet };
     if (pendingChord) ev.chord = pendingChord; if (pendingText) ev.text = pendingText; if (pendingLyric) ev.lyric = pendingLyric;
+    if (palmMute) ev.palmMute = true;
     pendingChord = pendingText = pendingLyric = undefined;
     st.cur.events.push(ev); t += dur.ticks;
   };
@@ -215,15 +216,25 @@ export function parseSong(src: string): ParseResult {
       dur = d;
       if (s === '') continue; // bare duration change like ":8"
     }
+    const palmMute = s.startsWith('_');
+    if (palmMute) s = s.slice(1);
+    if (palmMute && (s === '' || s === 'r')) report('error', 'palm-mute-place', spanOf(tok), `"_" goes before a note or a chord, not a rest`);
+    if (s === '') continue;
     if (s === 'r') { pushEvent([], tok); continue; }
     if (s.startsWith('(')) {
+      const at = tok.col + (palmMute ? 2 : 1);
       const inner = [...s.slice(1, -1).matchAll(/\S+/g)];
-      const notes = inner.map(x => parseNote(x[0], { line: tok.line, col: tok.col + 1 + x.index, length: x[0].length })).filter((x): x is Note => !!x);
-      if (notes.length) pushEvent(notes, tok);
+      const notes = inner.map(x => {
+        const span = { line: tok.line, col: at + x.index, length: x[0].length };
+        if (!x[0].startsWith('_')) return parseNote(x[0], span);
+        report('error', 'palm-mute-place', span, hinted(`"_" goes before the bracket, so it mutes the whole chord.`, 'e.g. _(0.6 2.5)'));
+        return parseNote(x[0].slice(1), { ...span, col: span.col + 1, length: span.length - 1 });
+      }).filter((x): x is Note => !!x);
+      if (notes.length) pushEvent(notes, tok, palmMute);
       continue;
     }
-    const n = parseNote(s, { line: tok.line, col: tok.col, length: s.length });
-    if (n) pushEvent([n], tok);
+    const n = parseNote(s, { line: tok.line, col: tok.col + (palmMute ? 1 : 0), length: s.length });
+    if (n) pushEvent([n], tok, palmMute);
   }
   if (st.cur) closeBar();
   if (bars.length || !versions.length) versions.push(version());
