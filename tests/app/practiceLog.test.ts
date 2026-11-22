@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { PlayTime, PracticeLog, dayKey, hasPractice, isPracticeRecord, levelsDone, songProgress, type PracticeRecord, type PracticeStore } from '../../src/app/practiceLog';
+import { PlayTime, PracticeLog, dayKey, doneLevels, hasPractice, isPracticeRecord, levelsDone, songProgress, type PracticeRecord, type PracticeStore } from '../../src/app/practiceLog';
 
 const at = (day: number, hour = 12, minute = 0) => new Date(2026, 10, day, hour, minute).getTime();
 const whole = (speed: number) => ({ firstBar: 1, lastBar: 8, whole: true, speed });
@@ -87,6 +87,83 @@ describe('practice levels', () => {
     const { log } = memory({ songs: { 'demo:a': { ...base, levels: { learn: at(3), develop: at(5) } } }, days: {}, wins: [] });
     log.merge({ songs: { 'demo:a': { ...base, version: 'learn', levels: undefined } }, days: {}, wins: [] });
     expect(log.song('demo:a')!.levels).toEqual({ learn: at(2), develop: at(5) });
+  });
+});
+
+describe('marking done by hand', () => {
+  it('marks a played song done without counting practice', () => {
+    const { log, stored } = memory();
+    log.played('demo:a', 30, at(2));
+    expect(log.setDone('demo:a', null, true, at(3))).toBe(true);
+    expect(log.song('demo:a')).toMatchObject({ doneAt: at(3), cleanAt: null, lastPlayed: at(2), seconds: 30 });
+    expect(log.progress('demo:a')).toBe('done');
+    expect(stored()!.days).toEqual({ [dayKey(at(2))]: 30 });
+    expect(log.wins()).toEqual([]);
+  });
+  it('marks a song never played, and is not practice', () => {
+    const { log } = memory();
+    log.setDone('demo:a', null, true, at(3));
+    expect(log.song('demo:a')).toMatchObject({ lastPlayed: 0, seconds: 0, doneAt: at(3) });
+    expect(hasPractice(log.record)).toBe(false);
+  });
+  it('keeps the first date when marked twice', () => {
+    const { log } = memory();
+    log.setDone('demo:a', null, true, at(3));
+    log.setDone('demo:a', null, true, at(4));
+    expect(log.song('demo:a')!.doneAt).toBe(at(3));
+  });
+  it('takes back a hand mark but keeps a clean pass, which was earned', () => {
+    const { log } = memory();
+    log.played('demo:a', 30, at(1));
+    log.setDone('demo:a', null, true, at(2));
+    log.setDone('demo:a', null, false, at(3));
+    expect(log.song('demo:a')).toMatchObject({ doneAt: null });
+    expect(log.progress('demo:a')).toBe('in-progress');
+    log.passEnded('demo:a', null, whole(100), at(4));
+    log.setDone('demo:a', null, false, at(5));
+    expect(log.song('demo:a')!.cleanAt).toBe(at(4));
+    expect(log.progress('demo:a')).toBe('done');
+  });
+  it('forgets a song that was only marked', () => {
+    const { log } = memory();
+    log.setDone('demo:a', null, true, at(3));
+    log.setDone('demo:a', null, false, at(4));
+    expect(log.song('demo:a')).toBeNull();
+  });
+  it('marks and unmarks one level by hand, apart from the levels played clean', () => {
+    const { log } = memory();
+    const levels = ['learn', 'develop', 'challenge'];
+    log.passEnded('demo:a', 'learn', whole(100), at(2));
+    log.setDone('demo:a', 'develop', true, at(3));
+    log.setDone('demo:a', 'challenge', true, at(3));
+    expect(doneLevels(log.song('demo:a')!)).toEqual({ learn: at(2), develop: at(3), challenge: at(3) });
+    expect(songProgress(log.song('demo:a'), levels)).toBe('done');
+    log.setDone('demo:a', 'learn', false, at(4));
+    log.setDone('demo:a', 'challenge', false, at(4));
+    expect(doneLevels(log.song('demo:a')!)).toEqual({ learn: at(2), develop: at(3) });
+    expect(songProgress(log.song('demo:a'), levels)).toBe('in-progress');
+  });
+  it('still counts a clean pass on a level marked by hand', () => {
+    const { log } = memory();
+    log.setDone('demo:a', 'learn', true, at(2));
+    expect(log.passEnded('demo:a', 'learn', whole(100), at(3))).toEqual({ best: true, clean: true });
+    expect(log.wins()).toHaveLength(1);
+  });
+  it('keeps hand marks through a merge, the earlier one winning', () => {
+    const song = { bestSpeed: 0, cleanAt: null, lastPlayed: 0, seconds: 0, lastLoop: null, lastSpeed: 100, version: null };
+    const { log } = memory({ songs: { 'demo:a': { ...song, doneAt: at(5) } }, days: {}, wins: [] });
+    log.merge({ songs: { 'demo:a': { ...song, doneAt: at(3) }, 'demo:b': song }, days: {}, wins: [] });
+    expect(log.song('demo:a')!.doneAt).toBe(at(3));
+    expect(log.song('demo:b')).not.toHaveProperty('doneAt');
+  });
+  it('accepts records with or without a hand mark, and rejects a bad one', () => {
+    const song = { bestSpeed: 0, cleanAt: null, lastPlayed: 0, seconds: 0, lastLoop: null, lastSpeed: 100, version: null };
+    expect(isPracticeRecord({ songs: { a: song, b: { ...song, doneAt: null }, c: { ...song, doneAt: 5 } }, days: {}, wins: [] })).toBe(true);
+    expect(isPracticeRecord({ songs: { a: { ...song, doneAt: 'x' } }, days: {}, wins: [] })).toBe(false);
+  });
+  it('reports a failed write', () => {
+    const log = new PracticeLog({ read: () => null, write: () => false });
+    expect(log.setDone('demo:a', null, true, at(3))).toBe(false);
   });
 });
 

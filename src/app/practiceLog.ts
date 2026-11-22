@@ -2,7 +2,7 @@ import type { PassEnd } from '../audio/practicePasses';
 import { PRACTICE_LEVELS } from './practiceLevels';
 
 export type BarLoop = [number, number];
-export interface SongRecord { bestSpeed: number; cleanAt: number | null; lastPlayed: number; seconds: number; lastLoop: BarLoop | null; lastSpeed: number; version: string | null; levels?: Record<string, number> }
+export interface SongRecord { bestSpeed: number; cleanAt: number | null; lastPlayed: number; seconds: number; lastLoop: BarLoop | null; lastSpeed: number; version: string | null; levels?: Record<string, number>; doneAt?: number | null; markedLevels?: Record<string, number> }
 export interface Win { song: string; speed: number; loop: BarLoop | null; at: number }
 export interface PracticeRecord { songs: Record<string, SongRecord>; days: Record<string, number>; wins: Win[] }
 export interface PracticeStore { read(): PracticeRecord | null; write(record: PracticeRecord): boolean }
@@ -21,10 +21,11 @@ const isBarLoop = (value: unknown): value is BarLoop => Array.isArray(value) && 
 
 function isSongRecord(value: unknown): value is SongRecord {
   if (!isObject(value)) return false;
-  const { bestSpeed, cleanAt, lastPlayed, seconds, lastLoop, lastSpeed, version, levels } = value;
+  const { bestSpeed, cleanAt, lastPlayed, seconds, lastLoop, lastSpeed, version, levels, doneAt, markedLevels } = value;
   return isAmount(bestSpeed) && (cleanAt === null || isAmount(cleanAt)) && isAmount(lastPlayed) && isAmount(seconds)
     && (lastLoop === null || isBarLoop(lastLoop)) && isAmount(lastSpeed) && (version === null || typeof version === 'string')
-    && (levels === undefined || (isObject(levels) && Object.values(levels).every(isAmount)));
+    && [levels, markedLevels].every(times => times === undefined || (isObject(times) && Object.values(times).every(isAmount)))
+    && (doneAt === undefined || doneAt === null || isAmount(doneAt));
 }
 
 function isWin(value: unknown): value is Win {
@@ -60,7 +61,8 @@ export function practiceWeek(days: Record<string, number>, now: number): Practic
   });
 }
 
-export const hasPractice = ({ songs, days }: PracticeRecord): boolean => Object.keys(songs).length > 0 || Object.keys(days).length > 0;
+// A song only marked done by hand was never played, so it is no practice yet.
+export const hasPractice = ({ songs, days }: PracticeRecord): boolean => Object.values(songs).some(song => song.lastPlayed > 0) || Object.keys(days).length > 0;
 
 const FIRST_LEVEL = PRACTICE_LEVELS[0].toLowerCase();
 
@@ -74,11 +76,20 @@ export function levelsDone(song: SongRecord): Record<string, number> {
   return song.lastLoop === null && song.lastSpeed >= CLEAN_SPEED ? { [song.version]: song.cleanAt } : {};
 }
 
+const unionTimes = (a: Record<string, number>, b: Record<string, number>) => {
+  const times = { ...a };
+  for (const [key, at] of Object.entries(b)) times[key] = earliest(times[key], at)!;
+  return times;
+};
+
+/** Each level done, whether played clean or marked by hand. */
+export const doneLevels = (song: SongRecord): Record<string, number> => unionTimes(levelsDone(song), song.markedLevels ?? {});
+
 /** With practice levels, a song is done once every level is; otherwise once any version is. */
 export function songProgress(song: SongRecord | null, levels: readonly string[] = []): SongProgress {
   if (!song) return 'not-started';
-  if (levels.length === 0) return song.cleanAt !== null || Object.keys(levelsDone(song)).length > 0 ? 'done' : 'in-progress';
-  const done = levelsDone(song);
+  if (levels.length === 0) return song.cleanAt !== null || (song.doneAt ?? null) !== null || Object.keys(doneLevels(song)).length > 0 ? 'done' : 'in-progress';
+  const done = doneLevels(song);
   return levels.every(level => done[level] !== undefined) ? 'done' : 'in-progress';
 }
 
@@ -91,10 +102,11 @@ function mergeSong(mine: SongRecord | undefined, theirs: SongRecord): SongRecord
   const latest = theirs.lastPlayed > mine.lastPlayed ? theirs : mine;
   const merged: SongRecord = { ...latest, bestSpeed: Math.max(mine.bestSpeed, theirs.bestSpeed), cleanAt: earliest(mine.cleanAt, theirs.cleanAt), seconds: Math.max(mine.seconds, theirs.seconds) };
   if (mine.levels || theirs.levels) {
-    const levels: Record<string, number> = { ...levelsDone(mine) };
-    for (const [level, at] of Object.entries(levelsDone(theirs))) levels[level] = earliest(levels[level], at)!;
-    merged.levels = levels;
+    merged.levels = unionTimes(levelsDone(mine), levelsDone(theirs));
   }
+  if (mine.markedLevels || theirs.markedLevels) merged.markedLevels = unionTimes(mine.markedLevels ?? {}, theirs.markedLevels ?? {});
+  const doneAt = earliest(mine.doneAt, theirs.doneAt);
+  if (doneAt !== null) merged.doneAt = doneAt; else delete merged.doneAt;
   return merged;
 }
 
@@ -151,6 +163,26 @@ export class PracticeLog {
       if (best || clean) record.wins = [{ song: ref, speed: pass.speed, loop, at: now }, ...record.wins].slice(0, KEPT_WINS);
       return { best, clean };
     });
+  }
+
+  /** Marks a song, or one of its levels, done by hand, or takes the hand mark back. A clean pass stays, since it was earned. */
+  setDone(ref: string, level: string | null, done: boolean, now: number): boolean {
+    return this.update(record => {
+      const song: SongRecord = { ...record.songs[ref] ?? newSong(0) };
+      if (level !== null) {
+        const marked = { ...song.markedLevels };
+        if (done && levelsDone(song)[level] === undefined) marked[level] ??= now;
+        if (!done) delete marked[level];
+        song.markedLevels = marked;
+      } else if (done) {
+        if (songProgress(song) !== 'done') song.doneAt = now;
+      } else {
+        song.doneAt = null;
+      }
+      const marked = song.cleanAt !== null || (song.doneAt ?? null) !== null || Object.keys(doneLevels(song)).length > 0;
+      if (song.lastPlayed === 0 && !marked) delete record.songs[ref]; else record.songs[ref] = song;
+      return true;
+    }) ?? false;
   }
 
   played(ref: string, seconds: number, now: number): boolean {

@@ -43,7 +43,7 @@ for (const colorScheme of ['light', 'dark'] as const) {
       await visit('[data-kind="mine"]');
       await visit('#jamNavBtn');
       await page.locator('[data-kind="exercises"]').click();
-      await visit('#catalogueList .catalogue-row >> nth=0');
+      await visit('#catalogueList .catalogue-link >> nth=0');
       await expect(page.locator('#practiceName')).not.toBeEmpty();
       await visit('[data-kind="exercises"]');
     }

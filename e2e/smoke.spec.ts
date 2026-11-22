@@ -6,7 +6,7 @@ const bundledCount = (instrument: string, kind: string) => readdirSync(`src/song
 
 async function openFirstExercise(page: Page) {
   await page.goto('./?view=library&kind=exercises');
-  await page.locator('#catalogueList .catalogue-row').first().click();
+  await page.locator('#catalogueList .catalogue-link').first().click();
   await expect(page.locator('.note').first()).toBeAttached();
 }
 
@@ -30,7 +30,7 @@ test('the library lists every bundled exercise and song', async ({ page }) => {
     await page.goto(`./?view=library&kind=exercises&instrument=${instrument}`);
     await expect(nav.locator('[data-kind="exercises"] .nav-count')).toHaveText(String(bundledCount(instrument, 'exercises')));
     await expect(nav.locator('[data-kind="songs"] .nav-count')).toHaveText(String(bundledCount(instrument, 'songs')));
-    await expect(page.locator('#catalogueList .catalogue-row').first()).toBeVisible();
+    await expect(page.locator('#catalogueList .catalogue-link').first()).toBeVisible();
   }
 });
 
@@ -173,4 +173,28 @@ test('without audio the landing demo opens First Steps', async ({ page }) => {
   await play.click();
   await expect(page).toHaveURL(/\/bass\/first-steps\/$/);
   expect(errors).toEqual([]);
+});
+
+test('a row marks a song done by hand, keeps it after a reload, and takes it back', async ({ page }) => {
+  await page.goto('./?view=library&kind=exercises&instrument=bass');
+  const toggle = page.locator('#catalogueList li').first().locator('.done-toggle:visible');
+  await toggle.click();
+  await expect(page.locator('#libraryScreen')).toBeVisible();
+  await expect(toggle).toHaveAttribute('aria-pressed', 'true');
+  await expect(toggle).toContainText(/Done/);
+  await page.reload();
+  await expect(toggle).toHaveAttribute('aria-pressed', 'true');
+  await toggle.click();
+  await expect(toggle).toHaveAttribute('aria-pressed', 'false');
+  await expect(toggle).toContainText('Not started');
+});
+
+test('a row marks each practice level on its own', async ({ page }) => {
+  await page.goto('./?view=library&kind=exercises&instrument=bass');
+  const row = page.locator('#catalogueList li', { has: page.locator('.level-marks') }).first();
+  await row.locator('.level-mark', { hasText: 'Learn' }).click();
+  await expect(row.locator('.level-mark', { hasText: 'Learn' })).toHaveAttribute('aria-pressed', 'true');
+  await expect(row.locator('.level-mark', { hasText: 'Develop' })).toHaveAttribute('aria-pressed', 'false');
+  await expect(row.locator('.row-status')).toHaveClass(/partial/);
+  await expect(page.locator('#libraryScreen')).toBeVisible();
 });

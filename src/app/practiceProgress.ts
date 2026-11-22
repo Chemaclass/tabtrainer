@@ -1,6 +1,6 @@
 import { defaultSpeedPractice, nextSpeedPracticeSpeed, type PassMark } from '../core/speedPractice';
 import type { CatalogueEntry } from './catalogue';
-import { CLEAN_SPEED, dayKey, levelsDone, songProgress, type BarLoop, type PracticeDay, type SongProgress, type SongRecord, type Win } from './practiceLog';
+import { CLEAN_SPEED, dayKey, doneLevels, levelsDone, songProgress, type BarLoop, type PracticeDay, type SongProgress, type SongRecord, type Win } from './practiceLog';
 
 export interface PickUp { entry: CatalogueEntry; loop: BarLoop | null; version: string | null; passSpeed: number | null; nextSpeed: number | null; lastPlayed: number }
 export interface RowProgress { progress: SongProgress; label: string; when: string | null; best: number | null; share: number | null; date: string | null }
@@ -8,6 +8,7 @@ export interface PracticeHistory { week: PracticeDay[]; wins: Win[] }
 export interface WeekBar { letter: string; name: string; share: number; today: boolean }
 export interface WeekSummary { minutes: number; days: number; bars: WeekBar[]; spoken: string; hint: string }
 export interface RecentWin { when: string; text: string }
+export interface LevelMark { slug: string; name: string; date: string | null; clean: boolean }
 
 const LADDER = Array.from({ length: 10 }, (_, step) => CLEAN_SPEED - (9 - step) * 5);
 
@@ -30,7 +31,7 @@ export function nextSpeed(speed: number, increase = defaultSpeedPractice.increas
 /** The song last played in this instrument, with the loop, version and speed to go back to. */
 export function pickUp(songs: Record<string, SongRecord>, entries: readonly CatalogueEntry[], family: string, increase = defaultSpeedPractice.increase): PickUp | null {
   const available = new Map(entries.filter(e => e.family === family).map(e => [e.value, e]));
-  const [latest] = Object.entries(songs).filter(([ref]) => available.has(ref)).sort(([, a], [, b]) => b.lastPlayed - a.lastPlayed);
+  const [latest] = Object.entries(songs).filter(([ref, song]) => available.has(ref) && song.lastPlayed > 0).sort(([, a], [, b]) => b.lastPlayed - a.lastPlayed);
   if (!latest) return null;
   // A merged record can pair the last speed of a device that never finished a pass with the best of another.
   const [ref, song] = latest, passSpeed = song.bestSpeed > 0 ? Math.min(song.lastSpeed, song.bestSpeed) : null;
@@ -82,7 +83,7 @@ export function rowProgress(song: SongRecord | null, now: number, levels: readon
   const progress = songProgress(song, slugs);
   const row = { progress, when: null, best: null, share: null, date: null };
   if (!song) return { ...row, label: 'Not started' };
-  const done = levelsDone(song);
+  const done = doneLevels(song);
   const finished = slugs.map((slug, i) => ({ name: levels[i].trim(), at: done[slug] })).filter((level): level is { name: string; at: number } => level.at !== undefined);
   if (finished.length > 0) {
     const latest = finished.reduce((a, b) => b.at > a.at ? b : a);
@@ -90,8 +91,25 @@ export function rowProgress(song: SongRecord | null, now: number, levels: readon
     return { ...row, label, when: doneWhen(latest.at, now), share: finished.length / slugs.length, date: fullDate(latest.at) };
   }
   if (slugs.length === 0 && song.cleanAt !== null) return { ...row, label: `Clean at ${CLEAN_SPEED}%`, when: doneWhen(song.cleanAt, now), date: fullDate(song.cleanAt) };
+  if (slugs.length === 0 && song.doneAt != null) return { ...row, label: 'Done', when: doneWhen(song.doneAt, now), date: fullDate(song.doneAt) };
   if (song.bestSpeed > 0) return { ...row, label: `Best ${song.bestSpeed}%`, best: Math.min(song.bestSpeed, CLEAN_SPEED) };
+  if (song.lastPlayed === 0) return { ...row, label: 'Not started' };
   return { ...row, label: 'Started', when: daysAgo(song.lastPlayed, now) };
+}
+
+/** Each practice level, with the date it was done. */
+export function levelMarks(song: SongRecord | null, levels: readonly string[]): LevelMark[] {
+  const done = song ? doneLevels(song) : {}, clean = song ? levelsDone(song) : {};
+  return levels.map(level => {
+    const name = level.trim(), slug = name.toLowerCase(), at = done[slug];
+    return { slug, name, date: at === undefined ? null : fullDate(at), clean: clean[slug] !== undefined };
+  });
+}
+
+/** What a done toggle says on hover. A clean pass was earned, so it cannot be undone. */
+export function doneHint(name: string, date: string | null, clean: boolean): string {
+  if (date === null) return `Click to mark ${name} done.`;
+  return clean ? `Played clean on ${date}.` : `Marked done on ${date}. Click to undo.`;
 }
 
 export const progressSummary = ({ label, when }: RowProgress): string => when ? `${label} · ${when}` : label;
