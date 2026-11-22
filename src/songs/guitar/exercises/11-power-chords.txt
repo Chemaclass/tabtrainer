@@ -1,0 +1,40 @@
+title: Power Chords
+artist: TabTrainer
+about: Move one two-finger shape along the low strings to play power chords, then add stops and quick changes.
+level: medium
+instrument: guitar6
+tempo: 84
+key: Em
+time: 4/4
+
+# A power chord is a root plus the fifth note of its scale. Index finger on the root, ring finger two frets higher on the next thinner string. E5 uses the open low string, so one finger is enough. Strike only the strings in the shape.
+== Learn
+level: medium
+@One shape, three places
+"E5" :q (0.6 2.5) (0.6 2.5) (0.6 2.5) (0.6 2.5) | "G5" (3.6 5.5) (3.6 5.5) (3.6 5.5) (3.6 5.5) |
+"A5" (5.6 7.5) (5.6 7.5) (5.6 7.5) (5.6 7.5) | "G5" (3.6 5.5) (3.6 5.5) "E5" :h (0.6 2.5) |
+
+== Develop
+level: medium
+# The three-note shape adds the root an octave up: put your little finger on the same fret as the ring finger, on the next thinner string. G5 has its root on string 6; C5 and D5 have theirs on string 5.
+@Roots on two strings
+"G5" :8 (3.6 5.5 5.4) (3.6 5.5 5.4) (3.6 5.5 5.4) (3.6 5.5 5.4) (3.6 5.5 5.4) (3.6 5.5 5.4) (3.6 5.5 5.4) (3.6 5.5 5.4) | "C5" (3.5 5.4 5.3) (3.5 5.4 5.3) (3.5 5.4 5.3) (3.5 5.4 5.3) (3.5 5.4 5.3) (3.5 5.4 5.3) (3.5 5.4 5.3) (3.5 5.4 5.3) |
+"D5" (5.5 7.4 7.3) (5.5 7.4 7.3) (5.5 7.4 7.3) (5.5 7.4 7.3) (5.5 7.4 7.3) (5.5 7.4 7.3) (5.5 7.4 7.3) (5.5 7.4 7.3) | "C5" (3.5 5.4 5.3) (3.5 5.4 5.3) (3.5 5.4 5.3) (3.5 5.4 5.3) (3.5 5.4 5.3) (3.5 5.4 5.3) :q (3.5 5.4 5.3) |
+
+== Challenge
+level: hard
+# For each rest, lift your fretting fingers just off the strings so the chord stops, but keep them in the shape. On E5 the low E is open, so also lay a finger or the side of your picking hand on it to stop it.
+@Stops
+"E5" :8 (0.6 2.5) r (0.6 2.5) r (0.6 2.5) (0.6 2.5) :q r | "G5" :8 (3.6 5.5) r (3.6 5.5) r "A5" (5.6 7.5) (5.6 7.5) :q r |
+"E5" :8 (0.6 2.5) r (0.6 2.5) r (0.6 2.5) (0.6 2.5) :q r | "D5" :8 (5.5 7.4) r (5.5 7.4) r "C5" (3.5 5.4) (3.5 5.4) :q r |
+@Quick changes
+"E5" :q (0.6 2.5) (0.6 2.5) "G5" (3.6 5.5) (3.6 5.5) | "A5" (5.6 7.5) (5.6 7.5) "G5" (3.6 5.5) (3.6 5.5) |
+"E5" :8 (0.6 2.5) (0.6 2.5) (0.6 2.5) (0.6 2.5) "D5" (5.5 7.4) (5.5 7.4) (5.5 7.4) (5.5 7.4) | "C5" (3.5 5.4) (3.5 5.4) (3.5 5.4) (3.5 5.4) "D5" :q (5.5 7.4) (5.5 7.4) |
+# A push: the next chord comes half a beat early, on the "and" of beat 4, and rings over the bar line. Count "1 and 2 and 3 and 4 AND".
+@Pushes
+"E5" :8 (0.6 2.5) (0.6 2.5) (0.6 2.5) (0.6 2.5) (0.6 2.5) (0.6 2.5) r "G5" (3.6 5.5) | :q (~3.6 ~5.5) :8 (3.6 5.5) (3.6 5.5) :q (3.6 5.5) :8 r "A5" (5.6 7.5) |
+:q (~5.6 ~7.5) :8 (5.6 7.5) (5.6 7.5) :q (5.6 7.5) :8 r "D5" (5.5 7.4) | :q (~5.5 ~7.4) :8 (5.5 7.4) (5.5 7.4) "C5" :q (3.5 5.4) "E5" (0.6 2.5) |
+# Keep the picking hand moving down on every eighth note: open low E between the chords.
+@Open string drive
+"E5" :8 0.6 0.6 "G5" (3.6 5.5) 0.6 0.6 "A5" (5.6 7.5) 0.6 0.6 | 0.6 0.6 "D5" (5.5 7.4) 0.6 "C5" (3.5 5.4) 0.6 "D5" :q (5.5 7.4) |
+"E5" :8 0.6 0.6 "G5" (3.6 5.5) 0.6 0.6 "A5" (5.6 7.5) "G5" (3.6 5.5) 0.6 | "E5" 0.6 0.6 0.6 0.6 :h (0.6 2.5 2.4) |
