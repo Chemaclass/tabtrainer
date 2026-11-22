@@ -15,8 +15,8 @@ export interface FeedbackState { screen: Screen; picked: string; title: string |
 const MAX_QUERY = 60;
 const INSTRUMENT: Record<Family, string> = { bass: 'Bass', guitar: 'Guitar' };
 const NOUN: Record<RequestKind, string> = { exercises: 'exercise', songs: 'song' };
-const FORM_KIND: Record<RequestKind, string> = { exercises: 'Exercise', songs: 'Song' };
 
+// GitHub fills text fields and the title from the address, but not dropdowns, so the title names the instrument and kind.
 export function issueUrl(form: IssueForm, title = '', fields: Record<string, string> = {}): string {
   const params = new URLSearchParams({ template: form, ...(title ? { title } : {}), ...fields });
   return `${ISSUES_URL}/new?${params}`;
@@ -31,7 +31,7 @@ export function tabRequest(family: Family, kind: RequestKind, query: string): Ta
     : `Looking for a ${family} ${noun} that is not here?`;
   const tail = kind === 'songs' ? ' with your idea and I will add it. It has to be in the public domain.' : ' with your idea and I will add it.';
   const title = `${INSTRUMENT[family]} ${noun} request${wanted ? `: ${wanted}` : ''}`;
-  const url = issueUrl('song-request.yml', title, { instrument: INSTRUMENT[family], kind: FORM_KIND[kind], ...(wanted ? { what: wanted } : {}) });
+  const url = issueUrl('song-request.yml', title, wanted ? { what: wanted } : {});
   return { lead, action: 'Open a GitHub issue', tail, url };
 }
 
@@ -48,7 +48,7 @@ function tabLinks({ title, family, kind, address }: TabRef): FeedbackLink[] {
   return [
     { lead: `A wrong note or rhythm in this ${noun}?`, action: 'Report a problem', url: issueUrl('bug.yml', `Problem in ${name}`, { steps: `1. Open ${address}\n2. ` }) },
     { lead: `An idea to make this ${noun} better?`, action: 'Suggest an improvement', url: issueUrl('feature.yml', `Idea for ${name}`) },
-    { lead: `Want another ${family} ${noun}?`, action: 'Ask for a tab', url: issueUrl('song-request.yml', `${INSTRUMENT[family]} ${noun} request`, { instrument: INSTRUMENT[family], kind: FORM_KIND[kind] }) },
+    { lead: `Want another ${family} ${noun}?`, action: 'Ask for a tab', url: issueUrl('song-request.yml', `${INSTRUMENT[family]} ${noun} request`) },
     { lead: 'Anything else?', action: 'See all the forms', url: ISSUE_FORMS },
   ];
 }
@@ -56,7 +56,7 @@ function tabLinks({ title, family, kind, address }: TabRef): FeedbackLink[] {
 const genericLinks = (family: Family): FeedbackLink[] => [
   { lead: 'Something in TabTrainer not working?', action: 'Report a problem', url: issueUrl('bug.yml') },
   { lead: 'An idea that would help you practise?', action: 'Suggest an idea', url: issueUrl('feature.yml') },
-  { lead: `Want a ${family} tab that is not here?`, action: 'Ask for a tab', url: issueUrl('song-request.yml', '', { instrument: INSTRUMENT[family] }) },
+  { lead: `Want a ${family} tab that is not here?`, action: 'Ask for a tab', url: issueUrl('song-request.yml', `${INSTRUMENT[family]} tab request`) },
   { lead: 'Anything else?', action: 'See all the forms', url: ISSUE_FORMS },
 ];
 
