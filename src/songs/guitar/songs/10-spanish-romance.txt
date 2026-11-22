@@ -1,0 +1,28 @@
+title: Spanish Romance
+artist: Traditional (public domain)
+about: Hold a slow melody on the top string while the other fingers fill in triplets and the thumb adds a bass note.
+level: medium
+instrument: guitar6
+tempo: 80
+key: Em
+time: 3/4
+
+# The first part of an anonymous Romance. Nobody knows who wrote it or exactly when.
+# Each beat is three notes: the tune on string 1, then strings 2 and 3. The thumb plays the bass with the first note of the bar.
+# Let every note ring. Keep the tune a little louder than the strings under it.
+@First phrase
+"Em" :8t (7.1 0.6) 0.2 0.3 7.1 0.2 0.3 7.1 0.2 0.3 | (7.1 0.6) 0.2 0.3 5.1 0.2 0.3 3.1 0.2 0.3 |
+(3.1 0.6) 0.2 0.3 2.1 0.2 0.3 0.1 0.2 0.3 | (0.1 0.6) 0.2 0.3 3.1 0.2 0.3 7.1 0.2 0.3 |
+@Up the neck
+# Bars 7 and 8: lay your first finger across strings 1 to 3 at fret 5. The low A is the open string.
+(12.1 0.6) 0.2 0.3 12.1 0.2 0.3 12.1 0.2 0.3 | (12.1 0.6) 0.2 0.3 10.1 0.2 0.3 8.1 0.2 0.3 |
+"Am" (8.1 0.5) 5.2 5.3 7.1 5.2 5.3 5.1 5.2 5.3 | (5.1 0.5) 5.2 5.3 7.1 5.2 5.3 8.1 5.2 5.3 |
+@To B7
+# Bars 9 and 10: a full barre at fret 7, which also gives the low B on string 6.
+# Bar 10 reaches to fret 11 with the little finger. Practise that stretch slowly on its own.
+"B7" (7.1 7.6) 7.2 8.3 8.1 7.2 8.3 7.1 7.2 8.3 | (11.1 7.6) 7.2 8.3 8.1 7.2 8.3 7.1 7.2 8.3 |
+"Em" (7.1 0.6) 0.2 0.3 5.1 0.2 0.3 3.1 0.2 0.3 | (3.1 0.6) 0.2 0.3 2.1 0.2 0.3 0.1 0.2 0.3 |
+@Ending
+# Bars 13 and 14 are the open B7 shape, with the bass moving from B to D sharp.
+"B7" (2.1 2.5) 0.2 2.3 2.1 0.2 2.3 2.1 0.2 2.3 | (2.1 1.4) 0.2 2.3 3.1 0.2 2.3 2.1 0.2 2.3 |
+"Em" (0.1 0.6) 0.2 0.3 0.1 0.2 0.3 0.1 0.2 0.3 | :h (0.6 2.5 2.4 0.3 0.2 0.1) :q r |

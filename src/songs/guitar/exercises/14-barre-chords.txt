@@ -1,0 +1,51 @@
+title: Barre Chords
+artist: TabTrainer
+about: Build the barre step by step, from a small F on four strings to full shapes you can slide to any fret.
+level: medium
+instrument: guitar6
+tempo: 66
+key: C
+time: 4/4
+
+# A barre is your first finger pressed flat across several strings at one fret.
+# Roll it slightly onto its bony side and keep your thumb behind the neck.
+
+== Learn
+level: medium
+@Small F
+# First finger flat across strings 1 and 2 at fret 1, second finger on string 3 at fret 2, third finger on string 4 at fret 3.
+"F" :h (3.4 2.3 1.2 1.1) r | "C" (3.5 2.4 0.3 1.2 0.1) r | "F" (3.4 2.3 1.2 1.1) r | "G" (3.6 2.5 0.4 0.3 0.2 3.1) r |
+
+== Develop
+level: medium
+@Full barre
+# One shape with the root on string 6. Slide it to fret 3 for G during the rest.
+# At fret 5, lift the finger on string 3 and the barre turns the chord into A minor.
+"F" :q (1.6 3.5 3.4 2.3 1.2 1.1) (1.6 3.5 3.4 2.3 1.2 1.1) :h r | "G" :q (3.6 5.5 5.4 4.3 3.2 3.1) (3.6 5.5 5.4 4.3 3.2 3.1) :h r |
+"Am" :q (5.6 7.5 7.4 5.3 5.2 5.1) (5.6 7.5 7.4 5.3 5.2 5.1) :h r | "G" :q (3.6 5.5 5.4 4.3 3.2 3.1) (3.6 5.5 5.4 4.3 3.2 3.1) :h r |
+
+== Challenge
+level: hard
+@Major and minor
+# Lift the finger on string 3 and the barre plays that string: major turns minor.
+"F" :q (1.6 3.5 3.4 2.3 1.2 1.1) (1.6 3.5 3.4 2.3 1.2 1.1) "Fm" (1.6 3.5 3.4 1.3 1.2 1.1) (1.6 3.5 3.4 1.3 1.2 1.1) |
+"G" (3.6 5.5 5.4 4.3 3.2 3.1) (3.6 5.5 5.4 4.3 3.2 3.1) "Gm" (3.6 5.5 5.4 3.3 3.2 3.1) (3.6 5.5 5.4 3.3 3.2 3.1) |
+"F" :8 (1.6 3.5 3.4 2.3 1.2 1.1) (1.6 3.5 3.4 2.3 1.2 1.1) (1.6 3.5 3.4 2.3 1.2 1.1) (1.6 3.5 3.4 2.3 1.2 1.1) "Fm" (1.6 3.5 3.4 1.3 1.2 1.1) (1.6 3.5 3.4 1.3 1.2 1.1) :q (1.6 3.5 3.4 1.3 1.2 1.1) |
+"Gm" :8 (3.6 5.5 5.4 3.3 3.2 3.1) (3.6 5.5 5.4 3.3 3.2 3.1) (3.6 5.5 5.4 3.3 3.2 3.1) (3.6 5.5 5.4 3.3 3.2 3.1) "G" (3.6 5.5 5.4 4.3 3.2 3.1) (3.6 5.5 5.4 4.3 3.2 3.1) :q (3.6 5.5 5.4 4.3 3.2 3.1) |
+@Root on the A string
+# Now the root is on string 5. Leave string 6 silent: touch it lightly with the tip of your first finger.
+"Bm" :q (2.5 4.4 4.3 3.2 2.1) (2.5 4.4 4.3 3.2 2.1) (2.5 4.4 4.3 3.2 2.1) r | "C" (3.5 5.4 5.3 5.2 3.1) (3.5 5.4 5.3 5.2 3.1) (3.5 5.4 5.3 5.2 3.1) r |
+"D" (5.5 7.4 7.3 7.2 5.1) (5.5 7.4 7.3 7.2 5.1) (5.5 7.4 7.3 7.2 5.1) r | "C" (3.5 5.4 5.3 5.2 3.1) (3.5 5.4 5.3 5.2 3.1) "Bm" :h (2.5 4.4 4.3 3.2 2.1) |
+@Both shapes
+# Change shape during the rest: your first finger moves between string 6 and string 5.
+"G" :8 (3.6 5.5 5.4 4.3 3.2 3.1) (3.6 5.5 5.4 4.3 3.2 3.1) (3.6 5.5 5.4 4.3 3.2 3.1) (3.6 5.5 5.4 4.3 3.2 3.1) (3.6 5.5 5.4 4.3 3.2 3.1) (3.6 5.5 5.4 4.3 3.2 3.1) (3.6 5.5 5.4 4.3 3.2 3.1) r |
+"Bm" (2.5 4.4 4.3 3.2 2.1) (2.5 4.4 4.3 3.2 2.1) (2.5 4.4 4.3 3.2 2.1) (2.5 4.4 4.3 3.2 2.1) (2.5 4.4 4.3 3.2 2.1) (2.5 4.4 4.3 3.2 2.1) (2.5 4.4 4.3 3.2 2.1) r |
+"C" (3.5 5.4 5.3 5.2 3.1) (3.5 5.4 5.3 5.2 3.1) (3.5 5.4 5.3 5.2 3.1) (3.5 5.4 5.3 5.2 3.1) (3.5 5.4 5.3 5.2 3.1) (3.5 5.4 5.3 5.2 3.1) (3.5 5.4 5.3 5.2 3.1) r |
+"D" (5.5 7.4 7.3 7.2 5.1) (5.5 7.4 7.3 7.2 5.1) (5.5 7.4 7.3 7.2 5.1) (5.5 7.4 7.3 7.2 5.1) :h (5.5 7.4 7.3 7.2 5.1) |
+@With open chords
+# The strum from Strumming Patterns. A full chord is a down strum, three strings are an up strum.
+# On beat 3 the hand moves down past the strings without hitting them: the tied chord keeps ringing.
+"C" {d} :q (3.5 2.4 0.3 1.2 0.1) {d} :8 (3.5 2.4 0.3 1.2 0.1) {u} (0.3 1.2 0.1) (~0.3 ~1.2 ~0.1) {u} (0.3 1.2 0.1) {d} (3.5 2.4 0.3 1.2 0.1) {u} (0.3 1.2 0.1) |
+"G" :q (3.6 2.5 0.4 0.3 0.2 3.1) :8 (3.6 2.5 0.4 0.3 0.2 3.1) (0.3 0.2 3.1) (~0.3 ~0.2 ~3.1) (0.3 0.2 3.1) (3.6 2.5 0.4 0.3 0.2 3.1) (0.3 0.2 3.1) |
+"Am" :q (0.5 2.4 2.3 1.2 0.1) :8 (0.5 2.4 2.3 1.2 0.1) (2.3 1.2 0.1) (~2.3 ~1.2 ~0.1) (2.3 1.2 0.1) (0.5 2.4 2.3 1.2 0.1) (2.3 1.2 0.1) |
+"F" :q (1.6 3.5 3.4 2.3 1.2 1.1) :8 (1.6 3.5 3.4 2.3 1.2 1.1) (2.3 1.2 1.1) (~2.3 ~1.2 ~1.1) (2.3 1.2 1.1) (1.6 3.5 3.4 2.3 1.2 1.1) (2.3 1.2 1.1) |
