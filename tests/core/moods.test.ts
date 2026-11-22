@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { readFileSync, readdirSync } from 'node:fs';
 import { parseGroove } from '../../src/core/groove';
 import { OWN_PROGRESSION, PROGRESSION_PRESETS, chordAt, isMinorProgression, keyTonic, numerals, parseNumeral } from '../../src/core/harmony';
-import { MOODS, isMoodId, jamProgression, moodById, moodFits, moodNoteText, type Mood, type MoodId, type MoodLoop } from '../../src/core/moods';
+import { MOODS, RETIRED_LOOPS, barRows, currentLoopSlug, isMoodId, jamProgression, moodById, moodFits, moodNoteText, type Mood, type MoodId, type MoodLoop } from '../../src/core/moods';
 import { isProgressionSlug, progressions, spellChordTones } from '../../src/core/progressions';
 import { harmonyScaleId, isScaleId, scaleById, scaleNotes } from '../../src/core/scales';
 import { keyRootName, pitchClass } from '../../src/core/theory';
@@ -68,11 +68,25 @@ describe('mood table', () => {
 });
 
 describe('mood loops', () => {
-  it('gives every mood at least two loops of four bars, or twelve for the blues', () => {
+  it('gives every mood at least two loops of four, eight or twelve bars', () => {
     for (const mood of MOODS) {
       expect(mood.loops.length, mood.id).toBeGreaterThanOrEqual(2);
-      for (const loop of mood.loops) expect([4, 12], `${mood.id}: ${loop.bars}`).toContain(numerals(loop.bars).length);
+      for (const loop of mood.loops) expect([4, 8, 12], `${mood.id}: ${loop.bars}`).toContain(numerals(loop.bars).length);
     }
+  });
+  it('ends every eight bar loop away from home, with a second half of its own', () => {
+    const eightBars = allLoops.filter(({ loop }) => numerals(loop.bars).length === 8);
+    expect(eightBars.length).toBeGreaterThanOrEqual(3);
+    for (const { mood, loop } of eightBars) {
+      const bars = loop.bars.split(' ');
+      expect(numerals(loop.bars)[7].degree, `${mood.id}: ${loop.bars}`).not.toBe(0);
+      expect(bars.slice(4).join(' '), `${mood.id}: ${loop.bars}`).not.toBe(bars.slice(0, 4).join(' '));
+    }
+  });
+  it('names an eight bar loop in two rows of four', () => {
+    expect(barRows('I bVII IV I')).toBe('I bVII IV I');
+    expect(barRows('I I bVII IV I I IV bVII')).toBe('I I bVII IV | I I IV bVII');
+    expect(moodById('exciting').loops[0]).toMatchObject({ slug: 'exciting-i-i-bvii-iv-i-i-iv-bvii', name: 'I I bVII IV | I I IV bVII' });
   });
   it('gives every bar a job of at most seven words', () => {
     for (const { mood, loop } of allLoops) {
@@ -125,6 +139,27 @@ describe('mood loops', () => {
       const minorScale = scaleById(mood.scale).intervals.includes(3);
       expect(isMinorProgression(numerals(loop.bars)), `${mood.id}: ${loop.bars}`).toBe(minorScale);
     }
+  });
+});
+
+describe('retired mood loops', () => {
+  it('opens each retired loop as the loop of its mood that starts with the same bars', () => {
+    for (const retired of RETIRED_LOOPS) {
+      const current = currentLoopSlug(retired.slug);
+      const loop = moodById(retired.mood).loops.find(l => l.slug === current);
+      expect(loop, retired.slug).toBeDefined();
+      const oldBars = retired.slug.slice(retired.mood.length + 1).split('-');
+      expect(loop!.bars.toLowerCase().split(' ').slice(0, oldBars.length), retired.slug).toEqual(oldBars);
+    }
+  });
+  it('keeps any other slug as it is', () => {
+    for (const slug of ['exciting-i-i-bvii-iv-i-i-iv-bvii', 'i-v-vi-iv', OWN_PROGRESSION, 'nope']) expect(currentLoopSlug(slug)).toBe(slug);
+  });
+});
+
+describe('mood tempo', () => {
+  it('starts every mood inside its own range', () => {
+    for (const { id, tempo } of MOODS) expect(tempo.start, id).toSatisfy((start: number) => start >= tempo.min && start <= tempo.max);
   });
 });
 

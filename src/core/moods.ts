@@ -17,6 +17,8 @@ export type TempoWord = 'Slow' | 'Medium' | 'Fast';
 export interface MoodTempo {
   min: number;
   max: number;
+  /** Where a mood picked from its chip starts. */
+  start: number;
   word: TempoWord;
   outside: string;
 }
@@ -62,7 +64,7 @@ const MOOD_ENTRIES: readonly MoodEntry[] = [
       { bars: 'I IV I V', jobs: ['Home. Bright and settled.', 'Steps away and opens up.', 'Back home.', 'Pulls hard back home.'] },
       { bars: 'I vi IV V', jobs: ['Home. Bright and settled.', 'A touch of shade.', 'Opens up.', 'Pulls hard back home.'] },
     ],
-    tempo: { min: 100, max: 140, word: 'Medium', outside: 'Slower and it turns calm' },
+    tempo: { min: 100, max: 140, start: 120, word: 'Medium', outside: 'Slower and it turns calm' },
     genres: ['rock', 'bossa'],
     note: { degree: '3', label: 'the happy note', contrast: 'not three' },
     why: 'The note four frets above home sounds bright, so the tune feels open and settled.',
@@ -78,7 +80,7 @@ const MOOD_ENTRIES: readonly MoodEntry[] = [
       { bars: 'i iv i v', jobs: ['Home. Minor, so it starts low.', 'Sinks deeper.', 'Back home.', 'A soft pull back home.'] },
       { bars: 'i iv bVI v', jobs: ['Home. Minor, so it starts low.', 'Sinks deeper.', 'A warm major chord.', 'A soft pull back home.'] },
     ],
-    tempo: { min: 56, max: 88, word: 'Slow', outside: 'Faster and it turns restless' },
+    tempo: { min: 56, max: 88, start: 66, word: 'Slow', outside: 'Faster and it turns restless' },
     genres: ['ballad', 'rock'],
     note: { degree: 'b3', label: 'the sad note', contrast: 'not four' },
     why: 'The note three frets above home, one fret lower than in a happy tune, makes it sound soft and low.',
@@ -94,7 +96,7 @@ const MOOD_ENTRIES: readonly MoodEntry[] = [
       { bars: 'I iii IV iv', jobs: ['Home. Bright and settled.', 'A gentle, wistful step.', 'Opens up.', 'The same chord turns minor.'] },
       { bars: 'Imaj7 vi7 IV iv', jobs: ['Home, soft and warm.', 'A touch of shade.', 'Opens up.', 'The same chord turns minor.'] },
     ],
-    tempo: { min: 60, max: 96, word: 'Slow', outside: 'Faster and it starts to sound happy' },
+    tempo: { min: 60, max: 96, start: 72, word: 'Slow', outside: 'Faster and it starts to sound happy' },
     genres: ['ballad', 'bossa'],
     note: { degree: 'b6', label: 'the melancholic note', contrast: 'not three, and it comes with the minor chord' },
     why: 'A bright major key where one chord turns minor. That chord brings in one note from the minor key, so a happy tune gets one sad note.',
@@ -106,13 +108,23 @@ const MOOD_ENTRIES: readonly MoodEntry[] = [
     alsoScales: [],
     progressions: ['I bVII IV'],
     loops: [
-      { bars: 'I bVII IV I', jobs: ['Home. Bright with grit.', 'One step down, ready to push.', 'Opens up.', 'Back home with a punch.'] },
-      { bars: 'I IV bVII IV', jobs: ['Home. Bright with grit.', 'Opens up.', 'One step below home.', 'Swings back toward home.'] },
+      {
+        bars: 'I I bVII IV I I IV bVII',
+        jobs: ['Home. Bright with grit.', 'Stays home and drives.', 'Drops one step down.', 'Opens up.', 'Back home with a punch.', 'Drives on.', 'Opens up, starting the climb.', 'One step below, climbing home.'],
+      },
+      {
+        bars: 'I bVII IV I I bVII IV bVII',
+        jobs: ['Home. Bright with grit.', 'One step down, ready to push.', 'Opens up.', 'Back home with a punch.', 'Home again.', 'One step down again.', 'Opens up.', 'Climbs back home.'],
+      },
+      {
+        bars: 'I IV bVII IV I IV bVII bVII',
+        jobs: ['Home. Bright with grit.', 'Opens up.', 'One step below home.', 'Swings back toward home.', 'Home again.', 'Opens up.', 'One step below home.', 'Holds there, then climbs home.'],
+      },
     ],
-    tempo: { min: 120, max: 176, word: 'Fast', outside: 'Slower and it loses its push' },
+    tempo: { min: 120, max: 176, start: 148, word: 'Fast', outside: 'Slower and it loses its push' },
     genres: ['rock', 'metal'],
     note: { degree: 'b7', label: 'the exciting note', contrast: 'not one' },
-    why: 'Bright like a happy tune, with a gritty note two frets below home. The chord built on that note keeps pushing back toward home.',
+    why: 'Bright like a happy tune, with one gritty note two frets below home. The chord on that note climbs straight up into home, so the loop keeps charging ahead.',
   },
   {
     id: 'epic',
@@ -125,7 +137,7 @@ const MOOD_ENTRIES: readonly MoodEntry[] = [
       { bars: 'i bVII bVI bVII', jobs: ['Home. Minor and heavy.', 'A big chord one step down.', 'Steps down again.', 'Climbs back toward home.'] },
       { bars: 'i i bVI bVII', jobs: ['Home. Minor and heavy.', 'Stays home, building up.', 'A big major chord.', 'Climbs back home.'] },
     ],
-    tempo: { min: 120, max: 180, word: 'Fast', outside: 'Slower and it turns sad' },
+    tempo: { min: 120, max: 180, start: 160, word: 'Fast', outside: 'Slower and it turns sad' },
     genres: ['metal', 'rock'],
     note: { degree: 'b6', label: 'the epic note', contrast: 'not three' },
     why: 'Home is a dark minor chord. Big bright chords built four and two frets below home climb back up to it.',
@@ -140,7 +152,7 @@ const MOOD_ENTRIES: readonly MoodEntry[] = [
       { bars: 'i bII i bII', jobs: ['Home. Minor and low.', 'One fret up, then falls back.', 'Back home.', 'Hangs over home again.'] },
       { bars: 'i bII bvii i', jobs: ['Home. Minor and low.', 'One fret above home.', 'Sinks below home.', 'Back home.'] },
     ],
-    tempo: { min: 80, max: 130, word: 'Medium', outside: 'Faster and it turns frantic' },
+    tempo: { min: 80, max: 130, start: 100, word: 'Medium', outside: 'Faster and it turns frantic' },
     genres: ['metal', 'rock'],
     note: { degree: 'b2', label: 'the dark note', contrast: 'not two' },
     why: 'One note sits just one fret above home and keeps pulling back down to it.',
@@ -155,7 +167,7 @@ const MOOD_ENTRIES: readonly MoodEntry[] = [
       { bars: 'i iv V7 i', jobs: ['Home. Minor and uneasy.', 'Sinks deeper.', 'Pulls hard back home.', 'Lands home, and the pull lets go.'] },
       { bars: 'i bVI V7 i', jobs: ['Home. Minor and uneasy.', 'A warm major chord.', 'Pulls hard back home.', 'Lands home, and the pull lets go.'] },
     ],
-    tempo: { min: 90, max: 140, word: 'Medium', outside: 'Slower and the pull home fades' },
+    tempo: { min: 90, max: 140, start: 112, word: 'Medium', outside: 'Slower and the pull home fades' },
     genres: ['bossa', 'rock'],
     note: { degree: '7', label: 'the tense note', contrast: 'so it pulls up into it' },
     why: 'One note sits one fret below home and begs to step up into it, so the chord before home pulls hard.',
@@ -170,7 +182,7 @@ const MOOD_ENTRIES: readonly MoodEntry[] = [
       { bars: 'Imaj7 II Imaj7 II', jobs: ['Home, soft and open.', 'Floats one step up.', 'Drifts back home.', 'Floats up again.'] },
       { bars: 'Imaj7 Imaj7 II II', jobs: ['Home, soft and open.', 'Stays and lingers.', 'Floats one step up.', 'Hangs there, then drifts home.'] },
     ],
-    tempo: { min: 70, max: 110, word: 'Slow', outside: 'Faster and it stops floating' },
+    tempo: { min: 70, max: 110, start: 76, word: 'Slow', outside: 'Faster and it stops floating' },
     genres: ['bossa', 'reggae'],
     note: { degree: '#4', label: 'the dreamy note', contrast: 'not five' },
     why: 'One note sits six frets above home, one fret higher than usual. It floats and never quite settles.',
@@ -191,7 +203,7 @@ const MOOD_ENTRIES: readonly MoodEntry[] = [
         jobs: ['Home. Minor and restless.', 'A quick move away.', 'Back home.', 'Home, getting ready to move.', 'Moves away for longer.', 'Stays away.', 'Back home.', 'Home a little longer.', 'Sets up the big pull.', 'Pulls hard back home.', 'Back home.', 'Turns around to start again.'],
       },
     ],
-    tempo: { min: 60, max: 130, word: 'Medium', outside: 'Faster and it turns into rock and roll' },
+    tempo: { min: 60, max: 130, start: 80, word: 'Medium', outside: 'Faster and it turns into rock and roll' },
     genres: ['blues', 'rock'],
     note: { degree: 'b5', label: 'the blue note', contrast: 'one fret below the fifth' },
     why: 'A rough note six frets above home rubs against its neighbour, and every chord carries an extra restless note.',
@@ -206,7 +218,7 @@ const MOOD_ENTRIES: readonly MoodEntry[] = [
       { bars: 'i7 i7 i7 IV7', jobs: ['Home. Minor but bright.', 'Stays home and grooves.', 'Stays home and grooves.', 'A bright lift, then home.'] },
       { bars: 'i7 IV7 i7 IV7', jobs: ['Home. Minor but bright.', 'A bright lift.', 'Back home.', 'A bright lift again.'] },
     ],
-    tempo: { min: 88, max: 116, word: 'Medium', outside: 'Slower and it loses its bounce' },
+    tempo: { min: 88, max: 116, start: 98, word: 'Medium', outside: 'Slower and it loses its bounce' },
     genres: ['funk', 'reggae'],
     note: { degree: '6', label: 'the funky note', contrast: 'not four' },
     why: 'A bright note three frets below home lifts the minor home chord, so two chords are enough to keep it moving.',
@@ -219,16 +231,45 @@ export function moodSlug(id: MoodId, bars: string): string {
   return `${id}-${barsSlug}`;
 }
 
+const BARS_PER_ROW = 4;
+export const BAR_ROW_SEPARATOR = ' | ';
+
+/** Numerals in rows of four bars, such as "I I bVII IV | I I IV bVII". */
+export function barRows(bars: string): string {
+  const numerals = bars.split(' ');
+  const rows = [];
+  for (let start = 0; start < numerals.length; start += BARS_PER_ROW) rows.push(numerals.slice(start, start + BARS_PER_ROW).join(' '));
+  return rows.join(BAR_ROW_SEPARATOR);
+}
+
 /** A loop the Jam already offers as a preset keeps that preset's slug and name, so it shows once. */
 function moodLoop(id: MoodId, { bars, jobs }: Omit<MoodLoop, 'slug' | 'name'>): MoodLoop {
   const preset = PROGRESSION_PRESETS.find(p => presetBars(p.slug) === bars);
   if (preset) return { slug: preset.slug, name: preset.name, bars, jobs };
-  return { slug: moodSlug(id, bars), name: bars, bars, jobs };
+  return { slug: moodSlug(id, bars), name: barRows(bars), bars, jobs };
 }
 
 export const MOODS: readonly Mood[] = MOOD_ENTRIES.map(entry => ({ ...entry, loops: entry.loops.map(loop => moodLoop(entry.id, loop)) }));
 
 export const isMoodId = (value: unknown): value is MoodId => MOODS.some(mood => mood.id === value);
+
+interface RetiredLoop {
+  mood: MoodId;
+  slug: string;
+  bars: string;
+}
+
+/** Old loops, each pointing at the loop that starts with the same bars. */
+export const RETIRED_LOOPS: readonly RetiredLoop[] = [
+  { mood: 'exciting', slug: 'exciting-i-bvii-iv-i', bars: 'I bVII IV I I bVII IV bVII' },
+  { mood: 'exciting', slug: 'exciting-i-iv-bvii-iv', bars: 'I IV bVII IV I IV bVII bVII' },
+];
+
+/** The loop a retired slug now plays; any other slug stays as it is. */
+export function currentLoopSlug(slug: string): string {
+  const retired = RETIRED_LOOPS.find(loop => loop.slug === slug);
+  return retired ? moodSlug(retired.mood, retired.bars) : slug;
+}
 
 export function moodById(id: MoodId): Mood {
   const mood = MOODS.find(m => m.id === id);
