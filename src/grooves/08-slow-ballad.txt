@@ -5,7 +5,7 @@ tempo: 68
 key: Am
 time: 4/4
 swing: 50
-progression: i bVI bIII bVII
+progression: i bVI bIII bVII | iv bVI bVII bVII
 kit: rock
 
 # eight straight eighths per bar: 1 & 2 & 3 & 4 &

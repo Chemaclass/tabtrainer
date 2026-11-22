@@ -1,11 +1,11 @@
 title: Medium swing in F
 genre: jazz
-about: A medium swing over ii V I in F to practise walking lines that lead into each next chord.
+about: A medium swing over ii V I in F, then a turnaround back to ii, to practise walking lines that lead into each next chord.
 tempo: 132
 key: F
 time: 4/4
 swing: 66
-progression: ii7 V7 Imaj7 Imaj7
+progression: ii7 V7 Imaj7 Imaj7 | iii7 VI7 ii7 V7
 kit: jazz
 
 # eight swung eighths per bar: 1 & 2 & 3 & 4 &

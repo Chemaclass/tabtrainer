@@ -146,9 +146,10 @@ describe('jam progression and swing', () => {
     expect(jam.setProgression('ii-v-i')).toBe(true);
     expect(jam.setKey('Bb')).toBe(true);
     const t = jam.timeline();
-    expect(t.bars.map(b => b.chord.name)).toEqual(['Cm7', 'F7', 'Bbmaj7', 'Bbmaj7']);
-    expect(t.bars.map(({ bar }) => t.bass.find(h => h.bar === bar)!.midi[0] % 12)).toEqual([0, 5, 10, 9]);
-    expect(t.bars.map(({ bar }) => t.keys.find(h => h.bar === bar)!.midi.map(m => m % 12).sort((a, b) => a - b))).toEqual([[0, 3, 7, 10], [0, 3, 5, 9], [2, 5, 9, 10], [2, 5, 9, 10]]);
+    expect(t.bars.map(b => b.chord.name)).toEqual(['Cm7', 'F7', 'Bbmaj7', 'Bbmaj7', 'Cm7', 'F7', 'Bbmaj7', 'Gm7']);
+    expect(t.bars.map(({ bar }) => t.bass.find(h => h.bar === bar)!.midi[0] % 12)).toEqual([0, 5, 10, 9, 0, 3, 10, 5]);
+    const keys = t.bars.map(({ bar }) => t.keys.find(h => h.bar === bar)!.midi.map(m => m % 12).sort((a, b) => a - b));
+    expect(keys).toEqual([[0, 3, 7, 10], [0, 3, 5, 9], [2, 5, 9, 10], [2, 5, 9, 10], [0, 3, 7, 10], [0, 3, 5, 9], [2, 5, 9, 10], [2, 5, 7, 10]]);
     expect(jam.setProgression('ii-v-i')).toBe(false);
     expect(jam.setProgression('polka')).toBe(false);
   });
@@ -617,7 +618,7 @@ describe('jam moods', () => {
     jam.choose('rock-straight-eighths');
     expect([jam.mood?.id, jam.progression, jam.timeline().bars.length]).toEqual(['happy', loopOf('happy'), 8]);
     jam.choose('bossa-nova');
-    expect([jam.mood, jam.progression, jam.timeline().bars.length]).toEqual([null, 'i-v-vi-iv', 4]);
+    expect([jam.mood, jam.progression, jam.timeline().bars.length]).toEqual([null, 'i-v-vi-iv', 8]);
     jam.open('metal-gallop', { mood: 'epic', progression: 'i-bvii-bvi-bvii' });
     expect([jam.mood?.id, jam.progression]).toEqual(['epic', loopOf('epic', 1)]);
   });

@@ -21,7 +21,7 @@ genre: rock
 tempo: 100
 key: E
 time: 4/4
-progression: I IV V IV
+progression: I IV V IV | I IV V V
 kit: rock
 
 hat:   xxxxxxxx
