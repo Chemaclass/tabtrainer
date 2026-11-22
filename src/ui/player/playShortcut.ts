@@ -54,7 +54,7 @@ export function practiceShortcuts(player: Player, controls: PracticeControls) {
   document.addEventListener('keydown', event => {
     const action = practiceKey(event, {
       active: controls.active(),
-      dialogOpen: document.querySelector('dialog[open]') !== null,
+      dialogOpen: document.querySelector('dialog:modal') !== null,
       playing: player.playing,
       scrolling: controls.scrolling.continuous(),
     });

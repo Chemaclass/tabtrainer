@@ -1,7 +1,8 @@
 import type { PassEnd } from '../audio/practicePasses';
+import { PRACTICE_LEVELS } from './practiceLevels';
 
 export type BarLoop = [number, number];
-export interface SongRecord { bestSpeed: number; cleanAt: number | null; lastPlayed: number; seconds: number; lastLoop: BarLoop | null; lastSpeed: number; version: string | null }
+export interface SongRecord { bestSpeed: number; cleanAt: number | null; lastPlayed: number; seconds: number; lastLoop: BarLoop | null; lastSpeed: number; version: string | null; levels?: Record<string, number> }
 export interface Win { song: string; speed: number; loop: BarLoop | null; at: number }
 export interface PracticeRecord { songs: Record<string, SongRecord>; days: Record<string, number>; wins: Win[] }
 export interface PracticeStore { read(): PracticeRecord | null; write(record: PracticeRecord): boolean }
@@ -20,9 +21,10 @@ const isBarLoop = (value: unknown): value is BarLoop => Array.isArray(value) && 
 
 function isSongRecord(value: unknown): value is SongRecord {
   if (!isObject(value)) return false;
-  const { bestSpeed, cleanAt, lastPlayed, seconds, lastLoop, lastSpeed, version } = value;
+  const { bestSpeed, cleanAt, lastPlayed, seconds, lastLoop, lastSpeed, version, levels } = value;
   return isAmount(bestSpeed) && (cleanAt === null || isAmount(cleanAt)) && isAmount(lastPlayed) && isAmount(seconds)
-    && (lastLoop === null || isBarLoop(lastLoop)) && isAmount(lastSpeed) && (version === null || typeof version === 'string');
+    && (lastLoop === null || isBarLoop(lastLoop)) && isAmount(lastSpeed) && (version === null || typeof version === 'string')
+    && (levels === undefined || (isObject(levels) && Object.values(levels).every(isAmount)));
 }
 
 function isWin(value: unknown): value is Win {
@@ -60,15 +62,44 @@ export function practiceWeek(days: Record<string, number>, now: number): Practic
 
 export const hasPractice = ({ songs, days }: PracticeRecord): boolean => Object.keys(songs).length > 0 || Object.keys(days).length > 0;
 
-export const songProgress = (song: SongRecord | null): SongProgress => !song ? 'not-started' : song.cleanAt !== null ? 'done' : 'in-progress';
+const FIRST_LEVEL = PRACTICE_LEVELS[0].toLowerCase();
+
+// Version names come from song files, so a name like "constructor" must not read Object.prototype.
+export const timeOf = (times: Record<string, number>, key: string): number | undefined => Object.hasOwn(times, key) ? times[key] : undefined;
+
+/** When each version was first played clean, crediting a record from before levels were kept with its best guess. */
+export function levelsDone(song: SongRecord): Record<string, number> {
+  if (song.levels) return song.levels;
+  if (song.cleanAt === null) return {};
+  // A song clean before it had levels was clean at its first one.
+  if (song.version === null) return { [FIRST_LEVEL]: song.cleanAt };
+  // Older records saved the version of every pass, so it names the clean level only when the last pass was clean.
+  return song.lastLoop === null && song.lastSpeed >= CLEAN_SPEED ? { [song.version]: song.cleanAt } : {};
+}
+
+/** With practice levels, a song is done once every level is; otherwise once any version is. */
+export function songProgress(song: SongRecord | null, levels: readonly string[] = []): SongProgress {
+  if (!song) return 'not-started';
+  if (levels.length === 0) return song.cleanAt !== null || Object.keys(levelsDone(song)).length > 0 ? 'done' : 'in-progress';
+  const done = levelsDone(song);
+  return levels.every(level => timeOf(done, level) !== undefined) ? 'done' : 'in-progress';
+}
+
+const earliest = (a: number | null | undefined, b: number | null | undefined) => a == null ? b ?? null : b == null ? a : Math.min(a, b);
 
 const newSong = (now: number): SongRecord => ({ bestSpeed: 0, cleanAt: null, lastPlayed: now, seconds: 0, lastLoop: null, lastSpeed: CLEAN_SPEED, version: null });
 
 function mergeSong(mine: SongRecord | undefined, theirs: SongRecord): SongRecord {
   if (!mine) return theirs;
   const latest = theirs.lastPlayed > mine.lastPlayed ? theirs : mine;
-  const cleanAt = mine.cleanAt === null ? theirs.cleanAt : theirs.cleanAt === null ? mine.cleanAt : Math.min(mine.cleanAt, theirs.cleanAt);
-  return { ...latest, bestSpeed: Math.max(mine.bestSpeed, theirs.bestSpeed), cleanAt, seconds: Math.max(mine.seconds, theirs.seconds) };
+  const merged: SongRecord = { ...latest, bestSpeed: Math.max(mine.bestSpeed, theirs.bestSpeed), cleanAt: earliest(mine.cleanAt, theirs.cleanAt), seconds: Math.max(mine.seconds, theirs.seconds) };
+  // Each side's levels are worked out before merging, since the merged version and clean time no longer pair up.
+  if (mine.levels || theirs.levels || mine.version !== null || theirs.version !== null) {
+    const levels: Record<string, number> = { ...levelsDone(mine) };
+    for (const [level, at] of Object.entries(levelsDone(theirs))) levels[level] = earliest(timeOf(levels, level), at)!;
+    if (Object.keys(levels).length > 0 || mine.levels || theirs.levels) merged.levels = levels;
+  }
+  return merged;
 }
 
 /** What the player has played through, per song and per day, kept in this browser. */
@@ -85,6 +116,12 @@ export class PracticeLog {
 
   progress(ref: string): SongProgress {
     return songProgress(this.song(ref));
+  }
+
+  /** Whether this version of the song was played whole at full speed. */
+  levelDone(ref: string, level: string | null): boolean {
+    const song = this.song(ref);
+    return song !== null && level !== null && timeOf(levelsDone(song), level) !== undefined;
   }
 
   latest(): { ref: string; song: SongRecord } | null {
@@ -111,9 +148,14 @@ export class PracticeLog {
     return this.update(record => {
       const song = { ...record.songs[ref] ?? newSong(now) };
       const loop: BarLoop | null = pass.whole ? null : [pass.firstBar, pass.lastBar];
-      const best = pass.speed > song.bestSpeed, clean = pass.whole && pass.speed >= CLEAN_SPEED && song.cleanAt === null;
+      const fullSpeed = pass.whole && pass.speed >= CLEAN_SPEED;
+      const levels = version === null ? null : { ...levelsDone(song) };
+      const clean = fullSpeed && (levels && version !== null ? timeOf(levels, version) === undefined : song.cleanAt === null);
+      const best = pass.speed > song.bestSpeed;
       if (best) song.bestSpeed = pass.speed;
-      if (clean) song.cleanAt = now;
+      if (clean && levels && version !== null) levels[version] = now;
+      if (clean && song.cleanAt === null) song.cleanAt = now;
+      if (levels) song.levels = levels;
       Object.assign(song, { lastPlayed: now, lastLoop: loop, lastSpeed: pass.speed, version });
       record.songs[ref] = song;
       if (best || clean) record.wins = [{ song: ref, speed: pass.speed, loop, at: now }, ...record.wins].slice(0, KEPT_WINS);
@@ -145,7 +187,7 @@ export class PracticeLog {
     let record: PracticeRecord;
     try { record = this.read(); } catch { return null; }
     const result = change(record);
-    return this.store.write(record) ? result : null;
+    return isPracticeRecord(record) && this.store.write(record) ? result : null;
   }
 
   // Throws on unreadable or corrupt data, so a write never replaces a record it could not read.

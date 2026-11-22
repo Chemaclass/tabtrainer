@@ -10,6 +10,7 @@ import { INSTRUMENTS, isFamily } from '../../core/instruments';
 import { defaultSpeedPractice } from '../../core/speedPractice';
 import { pref, setPref } from '../../app/storage';
 import { shareLabel, type ShareState } from '../../app/songProposal';
+import { PRACTICE_LEVELS } from '../../app/practiceLevels';
 
 const labels = { exercises: 'exercises', songs: 'songs', mine: 'My songs' };
 const intro = {
@@ -39,7 +40,9 @@ export function libraryView(onPick: (value: string) => void, onContinue: (plan: 
   const search = byId('songSearch', HTMLInputElement), level = byId('songLevel', HTMLSelectElement);
   const clear = byId('clearLevel', HTMLButtonElement), list = byId('catalogueList');
   const progressChips = [...byId('progressFilters').querySelectorAll<HTMLButtonElement>('[data-progress]')];
-  const progressOf = (value: string) => songProgress(practice[value] ?? null);
+  const levelsOf = (entry: CatalogueEntry | undefined): readonly string[] => entry?.practiceLevels ? PRACTICE_LEVELS : [];
+  const levelSlugs = PRACTICE_LEVELS.map(level => level.toLowerCase());
+  const progressOf = (value: string) => songProgress(practice[value] ?? null, entries.find(e => e.value === value)?.practiceLevels ? levelSlugs : []);
   function resetFilters() { search.value = ''; setSelectValue(level, ''); progressFilter = 'all'; render(); search.focus(); }
   search.addEventListener('input', render); level.addEventListener('change', render);
   progressChips.forEach(chip => { chip.onclick = () => { if (isProgressFilter(chip.dataset.progress)) { progressFilter = chip.dataset.progress; render(); } }; });
@@ -76,16 +79,20 @@ export function libraryView(onPick: (value: string) => void, onContinue: (plan: 
     showTemplates();
   }
   byId('exploreAllBtn').onclick = () => { expanded = true; render(); byId('catalogueHeading').focus(); };
-  function status(entry: CatalogueEntry, progress: SongProgress) {
-    const slot = text('span', '', `row-status ${progress}`), number = entries.filter(e => e.kind === entry.kind && e.family === family).indexOf(entry) + 1;
+  function status(entry: CatalogueEntry, progress: SongProgress, share: number | null) {
+    const partial = share !== null && share < 1;
+    const slot = text('span', '', `row-status ${progress}${partial ? ' partial' : ''}`), number = entries.filter(e => e.kind === entry.kind && e.family === family).indexOf(entry) + 1;
     const mark = progress === 'done' ? checkMark() : text('span', String(number).padStart(2, '0'));
     mark.setAttribute('aria-hidden', 'true');
-    slot.append(mark, text('span', statusText[progress], 'sr-only'));
+    if (partial) slot.style.setProperty('--share', String(share));
+    const levels = levelsOf(entry).length;
+    slot.append(mark, text('span', partial ? `${Math.round(share * levels)} of ${levels} levels done` : statusText[progress], 'sr-only'));
     return slot;
   }
   function progressLane(entry: CatalogueEntry, progress: RowProgress) {
     const lane = text('span', '', `catalogue-progress ${progress.progress}`);
     if (progress.progress === 'not-started') { lane.append(text('span', `Not started · ${entry.tempo} BPM`, 'progress-when')); return lane; }
+    if (progress.date) lane.title = `Done on ${progress.date}`;
     lane.append(text('span', progress.label, 'progress-label'));
     if (progress.best !== null) {
       const bar = text('span', '', 'progress-bar'); bar.setAttribute('aria-hidden', 'true'); bar.style.setProperty('--best', `${progress.best}%`);
@@ -98,10 +105,14 @@ export function libraryView(onPick: (value: string) => void, onContinue: (plan: 
     const button = document.createElement(path === null ? 'button' : 'a'); button.className = 'catalogue-row'; button.dataset.value = entry.value;
     if (button instanceof HTMLAnchorElement && path !== null) button.href = songAddress(import.meta.env.BASE_URL, path);
     else button.setAttribute('type', 'button');
-    const progress = rowProgress(practice[entry.value] ?? null, now);
-    button.append(status(entry, progress.progress));
+    const progress = rowProgress(practice[entry.value] ?? null, now, levelsOf(entry));
+    button.append(status(entry, progress.progress, progress.share));
     const copy = text('span', '', 'catalogue-copy'); copy.append(text('strong', entry.title));
-    if (progress.progress !== 'not-started') copy.append(text('span', progressSummary(progress), `catalogue-progress-line ${progress.progress}`));
+    if (progress.progress !== 'not-started') {
+      const line = text('span', progressSummary(progress), `catalogue-progress-line ${progress.progress}`);
+      if (progress.date) line.title = `Done on ${progress.date}`;
+      copy.append(line);
+    }
     const description = kind === 'exercises' ? entry.about : entry.artist;
     if (description) copy.append(text('span', description, 'catalogue-description'));
     const versions = entry.versions > 1 ? `${entry.versions} ${entry.practiceLevels ? 'practice levels' : 'arrangements'}` : '';
