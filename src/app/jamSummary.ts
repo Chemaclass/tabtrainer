@@ -9,6 +9,8 @@ export const PROGRESSION_CHOICES: readonly string[] = [OWN_PROGRESSION, ...PROGR
 export const SUMMARY_SEPARATOR = ' · ';
 
 const PRESET_SLUGS: readonly string[] = PROGRESSION_PRESETS.map(preset => preset.slug);
+const MOOD_LOOPS = MOODS.flatMap(mood => mood.loops);
+const isMoodLoop = (slug: string) => MOOD_LOOPS.some(loop => loop.slug === slug);
 
 /** A mood loop carries its mood's name while that mood is on, so the list says which chords belong to it. */
 export function progressionName(slug: string, mood: Mood | null = null): string {
@@ -16,14 +18,15 @@ export function progressionName(slug: string, mood: Mood | null = null): string 
   if (mood && moodLoop) return `${mood.name}: ${moodLoop.name}`;
   const preset = PROGRESSION_PRESETS.find(candidate => candidate.slug === slug);
   if (preset) return preset.name;
-  const loop = MOODS.flatMap(m => m.loops).find(candidate => candidate.slug === slug);
+  const loop = MOOD_LOOPS.find(candidate => candidate.slug === slug);
   return loop?.name ?? OWN_PROGRESSION_NAME;
 }
 
-/** The fixed choices, then the loops of the mood that is on. */
-export function progressionChoices(mood: Mood | null): string[] {
+/** The fixed choices, then the loops of the mood that is on, and the chosen mood loop when no mood names it. */
+export function progressionChoices(mood: Mood | null, chosen: string): string[] {
   const moodLoops = mood ? mood.loops.map(loop => loop.slug).filter(slug => !PRESET_SLUGS.includes(slug)) : [];
-  return [...PROGRESSION_CHOICES, ...moodLoops];
+  const choices = [...PROGRESSION_CHOICES, ...moodLoops];
+  return choices.includes(chosen) || !isMoodLoop(chosen) ? choices : [...choices, chosen];
 }
 
 function barCountText(barCount: number): string {

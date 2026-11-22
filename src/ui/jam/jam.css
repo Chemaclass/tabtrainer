@@ -1060,6 +1060,11 @@ fieldset.jam-plays {
     line-height: 23px;
   }
   .jam-recipe {
+    display: block;
+    padding-top: 0;
+    border-top: 0;
+  }
+  .jam-fact:not(:last-child) {
     display: none;
   }
   .jam.mood-on .jam-mood-summary:not([hidden]) {

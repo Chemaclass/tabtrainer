@@ -37,13 +37,13 @@ describe('mood stage', () => {
       chords: { value: 'i bVI bIII bVII', helper: '2 more loops for Sad', more: true },
       tempo: { value: 'Slow, 56 to 88', helper: 'Faster and it turns restless' },
       groove: { value: 'Straight eighths rock in E', helper: '1 groove fits Sad' },
-      summary: 'E minor · slow, 56 to 88 · Straight eighths rock in E groove',
+      summary: 'E minor · slow, 56 to 88',
       tempoHint: 'Usual for Sad: 56 to 88',
     });
   });
   it('says when the groove the player chose does not fit the mood', () => {
     const jam = sadOnRock();
-    jam.choose('funk-sixteenths');
+    jam.pickGroove('funk-sixteenths');
     expect(moodStage(jam)?.groove.helper).toBe('1 groove fits Sad, not this one');
     jam.applyMood('happy');
     expect(moodStage(jam)?.groove.helper).toBe('2 grooves fit Happy, not this one');
@@ -95,13 +95,19 @@ describe('mood note legend', () => {
 });
 
 describe('mood progressions in the list', () => {
+  it('keeps a chosen mood loop listed after its mood turns off', () => {
+    expect(progressionChoices(null, 'melancholic-i-iv-iv-i').at(-1)).toBe('melancholic-i-iv-iv-i');
+    expect(progressionChoices(null, 'i-v-vi-iv').filter(slug => slug === 'i-v-vi-iv')).toHaveLength(1);
+    expect(progressionChoices(null, 'nope')).not.toContain('nope');
+    expect(progressionChoices(moodById('dark'), 'dark-i-bii-i-bii').filter(slug => slug === 'dark-i-bii-i-bii')).toHaveLength(1);
+  });
   it('adds the mood loops and names them after the mood', () => {
     const sad = moodById('sad');
-    expect(progressionChoices(null)).not.toContain('sad-i-iv-i-v');
-    expect(progressionChoices(sad).slice(-3)).toEqual(['sad-i-bvi-biii-bvii', 'sad-i-iv-i-v', 'sad-i-iv-bvi-v']);
+    expect(progressionChoices(null, 'groove')).not.toContain('sad-i-iv-i-v');
+    expect(progressionChoices(sad, 'groove').slice(-3)).toEqual(['sad-i-bvi-biii-bvii', 'sad-i-iv-i-v', 'sad-i-iv-bvi-v']);
     expect(progressionName('sad-i-iv-i-v', sad)).toBe('Sad: i iv i v');
     expect(progressionName('sad-i-iv-i-v')).toBe('i iv i v');
-    expect(progressionChoices(moodById('happy')).filter(slug => slug === 'i-v-vi-iv')).toHaveLength(1);
+    expect(progressionChoices(moodById('happy'), 'groove').filter(slug => slug === 'i-v-vi-iv')).toHaveLength(1);
     expect(progressionName('i-v-vi-iv', moodById('happy'))).toBe('Happy: I V vi IV');
     expect(progressionName('i-v-vi-iv')).toBe('I V vi IV');
   });

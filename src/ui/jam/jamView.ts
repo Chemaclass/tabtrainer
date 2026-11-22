@@ -196,7 +196,7 @@ export function jamView(jam: Jam, engine: LoopEngine, { active, choose, changed,
 
   function showProgressions() {
     const { mood } = jam;
-    progression.replaceChildren(...progressionChoices(mood).map(slug => new Option(progressionName(slug, mood), slug)));
+    progression.replaceChildren(...progressionChoices(mood, jam.progression).map(slug => new Option(progressionName(slug, mood), slug)));
     setSelectValue(progression, jam.progression);
   }
 

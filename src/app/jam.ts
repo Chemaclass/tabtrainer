@@ -131,21 +131,32 @@ export class Jam {
     return scales[0];
   }
 
-  /** A mood follows the player to the groove they choose, even one whose genre does not fit it. */
+  /** Opens a groove with its own saved setup, mood included. */
   choose(slug: string): boolean {
     const found = this.find(slug);
     if (!found || found === this.current) return false;
-    const carried = this.chosenMood;
     this.current = found;
     this.load();
+    return true;
+  }
+
+  /** A groove the player picks from the list takes the mood along, even one whose genre does not fit it. */
+  pickGroove(slug: string): boolean {
+    const carried = this.chosenMood;
+    if (!this.choose(slug)) return false;
     if (carried) this.applyMood(carried);
     return true;
+  }
+
+  /** Whether what plays now, a draft included, has a genre that fits the mood. */
+  fitsMood(id: MoodId): boolean {
+    return moodFits(moodById(id), this.groove.genre);
   }
 
   /** The groove a mood plays on: this one when its genre fits, otherwise the first that fits best. */
   grooveFor(id: MoodId): string {
     const mood = moodById(id);
-    if (moodFits(mood, this.groove.genre)) return this.slug;
+    if (this.fitsMood(id)) return this.slug;
     for (const genre of mood.genres) {
       const fitting = this.grooves.find(entry => entry.groove.genre === genre);
       if (fitting) return fitting.slug;

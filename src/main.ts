@@ -235,7 +235,14 @@ function showJam(slug: string, push = true, setup: JamSetup = {}) {
   setScreen('jam', arriving); showLink(push);
 }
 function chooseGroove(slug: string) {
-  void grooveEditing.mayChoose(slug).then(chosen => { if (chosen) showJam(slug); });
+  void grooveEditing.mayChoose(slug).then(chosen => {
+    if (!chosen) return;
+    if (jam.pickGroove(slug)) {
+      grooveEditing.follow();
+      jamming.show();
+    }
+    showJam(slug);
+  });
 }
 function chooseMood(id: MoodId) {
   if (jam.mood?.id === id) {
@@ -244,9 +251,11 @@ function chooseMood(id: MoodId) {
     return;
   }
   const slug = jam.grooveFor(id);
-  void grooveEditing.mayChoose(slug).then(chosen => {
+  // A draft whose genre does not fit gives way to a groove that does, so its changes are asked about first
+  const allowed = jam.fitsMood(id) ? Promise.resolve(true) : grooveEditing.mayDiscard();
+  void allowed.then(chosen => {
     if (!chosen) return;
-    const moved = jam.choose(slug);
+    const moved = jam.choose(slug) || jam.endPreview();
     if (moved) grooveEditing.follow();
     jam.applyMood(id);
     jamming.show();

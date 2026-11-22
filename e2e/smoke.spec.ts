@@ -166,29 +166,53 @@ test('a second Back while asking to discard groove changes keeps the address and
   await expect(page.locator('#jamScreen')).toBeHidden();
 });
 
-test('a mood sets the Jam to its chords, asks before dropping groove changes, and clears back to the groove title', async ({ page }, testInfo) => {
+test('a mood sets the Jam to its chords, asks before dropping groove changes, and clears back to the groove title', async ({ page }) => {
   await page.goto('./jam/blues-shuffle/');
   const sad = page.getByRole('group', { name: 'How do you want it to feel?' }).getByRole('button', { name: 'Sad', exact: true });
   await page.locator('#grooveEdit').click();
   const source = page.locator('#grooveSource');
   await source.fill(`${await source.inputValue()}\n# changed`);
-  await sad.click();
   const ask = page.locator('#askDialog');
+  await sad.click();
+  await expect(ask).toBeVisible();
   await ask.getByRole('button', { name: 'Cancel' }).click();
+  await expect(ask).toBeHidden();
   await expect(sad).toHaveAttribute('aria-pressed', 'false');
   await sad.click();
+  await expect(ask).toBeVisible();
   await ask.getByRole('button', { name: 'Discard' }).click();
+  await expect(ask).toBeHidden();
   await expect(sad).toHaveAttribute('aria-pressed', 'true');
   await expect(page).toHaveURL(/\/jam\/rock-straight-eighths\//);
   await expect(page.locator('#jamTitle')).toHaveText('Sad');
   await expect(page.locator('#jamKey')).toHaveValue(/m$/);
   await expect(page.locator('#jamMoodWhy')).toContainText('three frets above home');
-  await expect(page.locator(testInfo.project.name === 'phone' ? '#jamMoodSummary' : '#jamRecipe')).toBeVisible();
   await expect(page.locator('#jamBars li').first()).toContainText('Home.');
+  await page.locator('#jamPickerButton').click();
+  await page.locator('#jamGrooves a', { hasText: 'Sixteenth funk' }).click();
+  await expect(page).toHaveURL(/\/jam\/funk-sixteenths\//);
+  await expect(page.locator('#jamTitle')).toHaveText('Sad');
   await sad.click();
   await expect(sad).toHaveAttribute('aria-pressed', 'false');
   await expect(page.locator('#jamTitle #jamPickerButton')).toBeVisible();
   await expect(page.locator('#jamRecipe')).toBeHidden();
+  await expect(page.locator('#jamTempoHint')).toHaveText('');
+});
+
+test('a mood asks before it drops a new groove whose genre does not fit', async ({ page }) => {
+  await page.goto('./jam/rock-straight-eighths/');
+  await page.locator('#grooveNew').click();
+  const source = page.locator('#grooveSource');
+  await source.fill((await source.inputValue()).replace('genre: rock', 'genre: jazz'));
+  await expect(page.locator('#jamContext')).toContainText('jazz');
+  const ask = page.locator('#askDialog');
+  const sad = page.getByRole('group', { name: 'How do you want it to feel?' }).getByRole('button', { name: 'Sad', exact: true });
+  await sad.click();
+  await expect(ask).toBeVisible();
+  await ask.getByRole('button', { name: 'Cancel' }).click();
+  await expect(ask).toBeHidden();
+  await expect(sad).toHaveAttribute('aria-pressed', 'false');
+  await expect(source).toHaveValue(/genre: jazz/);
 });
 
 test('a mood link opens the mood with its own key and tempo, and says when the tempo leaves the mood range', async ({ page }) => {

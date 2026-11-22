@@ -18,7 +18,7 @@ export interface MoodStage {
   chords: MoodFact & { more: boolean };
   tempo: MoodFact;
   groove: MoodFact;
-  /** The facts in one line, for narrow screens. */
+  /** Scale and tempo in one line, for narrow screens, where the groove fact stays on its own. */
   summary: string;
   tempoHint: string;
 }
@@ -60,7 +60,7 @@ export function moodStage(jam: MoodJam): MoodStage | null {
     chords: { value: loop?.bars ?? '', helper: `${plural(others, 'more loop', 'more loops')} for ${mood.name}`, more: others > 0 },
     tempo: { value: `${mood.tempo.word}, ${range}`, helper: note || mood.tempo.outside },
     groove: { value: jam.groove.title, helper: grooveHelper(jam, mood) },
-    summary: [scaleTitle, `${mood.tempo.word.toLowerCase()}, ${range}`, `${jam.groove.title} groove`].join(SUMMARY_SEPARATOR),
+    summary: [scaleTitle, `${mood.tempo.word.toLowerCase()}, ${range}`].join(SUMMARY_SEPARATOR),
     tempoHint: note ? `${note}: ${range}` : `Usual for ${mood.name}: ${range}`,
   };
 }

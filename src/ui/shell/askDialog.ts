@@ -28,11 +28,10 @@ function returnFocus(opener: Element | null) {
   if (document.activeElement !== opener) opener.closest('details')?.querySelector('summary')?.focus();
 }
 
-/** Asks one question at a time; a second question while one is open gets its safe answer at once. */
-export function askChoice<T extends string>(question: Question<T>): Promise<T> {
-  const dialog = byId('askDialog', HTMLDialogElement);
-  if (dialog.open) return Promise.resolve(question.safe);
-  const opener = document.activeElement;
+// The browser delivers "close" as a queued task, so a question opened before the last one's close arrived would take that close as its own answer
+let lastAnswer: Promise<unknown> = Promise.resolve();
+
+function show<T extends string>(dialog: HTMLDialogElement, question: Question<T>, opener: Element | null): Promise<T> {
   const buttons = question.choices.map(choiceButton);
   byId('askTitle').textContent = question.title;
   byId('askHelp').textContent = question.message;
@@ -47,6 +46,16 @@ export function askChoice<T extends string>(question: Question<T>): Promise<T> {
       resolve(question.choices.find(choice => choice.value === dialog.returnValue)?.value ?? question.safe);
     }, { once: true });
   });
+}
+
+/** Asks one question at a time; a second question while one is open gets its safe answer at once. */
+export function askChoice<T extends string>(question: Question<T>): Promise<T> {
+  const dialog = byId('askDialog', HTMLDialogElement);
+  if (dialog.open) return Promise.resolve(question.safe);
+  const opener = document.activeElement;
+  const answer = lastAnswer.then(() => show(dialog, question, opener));
+  lastAnswer = answer;
+  return answer;
 }
 
 export function askSaveConflict({ title, copyTitle }: SaveConflict, place: string): Promise<SaveChoice> {

@@ -81,7 +81,7 @@ export function moodStageView(jam: Jam, { pick, nextLoop }: MoodStageHandlers) {
     for (const element of [moodName, why, recipe, summary, tempoHint]) element.hidden = stage === null;
     grooveTitle.textContent = stage ? MOOD_GROOVE_TITLE : GROOVE_TITLE;
     if (stage) showFacts(stage);
-    else setText(why, '');
+    else for (const element of [why, tempoHint]) setText(element, '');
   }
 
   return { show };

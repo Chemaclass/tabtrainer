@@ -400,12 +400,45 @@ describe('jam moods', () => {
     expect([jam.mood, jam.progression, jam.key, jam.tempo]).toEqual([null, 'dark-i-bii-i-bii', 'Em', 100]);
     expect(jam.scales).not.toContain('phrygian');
   });
-  it('follows the player to another groove and plays its chords there', () => {
+  it('follows the player to a groove picked from the list and plays its chords there', () => {
     const jam = new Jam(bundledGrooves(files));
     jam.choose('rock-straight-eighths');
     jam.applyMood('sad');
-    jam.choose('jazz-swing');
+    expect(jam.pickGroove('jazz-swing')).toBe(true);
+    expect(jam.pickGroove('jazz-swing')).toBe(false);
     expect([jam.slug, jam.mood?.id, jam.progression, jam.key]).toEqual(['jazz-swing', 'sad', sadLoop, 'Fm']);
+  });
+  it('keeps a mood saved on the first groove off another groove the address opens', () => {
+    const first = new Jam(bundledGrooves(files));
+    first.applyMood('bluesy');
+    const funk = new Jam(bundledGrooves(files));
+    expect(funk.open('funk-sixteenths')).toBe(true);
+    expect([funk.mood, funk.progression, funk.key, funk.tempo]).toEqual([null, 'groove', 'Em', 98]);
+    expect(JSON.parse(stored.get('tabtrainer:jam')!)).not.toHaveProperty('funk-sixteenths');
+  });
+  it('opens each groove with its own mood on Back and Forward', () => {
+    const jam = new Jam(bundledGrooves(files));
+    jam.choose('funk-sixteenths');
+    jam.applyMood('funky');
+    jam.clearMood();
+    jam.choose('rock-straight-eighths');
+    jam.applyMood('sad');
+    expect(jam.open('blues-shuffle')).toBe(true);
+    expect([jam.mood, jam.progression]).toEqual([null, 'groove']);
+    jam.open('funk-sixteenths');
+    expect([jam.mood, jam.progression]).toEqual([null, 'funky-i7-i7-i7-iv7']);
+    jam.open('rock-straight-eighths');
+    expect([jam.mood?.id, jam.progression]).toEqual(['sad', sadLoop]);
+    expect(new Jam(bundledGrooves(files)).mood).toBeNull();
+  });
+  it('judges the fit of a mood by the draft that plays, and offers a groove that fits', () => {
+    const jam = new Jam(bundledGrooves(files));
+    jam.choose('rock-straight-eighths');
+    jam.preview(playableGroove(NEW_GROOVE_TEXT.replace('genre: rock', 'genre: jazz')).playable!);
+    expect(jam.fitsMood('sad')).toBe(false);
+    expect(jam.grooveFor('sad')).toBe('rock-straight-eighths');
+    expect(jam.endPreview()).toBe(true);
+    expect(jam.fitsMood('sad')).toBe(true);
   });
   it('comes back after a reload, unless the saved chords are not its own', () => {
     const jam = new Jam(bundledGrooves(files));
