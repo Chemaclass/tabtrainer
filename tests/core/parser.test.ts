@@ -313,6 +313,40 @@ describe('slides', () => {
   });
 });
 
+describe('bends', () => {
+  const guitar = (body: string) => parseSong(`instrument: guitar6\n${body}`);
+  it('reads every amount, with or without a release', () => {
+    const { song, issues } = guitar(':8 7.3^1/4 7.3^1/2 7.3^1 7.3^3/2 7.3^2 7.3^1r 7.3^1/2r:q |');
+    expect(issues).toEqual([]);
+    expect(song.bars[0].events.map(e => [e.notes[0].bend, e.notes[0].release])).toEqual([[0.25, undefined], [0.5, undefined], [1, undefined], [1.5, undefined], [2, undefined], [1, true], [0.5, true]]);
+  });
+  it('bends a note in a chord, after a join, and a held note that was not bent', () => {
+    const { song, issues } = guitar(':q (7.3^1 5.2) 5.3 h7.3^1 /9.3^1/2 | 7.3 ~7.3^1 7.3^1 ~7.3 |');
+    expect(issues).toEqual([]);
+    expect(song.bars[0].events[0].notes[0]).toEqual({ string: 3, fret: 7, bend: 1 });
+    expect(song.bars[0].events[2].notes[0]).toEqual({ string: 3, fret: 7, approach: 'hammer', bend: 1 });
+    expect(song.bars[0].events[3].notes[0]).toEqual({ string: 3, fret: 9, approach: 'slide-up', bend: 0.5 });
+    expect(song.bars[1].events[1].notes[0]).toEqual({ string: 3, fret: 7, tie: true, bend: 1 });
+  });
+  it('keeps the note and drops a bend it cannot have', () => {
+    const { song, issues } = guitar(':q 7.3^3 0.3^1 7.3^1 ~7.3^1 | 7.3^1r ~7.3^1 7.3^1 ~7.3 | ~7.3^1 r 5.3 5.3 |');
+    expect(issues.map(i => i.code)).toEqual(['bend-amount', 'bend-open', 'bend-held', 'bend-held']);
+    expect(song.bars[0].events.map(e => e.notes[0].bend)).toEqual([undefined, undefined, 1, undefined]);
+    expect(song.bars[1].events[1].notes[0].bend).toBe(1);
+  });
+  it('rejects a bend on a dead note', () => {
+    expect(guitar(':q x.3^1 5.3 5.3 5.3 5.3 |').issues.map(i => i.code)).toEqual(['note-unreadable']);
+  });
+  it('survives a round trip', () => {
+    const { song } = guitar(':8 7.3^1/4 7.3^1/2r 7.3^1 ~7.3 (7.3^3/2 5.2) 5.3 h7.3^2 /9.3^1r | :h \\7.3^1 ~7.3 |');
+    const text = serializeSong(song);
+    expect(text).toContain(':8 7.3^1/4 7.3^1/2r 7.3^1 ~7.3 (7.3^3/2 5.2) 5.3 h7.3^2 /9.3^1r | :h \\7.3^1 ~7.3 |');
+    const again = parseSong(text);
+    expect(again.issues).toEqual([]);
+    expect(again.song.bars.map(b => b.events)).toEqual(song.bars.map(b => b.events));
+  });
+});
+
 describe('issue codes', () => {
   const CASES: Record<SongIssueCode, [string, Partial<ParseIssue>]> = {
     'level-unknown': ['level: brutal\n:w 3.4 |', { line: 1, col: 8, length: 6 }],
@@ -332,6 +366,9 @@ describe('issue codes', () => {
     'legato-source': [':q 3.4 h5.3 3.4 3.4 |', { line: 1, col: 8, length: 4 }],
     'legato-direction': [':q 7.3 h5.3 3.4 3.4 |', { line: 1, col: 8, length: 4 }],
     'slide-open': [':q 0.3 /5.3 3.4 3.4 |', { line: 1, col: 8, length: 4 }],
+    'bend-amount': [':q 7.3^3 3.4 3.4 3.4 |', { line: 1, col: 4, length: 5 }],
+    'bend-open': [':q 0.3^1 3.4 3.4 3.4 |', { line: 1, col: 4, length: 5 }],
+    'bend-held': [':q 7.3^1 ~7.3^1 3.4 3.4 |', { line: 1, col: 10, length: 6 }],
     'bar-short': ['title: x\n:q 3.4 5.4 3.3 |', { line: 2, col: 4, length: 11, beats: 3, expected: 4 }],
     'bar-long': [':q 3.4 3.4 3.4 3.4 3.4 |', { line: 1, col: 20, length: 3, beats: 5, expected: 4, hint: '(missing a "|"?)' }],
     'version-duplicate': ['== A\n:w 3.4 |\n== A\n:w 3.4 |', { line: 3, col: 1, length: 4 }],

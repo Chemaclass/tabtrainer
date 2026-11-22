@@ -10,7 +10,7 @@ It's a free web app with no account. Your songs stay in your browser, and it wor
 
 ## What you can do
 
-- **Practise:** exercises and songs for bass (4, 5 or 6 strings) and guitar, with stems, beams, ties and triplets under the frets.
+- **Practise:** exercises and songs for bass (4, 5 or 6 strings) and guitar, with stems, beams, ties and triplets under the frets, and hammer-ons, pull-offs, slides, bends, dead notes and palm mutes that you can see and hear.
 - **Slow down and loop:** play from 30 to 130% speed, loop any bars, and raise the speed after a set number of loops.
 - **Follow along:** the playing note turns red and the page scrolls with it. Add a metronome or a count-in.
 - **Keep your place:** the library shows how far you got on each song and takes you back to it.
@@ -48,7 +48,7 @@ time: 4/4
 "C" :q 3.3 3.3 :8 5.2 5.2 :q 3.3 |
 (3.3 5.2):h r:h |      # two notes together, then a rest
 [3/4] :8t 3.3 5.3 7.3 :q ~7.3 r |
-:8 5.3 h7.3 p5.3 /9.3 x.3 _5.3 |   # h, p: hammer-on, pull-off; /: slide; x: dead note; _: palm mute
+:8 5.3 h7.3 p5.3 /9.3^1 x.3 _5.3 |   # h, p: hammer-on, pull-off; /: slide; ^1: bend; x: dead note; _: palm mute
 ```
 
 | Syntax | Meaning |
@@ -63,6 +63,9 @@ time: 4/4
 | `7.3 p5.3` | pull-off: pick fret 7, then lift that finger so fret 5 sounds without picking again |
 | `5.3 /7.3` `7.3 \5.3` | slide: pick the first note, then slide the same finger up (`/`) or down (`\`) the string to the second without picking again |
 | `/7.3` `\5.3` | slide into the note from two frets lower or higher, and pick it as usual |
+| `7.3^1` `7.3^1/2` | bend: push the string until the note sounds a whole step (two frets) or a half step (one fret) higher. Also `^1/4`, `^3/2` and `^2` |
+| `7.3^1r` | bend, then let the string back down within the same note |
+| `7.3^1 ~7.3` | bend and hold: the tie keeps the bend |
 | `x.3` | dead note on string 3: mute the string with the fretting hand and pick it, for a click with no pitch |
 | `_0.6` `_(0.6 2.5)` | palm mute: rest the side of the picking hand on the strings near the bridge, for a short, dark note or chord |
 | `"Am7"` | chord name above the next note |

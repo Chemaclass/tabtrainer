@@ -629,4 +629,12 @@ describe('slides', () => {
     expect(startCents(0)).toContain(900);
     expect(startCents(4)).toEqual([200, 200]);
   });
+  it('keep the bend after a slide whose first note is not played', () => {
+    const { sources, advance } = fakeAudio();
+    const p = new Player();
+    p.load(buildTimeline(parseSong('instrument: guitar6\ntempo: 60\n:w 12.3 | :q \\5.3^2 r r r |').song), 60);
+    p.seek(4); p.play(); advance(0.2);
+    expect(sources[0].detune.setValueAtTime.mock.calls[0][0]).toBe(200);
+    expect(sources[0].detune.linearRampToValueAtTime.mock.calls.map(call => call[0])).toEqual([0, 400]);
+  });
 });

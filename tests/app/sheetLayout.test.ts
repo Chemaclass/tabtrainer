@@ -106,9 +106,14 @@ describe('line breaks', () => {
 
 describe('mark room', () => {
   it('makes room above the tab only for a system with a mark', () => {
-    expect(markRoom({ joins: false, palmMute: false }, 13)).toBe(0);
-    expect(markRoom({ joins: true, palmMute: false }, 13)).toBe(20);
-    expect(markRoom({ joins: false, palmMute: true }, 13)).toBe(20);
-    expect(markRoom({ joins: true, palmMute: true }, 13)).toBe(33);
+    expect(markRoom({ bend: false, joins: false, palmMute: false }, 13)).toBe(0);
+    expect(markRoom({ bend: false, joins: true, palmMute: false }, 13)).toBe(20);
+    expect(markRoom({ bend: false, joins: false, palmMute: true }, 13)).toBe(20);
+    expect(markRoom({ bend: false, joins: true, palmMute: true }, 13)).toBe(33);
+  });
+  it('puts bend arrows below the letters and "P.M."', () => {
+    expect(markRoom({ bend: true, joins: false, palmMute: false }, 13)).toBe(26);
+    expect(markRoom({ bend: true, joins: true, palmMute: false }, 13)).toBe(46);
+    expect(markRoom({ bend: true, joins: true, palmMute: true }, 13)).toBe(59);
   });
 });

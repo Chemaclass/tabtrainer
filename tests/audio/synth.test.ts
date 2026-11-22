@@ -80,6 +80,17 @@ describe('Synth', () => {
     synth.voice(1, 55, 1, 0.2, undefined, 'instrument', { muted: true, pitch: [{ after: 0, cents: -200 }, { after: 0.3, cents: 0 }] });
     expect(sources[0].detune.linearRampToValueAtTime).toHaveBeenCalledWith(0, 1.06);
   });
+  it('squeezes a palm-muted release into the sound and keeps its shape, but leaves an open release alone', () => {
+    const release = [{ after: 0, cents: 0 }, { after: 0.2, cents: 200 }, { after: 0.3, cents: 200 }, { after: 0.5, cents: 0 }];
+    const ramps = (muted: boolean) => {
+      const { sources } = fakeAudio();
+      const synth = new Synth(); synth.ensure();
+      synth.voice(1, 55, 0.6, 0.2, undefined, 'instrument', { muted, pitch: release });
+      return sources[0].detune.linearRampToValueAtTime.mock.calls.map(([cents, at]) => [cents, +((at as number) - 1).toFixed(3)]);
+    };
+    expect(ramps(true)).toEqual([[200, 0.024], [200, 0.036], [0, 0.06]]);
+    expect(ramps(false)).toEqual([[200, 0.2], [200, 0.3], [0, 0.5]]);
+  });
   it('glides both oscillators of a voice through the pitch points', () => {
     const { sources } = fakeAudio();
     const synth = new Synth(); synth.ensure();

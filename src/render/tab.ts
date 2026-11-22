@@ -1,8 +1,8 @@
-import { Barline, Beam, Dot, Formatter, Renderer, StaveNote, Stem, TabNote, TabSlide, TabStave, TabTie, Tuplet, Voice, type RenderContext, type StemmableNote, type TabNotePosition } from 'vexflow';
+import { Barline, Beam, Bend, Dot, Formatter, Renderer, StaveNote, Stem, TabNote, TabSlide, TabStave, TabTie, Tuplet, Voice, type RenderContext, type StemmableNote, type TabNotePosition } from 'vexflow';
 import { PPQ, type Approach, type Bar, type Note, type NoteEvent, type Song } from '../core/model';
 import { onsetKey } from '../core/timeline';
-import { eventsInOrder, isSlide, sourceOf } from '../core/technique';
-import { barWidths, labelRows, lineBreaks, markRoom, timeSignatureDigitHeight } from '../app/sheetLayout';
+import { BENDS, eventsInOrder, isSlide, sourceOf } from '../core/technique';
+import { BEND_BAND, barWidths, labelRows, lineBreaks, markRoom, timeSignatureDigitHeight } from '../app/sheetLayout';
 
 export interface RenderOptions { barsPerLine: number; width: number; touchSize: number }
 
@@ -83,6 +83,14 @@ export function renderSong(host: HTMLElement, song: Song, opt: RenderOptions): v
 interface Ctx { tuning: number[]; nStr: number; tempo: number; opt: RenderOptions; barStart: Record<number, number>; before: Map<NoteEvent, NoteEvent | undefined> }
 
 const SHEET_MUT = '#5c5c5c', SHEET_LINE = '#c4c4c4';
+
+function bendMark(n: Note): Bend | undefined {
+  const label = n.bend && BENDS.find(b => b.steps === n.bend)?.label;
+  if (!label) return undefined;
+  const bend = new Bend(label, n.release === true);
+  bend.render_options.line_style = SHEET_MUT;
+  return bend;
+}
 const SVG_NS = 'http://www.w3.org/2000/svg';
 const DIGIT_CAP_HEIGHT = 0.73, DIGIT_WIDTH = 0.62;
 const ROW = { barNo: 0.4 * STRING_SPACE, label: 1.4 * STRING_SPACE, section: 2.8 * STRING_SPACE };
@@ -147,14 +155,17 @@ function drawPalmMutes(svg: SVGSVGElement, targets: Target[], top: number) {
 }
 
 const JOIN_LETTER: Partial<Record<Approach, string>> = { hammer: 'H', pull: 'P' };
-const HALF_JOIN_LETTER_LEFT = 8, SLIDE_IN_WIDTH = 9, SLIDE_RISE = 3;
+const HALF_JOIN_LETTER_LEFT = 8, SHORT_SLIDE_WIDTH = 9, SLIDE_RISE = 3;
 
 // TabSlide always prints "sl." in the row the app keeps for chord names
 class SilentSlide extends TabSlide { renderText() {} }
 
 const slideDirection = (approach: Approach) => approach === 'slide-up' ? TabSlide.SLIDE_UP : TabSlide.SLIDE_DOWN;
 
-/** Arcs for hammer-ons and pull-offs, lines for slides. A join that crosses a system break is drawn as two halves, and only the half that ends on the note gets the letters. A chord shows each of its letters once. A slide with no note before it gets a short line into the note. */
+/**
+ * Arcs for hammer-ons and pull-offs, lines for slides. An arc that crosses a system break is drawn as two halves, and only the half that ends on the note gets the letters.
+ * A chord shows each of its letters once. A slide that crosses a system break, or has no note before it, gets a short line out of or into the note.
+ */
 function drawJoins(ctx: RenderContext, svg: SVGSVGElement, targets: Target[], next: Bar | undefined, c: Ctx, top: number) {
   const first = new Map<NoteEvent, Target>(), last = new Map<NoteEvent, Target>();
   for (const target of targets) { if (!first.has(target.event)) first.set(target.event, target); last.set(target.event, target); }
@@ -167,12 +178,13 @@ function drawJoins(ctx: RenderContext, svg: SVGSVGElement, targets: Target[], ne
     (isSlide(approach) ? new SilentSlide(notes, slideDirection(approach)) : new TabTie(notes)).setContext(ctx).draw();
     ctx.closeGroup();
   };
-  const slideIn = (approach: Approach, to: Target, index: number) => {
-    const x = to.note.getTieLeftX(), y = to.note.getYs()[index], rise = SLIDE_RISE * slideDirection(approach);
+  const shortSlide = (approach: Approach, x: number, y: number) => {
+    const rise = SLIDE_RISE * slideDirection(approach);
     ctx.openGroup('join');
-    ctx.beginPath(); ctx.moveTo(x - SLIDE_IN_WIDTH, y + rise); ctx.lineTo(x, y - rise); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x, y + rise); ctx.lineTo(x + SHORT_SLIDE_WIDTH, y - rise); ctx.stroke();
     ctx.closeGroup();
   };
+  const slideInto = (approach: Approach, to: Target, note: Note) => shortSlide(approach, to.note.getTieLeftX() - SHORT_SLIDE_WIDTH, to.note.getYs()[to.placed.indexOf(note)]);
   for (const [event, to] of first) {
     const before = c.before.get(event);
     const from = before && last.get(before);
@@ -180,9 +192,9 @@ function drawJoins(ctx: RenderContext, svg: SVGSVGElement, targets: Target[], ne
     for (const note of event.notes) {
       if (!note.approach) continue;
       const source = sourceOf(before, note);
-      if (source) arc(note.approach, from, from?.placed.indexOf(source) ?? 0, to, to.placed.indexOf(note));
-      else if (isSlide(note.approach)) slideIn(note.approach, to, to.placed.indexOf(note));
-      const letter = source && JOIN_LETTER[note.approach];
+      if (isSlide(note.approach) && !(source && from)) slideInto(note.approach, to, note);
+      else if (source) arc(note.approach, from, from?.placed.indexOf(source) ?? 0, to, to.placed.indexOf(note));
+      const letter = source && !source.bend && JOIN_LETTER[note.approach];
       if (letter) letters.add(letter);
     }
     if (!letters.size) continue;
@@ -194,7 +206,10 @@ function drawJoins(ctx: RenderContext, svg: SVGSVGElement, targets: Target[], ne
   if (!after || !from || c.before.get(after) !== lastEvent) return;
   for (const note of after.notes) {
     const source = sourceOf(lastEvent, note);
-    if (note.approach && source) arc(note.approach, from, from.placed.indexOf(source), undefined, 0);
+    if (!note.approach || !source) continue;
+    const index = from.placed.indexOf(source);
+    if (isSlide(note.approach)) shortSlide(note.approach, from.note.getTieRightX(), from.note.getYs()[index]);
+    else arc(note.approach, from, index, undefined, 0);
   }
 }
 
@@ -242,6 +257,7 @@ function barNotes(bar: Bar, c: Ctx): BarNotes {
         ? tabNote(sorted.map(n => ({ str: n.string, fret: fretLabel(n, pi > 0) })), val, dots)
         : tabRest(val, dots, c.nStr);
       if (dots) Dot.buildAndAttach([t]);
+      if (pi === 0 && t instanceof TabNote) sorted.forEach((n, index) => { const bend = bendMark(n); if (bend) t.addModifier(bend, index); });
       if (isT) { g.push(t); if (g.length === 3) { trip.push(g); g = []; } }
       else if (g.length) { trip.push(g); g = []; }
       if (pi === 0 && (ev.chord || ev.text)) labels.push([t, ev]);
@@ -274,8 +290,10 @@ function drawSystem(div: HTMLDivElement, bars: Bar[], { prev, next }: { prev?: B
   const W = sheetWidth(c.opt);
   const lift = (rows - 1) * LABEL_ROW;
   const joins = bars.some(bar => bar.events.some(e => e.notes.some(n => n.approach && JOIN_LETTER[n.approach])));
-  const room = markRoom({ joins, palmMute: bars.some(bar => bar.events.some(e => e.palmMute)) }, STRING_SPACE);
+  const bend = bars.some(bar => bar.events.some(e => e.notes.some(n => n.bend)));
+  const room = markRoom({ bend, joins, palmMute: bars.some(bar => bar.events.some(e => e.palmMute)) }, STRING_SPACE);
   const top = tabLineTop(bars, !prev, lift) + room;
+  const marksTop = top - (bend ? BEND_BAND * STRING_SPACE : 0);
   const labelTop = top - room;
   const H = top + 40 + c.nStr * 13 + 30; // provisional; resized to the real tab bottom below
   const r = new Renderer(div, Renderer.Backends.SVG); r.resize(W, H); const ctx = r.getContext();
@@ -348,8 +366,8 @@ function drawSystem(div: HTMLDivElement, bars: Bar[], { prev, next }: { prev?: B
     x += bw;
   });
   const systemTargets = notes.flatMap(n => n.targets);
-  drawJoins(ctx, svg, systemTargets, next, c, top);
-  drawPalmMutes(svg, systemTargets, top - (joins ? STRING_SPACE : 0));
+  drawJoins(ctx, svg, systemTargets, next, c, marksTop);
+  drawPalmMutes(svg, systemTargets, marksTop - (joins ? STRING_SPACE : 0));
   lyrics.forEach(([px, words]) => svgText(svg, 'lyric', px, bottom + STRING_SPACE + 11, words));
   const end = Math.ceil(bottom + (lyrics.length ? STRING_SPACE + 18 : 14));
   hits.forEach(hit => { if (hit.classList.contains('bar-target')) hit.setAttribute('height', String(Math.min(bottom + 24, end))); });

@@ -479,6 +479,11 @@ kbd {
 .note.on .vf-stem path {
   stroke: var(--playing) !important;
 }
+/* A bend curve is a stroked path in the note: filling it would draw a wedge */
+.note.on path[fill="none"] {
+  fill: none !important;
+  stroke: var(--playing) !important;
+}
 .tip {
   margin: var(--space-4) 0 0;
   font-size: 13px;
