@@ -1,3 +1,4 @@
+import { genreName } from '../../core/groove';
 import { addressOf } from '../../app/address';
 import type { Jam, JamGroove } from '../../app/jam';
 import { grooveGroups } from '../../app/jamMood';
@@ -16,7 +17,7 @@ function grooveLink({ slug, groove }: JamGroove, fit: HTMLSpanElement): HTMLAnch
   const link = document.createElement('a');
   link.className = 'jam-groove';
   link.href = grooveHref(slug);
-  const genre = textSpan('jam-groove-genre', groove.genre);
+  const genre = textSpan('jam-groove-genre', genreName(groove.genre));
   genre.append(fit);
   link.append(
     textSpan('jam-groove-title', groove.title),

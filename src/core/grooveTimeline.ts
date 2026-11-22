@@ -69,7 +69,8 @@ function chordVoicing(chord: Chord): number[] {
   return chord.tones.map(pc => noteFrom(KEYS_RANGE.low, pc)).sort((a, b) => a - b);
 }
 
-const keysVoicing = (chord: Chord) => (isPowerChord(chord) ? powerChordVoicing(chord) : chordVoicing(chord));
+// Thirds turn to mud through distortion, so the drive voice plays every chord as root, fifth and octave
+const keysVoicing = (chord: Chord, voice: Groove['voice']) => (voice === 'drive' || isPowerChord(chord) ? powerChordVoicing(chord) : chordVoicing(chord));
 
 const isRest = (step: string) => step === REST || step === HOLD;
 const isApproach = (step: string) => step.startsWith(APPROACH);
@@ -264,7 +265,7 @@ export function buildGrooveTimeline(groove: Groove, key: string = groove.key): G
   groove.progression.forEach((_, index) => {
     const bar: GrooveBar = { bar: index, start: index * length, length, chord: chordAt(groove.progression, key, index) };
     timeline.bars.push(bar);
-    const notes: BarNotes = { bass: bass[index], keys: keysVoicing(bar.chord) };
+    const notes: BarNotes = { bass: bass[index], keys: keysVoicing(bar.chord, groove.voice) };
     for (const grid of groove.grids) addGridBar(timeline, grid, bar, notes, placement);
   });
 

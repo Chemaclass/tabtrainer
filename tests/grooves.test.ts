@@ -38,7 +38,7 @@ describe('bundled grooves', () => {
           const t = buildGrooveTimeline({ ...groove, progression }, key);
           expect(t.bass.length, `${slug} in ${key}`).toBeGreaterThan(0);
           expect(t.bass.every(h => h.midi[0] >= BASS_RANGE.low && h.midi[0] <= BASS_RANGE.high), `${slug} in ${key}`).toBe(true);
-          const range = (bar: number) => (t.bars[bar].chord.intervals.length === 2 ? POWER_CHORD_RANGE : KEYS_RANGE);
+          const range = (bar: number) => (groove.voice === 'drive' || t.bars[bar].chord.intervals.length === 2 ? POWER_CHORD_RANGE : KEYS_RANGE);
           expect(t.keys.every(h => h.midi.every(m => m >= range(h.bar).low && m <= range(h.bar).high)), `${slug} in ${key}`).toBe(true);
         }
       }

@@ -124,6 +124,8 @@ describe('buildGrooveTimeline', () => {
       expect(t.voice).toBe('drive');
     }
     expect(buildGrooveTimeline(blues).voice).toBe('keys');
+    const full = parseGroove('progression: I vi\nvoice: drive\nkeys: x.......\n').groove;
+    expect(buildGrooveTimeline(full, 'A').keys.map(hit => hit.midi.map(m => m - hit.midi[0]))).toEqual([[0, 7, 12], [0, 7, 12]]);
   });
   it('passes the drum kit on', () => {
     expect(buildGrooveTimeline(blues).kit).toBe('blues');

@@ -51,6 +51,10 @@ const TRAILING_COMMENT = /\s#(\s.*)?$/;
 const TIME_SIGNATURE = /^(\d+)\/(2|4|8|16)$/;
 const NUMERAL_TOKEN = /[^\s|]+/g;
 const TEXT_HEADERS = ['title', 'genre', 'about'] as const;
+
+// A genre is one word in the groove text; these read better on the page
+const GENRE_NAMES: Readonly<Record<string, string>> = { hardrock: 'hard rock' };
+export const genreName = (genre: string): string => GENRE_NAMES[genre] ?? genre;
 const HEADERS = [...TEXT_HEADERS, 'tempo', 'key', 'time', 'swing', 'progression', 'voice', 'kit', 'fill'];
 const PARTS: readonly string[] = [...DRUMS, 'bass', 'keys'];
 const DRUM_STEPS = ['x', 'X', 'o', REST];

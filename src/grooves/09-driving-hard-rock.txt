@@ -8,7 +8,7 @@ swing: 50
 progression: I I bVII IV | I I IV bVII
 voice: drive
 kit: rock
-fill: on
+fill: off
 
 # eight straight eighths per bar: 1 & 2 & 3 & 4 &
 crash:   x....... | ........ | ........ | ........ | x....... | ........ | ........ | ........

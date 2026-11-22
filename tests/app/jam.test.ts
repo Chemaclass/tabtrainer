@@ -34,6 +34,8 @@ describe('jam', () => {
     const jam = new Jam(bundledGrooves(files));
     expect(jam.scale).toBe('minor-pentatonic');
     expect(jam.scales).toEqual(['minor-pentatonic', 'blues', 'major', 'major-pentatonic']);
+    jam.choose('driving-hard-rock');
+    expect(jam.scales.slice(0, 2)).toEqual(['minor-pentatonic', 'blues']);
     jam.choose('jazz-swing');
     expect(jam.scale).toBe('major');
     jam.choose('funk-sixteenths');

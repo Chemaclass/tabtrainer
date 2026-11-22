@@ -1,3 +1,4 @@
+import { genreName } from '../core/groove';
 import type { Family } from '../core/instruments';
 import type { LibraryKind } from './catalogue';
 
@@ -14,7 +15,7 @@ export function songPageTitle(title: string, family: Family, artist?: string): s
   const by = creditedArtist(artist);
   return `${title}${by ? ` by ${by}` : ''}, ${family} tab with rhythm · TabTrainer`;
 }
-export const jamPageTitle = (title: string, genre: string) => `${title}, ${genre} backing groove · TabTrainer`;
+export const jamPageTitle = (title: string, genre: string) => `${title}, ${genreName(genre)} backing groove · TabTrainer`;
 
 export interface LibraryPage { title: string; description: string }
 const FOLLOW = 'Slow each one down, loop the hard bars, and follow each note as it plays.';
