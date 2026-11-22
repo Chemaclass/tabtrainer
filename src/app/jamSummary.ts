@@ -1,5 +1,5 @@
 import { OWN_PROGRESSION, PROGRESSION_PRESETS } from '../core/harmony';
-import { MOODS, type Mood } from '../core/moods';
+import { MOODS, barRows, type Mood, type MoodLoop } from '../core/moods';
 import { MIXER_PARTS, type Mixer } from './jam';
 import type { JamSetup } from './jamLink';
 
@@ -8,25 +8,26 @@ export const PROGRESSION_CHOICES: readonly string[] = [OWN_PROGRESSION, ...PROGR
 
 export const SUMMARY_SEPARATOR = ' · ';
 
-const PRESET_SLUGS: readonly string[] = PROGRESSION_PRESETS.map(preset => preset.slug);
 const MOOD_LOOPS = MOODS.flatMap(mood => mood.loops);
 const isMoodLoop = (slug: string) => MOOD_LOOPS.some(loop => loop.slug === slug);
 
-/** A mood loop carries its mood's name while that mood is on, so the list says which chords belong to it. */
+// A comma between the rows, not a bar line, so a screen reader does not say "vertical bar"
+const loopName = (loop: MoodLoop) => `${loop.name}: ${barRows(loop.bars).join(', ')}`;
+
+/** A mood loop by its name and chords, such as "Drive and climb: I I bVII IV, I I IV bVII". */
 export function progressionName(slug: string, mood: Mood | null = null): string {
-  const moodLoop = mood?.loops.find(loop => loop.slug === slug);
-  if (mood && moodLoop) return `${mood.name}: ${moodLoop.name}`;
+  const moodLoop = mood?.loops.find(candidate => candidate.slug === slug);
+  if (moodLoop) return loopName(moodLoop);
   const preset = PROGRESSION_PRESETS.find(candidate => candidate.slug === slug);
   if (preset) return preset.name;
-  const loop = MOOD_LOOPS.find(candidate => candidate.slug === slug);
-  return loop?.name ?? OWN_PROGRESSION_NAME;
+  const strayLoop = MOOD_LOOPS.find(candidate => candidate.slug === slug);
+  return strayLoop ? loopName(strayLoop) : OWN_PROGRESSION_NAME;
 }
 
-/** The fixed choices, then the loops of the mood that is on, and the chosen mood loop when no mood names it. */
+/** Only the loops of the mood that is on. With no mood, the fixed choices, and the chosen mood loop that a mood left behind. */
 export function progressionChoices(mood: Mood | null, chosen: string): string[] {
-  const moodLoops = mood ? mood.loops.map(loop => loop.slug).filter(slug => !PRESET_SLUGS.includes(slug)) : [];
-  const choices = [...PROGRESSION_CHOICES, ...moodLoops];
-  return choices.includes(chosen) || !isMoodLoop(chosen) ? choices : [...choices, chosen];
+  if (mood) return mood.loops.map(loop => loop.slug);
+  return PROGRESSION_CHOICES.includes(chosen) || !isMoodLoop(chosen) ? [...PROGRESSION_CHOICES] : [...PROGRESSION_CHOICES, chosen];
 }
 
 function barCountText(barCount: number): string {

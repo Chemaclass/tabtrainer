@@ -1,15 +1,27 @@
 import type { Jam } from '../../app/jam';
 import { moodStage, type MoodStage } from '../../app/jamMood';
-import { BAR_ROW_SEPARATOR, MOODS, type MoodId } from '../../core/moods';
+import { MOODS, type MoodId } from '../../core/moods';
 import { byId } from '../dom';
 
 interface MoodStageHandlers {
-  pick: (id: MoodId) => void;
+  /** A mood, or null for Free. */
+  pick: (id: MoodId | null) => void;
   nextLoop: () => void;
 }
 
 const GROOVE_TITLE = 'Groove';
 const MOOD_GROOVE_TITLE = 'Fine tune';
+const FREE_TEXT = 'No mood. The groove plays its own chords.';
+
+function chip(label: string, id: MoodId | null, pick: MoodStageHandlers['pick']): HTMLButtonElement {
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.className = 'jam-mood-chip';
+  button.textContent = label;
+  button.dataset.mood = id ?? '';
+  button.onclick = () => pick(id);
+  return button;
+}
 
 function setText(element: HTMLElement, text: string) {
   if (element.textContent !== text) element.textContent = text;
@@ -33,15 +45,10 @@ export function moodStageView(jam: Jam, { pick, nextLoop }: MoodStageHandlers) {
   const pickerHome = picker.parentElement!;
   const pickerNext = picker.nextSibling;
 
-  const buttons = MOODS.map(mood => {
-    const button = document.createElement('button');
-    button.type = 'button';
-    button.className = 'jam-mood-chip';
-    button.textContent = mood.name;
-    button.dataset.mood = mood.id;
-    button.onclick = () => pick(mood.id);
-    return button;
-  });
+  const free = chip('Free', null, pick);
+  free.classList.add('jam-mood-free');
+  free.setAttribute('aria-label', 'Free, no mood');
+  const buttons = [free, ...MOODS.map(mood => chip(mood.name, mood.id, pick))];
   chips.replaceChildren(...buttons);
   moreLoops.onclick = nextLoop;
 
@@ -58,21 +65,12 @@ export function moodStageView(jam: Jam, { pick, nextLoop }: MoodStageHandlers) {
     }
   }
 
-  function showChordRows(chords: string) {
-    byId('jamRecipeChords').replaceChildren(...chords.split(BAR_ROW_SEPARATOR).map(row => {
-      const line = document.createElement('span');
-      line.className = 'jam-numerals-row';
-      line.textContent = row;
-      return line;
-    }));
-  }
-
   function showFacts(stage: MoodStage) {
     setText(moodName, stage.name);
     setText(why, stage.why);
     setText(byId('jamRecipeScale'), stage.scale.value);
     setText(byId('jamRecipeScaleHelp'), stage.scale.helper);
-    showChordRows(stage.chords.value);
+    setText(byId('jamRecipeChords'), stage.chords.value);
     setText(moreLoops, stage.chords.helper);
     moreLoops.hidden = !stage.chords.more;
     setText(byId('jamRecipeTempo'), stage.tempo.value);
@@ -84,13 +82,18 @@ export function moodStageView(jam: Jam, { pick, nextLoop }: MoodStageHandlers) {
 
   function show() {
     const stage = moodStage(jam);
-    for (const button of buttons) button.setAttribute('aria-pressed', String(button.dataset.mood === jam.mood?.id));
+    for (const button of buttons) button.setAttribute('aria-pressed', String(button.dataset.mood === (jam.mood?.id ?? '')));
     screen.classList.toggle('mood-on', stage !== null);
     placeTitle(stage !== null);
-    for (const element of [moodName, why, recipe, summary, tempoHint]) element.hidden = stage === null;
+    for (const element of [moodName, recipe, summary, tempoHint]) element.hidden = stage === null;
+    // With Free on, the why line stays as a hidden live region that says the mood is off
+    why.classList.toggle('sr-only', stage === null);
     grooveTitle.textContent = stage ? MOOD_GROOVE_TITLE : GROOVE_TITLE;
     if (stage) showFacts(stage);
-    else for (const element of [why, tempoHint]) setText(element, '');
+    else {
+      setText(why, FREE_TEXT);
+      setText(tempoHint, '');
+    }
   }
 
   return { show };

@@ -83,6 +83,8 @@ export class Jam {
   private draft: Groove | null = null;
   private chosenKey = '';
   private chosenTempo = 0;
+  /** Whether the player set the tempo by hand since a mood, a groove or a link last set it. */
+  private ownTempo = false;
   private chosenProgression = OWN_PROGRESSION;
   private chosenSwing: number = JAM_SWING.min;
   private chosenScale: ScaleId | null = null;
@@ -144,7 +146,7 @@ export class Jam {
   pickGroove(slug: string): boolean {
     const carried = this.chosenMood;
     if (!this.choose(slug)) return false;
-    if (carried) this.applyMood(carried, 'keep');
+    if (carried) this.applyMood(carried, 'clamp');
     return true;
   }
 
@@ -166,27 +168,33 @@ export class Jam {
 
   /**
    * Sets the mood's chords, key mode, tempo and scale, keeping the tonic and any loop of the mood that plays.
-   * A new mood starts at its own tempo; with "keep", a tempo inside its range stays.
+   * From a chip the mood starts at its own tempo, unless the player set one by hand inside its range.
+   * With "clamp", for a groove picked by hand, a tempo inside the range stays and one outside it becomes the groove's own, held inside the range.
    */
-  applyMood(id: MoodId, tempo: 'start' | 'keep' = 'start'): boolean {
+  applyMood(id: MoodId, tempo: 'start' | 'clamp' = 'start'): boolean {
     const mood = moodById(id);
     const playsLoop = this.playsLoopOf(mood);
     if (this.chosenMood === id && playsLoop) return false;
-    const newMood = this.chosenMood !== id;
     this.chosenMood = id;
     if (!playsLoop) this.chosenProgression = mood.loops[0].slug;
     this.chosenKey = jamKey(this.keys, this.chosenKey, this.groove.key);
-    if (newMood && tempo === 'start') this.chosenTempo = mood.tempo.start;
-    else if (!within(this.chosenTempo, mood.tempo)) this.chosenTempo = clamp(this.groove.tempo, mood.tempo);
+    const keepsTempo = within(this.chosenTempo, mood.tempo) && (this.ownTempo || tempo === 'clamp');
+    if (!keepsTempo) {
+      this.chosenTempo = tempo === 'start' ? mood.tempo.start : clamp(this.groove.tempo, mood.tempo);
+      this.ownTempo = false;
+    }
     this.chosenScale = null;
     this.save();
     return true;
   }
 
-  /** Drops the mood and keeps what it set. */
+  /** Drops the mood and gives back the groove's own chords, keeping the home note and the tempo. */
   clearMood(): boolean {
     if (!this.chosenMood) return false;
     this.chosenMood = null;
+    this.chosenProgression = OWN_PROGRESSION;
+    this.chosenScale = null;
+    this.chosenKey = jamKey(this.keys, this.chosenKey, this.groove.key);
     this.save();
     return true;
   }
@@ -238,10 +246,11 @@ export class Jam {
     const moved = this.choose(slug);
     if (this.slug !== slug) return moved;
     const { mood, key, tempo, progression, swing } = setup;
+    const chords = this.linkedChords(mood, progression);
     const changes = [
-      progression !== undefined && this.setProgression(currentLoopSlug(progression)),
+      chords !== null && this.playProgression(chords),
       key !== undefined && this.setKey(this.keyWithTonicOf(key)),
-      within(tempo, JAM_TEMPO) && this.setTempo(tempo),
+      within(tempo, JAM_TEMPO) && this.placeTempo(tempo, false),
       within(swing, JAM_SWING) && this.setSwing(swing),
       mood !== undefined && this.labelMood(mood),
     ];
@@ -255,16 +264,38 @@ export class Jam {
     return true;
   }
 
+  /** The player's own tempo, from the slider or the tempo keys. */
   setTempo(bpm: number): boolean {
+    return this.placeTempo(bpm, true);
+  }
+
+  private placeTempo(bpm: number, own: boolean): boolean {
     if (!Number.isFinite(bpm)) return false;
     const tempo = clamp(bpm, JAM_TEMPO);
     if (tempo === this.chosenTempo) return false;
     this.chosenTempo = tempo;
+    this.ownTempo = own;
     this.save();
     return true;
   }
 
+  /** A mood owns its chords, so with one on only its loops play. */
   setProgression(slug: string): boolean {
+    const { mood } = this;
+    if (mood && !mood.loops.some(loop => loop.slug === slug)) return false;
+    return this.playProgression(slug);
+  }
+
+  /** The chords a link names, or the first loop of a linked mood that names none it can play. */
+  private linkedChords(mood: string | undefined, progression: string | undefined): string | null {
+    const linkedMood = isMoodId(mood) ? moodById(mood) : null;
+    const slug = progression === undefined ? null : currentLoopSlug(progression, linkedMood?.id ?? null);
+    if (slug !== null && jamProgression(slug, this.groove.progression)) return slug;
+    if (!linkedMood || this.playsLoopOf(linkedMood)) return null;
+    return linkedMood.loops[0].slug;
+  }
+
+  private playProgression(slug: string): boolean {
     if (slug === this.chosenProgression || !jamProgression(slug, this.groove.progression)) return false;
     this.chosenProgression = slug;
     this.dropMoodUnlessPlaying();
@@ -328,7 +359,10 @@ export class Jam {
     this.dropMoodUnlessPlaying();
     const wantedKey = after.key === before.key ? this.chosenKey : after.key;
     this.chosenKey = jamKey(this.keys, wantedKey, after.key);
-    if (after.tempo !== before.tempo) this.chosenTempo = clamp(after.tempo, JAM_TEMPO);
+    if (after.tempo !== before.tempo) {
+      this.chosenTempo = clamp(after.tempo, JAM_TEMPO);
+      this.ownTempo = false;
+    }
     if (after.swing !== before.swing) this.chosenSwing = clamp(after.swing, JAM_SWING);
   }
 
@@ -349,15 +383,16 @@ export class Jam {
 
   private load() {
     this.draft = null;
-    const { key, tempo, progression, swing, scale, mood } = this.savedChoice();
+    const { key, tempo, progression, swing, scale, mood, ownTempo } = this.savedChoice();
     const { groove } = this;
-    const current = typeof progression === 'string' ? currentLoopSlug(progression) : null;
+    const current = typeof progression === 'string' ? currentLoopSlug(progression, isMoodId(mood) ? mood : null) : null;
     const isOffered = current !== null && jamProgression(current, groove.progression);
     this.chosenProgression = isOffered ? current : OWN_PROGRESSION;
     this.chosenMood = isMoodId(mood) ? mood : null;
     this.dropMoodUnlessPlaying();
     this.chosenKey = jamKey(this.keys, typeof key === 'string' ? key : groove.key, groove.key);
     this.chosenTempo = clamp(isFiniteNumber(tempo) ? tempo : groove.tempo, JAM_TEMPO);
+    this.ownTempo = isFiniteNumber(tempo) && ownTempo === true;
     this.chosenSwing = clamp(isFiniteNumber(swing) ? swing : groove.swing, JAM_SWING);
     this.chosenScale = isScaleId(scale) ? scale : null;
   }
@@ -365,7 +400,7 @@ export class Jam {
   private save() {
     // A draft is not saved yet, so its choices would land on the groove it replaces
     if (this.draft) return;
-    const choice = { ...this.setup, scale: this.chosenScale ?? undefined, mood: this.chosenMood ?? undefined };
+    const choice = { ...this.setup, scale: this.chosenScale ?? undefined, mood: this.chosenMood ?? undefined, ownTempo: this.ownTempo || undefined };
     setPref('jam', { ...pref('jam', {}), [this.slug]: choice });
   }
 }

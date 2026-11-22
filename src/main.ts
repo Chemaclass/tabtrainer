@@ -244,8 +244,9 @@ function chooseGroove(slug: string) {
     showJam(slug);
   });
 }
-function chooseMood(id: MoodId) {
-  if (jam.mood?.id === id) {
+function chooseMood(id: MoodId | null) {
+  if (id === (jam.mood?.id ?? null)) return;
+  if (id === null) {
     jam.clearMood();
     showJamGroove();
     return;

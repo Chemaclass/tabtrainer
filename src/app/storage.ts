@@ -84,7 +84,7 @@ export const library = () => savedSongs.list();
 export const saveSong = (title: string, text: string) => savedSongs.save(title, text);
 export const removeSong = (title: string) => savedSongs.remove(title);
 export interface DraftSnapshot { text: string; base: string; picked: string }
-export interface JamChoice { key?: unknown; tempo?: unknown; progression?: unknown; swing?: unknown; scale?: unknown; mood?: unknown }
+export interface JamChoice { key?: unknown; tempo?: unknown; progression?: unknown; swing?: unknown; scale?: unknown; mood?: unknown; ownTempo?: unknown }
 export interface MixerChoice { plays?: unknown; parts?: unknown; room?: unknown }
 export interface JamFretboardChoice { bass?: unknown; labels?: unknown }
 interface Preferences {

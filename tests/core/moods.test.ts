@@ -55,38 +55,44 @@ describe('mood table', () => {
   });
   it('explains every mood without theory terms, counting distances in frets', () => {
     for (const mood of MOODS) {
-      const texts = [mood.why, mood.tempo.outside, ...mood.loops.flatMap(l => l.jobs)];
+      const texts = [mood.why, mood.tempo.outside, ...mood.loops.flatMap(l => [l.name, ...l.jobs])];
       for (const text of texts) expect(text, mood.id).not.toMatch(/\b(root|second|third|fourth|fifth|sixth|seventh|half step|whole step|raised|flat|vamp|resolve)/i);
     }
   });
   it('writes no dashes other than a hyphen in any mood text', () => {
     for (const mood of MOODS) {
-      const texts = [mood.name, mood.why, mood.tempo.outside, mood.note.label, mood.note.contrast, ...mood.loops.flatMap(l => l.jobs)];
+      const texts = [mood.name, mood.why, mood.tempo.outside, mood.note.label, mood.note.contrast, ...mood.loops.flatMap(l => [l.name, ...l.jobs])];
       for (const text of texts) expect(text, mood.id).not.toMatch(/[‒-―]/);
     }
   });
 });
 
 describe('mood loops', () => {
-  it('gives every mood at least two loops of four, eight or twelve bars', () => {
+  it('gives every mood at least two loops of eight bars, or twelve for the blues', () => {
     for (const mood of MOODS) {
       expect(mood.loops.length, mood.id).toBeGreaterThanOrEqual(2);
-      for (const loop of mood.loops) expect([4, 8, 12], `${mood.id}: ${loop.bars}`).toContain(numerals(loop.bars).length);
+      for (const loop of mood.loops) expect([mood.id === 'bluesy' ? 12 : 8], `${mood.id}: ${loop.bars}`).toContain(numerals(loop.bars).length);
     }
   });
   it('ends every eight bar loop away from home, with a second half of its own', () => {
     const eightBars = allLoops.filter(({ loop }) => numerals(loop.bars).length === 8);
-    expect(eightBars.length).toBeGreaterThanOrEqual(3);
     for (const { mood, loop } of eightBars) {
       const bars = loop.bars.split(' ');
       expect(numerals(loop.bars)[7].degree, `${mood.id}: ${loop.bars}`).not.toBe(0);
       expect(bars.slice(4).join(' '), `${mood.id}: ${loop.bars}`).not.toBe(bars.slice(0, 4).join(' '));
     }
   });
-  it('names an eight bar loop in two rows of four', () => {
-    expect(barRows('I bVII IV I')).toBe('I bVII IV I');
-    expect(barRows('I I bVII IV I I IV bVII')).toBe('I I bVII IV | I I IV bVII');
-    expect(moodById('exciting').loops[0]).toMatchObject({ slug: 'exciting-i-i-bvii-iv-i-i-iv-bvii', name: 'I I bVII IV | I I IV bVII' });
+  it('writes the numerals of a loop in rows of four bars', () => {
+    expect(barRows('I bVII IV I')).toEqual(['I bVII IV I']);
+    expect(barRows('I I bVII IV I I IV bVII')).toEqual(['I I bVII IV', 'I I IV bVII']);
+  });
+  it('gives every loop a plain name of its own inside its mood', () => {
+    for (const mood of MOODS) {
+      const names = mood.loops.map(loop => loop.name);
+      expect(new Set(names).size, mood.id).toBe(names.length);
+      for (const name of names) expect(name, mood.id).toMatch(/^[A-Z0-9][a-z0-9 ]*$/);
+    }
+    expect(moodById('exciting').loops[0]).toMatchObject({ slug: 'exciting-i-i-bvii-iv-i-i-iv-bvii', name: 'Drive and climb' });
   });
   it('gives every bar a job of at most seven words', () => {
     for (const { mood, loop } of allLoops) {
@@ -100,13 +106,12 @@ describe('mood loops', () => {
   it('starts every loop on the home chord', () => {
     for (const { mood, loop } of allLoops) expect(numerals(loop.bars)[0].degree, `${mood.id}: ${loop.bars}`).toBe(0);
   });
-  it('gives every loop its own slug, reusing the Jam preset where the numerals match', () => {
+  it('gives every loop its own slug, keeping the blues presets', () => {
     const slugs = allLoops.map(({ loop }) => loop.slug);
     expect(new Set(slugs).size).toBe(slugs.length);
-    expect(moodById('happy').loops.map(l => l.slug)).toEqual(['i-v-vi-iv', 'i-iv-v', 'happy-i-vi-iv-v']);
-    expect(moodById('epic').loops[1]).toMatchObject({ slug: 'i-bvii-bvi-bvii', name: 'i bVII bVI bVII' });
+    expect(moodById('happy').loops[0].slug).toBe('happy-i-v-vi-iv-i-v-iv-v');
     expect(moodById('bluesy').loops.map(l => l.slug)).toEqual(['12-bar-blues', 'minor-blues']);
-    expect(moodById('sad').loops[0]).toMatchObject({ slug: 'sad-i-bvi-biii-bvii', name: 'i bVI bIII bVII' });
+    expect(moodById('sad').loops[0].slug).toBe('sad-i-bvi-biii-bvii-i-bvi-iv-v');
   });
   it('keeps every chord tone in the mood scale, apart from the chords a mood borrows, in every key', () => {
     for (const { mood, loop } of allLoops) {
@@ -143,17 +148,30 @@ describe('mood loops', () => {
 });
 
 describe('retired mood loops', () => {
-  it('opens each retired loop as the loop of its mood that starts with the same bars', () => {
+  const oldBars = ({ mood, slug, presetSlug }: (typeof RETIRED_LOOPS)[number]) => (presetSlug ? slug : slug.slice(mood.length + 1)).split('-');
+  const startsWith = (loop: MoodLoop, bars: string[]) => bars.every((bar, index) => loop.bars.toLowerCase().split(' ')[index] === bar);
+
+  it('opens each retired loop as a loop of its mood, one with the same first bars where there is one', () => {
     for (const retired of RETIRED_LOOPS) {
-      const current = currentLoopSlug(retired.slug);
-      const loop = moodById(retired.mood).loops.find(l => l.slug === current);
+      const loops = moodById(retired.mood).loops;
+      const loop = loops.find(l => l.slug === currentLoopSlug(retired.slug, retired.mood));
       expect(loop, retired.slug).toBeDefined();
-      const oldBars = retired.slug.slice(retired.mood.length + 1).split('-');
-      expect(loop!.bars.toLowerCase().split(' ').slice(0, oldBars.length), retired.slug).toEqual(oldBars);
+      const bars = oldBars(retired);
+      if (loops.some(l => startsWith(l, bars))) expect(startsWith(loop!, bars), retired.slug).toBe(true);
     }
   });
+  it('retires every slug a mood loop had before its loops grew to eight bars', () => {
+    const retired = RETIRED_LOOPS.map(loop => loop.slug);
+    for (const slug of ['sad-i-bvi-biii-bvii', 'sad-i-iv-i-v', 'sad-i-iv-bvi-v', 'melancholic-i-iv-iv-i', 'dark-i-bii-i-bii', 'tense-i-iv-v7-i', 'funky-i7-iv7-i7-iv7', 'happy-i-vi-iv-v']) expect(retired).toContain(slug);
+  });
+  it('reads a Jam preset slug as a mood loop only when its mood is named', () => {
+    expect(currentLoopSlug('i-v-vi-iv', 'happy')).toBe(moodById('happy').loops[0].slug);
+    expect(currentLoopSlug('i-bvii-bvi-bvii', 'epic')).toBe(moodById('epic').loops[1].slug);
+    for (const mood of [null, 'sad'] as const) expect(currentLoopSlug('i-v-vi-iv', mood)).toBe('i-v-vi-iv');
+    expect(currentLoopSlug('sad-i-iv-i-v', null)).toBe(moodById('sad').loops[1].slug);
+  });
   it('keeps any other slug as it is', () => {
-    for (const slug of ['exciting-i-i-bvii-iv-i-i-iv-bvii', 'i-v-vi-iv', OWN_PROGRESSION, 'nope']) expect(currentLoopSlug(slug)).toBe(slug);
+    for (const slug of ['exciting-i-i-bvii-iv-i-i-iv-bvii', 'i-v-vi-iv', OWN_PROGRESSION, 'nope']) expect(currentLoopSlug(slug, null)).toBe(slug);
   });
 });
 
