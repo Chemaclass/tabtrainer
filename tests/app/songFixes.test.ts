@@ -40,6 +40,11 @@ describe('song fixes', () => {
     expect(parseSong(fixed(':q 7.3 _h5.3 3.4 3.4 |', 'Change to p5.3')).issues).toEqual([]);
   });
 
+  it('swaps a slide that goes the wrong way', () => {
+    expect(fixed(':q 7.3 /5.3 3.4 3.4 |', 'Change to \\5.3')).toBe(':q 7.3 \\5.3 3.4 3.4 |');
+    expect(fixed(':q 5.3 \\7.3 3.4 3.4 |', 'Change to /7.3')).toBe(':q 5.3 /7.3 3.4 3.4 |');
+  });
+
   it('offers no swap for a join that stays on its fret', () => {
     const text = ':q 5.3 h5.3 3.4 3.4 |';
     expect(parseSong(text).issues.flatMap(issue => songFixes(text, issue))).toEqual([]);

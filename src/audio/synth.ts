@@ -1,7 +1,7 @@
 import { frequencyOf } from '../core/pitch';
 
 export type SourceKind = 'instrument' | 'count-in' | 'metronome' | 'backing';
-export interface VoiceShape { muted?: boolean; legato?: boolean }
+export interface VoiceShape { muted?: boolean; legato?: boolean; pitch?: readonly { after: number; cents: number }[] }
 type Scheduled = { node: AudioScheduledSourceNode; kind: SourceKind; start: number; end: number };
 
 const MASTER_LEVEL = 0.8;
@@ -135,6 +135,7 @@ export class Synth {
     const end = when + dur + VOICE.tail;
     const saw = this.oscillator('sawtooth', frequency, when, end, kind);
     const sine = this.oscillator('sine', frequency, when, end, kind);
+    if (shape.pitch?.length) for (const oscillator of [saw, sine]) this.glide(oscillator.detune, when, shape.pitch.map(point => ({ ...point, after: Math.min(point.after, dur / 2) })));
     const envelope = this.ctx!.createGain();
     envelope.gain.setValueAtTime(SILENT, when);
     envelope.gain.exponentialRampToValueAtTime(vel, when + (shape.legato ? VOICE.legatoAttack : VOICE.attack));
@@ -152,6 +153,12 @@ export class Synth {
     sine.connect(sineLevel);
     sineLevel.connect(envelope);
     envelope.connect(out);
+  }
+
+  // detune is in cents, so a straight ramp is a straight glide in pitch
+  private glide(detune: AudioParam, when: number, points: readonly { after: number; cents: number }[]) {
+    detune.setValueAtTime(points[0].cents, when);
+    for (const point of points.slice(1)) detune.linearRampToValueAtTime(point.cents, when + point.after);
   }
 
   /** A dead note: a short sawtooth burst at the open string, dark and falling. */

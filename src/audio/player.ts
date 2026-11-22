@@ -1,6 +1,7 @@
 import type { TimedNote, BarSpan } from '../core/timeline';
 import { Synth } from './synth';
 import { TempoMap } from '../core/tempoMap';
+import { SLIDE_IN_FRETS } from '../core/technique';
 import { PracticePasses, passEnd, type PassEnd } from './practicePasses';
 import { isSpeedPracticeConfig, type SpeedPracticeConfig, type SpeedPracticeProgress } from '../core/speedPractice';
 
@@ -173,8 +174,12 @@ export class Player {
       if (when < musicFrom || when >= end || this.mute.has(n.string)) continue;
       // A hammer-on whose first note comes before this pass, after a seek or at a loop start, has nothing to hammer from, so it is picked
       const legato = n.legato === true && before !== undefined && before >= passFrom - 1e-6;
+      // A slide whose first note was not played starts close by, like a slide from nowhere, not from a note nobody heard
+      const reach = n.legato === true && !legato ? SLIDE_IN_FRETS * 100 : Infinity;
       if (n.dead) this.synth.thud(when, n.midi, LEVEL.dead);
-      else this.synth.voice(when, n.midi, Math.max(0.15, this.duration(n.beat, n.beat + n.ring, speed)), n.soft ? LEVEL.tied : legato ? LEVEL.legato : LEVEL.picked, undefined, 'instrument', { muted: n.muted, legato });
+      else this.synth.voice(when, n.midi, Math.max(0.15, this.duration(n.beat, n.beat + n.ring, speed)), n.soft ? LEVEL.tied : legato ? LEVEL.legato : LEVEL.picked, undefined, 'instrument', {
+        muted: n.muted, legato, pitch: n.pitch?.map(point => ({ after: this.duration(n.beat, n.beat + point.at, speed), cents: Math.max(-reach, Math.min(reach, point.cents)) })),
+      });
     }
     if (!this.metronome) return;
     for (const b of this.bars) for (let i = 0; i < b.beats; i++) {

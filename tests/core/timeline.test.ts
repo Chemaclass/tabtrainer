@@ -65,3 +65,11 @@ it('plays a hammer-on or pull-off without a pick, in its own voice', () => {
   expect(notes.map(n => n.key)).toEqual(['0', '2000', '4000', '6000']);
   expect(notes[0].ring).toBe(2);
 });
+
+it('glides a slide from the note before, or into a note from two frets away', () => {
+  const { notes } = buildTimeline(parseSong('instrument: guitar6\n:q 5.3 /7.3 r \\5.3 |').song);
+  expect(notes[1]).toMatchObject({ legato: true, pitch: [{ at: 0, cents: -200 }, { at: 0.25, cents: 0 }] });
+  expect(notes[2].legato).toBeUndefined();
+  expect(notes[2].pitch).toEqual([{ at: 0, cents: 200 }, { at: 0.25, cents: 0 }]);
+  expect(notes[0].pitch).toBeUndefined();
+});

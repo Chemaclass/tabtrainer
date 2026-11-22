@@ -1,5 +1,5 @@
 import { PPQ, barTicks, type Song } from './model';
-import { eventsInOrder, sourceOf } from './technique';
+import { eventsInOrder, pitchPlan, sourceOf, type PitchPoint } from './technique';
 
 export interface TimedNote {
   /** Absolute position in quarter-note beats from the start of the song. */
@@ -18,8 +18,10 @@ export interface TimedNote {
   dead?: boolean;
   /** Palm muted: short and dark. */
   muted?: boolean;
-  /** Reached by a hammer-on or pull-off: sounds without a pick attack. */
+  /** Reached by a hammer-on, pull-off or slide from the note before: sounds without a pick attack. */
   legato?: boolean;
+  /** Pitch movement in cents against `midi`, as points in beats from the note's start. */
+  pitch?: PitchPoint[];
 }
 
 export interface BarSpan { bar: number; start: number; length: number; beats: number; beatValue: number; tempo?: number }
@@ -38,7 +40,9 @@ export function buildTimeline(song: Song): { notes: TimedNote[]; bars: BarSpan[]
     for (const e of b.events) {
       const beat = pos + e.start / PPQ;
       for (const n of e.notes) {
-        notes.push({ beat, ring: e.dur / PPQ, midi: tuning[n.string - 1] + n.fret + tr, string: n.string, fret: n.fret, bar: b.index, key: onsetKey(beat), ...(n.tie ? { soft: true } : {}), ...(n.dead ? { dead: true } : {}), ...(e.palmMute ? { muted: true } : {}), ...(n.approach && sourceOf(before.get(e), n) ? { legato: true } : {}) });
+        const source = n.approach && sourceOf(before.get(e), n);
+        const pitch = pitchPlan(n, source, e.dur / PPQ);
+        notes.push({ beat, ring: e.dur / PPQ, midi: tuning[n.string - 1] + n.fret + tr, string: n.string, fret: n.fret, bar: b.index, key: onsetKey(beat), ...(n.tie ? { soft: true } : {}), ...(n.dead ? { dead: true } : {}), ...(e.palmMute ? { muted: true } : {}), ...(source ? { legato: true } : {}), ...(pitch ? { pitch } : {}) });
       }
     }
     pos += len;

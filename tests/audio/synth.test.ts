@@ -74,6 +74,24 @@ describe('Synth', () => {
     expect(gains[1].gain.exponentialRampToValueAtTime).toHaveBeenCalledWith(0.2, 1.03);
     expect(lowPass.frequency.setValueAtTime.mock.calls[0][0]).toBe(lowPass.frequency.exponentialRampToValueAtTime.mock.calls[0][0]);
   });
+  it('ends the glide of a palm-muted note while the note still sounds', () => {
+    const { sources } = fakeAudio();
+    const synth = new Synth(); synth.ensure();
+    synth.voice(1, 55, 1, 0.2, undefined, 'instrument', { muted: true, pitch: [{ after: 0, cents: -200 }, { after: 0.3, cents: 0 }] });
+    expect(sources[0].detune.linearRampToValueAtTime).toHaveBeenCalledWith(0, 1.06);
+  });
+  it('glides both oscillators of a voice through the pitch points', () => {
+    const { sources } = fakeAudio();
+    const synth = new Synth(); synth.ensure();
+    synth.voice(1, 55, 1, 0.2, undefined, 'instrument', { pitch: [{ after: 0, cents: -200 }, { after: 0.1, cents: 0 }] });
+    synth.voice(3, 55, 1, 0.2);
+    expect(sources.slice(0, 2).map(s => s.type)).toEqual(['sawtooth', 'sine']);
+    for (const source of sources.slice(0, 2)) {
+      expect(source.detune.setValueAtTime).toHaveBeenCalledWith(-200, 1);
+      expect(source.detune.linearRampToValueAtTime).toHaveBeenCalledWith(0, 1.1);
+    }
+    for (const source of sources.slice(2)) expect(source.detune.setValueAtTime).not.toHaveBeenCalled();
+  });
   it('plays a dead note as one short falling sawtooth through a dark low pass', () => {
     const { sources, filters, gains } = fakeAudio();
     const synth = new Synth(); synth.ensure();

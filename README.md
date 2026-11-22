@@ -48,7 +48,7 @@ time: 4/4
 "C" :q 3.3 3.3 :8 5.2 5.2 :q 3.3 |
 (3.3 5.2):h r:h |      # two notes together, then a rest
 [3/4] :8t 3.3 5.3 7.3 :q ~7.3 r |
-:8 5.3 h7.3 p5.3 x.3 _5.3 _5.3 |   # h, p: hammer-on, pull-off; x: dead note; _: palm mute
+:8 5.3 h7.3 p5.3 /9.3 x.3 _5.3 |   # h, p: hammer-on, pull-off; /: slide; x: dead note; _: palm mute
 ```
 
 | Syntax | Meaning |
@@ -61,6 +61,8 @@ time: 4/4
 | `~5.3` | tie: let the note ring without picking it again |
 | `5.3 h7.3` | hammer-on: pick fret 5, then press fret 7 on the same string without picking again |
 | `7.3 p5.3` | pull-off: pick fret 7, then lift that finger so fret 5 sounds without picking again |
+| `5.3 /7.3` `7.3 \5.3` | slide: pick the first note, then slide the same finger up (`/`) or down (`\`) the string to the second without picking again |
+| `/7.3` `\5.3` | slide into the note from two frets lower or higher, and pick it as usual |
 | `x.3` | dead note on string 3: mute the string with the fretting hand and pick it, for a click with no pitch |
 | `_0.6` `_(0.6 2.5)` | palm mute: rest the side of the picking hand on the strings near the bridge, for a short, dark note or chord |
 | `"Am7"` | chord name above the next note |

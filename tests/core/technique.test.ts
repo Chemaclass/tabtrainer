@@ -1,13 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { parseSong } from '../../src/core/parser';
-import { APPROACH_MARK, approachOf, eventsInOrder, sourceOf } from '../../src/core/technique';
+import { APPROACHES } from '../../src/core/model';
+import { APPROACH_MARK, OPPOSITE, RISES, approachOf, eventsInOrder, pitchPlan, sourceOf } from '../../src/core/technique';
 
 const bars = (body: string) => parseSong(`instrument: guitar6\n${body}`).song.bars;
 
 describe('approach marks', () => {
   it('reads back each mark it writes', () => {
-    expect(approachOf(APPROACH_MARK.hammer)).toBe('hammer');
-    expect(approachOf(APPROACH_MARK.pull)).toBe('pull');
+    for (const approach of APPROACHES) expect(approachOf(APPROACH_MARK[approach])).toBe(approach);
     expect(approachOf('~')).toBeUndefined();
     expect(approachOf('')).toBeUndefined();
   });
@@ -30,5 +30,34 @@ describe('source of a join', () => {
     expect(sourceOf(before, { string: 2 })).toBeUndefined();
     expect(sourceOf(before, { string: 4 })).toBeUndefined();
     expect(sourceOf(undefined, { string: 3 })).toBeUndefined();
+  });
+});
+
+describe('opposite approaches', () => {
+  it('pairs each approach with one that moves the other way', () => {
+    for (const approach of APPROACHES) {
+      expect(OPPOSITE[OPPOSITE[approach]]).toBe(approach);
+      expect(RISES[OPPOSITE[approach]]).toBe(!RISES[approach]);
+    }
+  });
+});
+
+describe('pitch plan', () => {
+  const note = (approach: 'slide-up' | 'slide-down' | 'hammer', fret: number) => ({ string: 3, fret, approach });
+  it('glides from the source fret to the written one over a quarter of a beat', () => {
+    expect(pitchPlan(note('slide-up', 7), { string: 3, fret: 5 }, 1)).toEqual([{ at: 0, cents: -200 }, { at: 0.25, cents: 0 }]);
+    expect(pitchPlan(note('slide-down', 5), { string: 3, fret: 9 }, 2)).toEqual([{ at: 0, cents: 400 }, { at: 0.25, cents: 0 }]);
+  });
+  it('takes half of a short note', () => {
+    expect(pitchPlan(note('slide-up', 7), { string: 3, fret: 5 }, 0.25)).toEqual([{ at: 0, cents: -200 }, { at: 0.125, cents: 0 }]);
+  });
+  it('slides in from two frets away when nothing comes before, but not below the open string', () => {
+    expect(pitchPlan(note('slide-up', 7), undefined, 1)?.[0]).toEqual({ at: 0, cents: -200 });
+    expect(pitchPlan(note('slide-up', 1), undefined, 1)?.[0]).toEqual({ at: 0, cents: -100 });
+    expect(pitchPlan(note('slide-down', 5), undefined, 1)?.[0]).toEqual({ at: 0, cents: 200 });
+  });
+  it('leaves the pitch alone for other notes', () => {
+    expect(pitchPlan(note('hammer', 7), { string: 3, fret: 5 }, 1)).toBeUndefined();
+    expect(pitchPlan({ string: 3, fret: 7 }, undefined, 1)).toBeUndefined();
   });
 });
