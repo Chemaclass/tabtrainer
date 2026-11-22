@@ -46,17 +46,20 @@ export interface MarkOptions {
   labels: FretLabels;
   /** Frets outside the position window; none when left out. */
   isDimmed?: (fret: number) => boolean;
+  /** The pitch class of the note that carries a mood, marked apart. */
+  moodNote?: number | null;
 }
 
 const NOTHING_DIMMED = () => false;
 
-export function fretMarks(positions: readonly FretPosition[], { notes, chord, labels, isDimmed = NOTHING_DIMMED }: MarkOptions): FretMark[] {
+export function fretMarks(positions: readonly FretPosition[], { notes, chord, labels, isDimmed = NOTHING_DIMMED, moodNote = null }: MarkOptions): FretMark[] {
   return positions.map(({ stringIndex, fret, pitchClass }): FretMark => {
     const note = notes.get(pitchClass)!;
     const label = markLabel(note, labels);
     const role = markRole(note, chord);
     const dimmed = isDimmed(fret);
-    return { stringIndex, fret, label, role, dimmed };
+    const mark: FretMark = { stringIndex, fret, label, role, dimmed };
+    return pitchClass === moodNote ? { ...mark, mood: true } : mark;
   });
 }
 

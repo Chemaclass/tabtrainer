@@ -184,14 +184,19 @@ tempo: 90
   </main>
   <main id="jamScreen" class="jam" aria-labelledby="jamTitle" hidden>
     <div class="jam-stage">
+      <div class="jam-moods">
+        <p id="jamMoodQuestion" class="jam-context">How do you want it to feel?</p>
+        <div id="jamMoods" class="jam-mood-chips" role="group" aria-labelledby="jamMoodQuestion"></div>
+      </div>
       <div class="jam-head">
         <div class="jam-heading">
           <p id="jamContext" class="jam-context">Jam</p>
           <div id="jamPicker" class="jam-picker">
-            <h1 id="jamTitle" tabindex="-1"><button id="jamPickerButton" class="jam-picker-button" type="button" aria-expanded="false" aria-controls="jamGrooves" aria-describedby="jamPickerHint"><span id="jamTitleText"></span><svg class="jam-picker-chevron" viewBox="0 0 22 22" aria-hidden="true"><path d="M5 8l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button></h1>
+            <h1 id="jamTitle" tabindex="-1"><span id="jamMoodName" class="jam-mood-name" hidden></span><button id="jamPickerButton" class="jam-picker-button" type="button" aria-expanded="false" aria-controls="jamGrooves" aria-describedby="jamPickerHint"><span id="jamTitleText"></span><svg class="jam-picker-chevron" viewBox="0 0 22 22" aria-hidden="true"><path d="M5 8l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button></h1>
             <span id="jamPickerHint" hidden>Choose another groove</span>
             <nav id="jamGrooves" class="jam-grooves" aria-label="Grooves" hidden><ul id="jamGrooveList" class="jam-groove-list" aria-label="Bundled grooves"></ul><p id="jamMineHeading" class="jam-groove-group">Mine</p><ul id="jamMineList" class="jam-groove-list" aria-labelledby="jamMineHeading"></ul><p id="jamMineEmpty" class="jam-groove-empty">Grooves you save appear here.</p></nav>
           </div>
+          <p id="jamMoodWhy" class="jam-mood-why" aria-live="polite" hidden></p>
         </div>
         <div class="jam-transport">
           <p class="jam-bpm"><span id="jamBpm" class="jam-bpm-value"></span> <span class="jam-bpm-unit">bpm</span></p>
@@ -199,6 +204,13 @@ tempo: 90
         </div>
         <p id="jamAbout" class="jam-about"></p>
       </div>
+      <dl id="jamRecipe" class="jam-recipe" hidden>
+        <div class="jam-fact"><dt>Scale to solo with</dt><dd id="jamRecipeScale" class="jam-fact-value"></dd><dd id="jamRecipeScaleHelp" class="jam-fact-help"></dd></div>
+        <div class="jam-fact"><dt>Chords</dt><dd id="jamRecipeChords" class="jam-fact-value jam-numerals"></dd><dd class="jam-fact-help"><button id="jamMoreLoops" class="jam-fact-link" type="button"></button></dd></div>
+        <div class="jam-fact"><dt>Tempo</dt><dd id="jamRecipeTempo" class="jam-fact-value"></dd><dd id="jamRecipeTempoHelp" class="jam-fact-help"></dd></div>
+        <div class="jam-fact"><dt>Groove</dt><dd id="jamRecipeGroove" class="jam-fact-value"></dd><dd id="jamRecipeGrooveHelp" class="jam-fact-help"></dd></div>
+      </dl>
+      <p id="jamMoodSummary" class="jam-mood-summary" hidden></p>
       <section id="grooveEditor" class="groove-editor" aria-labelledby="grooveEditorTitle" hidden>
         <div class="pane-head"><h2 id="grooveEditorTitle" class="caps">Groove text</h2><span id="grooveStatus" class="status" role="status"></span><button id="grooveEditorHide" class="pane-close" type="button" aria-label="Hide groove text">Hide</button></div>
         <textarea id="grooveSource" class="source-text" spellcheck="false" aria-labelledby="grooveEditorTitle" aria-describedby="grooveStatus"></textarea>
@@ -215,7 +227,7 @@ tempo: 90
       <section class="jam-fretboard" aria-labelledby="jamFretboardTitle">
         <h2 id="jamFretboardTitle" class="sr-only">Fretboard</h2>
         <div class="jam-fretboard-head">
-          <p class="jam-now"><span id="jamFretboardChord" aria-live="polite"></span><span class="jam-now-details"> · <span id="jamFretboardNext"></span> · <span id="jamFretboardScale"></span></span></p>
+          <p class="jam-now"><span id="jamFretboardChord" aria-live="polite"></span><span class="jam-now-details"> · <span class="jam-now-next"><span id="jamFretboardNext"></span> · </span><span id="jamFretboardJob" class="jam-now-job"></span><span id="jamFretboardScale"></span></span></p>
           <div class="jam-fretboard-controls">
             <div class="jam-field jam-field-inline"><label for="jamScale">Scale</label><select id="jamScale"></select></div>
             <div id="jamStringsField" class="jam-field jam-field-inline"><label for="jamStrings">Bass</label><select id="jamStrings"><option value="bass4">4 strings</option><option value="bass5">5 strings</option><option value="bass6">6 strings</option></select></div>
@@ -223,19 +235,20 @@ tempo: 90
           </div>
         </div>
         <div id="jamFretboardBoard" class="fretboard-board" tabindex="0" role="region" aria-label="Fretboard, scrolls sideways"></div>
+        <p id="jamMoodLegend" class="jam-mood-legend" hidden><span class="jam-mood-dot" aria-hidden="true"></span><span><strong id="jamMoodLegendNote"></strong> <span id="jamMoodLegendRest"></span></span></p>
       </section>
       <p class="tip">Play along in any position you like. The outlined bar is the one you hear.<span class="keys"> <kbd>Space</kbd> plays or stops.</span></p>
     </div>
     <aside class="jam-panel" aria-label="Jam settings">
       <section class="jam-section" aria-labelledby="jamGrooveHeading">
-        <h2 id="jamGrooveHeading" class="jam-section-heading"><span class="jam-section-title">Groove</span><button class="jam-section-toggle" type="button" aria-expanded="false" aria-controls="jamGrooveBody"><span class="jam-section-name">Groove</span><span id="jamGrooveSummary" class="jam-section-summary"></span></button></h2>
+        <h2 id="jamGrooveHeading" class="jam-section-heading"><span id="jamGrooveTitle" class="jam-section-title">Groove</span><button class="jam-section-toggle" type="button" aria-expanded="false" aria-controls="jamGrooveBody"><span class="jam-section-name">Groove</span><span id="jamGrooveSummary" class="jam-section-summary"></span></button></h2>
         <div id="jamGrooveBody" class="jam-section-body">
           <div class="jam-field-pair">
             <div class="jam-field"><label for="jamKey">Key</label><select id="jamKey"></select></div>
             <div class="jam-field"><label for="jamCountIn">Count-in</label><select id="jamCountIn"><option value="off">Off</option><option value="bar">One bar</option></select></div>
           </div>
           <div class="jam-field"><label for="jamProgression">Progression</label><select id="jamProgression"></select></div>
-          <div class="jam-field"><div class="jam-field-head"><label for="jamTempo">Tempo</label><output id="jamTempoOut" for="jamTempo"></output></div><input id="jamTempo" type="range" min="40" max="220" step="1" /></div>
+          <div class="jam-field"><div class="jam-field-head"><label for="jamTempo">Tempo</label><output id="jamTempoOut" for="jamTempo"></output></div><input id="jamTempo" type="range" min="40" max="220" step="1" aria-describedby="jamTempoHint" /><p id="jamTempoHint" class="jam-field-hint" hidden></p></div>
           <div class="jam-field"><div class="jam-field-head"><label for="jamSwing">Swing</label><output id="jamSwingOut" for="jamSwing"></output></div><input id="jamSwing" type="range" min="50" max="66" step="1" /></div>
         </div>
       </section>

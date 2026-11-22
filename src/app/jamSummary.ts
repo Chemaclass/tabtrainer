@@ -1,4 +1,5 @@
 import { OWN_PROGRESSION, PROGRESSION_PRESETS } from '../core/harmony';
+import { MOODS, type Mood } from '../core/moods';
 import { MIXER_PARTS, type Mixer } from './jam';
 import type { JamSetup } from './jamLink';
 
@@ -7,9 +8,22 @@ export const PROGRESSION_CHOICES: readonly string[] = [OWN_PROGRESSION, ...PROGR
 
 export const SUMMARY_SEPARATOR = ' · ';
 
-export function progressionName(slug: string): string {
+const PRESET_SLUGS: readonly string[] = PROGRESSION_PRESETS.map(preset => preset.slug);
+
+/** A mood loop carries its mood's name while that mood is on, so the list says which chords belong to it. */
+export function progressionName(slug: string, mood: Mood | null = null): string {
+  const moodLoop = mood?.loops.find(loop => loop.slug === slug);
+  if (mood && moodLoop) return `${mood.name}: ${moodLoop.name}`;
   const preset = PROGRESSION_PRESETS.find(candidate => candidate.slug === slug);
-  return preset?.name ?? OWN_PROGRESSION_NAME;
+  if (preset) return preset.name;
+  const loop = MOODS.flatMap(m => m.loops).find(candidate => candidate.slug === slug);
+  return loop?.name ?? OWN_PROGRESSION_NAME;
+}
+
+/** The fixed choices, then the loops of the mood that is on. */
+export function progressionChoices(mood: Mood | null): string[] {
+  const moodLoops = mood ? mood.loops.map(loop => loop.slug).filter(slug => !PRESET_SLUGS.includes(slug)) : [];
+  return [...PROGRESSION_CHOICES, ...moodLoops];
 }
 
 function barCountText(barCount: number): string {
