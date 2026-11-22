@@ -199,6 +199,19 @@ test('a mood sets the Jam to its chords, asks before dropping groove changes, an
   await expect(page.locator('#jamTempoHint')).toHaveText('');
 });
 
+test('a mood keeps unsaved groove text when the groove fits it', async ({ page }) => {
+  await page.goto('./jam/rock-straight-eighths/');
+  await page.locator('#grooveEdit').click();
+  const source = page.locator('#grooveSource');
+  await source.fill(`${await source.inputValue()}\n# changed`);
+  const sad = page.getByRole('group', { name: 'How do you want it to feel?' }).getByRole('button', { name: 'Sad', exact: true });
+  await sad.click();
+  await expect(sad).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.locator('#askDialog')).toBeHidden();
+  await expect(source).toHaveValue(/# changed$/);
+  await expect(page).toHaveURL(/\/jam\/rock-straight-eighths\//);
+});
+
 test('a mood asks before it drops a new groove whose genre does not fit', async ({ page }) => {
   await page.goto('./jam/rock-straight-eighths/');
   await page.locator('#grooveNew').click();

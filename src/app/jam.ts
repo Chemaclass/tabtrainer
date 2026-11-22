@@ -299,9 +299,11 @@ export class Jam {
 
   /** A linked mood names the chords the link plays, or none at all when they are not its own. */
   private labelMood(value: string): boolean {
-    const next = isMoodId(value) && this.playsLoopOf(moodById(value)) ? value : null;
+    if (!isMoodId(value)) return false;
+    const next = this.playsLoopOf(moodById(value)) ? value : null;
     if (next === this.chosenMood) return false;
     this.chosenMood = next;
+    if (next) this.chosenScale = null;
     this.save();
     return true;
   }

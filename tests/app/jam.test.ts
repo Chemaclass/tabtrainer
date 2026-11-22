@@ -453,6 +453,26 @@ describe('jam moods', () => {
     foreign.choose('rock-straight-eighths');
     expect([foreign.mood, foreign.progression]).toEqual([null, 'ii-v-i']);
   });
+  it('opens a mood link with the mood scale, not the scale chosen before', () => {
+    const jam = new Jam(bundledGrooves(files));
+    jam.choose('rock-straight-eighths');
+    jam.setProgression('dark-i-bii-i-bii');
+    expect(jam.setScale('blues')).toBe(true);
+    jam.open('rock-straight-eighths', { mood: 'dark', progression: 'dark-i-bii-i-bii' });
+    expect([jam.mood?.id, jam.scale]).toEqual(['dark', 'phrygian']);
+  });
+  it('ignores a mood link id that names no mood, and keeps the saved mood', () => {
+    const jam = new Jam(bundledGrooves(files));
+    jam.choose('rock-straight-eighths');
+    jam.applyMood('sad');
+    for (const mood of ['xyz', '']) {
+      jam.open('rock-straight-eighths', { mood, progression: sadLoop });
+      expect(jam.mood?.id).toBe('sad');
+    }
+    const reloaded = new Jam(bundledGrooves(files));
+    reloaded.choose('rock-straight-eighths');
+    expect(reloaded.mood?.id).toBe('sad');
+  });
   it('opens a link to a mood loop even with no mood on', () => {
     const jam = new Jam(bundledGrooves(files));
     expect(jam.open('bossa-nova', { progression: 'melancholic-i-iv-iv-i' })).toBe(true);

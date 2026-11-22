@@ -252,10 +252,11 @@ function chooseMood(id: MoodId) {
   }
   const slug = jam.grooveFor(id);
   // A draft whose genre does not fit gives way to a groove that does, so its changes are asked about first
-  const allowed = jam.fitsMood(id) ? Promise.resolve(true) : grooveEditing.mayDiscard();
+  const fits = jam.fitsMood(id);
+  const allowed = fits ? Promise.resolve(true) : grooveEditing.mayDiscard();
   void allowed.then(chosen => {
     if (!chosen) return;
-    const moved = jam.choose(slug) || jam.endPreview();
+    const moved = jam.choose(slug) || (!fits && jam.endPreview());
     if (moved) grooveEditing.follow();
     jam.applyMood(id);
     jamming.show();
