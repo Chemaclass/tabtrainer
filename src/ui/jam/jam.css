@@ -1049,8 +1049,8 @@ fieldset.jam-plays {
     margin-top: 12px;
   }
   .jam-heading h1 {
-    font-size: 48px;
-    line-height: 48px;
+    font-size: 44px;
+    line-height: 44px;
   }
   .jam-heading h1.long {
     font-size: 32px;
@@ -1058,12 +1058,12 @@ fieldset.jam-plays {
   }
   .jam-hero-line {
     margin-top: 6px;
-    font-size: 15px;
-    line-height: 21px;
+    font-size: 14px;
+    line-height: 20px;
   }
   .jam-setup {
     gap: 12px;
-    margin: 14px calc(-1 * var(--space-4)) 0;
+    margin: 12px calc(-1 * var(--space-4)) 0;
     padding: 6px var(--space-4) 6px 0;
   }
   .jam-setup-scroll {

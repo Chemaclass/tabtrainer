@@ -377,7 +377,7 @@ test('the now line under the bars names the playing chord, its job and the mood 
 test('the Jam fits its width, and a six string fretboard ends on the first screen', async ({ page }, testInfo) => {
   const phone = testInfo.project.name === 'phone';
   await page.addInitScript(() => localStorage.setItem('tabtrainer:family', JSON.stringify('guitar')));
-  for (const path of ['./jam/rock-straight-eighths/?mood=sad', './jam/blues-shuffle/?mood=bluesy', './jam/rock-straight-eighths/']) {
+  for (const path of ['./jam/rock-straight-eighths/?mood=sad', './jam/rock-straight-eighths/?mood=exciting', './jam/blues-shuffle/?mood=bluesy', './jam/rock-straight-eighths/']) {
     await page.goto(path);
     await expect(page.locator('#jamFretboardBoard svg')).toBeAttached();
     const fit = await page.evaluate(() => ({
