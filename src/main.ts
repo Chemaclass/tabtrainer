@@ -26,7 +26,9 @@ import { JamFretboardSettings } from './app/jamFretboard';
 import { SITE_TITLE, jamPageTitle, libraryPage, songPageTitle } from './app/pageTitles';
 import { libraryAddress } from './app/address';
 import { isMineGroove, jamAddress, jamShareLink, type JamSetup } from './app/jamLink';
+import { feedbackLinks } from './app/feedback';
 import { draftFlow } from './ui/editor/draftFlow';
+import { feedbackDialog } from './ui/shell/feedbackDialog';
 import { editorPane } from './ui/editor/editorPane';
 import { proposeSongDialog } from './ui/editor/proposeSong';
 import { saveState } from './ui/editor/saveState';
@@ -81,6 +83,11 @@ const help = helpDialogs();
 const sharedSongs = () => withOpenDraft(library(), workspace.picked, draftSession.hasChanges() ? editor.text() : null);
 const proposal = proposeSongDialog(songbook.paths, () => editor.text(), sharedSongs, { goToLine: showSongLine });
 const site = new URL(import.meta.env.BASE_URL, location.origin).href;
+feedbackDialog(
+  () => feedbackLinks({ screen: workspace.screen, picked: workspace.picked, title: openSong.song?.meta.title, address: songShareLink(site, workspace.picked, openSong.versionSlug()), family: workspace.family }),
+  () => workspace.screen === 'practice',
+  help.showShortcuts,
+);
 const view = screens(chooseFamily, () => showJam(jam.slug));
 const mixer = new Mixer(workspace.family);
 const jamFretboard = jamFretboardView(jam, mixer, new JamFretboardSettings(), loop);

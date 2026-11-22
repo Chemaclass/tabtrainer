@@ -10,6 +10,7 @@ import { INSTRUMENTS, isFamily } from '../../core/instruments';
 import { defaultSpeedPractice } from '../../core/speedPractice';
 import { pref, setPref } from '../../app/storage';
 import { shareLabel, type ShareState } from '../../app/songProposal';
+import { tabRequest } from '../../app/feedback';
 import { PRACTICE_LEVELS } from '../../app/practiceLevels';
 
 const labels = { exercises: 'exercises', songs: 'songs', mine: 'My songs' };
@@ -19,8 +20,8 @@ const intro = {
   mine: ['Write your own.', 'Pick a starting point. You hear it as you type, and it saves in this browser.', 'Search your songs'],
 };
 const closing = {
-  exercises: ['Missing an exercise? Write it, and send it in for everyone.', 'Write an exercise'],
-  songs: ['Missing a song? Write it, and send it in for everyone.', 'Write a song'],
+  exercises: ['Or write it yourself, and send it in for everyone.', 'Write an exercise'],
+  songs: ['Or write it yourself, and send it in for everyone.', 'Write a song'],
 };
 const text = (tag: string, value: string, className = '') => { const node = document.createElement(tag); node.textContent = value; node.className = className; return node; };
 const levelLabel = (entry: CatalogueEntry) => difficultyLabel(entry.levels);
@@ -210,6 +211,14 @@ export function libraryView(onPick: (value: string) => void, onContinue: (plan: 
     byId('closingRow').hidden = kind === 'mine' || noMatch;
     const [closingText, closingAction] = closing[kind === 'exercises' ? 'exercises' : 'songs'];
     byId('closingText').textContent = closingText; byId('closingWriteBtn').textContent = closingAction;
+    showTabRequest();
+  }
+  function showTabRequest() {
+    byId('tabRequest').hidden = kind === 'mine';
+    if (kind === 'mine') return;
+    const request = tabRequest(isFamily(family) ? family : 'bass', kind, search.value), link = byId('tabRequestLink', HTMLAnchorElement);
+    byId('tabRequestLead').textContent = request.lead; byId('tabRequestTail').textContent = request.tail;
+    link.textContent = request.action; link.href = request.url;
   }
   function showPickUp(plan: PickUp | null) {
     byId('pickUp').hidden = !plan;

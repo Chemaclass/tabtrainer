@@ -888,6 +888,8 @@ fieldset.propose-group {
   }
   .song-source a,
   .tip-link,
+  .tab-request a,
+  .feedback-links a,
   .songs-guide-actions a:not(.primary) {
     padding-block: var(--space-3);
     margin-block: calc(-1 * var(--space-3));

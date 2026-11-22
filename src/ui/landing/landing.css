@@ -470,6 +470,19 @@ pre.landing-artefact b {
   margin: 0;
   padding-left: 22px;
 }
+.songs-guide .feedback-links {
+  margin: var(--space-3) 0;
+  padding: 0;
+  list-style: none;
+}
+.songs-guide .feedback-links li {
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--rule);
+}
+.feedback-links a {
+  color: var(--ink);
+  font-weight: 600;
+}
 .songs-guide-actions {
   display: flex;
   flex-wrap: wrap;

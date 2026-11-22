@@ -1,3 +1,4 @@
+import { REPOSITORY } from './repository';
 import { parseSong } from '../core/parser';
 import { familyOf, type Family } from '../core/instruments';
 import { MIN_BARS, headerLine, songName, songProblems, type SongGroup, type SongRule } from '../core/songRules';
@@ -20,7 +21,6 @@ export interface Proposal {
   carriesText: boolean;
 }
 
-const REPOSITORY = 'https://github.com/Chemaclass/tabtrainer';
 const BRANCH = 'main';
 // Measured against GitHub: a longer link fails for a signed-out player, whose sign-in redirect carries it.
 export const MAX_PROPOSAL_URL = 6000;

@@ -175,6 +175,50 @@ test('without audio the landing demo opens First Steps', async ({ page }) => {
   expect(errors).toEqual([]);
 });
 
+test('the library invites a tab request that follows the page and the search', async ({ page }) => {
+  await page.goto('./?view=library&kind=exercises&instrument=guitar');
+  const request = page.locator('#tabRequest');
+  await expect(request).toContainText('Looking for a guitar exercise that is not here?');
+  await expect(page.locator('#tabRequestLink')).toHaveAttribute('href', /template=song-request\.yml/);
+  await page.locator('#songSearch').fill('zzz nothing');
+  await expect(request).toBeVisible();
+  await expect(request).toContainText('"zzz nothing"');
+  await page.goto('./?view=library&kind=mine');
+  await expect(request).toBeHidden();
+});
+
+test('the practice help names the open tab and leads to the shortcuts', async ({ page }) => {
+  await openFirstExercise(page);
+  await page.locator('#feedbackTipBtn').click();
+  const dialog = page.locator('#feedback');
+  await expect(dialog).toBeVisible();
+  await expect(dialog.locator('#feedbackLinks a').first()).toHaveAttribute('href', /template=bug\.yml.*First\+Steps/);
+  await page.locator('#feedbackShortcutsBtn').click();
+  await expect(page.locator('#shortcuts')).toBeVisible();
+  await expect(dialog).toBeHidden();
+});
+
+test('the header help button opens generic help in the library', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name === 'phone', 'The phone header has no room; the File menu and the tip open it there');
+  await page.goto('./?view=library&kind=songs');
+  await page.locator('#helpBtn').click();
+  await expect(page.locator('#feedback')).toBeVisible();
+  await expect(page.locator('#feedbackShortcuts')).toBeHidden();
+  await expect(page.locator('#feedbackLinks li').first()).toContainText('Something in TabTrainer not working?');
+});
+
+test('help opened from the phone File menu gives focus back to the menu', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'phone', 'The File menu item only shows on phones');
+  await openFirstExercise(page);
+  await page.locator('.file-menu summary').click();
+  await page.locator('#feedbackMenuBtn').focus();
+  await page.keyboard.press('Enter');
+  await expect(page.locator('#feedback')).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(page.locator('#feedback')).toBeHidden();
+  await expect(page.locator('.file-menu summary')).toBeFocused();
+});
+
 test('a row marks a song done by hand, keeps it after a reload, and takes it back', async ({ page }) => {
   await page.goto('./?view=library&kind=exercises&instrument=bass');
   const toggle = page.locator('#catalogueList li').first().locator('.done-toggle:visible');
