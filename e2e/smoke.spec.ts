@@ -206,3 +206,15 @@ test('the header help button opens generic help in the library', async ({ page }
   await expect(page.locator('#feedbackShortcuts')).toBeHidden();
   await expect(page.locator('#feedbackLinks li').first()).toContainText('Something in TabTrainer not working?');
 });
+
+test('help opened from the phone File menu gives focus back to the menu', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'phone', 'The File menu item only shows on phones');
+  await openFirstExercise(page);
+  await page.locator('.file-menu summary').click();
+  await page.locator('#feedbackMenuBtn').focus();
+  await page.keyboard.press('Enter');
+  await expect(page.locator('#feedback')).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(page.locator('#feedback')).toBeHidden();
+  await expect(page.locator('.file-menu summary')).toBeFocused();
+});

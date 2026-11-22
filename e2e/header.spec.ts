@@ -34,6 +34,8 @@ for (const colorScheme of ['light', 'dark'] as const) {
       await page.goto('./');
       const landing = await headerParts(page);
       expect(await page.evaluate(() => document.documentElement.scrollWidth), `${width}px scrolls sideways`).toBeLessThanOrEqual(width);
+      const gutter = await page.evaluate(() => innerWidth - document.querySelector('.top-action')!.getBoundingClientRect().right);
+      expect(gutter, `${width}px keeps a right gutter`).toBeGreaterThanOrEqual(12);
       const visit = async (selector: string) => {
         await page.locator(selector).click();
         expect(await headerParts(page), `${width}px after ${selector}`).toEqual(landing);

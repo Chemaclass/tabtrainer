@@ -1137,11 +1137,6 @@ body:not(.library-view) .site-footer {
     padding: 0 40px;
   }
 }
-@media (min-width: 600px) and (max-width: 639px) {
-  .top {
-    padding: 0 var(--space-3);
-  }
-}
 @media (max-width: 1199px) {
   .top {
     grid-template-columns:
@@ -1333,6 +1328,11 @@ body:not(.library-view) .site-footer {
   }
   .site-footer {
     padding: 0 var(--space-6) var(--space-6);
+  }
+}
+@media (min-width: 600px) and (max-width: 639px) {
+  .top {
+    padding: 0 var(--space-3);
   }
 }
 @media (max-width: 599px) {
