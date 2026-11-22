@@ -7,7 +7,7 @@ const names = (root: number, id: ScaleId, slug: string) => progressions(root, id
 
 describe('progressions of a key', () => {
   it('lists the major and minor progressions with numerals', () => {
-    expect(progressions(0, 'major').map(p => p.name)).toEqual(['I IV V', 'I V vi IV', 'ii V I', 'I vi IV V']);
+    expect(progressions(0, 'major').map(p => p.name)).toEqual(['I IV V', 'I V vi IV', 'ii V I', 'I vi IV V', 'I IV iv', 'I iii IV iv']);
     expect(progressions(9, 'minor').map(p => p.name)).toEqual(['i iv v', 'i bVII bVI bVII', 'i bVI bIII bVII', 'ii m7b5 V7 i', 'i bVI bVII']);
     expect(progressions(0, 'major')[1].chords.map(c => c.numeral)).toEqual(['I', 'V', 'vi', 'IV']);
   });
@@ -50,7 +50,7 @@ describe('progressions of a key', () => {
   });
   it('lists the progressions of the moods on a mode', () => {
     expect(names(2, 'dorian', 'funky-i7-iv7')).toEqual(['Dm7', 'G7']);
-    expect(progressions(4, 'phrygian').map(p => p.name)).toEqual(['i bII', 'i bII bVII']);
+    expect(progressions(4, 'phrygian').map(p => p.name)).toEqual(['i bII', 'i bII bvii']);
     expect(names(0, 'lydian', 'dreamy-imaj7-ii')).toEqual(['Cmaj7', 'D']);
     expect(names(7, 'mixolydian', 'mixolydian-i-bvii-iv')).toEqual(['G', 'F', 'C']);
   });

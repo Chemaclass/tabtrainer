@@ -1,5 +1,5 @@
 import { PROGRESSION_PRESETS, chordAt, numerals, presetProgression, type Chord, type Numeral } from './harmony';
-import { MOODS, type Mood } from './moods';
+import { MOODS, moodSlug, type Mood } from './moods';
 import { harmonyScaleId, rootName, scaleById, scaleNotes, type ScaleChord, type ScaleId, type ScaleNote } from './scales';
 import { degreeName, isKey, letterName } from './theory';
 
@@ -43,16 +43,11 @@ const SCALE_FAMILIES: Partial<Record<ScaleId, Family>> = {
 
 const FAMILY_ENTRIES = Object.values(PROGRESSIONS).flat();
 
-function moodSlug(mood: Mood, bars: string): string {
-  const barsSlug = bars.toLowerCase().replaceAll(' ', '-');
-  return `${mood.id}-${barsSlug}`;
-}
-
 /** A mood progression the scale families already list keeps that entry, so it shows once under one name. */
 function moodEntry(mood: Mood, bars: string): ProgressionEntry {
   const known = FAMILY_ENTRIES.find(entry => entry.bars === bars);
   if (known) return known;
-  return { slug: moodSlug(mood, bars), name: bars, bars };
+  return { slug: moodSlug(mood.id, bars), name: bars, bars };
 }
 
 const moodEntries = (mood: Mood) => mood.progressions.map(bars => moodEntry(mood, bars));
