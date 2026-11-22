@@ -175,16 +175,24 @@ test('without audio the landing demo opens First Steps', async ({ page }) => {
   expect(errors).toEqual([]);
 });
 
-test('the library invites a tab request that follows the page and the search', async ({ page }) => {
+test('the library invites a tab request that follows the page and the search', async ({ page }, testInfo) => {
+  const desktop = testInfo.project.name !== 'phone';
   await page.goto('./?view=library&kind=exercises&instrument=guitar');
-  const request = page.locator('#tabRequest');
-  await expect(request).toContainText('Looking for a guitar exercise that is not here?');
-  await expect(page.locator('#tabRequestLink')).toHaveAttribute('href', /template=song-request\.yml/);
+  const [shown, hidden] = desktop ? [page.locator('#requestCard'), page.locator('#tabRequest')] : [page.locator('#tabRequest'), page.locator('#requestCard')];
+  await expect(shown).toContainText(desktop ? 'Missing a guitar exercise?' : 'Looking for a guitar exercise that is not here?');
+  await expect(hidden).toBeHidden();
+  if (desktop) await expect(shown).toBeInViewport({ ratio: 1 });
+  await expect(shown.locator('a')).toHaveAttribute('href', /template=song-request\.yml/);
   await page.locator('#songSearch').fill('zzz nothing');
-  await expect(request).toBeVisible();
-  await expect(request).toContainText('"zzz nothing"');
+  await expect(shown).toBeVisible();
+  await expect(shown).toContainText('"zzz nothing"');
   await page.goto('./?view=library&kind=mine');
-  await expect(request).toBeHidden();
+  await expect(shown).toBeHidden();
+  if (!desktop) return;
+  await page.setViewportSize({ width: 1100, height: 900 });
+  await page.goto('./?view=library&kind=songs&instrument=bass');
+  await expect(page.locator('#tabRequest')).toContainText('Looking for a bass song that is not here?');
+  await expect(page.locator('#requestCard')).toBeHidden();
 });
 
 test('the practice help names the open tab and leads to the shortcuts', async ({ page }) => {

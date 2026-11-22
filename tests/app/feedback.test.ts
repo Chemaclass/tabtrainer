@@ -47,8 +47,11 @@ describe('asking for a tab from the library', () => {
     expect(params(request.url).has('what')).toBe(false);
   });
   it('reminds that songs must be in the public domain', () => {
-    expect(tabRequest('bass', 'songs', '').tail).toContain('public domain');
-    expect(tabRequest('bass', 'exercises', '').tail).not.toContain('public domain');
+    for (const part of ['tail', 'line'] as const) {
+      expect(tabRequest('bass', 'songs', '')[part]).toContain('public domain');
+      expect(tabRequest('bass', 'exercises', '')[part]).not.toContain('public domain');
+      expect(tabRequest('guitar', 'songs', 'x')[part]).toContain('I will take a look.');
+    }
   });
   it('carries the search into the question and the issue', () => {
     const request = tabRequest('bass', 'exercises', '  slap   bass ');
@@ -56,6 +59,12 @@ describe('asking for a tab from the library', () => {
     expect(params(request.url).get('title')).toBe('Bass exercise request: slap bass');
     expect(params(request.url).get('what')).toBe('slap bass');
     expect(tabRequest('guitar', 'songs', 'greensleeves').lead).toBe('Want a guitar tab of "greensleeves" that is not here?');
+  });
+  it('heads the side card by instrument, kind and search', () => {
+    expect(tabRequest('bass', 'exercises', '').heading).toBe('Missing a bass exercise?');
+    expect(tabRequest('guitar', 'songs', '').heading).toBe('Missing a guitar song?');
+    expect(tabRequest('bass', 'exercises', ' slap  bass ').heading).toBe('Want a bass exercise for "slap bass"?');
+    expect(tabRequest('guitar', 'songs', 'greensleeves').heading).toBe('Want a guitar tab of "greensleeves"?');
   });
   it('cuts a long search without splitting a character', () => {
     expect(params(tabRequest('bass', 'songs', 'x'.repeat(200)).url).get('what')).toHaveLength(60);
@@ -99,7 +108,7 @@ describe('help and feedback links', () => {
       ...feedbackLinks({ screen: 'practice', picked: exercise, title: 'T', address, family: 'bass' }),
       ...feedbackLinks({ screen: 'jam', picked: '', title: undefined, address: null, family: 'guitar' }),
     ];
-    const copy = [...requests.flatMap(r => [r.lead, r.action, r.tail]), ...links.flatMap(l => [l.lead, l.action])].join(' ');
+    const copy = [...requests.flatMap(r => [r.heading, r.line, r.lead, r.action, r.tail]), ...links.flatMap(l => [l.lead, l.action])].join(' ');
     expect(copy).not.toMatch(/[—–!]/);
   });
 });

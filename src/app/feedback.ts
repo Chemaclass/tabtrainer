@@ -8,7 +8,7 @@ export const ISSUE_FORMS = `${ISSUES_URL}/new/choose`;
 export type IssueForm = 'bug.yml' | 'feature.yml' | 'song-request.yml';
 export type RequestKind = 'exercises' | 'songs';
 export interface TabRef { title: string; family: Family; kind: RequestKind; address: string }
-export interface TabRequest { lead: string; action: string; tail: string; url: string }
+export interface TabRequest { heading: string; line: string; lead: string; action: string; tail: string; url: string }
 export interface FeedbackLink { lead: string; action: string; url: string }
 export interface FeedbackState { screen: Screen; picked: string; title: string | undefined; address: string | null; family: Family }
 
@@ -29,10 +29,14 @@ export function tabRequest(family: Family, kind: RequestKind, query: string): Ta
   const lead = wanted
     ? kind === 'exercises' ? `Want a ${family} exercise for "${wanted}" that is not here?` : `Want a ${family} tab of "${wanted}" that is not here?`
     : `Looking for a ${family} ${noun} that is not here?`;
-  const tail = kind === 'songs' ? ' with your idea and I will add it. It has to be in the public domain.' : ' with your idea and I will add it.';
+  const heading = wanted
+    ? kind === 'exercises' ? `Want a ${family} exercise for "${wanted}"?` : `Want a ${family} tab of "${wanted}"?`
+    : `Missing a ${family} ${noun}?`;
+  const domain = kind === 'songs' ? ' It has to be in the public domain.' : '';
+  const tail = ` with your idea and I will take a look.${domain}`, line = `Open a GitHub issue with your idea and I will take a look.${domain}`;
   const title = `${INSTRUMENT[family]} ${noun} request${wanted ? `: ${wanted}` : ''}`;
   const url = issueUrl('song-request.yml', title, wanted ? { what: wanted } : {});
-  return { lead, action: 'Open a GitHub issue', tail, url };
+  return { heading, line, lead, action: 'Open a GitHub issue', tail, url };
 }
 
 export function tabRef(picked: string, title: string | undefined, address: string | null): TabRef | null {

@@ -214,11 +214,14 @@ export function libraryView(onPick: (value: string) => void, onContinue: (plan: 
     showTabRequest();
   }
   function showTabRequest() {
-    byId('tabRequest').hidden = kind === 'mine';
+    byId('tabRequest').hidden = byId('requestCard').hidden = kind === 'mine';
     if (kind === 'mine') return;
     const request = tabRequest(isFamily(family) ? family : 'bass', kind, search.value), link = byId('tabRequestLink', HTMLAnchorElement);
     byId('tabRequestLead').textContent = request.lead; byId('tabRequestTail').textContent = request.tail;
     link.textContent = request.action; link.href = request.url;
+    const cardLink = byId('requestCardLink', HTMLAnchorElement);
+    byId('requestCardTitle').textContent = request.heading; byId('requestCardLine').textContent = request.line;
+    cardLink.textContent = `${request.action} →`; cardLink.href = request.url;
   }
   function showPickUp(plan: PickUp | null) {
     byId('pickUp').hidden = !plan;
