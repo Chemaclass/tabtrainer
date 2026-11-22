@@ -213,14 +213,6 @@ export class Jam {
     return true;
   }
 
-  /** Plays the mood's next loop, back to the first after the last. */
-  nextMoodLoop(): boolean {
-    const { mood } = this;
-    if (!mood || mood.loops.length < 2) return false;
-    const index = mood.loops.findIndex(loop => loop.slug === this.chosenProgression);
-    return this.setProgression(mood.loops[(index + 1) % mood.loops.length].slug);
-  }
-
   /** Reads the saved grooves again after one is saved or deleted. */
   refreshMine() {
     this.grooves = this.withMine();
@@ -462,6 +454,11 @@ export class Mixer {
   get room() { return this.roomOn; }
 
   level(part: MixerPart): PartLevel { return { ...this.parts[part] }; }
+
+  /** A part is muted, or playing, against what the instrument I play sets. */
+  get mutesChanged(): boolean {
+    return MIXER_PARTS.some(part => this.parts[part].muted !== mutedByDefault(part, this.player));
+  }
 
   gain(part: MixerPart): number {
     const { muted, volume } = this.parts[part];

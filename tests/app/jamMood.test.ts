@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { readFileSync, readdirSync } from 'node:fs';
 import { Jam, bundledGrooves } from '../../src/app/jam';
 import { jamFretboard } from '../../src/app/jamFretboard';
-import { grooveGroups, keyLabel, moodBars, moodLegend, moodStage, scaleGroups, tempoNote } from '../../src/app/jamMood';
+import { chordsChoice, grooveGroups, heroTitle, keyLabel, moodBars, moodLegend, moodStage, nowText, scaleGroups, tempoNote } from '../../src/app/jamMood';
 import { progressionChoices, progressionName } from '../../src/app/jamSummary';
 import { chordAt, numerals } from '../../src/core/harmony';
 import { INSTRUMENTS } from '../../src/core/instruments';
@@ -29,31 +29,43 @@ describe('mood stage', () => {
     expect(moodStage(jam)).toBeNull();
     expect(moodBars(jam)).toBeNull();
   });
-  it('gives the recipe for Sad on the rock groove', () => {
+  it('gives the title, the why sentence and the usual tempo for Sad', () => {
     expect(moodStage(sadOnRock())).toEqual({
       name: 'Sad',
       why: moodById('sad').why,
-      scale: { value: 'E minor', helper: 'Shown on the fretboard below' },
-      chords: { value: 'Sink and rise', helper: 'Loop 1 of 3. Next loop', more: true },
-      tempo: { value: 'Slow, 56 to 88', helper: 'Faster and it turns restless' },
-      groove: { value: 'Straight eighths rock in E', helper: '2 grooves fit Sad' },
-      summary: 'E minor · slow, 56 to 88',
       tempoHint: 'Usual for Sad: 56 to 88',
+      tempoOutside: false,
     });
   });
-  it('says when the groove the player chose does not fit the mood', () => {
-    const jam = sadOnRock();
-    jam.pickGroove('funk-sixteenths');
-    expect(moodStage(jam)?.groove.helper).toBe('2 grooves fit Sad, not this one');
-    jam.applyMood('happy');
-    expect(moodStage(jam)?.groove.helper).toBe('2 grooves fit Happy, not this one');
-  });
-  it('notes when the tempo leaves the mood range, in the recipe and under the slider', () => {
+  it('notes when the tempo leaves the mood range, under the slider', () => {
     const sad = moodById('sad');
     expect([tempoNote(sad, 56), tempoNote(sad, 88), tempoNote(sad, 89), tempoNote(sad, 40)]).toEqual(['', '', 'Faster than usual for Sad', 'Slower than usual for Sad']);
     const jam = sadOnRock();
     jam.setTempo(120);
-    expect(moodStage(jam)).toMatchObject({ tempo: { helper: 'Faster than usual for Sad' }, tempoHint: 'Faster than usual for Sad: 56 to 88' });
+    expect(moodStage(jam)).toMatchObject({ tempoHint: 'Faster than usual for Sad: 56 to 88', tempoOutside: true });
+  });
+  it('titles the page with the mood, or the groove with Free', () => {
+    const jam = sadOnRock();
+    expect(heroTitle(jam)).toBe('Sad');
+    jam.clearMood();
+    expect(heroTitle(jam)).toBe('Straight eighths rock in E');
+  });
+  it('names the chords by the loop and its place among the mood loops, or by the progression with Free', () => {
+    const jam = sadOnRock();
+    expect(chordsChoice(jam)).toEqual({ short: 'Sink and rise', count: '1/3' });
+    jam.setProgression(moodById('sad').loops[1].slug);
+    expect(chordsChoice(jam)).toEqual({ short: 'Deeper each time', count: '2/3' });
+    jam.clearMood();
+    expect(chordsChoice(jam)).toEqual({ short: "Groove's own", count: '' });
+    jam.setProgression('ii-v-i');
+    expect(chordsChoice(jam)).toEqual({ short: 'ii V I', count: '' });
+  });
+  it('gives the job of the bar that plays, and the next chord with Free', () => {
+    const jam = sadOnRock();
+    expect(nowText(jam, 0)).toEqual({ job: 'Home. Minor, so it starts low.', showNext: false });
+    expect(nowText(jam, 15)).toEqual({ job: 'A soft pull back home.', showNext: false });
+    jam.clearMood();
+    expect(nowText(jam, 0)).toEqual({ job: '', showNext: true });
   });
   it('gives every bar its numeral and its job', () => {
     expect(moodBars(sadOnRock())).toEqual([
@@ -71,12 +83,10 @@ describe('mood stage', () => {
     const jam = new Jam(bundledGrooves(files));
     jam.choose('rock-straight-eighths');
     jam.applyMood('exciting');
-    expect(moodStage(jam)).toMatchObject({ chords: { value: 'Drive and climb', helper: 'Loop 1 of 3. Next loop' }, summary: 'E Mixolydian · fast, 120 to 176' });
+    expect(chordsChoice(jam)).toEqual({ short: 'Drive and climb', count: '1/3' });
     const bars = moodBars(jam)!;
     expect(bars).toHaveLength(8);
     expect(bars.at(-1)).toEqual({ numeral: 'bVII', job: 'One step below, climbing home.' });
-    jam.nextMoodLoop();
-    expect(moodStage(jam)?.chords).toMatchObject({ value: 'Punch and climb', helper: 'Loop 2 of 3. Next loop' });
   });
   it('spells the key out', () => {
     expect([keyLabel('Am'), keyLabel('Eb')]).toEqual(['A minor', 'Eb major']);

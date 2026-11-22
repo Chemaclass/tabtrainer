@@ -30,6 +30,7 @@ export function mixerView(mixer: Mixer, engine: Pick<LoopEngine, 'setPartGain' |
   const plays = [...document.querySelectorAll<HTMLInputElement>('input[name="jamPlays"]')];
   const room = byId('jamRoom', HTMLButtonElement);
   const summary = byId('jamMixSummary');
+  const more = byId('jamMore');
   const rows = MIXER_PARTS.map(row);
   byId('jamMixer').replaceChildren(...rows.map(r => r.element));
 
@@ -66,6 +67,8 @@ export function mixerView(mixer: Mixer, engine: Pick<LoopEngine, 'setPartGain' |
     for (const input of plays) input.checked = input.value === mixer.plays;
     room.setAttribute('aria-pressed', String(mixer.room));
     summary.textContent = mixSummary(mixer);
+    // A dot on the closed drawer's button, so a part muted by hand is not forgotten
+    more.toggleAttribute('data-note', mixer.mutesChanged);
     for (const { part, element, mute, volume } of rows) {
       const { volume: level, muted } = mixer.level(part);
       mute.setAttribute('aria-pressed', String(muted));

@@ -73,7 +73,9 @@ export interface JamFretboard {
   marks: FretMark[];
   /** The chord and its tones, for the line screen readers announce on each chord change. */
   chordText: string;
-  scaleText: string;
+  chordName: string;
+  /** The chord tones spelled in the key, such as "B D F#". */
+  chordNotes: string;
   nextChordText: string;
   description: string;
 }
@@ -103,7 +105,8 @@ export function jamFretboard({ instrument, key, scale, labels, chord, nextChord,
     openNames: openStringNames(instrument, spelled.flats),
     marks: fretMarks(positions, { notes, chord, labels, moodNote }),
     chordText: `${chord.name}: ${noteNames(spelled.chord)}`,
-    scaleText: `Scale: ${spelled.scaleTitle}, ${noteNames(spelled.scale)}`,
+    chordName: chord.name,
+    chordNotes: noteNames(spelled.chord),
     nextChordText: `Next: ${nextChord.name}`,
     description: fretboardDescription(instrument, spelled.scaleTitle, chord.name),
   };

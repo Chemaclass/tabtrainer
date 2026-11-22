@@ -1,54 +1,535 @@
 .jam {
-  --jam-panel-width: 360px;
-  --jam-bar-columns: 6;
+  --jam-soft: color-mix(in srgb, var(--ink) 72%, var(--page));
+  --jam-card: var(--wash);
+  --jam-bar-columns: 8;
+  --jam-drawer-width: 380px;
 }
 .jam-stage {
   display: flex;
   flex-direction: column;
-  gap: 32px;
   width: 100%;
-  max-width: 1200px;
+  max-width: calc(1080px + 80px);
   min-width: 0;
   margin-inline: auto;
-  padding: 40px 64px;
+  padding: 28px 40px 48px;
 }
-.jam-stage .tip {
-  margin: 0;
+.jam-hero {
+  margin-top: 36px;
+}
+.jam-setup {
+  margin-top: 32px;
+}
+.jam-bars {
+  margin-top: 28px;
+}
+.jam-fretboard {
+  margin-top: 16px;
 }
 
-.jam-head {
+.jam-mood-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  margin-inline: -12px;
+}
+.jam-mood-chip {
+  min-height: 36px;
+  padding: 7px 12px;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: none;
+  color: var(--mut);
+  font: 500 15px/22px var(--ui);
+}
+.jam-mood-chip:hover {
+  background: none;
+  color: var(--ink);
+}
+.jam-mood-chip[aria-pressed="true"] {
+  background: var(--ink);
+  color: var(--page);
+  font-weight: 600;
+}
+.jam-mood-free {
+  position: relative;
+  margin-right: 9px;
+}
+.jam-mood-free::after {
+  content: "";
+  position: absolute;
+  top: 10px;
+  right: -6px;
+  bottom: 10px;
+  width: 1px;
+  background: var(--rule);
+}
+
+.jam-hero {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: end;
-  gap: 0 32px;
+  gap: 16px 40px;
 }
 .jam-heading {
   min-width: 0;
 }
-.jam-context {
-  margin: 0 0 8px;
-  font-size: 12px;
+.jam-heading h1 {
+  margin: 0;
+  font: 800 96px/88px var(--display);
+  letter-spacing: -0.045em;
+  overflow-wrap: anywhere;
+}
+/* With Free the title is the groove's own, which can be long, so it takes two lines at most */
+.jam-heading h1.long {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  font-size: 56px;
+  line-height: 60px;
+  letter-spacing: -0.03em;
+}
+.jam-hero-line {
+  max-width: 560px;
+  margin: 10px 0 0;
+  font-size: 18px;
+  line-height: 26px;
+  color: var(--jam-soft);
+}
+
+.jam-transport {
+  position: relative;
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 20px;
+}
+.jam-bpm {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  min-height: 44px;
+  padding: 4px 8px;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  color: var(--ink);
+}
+.jam-bpm:hover,
+.jam-bpm[aria-expanded="true"] {
+  background: var(--wash);
+}
+.jam-bpm-value {
+  font: 600 30px/34px var(--mono);
+}
+.jam-bpm-unit {
+  font-size: 13px;
+  line-height: 16px;
+  color: var(--mut);
+}
+.jam-bpm[data-outside]::after {
+  content: "";
+  position: absolute;
+  top: 6px;
+  right: 0;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--led);
+}
+.jam-tempo-panel {
+  position: absolute;
+  z-index: 9;
+  top: calc(100% + 8px);
+  right: 0;
+  width: 300px;
+  padding: 12px 16px 14px;
+  background: var(--page);
+  border: 1px solid var(--rule);
+  border-radius: 10px;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.18);
+}
+.jam-tempo-panel:focus {
+  outline: none;
+}
+.jam-play {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 76px;
+  height: 76px;
+  padding: 0;
+  border: 2px solid var(--ink);
+  border-radius: 50%;
+  background: var(--ink);
+  color: var(--page);
+  font: 600 17px/22px var(--ui);
+}
+.jam-play:hover {
+  opacity: 0.88;
+}
+.jam-play.on {
+  background: var(--page);
+  color: var(--ink);
+}
+.jam-play-icon {
+  width: 20px;
+  height: 22px;
+  margin-left: 4px;
+  background: currentColor;
+  clip-path: polygon(0 0, 100% 50%, 0 100%);
+}
+.jam-play.on .jam-play-icon {
+  width: 20px;
+  height: 20px;
+  margin-left: 0;
+  clip-path: none;
+}
+@media (min-width: 1024px) {
+  /* The round button shows only its icon; the word stays for screen readers and the title */
+  #jamPlayLabel {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+}
+
+.jam-setup {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 18px 0;
+  border-block: 1px solid var(--rule);
+}
+.jam-setup-scroll {
+  display: flex;
+  flex: 1;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 12px 36px;
+  min-width: 0;
+}
+.jam-setup-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.jam-setup-item > label,
+.jam-setup-label {
+  font-size: 11px;
   font-weight: 600;
   line-height: 16px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--mut);
 }
-.jam-context-key {
-  text-transform: none;
+.jam-setup .dropdown-button,
+.jam-setup .jam-picker-button {
+  min-height: 32px;
+  padding: 4px 22px 4px 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent var(--select-arrow) no-repeat right 2px center;
+  background-size: 14px;
+  color: var(--ink);
+  font: 600 16px/24px var(--ui);
+  letter-spacing: normal;
 }
-.jam-heading h1 {
-  margin: 0;
-  font: 800 48px/52px var(--display);
-  letter-spacing: -0.025em;
+.jam-setup .jam-picker-button {
+  gap: 0;
+  padding-right: 0;
+  background: none;
+  white-space: nowrap;
 }
-.jam-about {
-  grid-column: 1/-1;
-  max-width: 64ch;
-  margin: 12px 0 0;
-  font-size: 15px;
-  line-height: 22px;
+.jam-setup .jam-picker-chevron {
+  width: 14px;
+  height: 14px;
+  margin-left: 8px;
   color: var(--mut);
+}
+.jam-setup :is(.dropdown-button, .jam-picker-button):focus-visible {
+  outline-offset: 2px;
+}
+.jam-setup .jam-grooves {
+  right: auto;
+  left: 0;
+}
+.jam-more {
+  position: relative;
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 0 16px 0 12px;
+  border: 1px solid var(--control-border);
+  border-radius: var(--radius-pill);
+  background: var(--page);
+  color: var(--ink);
+  font: 600 14px/20px var(--ui);
+}
+.jam-more:hover,
+.jam-more[aria-expanded="true"] {
+  background: var(--wash);
+}
+.jam-more-icon {
+  flex: none;
+}
+/* A dot says a part is muted or the groove text is open while the drawer is closed */
+.jam-more:is([data-note], [data-editing])::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--led);
+}
+
+.jam-bars {
+  display: grid;
+  grid-template-columns: repeat(var(--jam-bar-columns), minmax(0, 1fr));
+  gap: 6px;
+  padding: 0;
+  list-style: none;
+}
+.jam-bars[data-count="4"] {
+  --jam-bar-columns: 4;
+}
+.jam-bars[data-count="12"] {
+  --jam-bar-columns: 6;
+}
+.jam-bars li {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  padding: 12px 14px;
+  border-radius: 8px;
+  background: var(--jam-card);
+  container-type: inline-size;
+}
+.jam-bars li[aria-current] {
+  background: var(--led);
+  color: #111;
+}
+.jam-bar-no {
+  font: 400 12px/16px var(--mono);
+  color: var(--mut);
+}
+.jam-bar-numeral::before {
+  content: " · ";
+  content: " · " / "";
+  white-space: pre;
+}
+.jam-bars li[aria-current] .jam-bar-no {
+  color: #111;
+}
+.jam-chord {
+  font: 700 clamp(16px, 30cqi, 30px)/32px var(--display);
+  letter-spacing: -0.02em;
+  overflow-wrap: anywhere;
+}
+
+.jam-now {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px 24px;
+  margin-bottom: 24px;
+}
+.jam-now-line {
+  min-width: 0;
+  margin: 0;
+  font-size: 16px;
+  line-height: 24px;
+  color: var(--jam-soft);
+}
+.jam-now-line strong {
+  margin-right: 4px;
+  color: var(--ink);
+}
+.jam-now-next[hidden] {
+  display: none;
+}
+.jam-now-notes {
+  margin-left: 4px;
+  font: 400 13px/24px var(--mono);
+  color: var(--mut);
+}
+.jam-mood-legend {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin: 0;
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--mut);
+}
+.jam-mood-legend[hidden] {
+  display: none;
+}
+.jam-mood-legend strong {
+  color: var(--ink);
+}
+.jam-mood-dot {
+  flex: none;
+  width: 12px;
+  height: 12px;
+  border: 1.5px solid var(--ink);
+  border-radius: 50%;
+  background: var(--led);
+  transform: translateY(1px);
+}
+.jam-mood-legend[data-missing] .jam-mood-dot {
+  background: none;
+}
+.jam.mood-on .fb-mark[data-role="root"] rect {
+  fill: var(--ink);
+}
+.jam.mood-on .fb-mark[data-role="root"] text {
+  fill: var(--page);
+}
+.jam .fretboard-svg .fb-mark[data-mood]:not([data-dimmed]) :is(circle, rect) {
+  fill: var(--led);
+  stroke: var(--ink);
+  stroke-width: 2;
+}
+.jam .fretboard-svg .fb-mark[data-mood]:not([data-dimmed]) text {
+  fill: #111;
+  font-weight: 600;
+}
+
+.jam-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+.jam-field label,
+.jam-plays legend {
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 16px;
+}
+.jam-field-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+.jam-field output {
+  font: 600 14px/18px var(--mono);
+}
+.jam-field input[type="range"] {
+  width: 100%;
+  height: 44px;
+}
+.jam-field-row {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.jam-field-row[hidden] {
+  display: none;
+}
+.jam-field :is(select, .dropdown-button) {
+  height: 44px;
+  min-width: 160px;
+  background-color: var(--page);
+}
+.jam-field-hint {
+  margin: 0;
+  font-size: 13px;
+  line-height: 18px;
+  color: var(--mut);
+}
+.jam-field-hint[hidden] {
+  display: none;
+}
+
+.jam-drawer {
+  position: fixed;
+  z-index: 8;
+  top: var(--top-h, 64px);
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  width: min(var(--jam-drawer-width), 100vw);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 0 24px 24px;
+  background: var(--page);
+  border-left: 1px solid var(--rule);
+  box-shadow: -12px 0 32px rgba(0, 0, 0, 0.16);
+  animation: jam-drawer-in 0.18s ease-out;
+}
+.jam-drawer[hidden] {
+  display: none;
+}
+.jam-drawer:focus {
+  outline: none;
+}
+.jam:has(#grooveEditor:not([hidden])) {
+  --jam-drawer-width: 560px;
+}
+@keyframes jam-drawer-in {
+  from {
+    opacity: 0;
+    translate: 24px 0;
+  }
+}
+.jam-drawer-head {
+  position: sticky;
+  z-index: 1;
+  top: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 -24px;
+  padding: 16px 24px 12px;
+  background: var(--page);
+}
+.jam-drawer-head h2 {
+  margin: 0;
+  font: 700 18px/24px var(--display);
+}
+.jam-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 20px 0;
+  border-top: 1px solid var(--rule);
+}
+.jam-section-heading {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 16px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--mut);
+}
+.jam-section .toggle[aria-pressed="true"] {
+  background: var(--ink);
+  color: var(--page);
+  border-color: var(--ink);
+}
+#jamDegrees {
+  align-self: flex-start;
 }
 
 .jam-picker {
@@ -217,206 +698,6 @@
   display: none;
 }
 
-.jam-transport {
-  display: flex;
-  flex: none;
-  align-items: center;
-  gap: 16px;
-}
-.jam-bpm {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 2px;
-  margin: 0;
-}
-.jam-bpm-value {
-  font: 600 28px/32px var(--mono);
-}
-.jam-bpm-unit {
-  font-size: 12px;
-  line-height: 16px;
-  color: var(--mut);
-}
-.jam-play {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  min-width: 132px;
-  height: var(--jam-play-height, 56px);
-  padding: 0 28px;
-  border: 2px solid var(--ink);
-  border-radius: calc(var(--jam-play-height, 56px) / 2);
-  background: var(--ink);
-  color: var(--page);
-  font: 600 17px/22px var(--ui);
-}
-.jam-play:hover {
-  opacity: 0.88;
-}
-.jam-play.on {
-  background: var(--page);
-  color: var(--ink);
-}
-.jam-play-icon {
-  width: 14px;
-  height: 16px;
-  background: currentColor;
-  clip-path: polygon(0 0, 100% 50%, 0 100%);
-}
-.jam-play.on .jam-play-icon {
-  height: 14px;
-  clip-path: none;
-}
-
-.jam-bars {
-  display: grid;
-  grid-template-columns: repeat(var(--jam-bar-columns), minmax(0, 1fr));
-  gap: 8px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-/* Eight bars read as two phrases of four, twelve as two rows of six */
-.jam-bars[data-count="8"] {
-  --jam-bar-columns: 4;
-}
-.jam-bars li {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  padding: 12px 14px;
-  border: 1px solid var(--rule);
-  border-radius: 8px;
-  container-type: inline-size;
-}
-.jam-bars li[aria-current] {
-  padding: 10px 12px;
-  border: 3px solid var(--ink);
-  background: var(--cur);
-}
-.jam-bars li[aria-current]::after {
-  content: "Now";
-  content: "Now" / "";
-  position: absolute;
-  top: 10px;
-  right: 12px;
-  font: 600 11px/16px var(--ui);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-.jam-bar-no {
-  font: 400 12px/16px var(--mono);
-  color: var(--mut);
-}
-.jam-chord {
-  font: 800 clamp(16px, 32cqi, 28px)/32px var(--display);
-  letter-spacing: -0.02em;
-  overflow-wrap: anywhere;
-}
-
-.jam-fretboard-head {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px 24px;
-  margin-bottom: 12px;
-}
-.jam-now {
-  min-width: 0;
-  margin: 0;
-  font-size: 16px;
-  font-weight: 600;
-  line-height: 22px;
-}
-.jam-now-details {
-  font-weight: 400;
-  color: var(--mut);
-}
-.jam-fretboard-controls {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px 16px;
-}
-.jam-fretboard .toggle[aria-pressed="true"] {
-  background: var(--ink);
-  color: var(--page);
-  border-color: var(--ink);
-}
-
-.jam-field {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  min-width: 0;
-}
-.jam-field label,
-.jam-plays legend {
-  font-size: 13px;
-  font-weight: 500;
-  line-height: 16px;
-}
-.jam-field-inline {
-  flex-direction: row;
-  align-items: center;
-  gap: 8px;
-}
-.jam-field-head {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 12px;
-}
-.jam-field output {
-  font: 600 14px/18px var(--mono);
-}
-.jam-field input[type="range"] {
-  width: 100%;
-  height: 44px;
-}
-.jam-field-pair {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-}
-.jam-panel .jam-field .dropdown {
-  display: flex;
-}
-.jam-panel .jam-field :is(select, .dropdown-button) {
-  width: 100%;
-}
-.jam-field :is(select, .dropdown-button) {
-  height: 44px;
-  background-color: var(--page);
-}
-
-.jam-section-heading {
-  margin: 0 0 12px;
-  font-size: 12px;
-  font-weight: 600;
-  line-height: 16px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--mut);
-}
-.jam-section-body {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-.jam-section + .jam-section {
-  margin-top: 24px;
-  padding-top: 24px;
-  border-top: 1px solid var(--rule);
-}
-.jam-section-toggle {
-  display: none;
-}
-
 fieldset.jam-plays {
   display: flex;
   align-items: center;
@@ -555,11 +836,6 @@ fieldset.jam-plays {
 .jam-write-actions button:hover {
   background: var(--wash);
 }
-.jam-write .toggle[aria-pressed="true"] {
-  background: var(--ink);
-  color: var(--page);
-  border-color: var(--ink);
-}
 
 .jam-share-row {
   display: flex;
@@ -595,41 +871,72 @@ fieldset.jam-plays {
 }
 
 @media (min-width: 1024px) {
-  .jam {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) var(--jam-panel-width);
-    align-items: start;
+  /* The open drawer pushes the stage aside, so Play and the bars stay in reach */
+  .jam:has(.jam-drawer:not([hidden])) {
+    padding-right: var(--jam-drawer-width);
   }
-  .jam-panel {
-    position: sticky;
-    top: var(--top-h, 72px);
-    height: calc(100dvh - var(--top-h, 72px));
-    overflow-y: auto;
-    overscroll-behavior: contain;
-    padding: 28px;
-    background: var(--wash);
-    border-left: 1px solid var(--rule);
+  .jam-fretboard .fretboard-board {
+    width: clamp(
+      min(714px, 100%),
+      calc((100dvh - var(--jam-above-board, 680px)) * var(--board-ratio, 4.5)),
+      100%
+    );
+  }
+  .jam-fretboard .fretboard-svg {
+    width: 100%;
+    height: auto;
   }
 }
-@media (max-width: 1199px) {
-  .jam-stage {
-    padding-inline: var(--space-6);
+@media (min-width: 1280px) {
+  .jam-bars[data-count="12"] {
+    --jam-bar-columns: 12;
+  }
+  .jam-bars[data-count="12"] li {
+    padding-inline: 10px;
+  }
+  .jam:has(.jam-drawer:not([hidden])) .jam-bars[data-count="12"] {
+    --jam-bar-columns: 6;
   }
 }
 @media (min-width: 1024px) and (max-width: 1279px) {
+  .jam-heading h1 {
+    font-size: 72px;
+    line-height: 68px;
+  }
+}
+@media (min-width: 1024px) and (max-height: 840px) {
+  .jam {
+    --jam-above-board: 560px;
+  }
   .jam-stage {
-    padding-block: var(--space-6);
+    padding-top: 16px;
+  }
+  .jam-hero {
+    margin-top: 16px;
   }
   .jam-heading h1 {
-    font-size: 40px;
-    line-height: 44px;
+    font-size: 64px;
+    line-height: 60px;
+  }
+  .jam-setup {
+    margin-top: 20px;
+    padding-block: 10px;
+  }
+  .jam-bars {
+    margin-top: 16px;
+  }
+  .jam-bars li {
+    padding-block: 8px;
+  }
+  .jam-fretboard {
+    margin-top: 12px;
+  }
+  .jam-now {
+    margin-bottom: 12px;
   }
 }
 
 @media (max-width: 1023px) {
-  .jam {
-    --jam-bar-columns: 4;
-  }
   html:has(body.jam-view) {
     --jam-play-height: 52px;
     --jam-transport-padding: 12px;
@@ -645,8 +952,26 @@ fieldset.jam-plays {
       var(--jam-transport-height) + env(safe-area-inset-bottom)
     );
   }
+  .jam {
+    --jam-bar-columns: 4;
+  }
+  .jam-bars[data-count="12"] {
+    --jam-bar-columns: 6;
+  }
   .jam-stage {
-    padding: 28px var(--space-6);
+    padding: 24px var(--space-6) 32px;
+  }
+  .jam-hero {
+    display: block;
+    margin-top: 24px;
+  }
+  .jam-heading h1 {
+    font-size: 64px;
+    line-height: 60px;
+  }
+  .jam-heading h1.long {
+    font-size: 40px;
+    line-height: 44px;
   }
   .jam-transport {
     position: fixed;
@@ -672,142 +997,184 @@ fieldset.jam-plays {
     font-size: 11px;
     line-height: 14px;
   }
+  .jam-tempo-panel {
+    top: auto;
+    right: auto;
+    bottom: calc(100% + 8px);
+    left: max(16px, env(safe-area-inset-left));
+    width: min(320px, calc(100vw - 32px));
+  }
   .jam-play {
     flex: 1;
+    width: auto;
+    height: var(--jam-play-height);
+    padding: 0 28px;
+    border-radius: calc(var(--jam-play-height) / 2);
     font-size: 16px;
     line-height: 20px;
   }
-  .jam-panel {
-    padding: 0 var(--space-6) var(--space-6);
+  .jam-play-icon {
+    width: 14px;
+    height: 16px;
+    margin-left: 0;
   }
-  .jam-section {
-    border-bottom: 1px solid var(--rule);
+  .jam-play.on .jam-play-icon {
+    width: 14px;
+    height: 14px;
   }
-  .jam-section:first-child {
-    border-top: 1px solid var(--rule);
-  }
-  .jam-section + .jam-section {
-    margin-top: 0;
-    padding-top: 0;
-    border-top: 0;
-  }
-  .jam-section-title {
-    display: none;
-  }
-  .jam-section-heading {
-    margin: 0;
-    font-size: inherit;
-    letter-spacing: normal;
-    text-transform: none;
-    color: inherit;
-  }
-  .jam-section-toggle {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    width: 100%;
-    min-height: 52px;
-    padding: 0;
-    border: 0;
-    border-radius: 0;
-    text-align: left;
-  }
-  .jam-section-toggle:focus-visible {
-    outline-offset: -2px;
-  }
-  .jam-section-name {
-    flex: none;
-    font-size: 15px;
-    font-weight: 600;
-    line-height: 18px;
-  }
-  .jam-section-summary {
-    min-width: 0;
-    font-size: 13px;
-    font-weight: 400;
-    line-height: 16px;
-    color: var(--mut);
-    text-align: right;
-  }
-  .jam-section-summary::after {
-    content: "›";
-    content: "›" / "";
-    display: inline-block;
-    margin-left: 6px;
-    transition: transform 0.15s;
-  }
-  .jam-section-toggle[aria-expanded="true"] .jam-section-summary::after {
-    transform: rotate(90deg);
-  }
-  .jam-section:has(.jam-section-toggle[aria-expanded="false"])
-    .jam-section-body {
-    display: none;
-  }
-  .jam-section-body {
-    padding: 4px 0 20px;
-  }
-  .jam-section:is(.jam-share, .jam-write) {
-    padding: 20px 0;
-  }
-  :is(.jam-share, .jam-write) .jam-section-heading {
-    margin-bottom: 12px;
-    font-size: 15px;
-    font-weight: 600;
-    line-height: 18px;
-  }
-  .jam-heading h1 {
-    font-size: 36px;
-    line-height: 40px;
-    letter-spacing: -0.02em;
+  .jam-drawer {
+    bottom: calc(var(--jam-transport-height) + env(safe-area-inset-bottom));
   }
 }
+
 @media (max-width: 599px) {
   .jam-stage {
-    gap: 20px;
-    padding: 20px var(--space-4);
+    padding: 12px var(--space-4) 16px;
   }
-  .jam-panel {
-    padding-inline: var(--space-4);
+  .jam-moods {
+    margin-inline: calc(-1 * var(--space-4));
+  }
+  /* The padding keeps the focus ring and the tap area inside the scrolling row */
+  .jam-mood-chips {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+    margin: -4px 0;
+    padding: 4px calc(var(--space-4) - 12px);
+  }
+  .jam-mood-chip {
+    flex: none;
+  }
+  .jam-hero {
+    margin-top: 12px;
   }
   .jam-heading h1 {
+    font-size: 48px;
+    line-height: 48px;
+  }
+  .jam-heading h1.long {
     font-size: 32px;
     line-height: 36px;
   }
-  .jam-picker-button {
-    gap: 8px;
+  .jam-hero-line {
+    margin-top: 6px;
+    font-size: 15px;
+    line-height: 21px;
   }
-  .jam-picker-chevron {
-    width: 18px;
-    height: 18px;
+  .jam-setup {
+    gap: 12px;
+    margin: 14px calc(-1 * var(--space-4)) 0;
+    padding: 6px var(--space-4) 6px 0;
   }
-  .jam-about {
-    font-size: 14px;
-    line-height: 20px;
+  .jam-setup-scroll {
+    flex-wrap: nowrap;
+    gap: 24px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    padding-left: var(--space-4);
+  }
+  .jam-setup-item {
+    flex: none;
+  }
+  /* The groove list cannot hang from a row that scrolls, so it opens above the Play bar */
+  .jam-setup .jam-grooves {
+    position: fixed;
+    top: auto;
+    right: var(--space-4);
+    bottom: calc(
+      var(--jam-transport-height) + env(safe-area-inset-bottom) + 8px
+    );
+    left: var(--space-4);
+    width: auto;
+    max-height: min(480px, 60dvh);
+  }
+  .jam-more {
+    width: 44px;
+    min-height: 44px;
+    justify-content: center;
+    padding: 0;
+  }
+  .jam-more-text {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
   }
   .jam-bars {
-    gap: 6px;
+    margin-top: 12px;
   }
   .jam-bars li {
-    min-height: 56px;
-    padding: 8px 10px;
+    gap: 0;
+    padding: 6px 10px;
   }
-  .jam-bars li[aria-current] {
-    padding: 6px 8px;
+  .jam-bar-no {
+    line-height: 14px;
   }
-  .jam-bars li[aria-current]::after {
-    content: "▶";
-    content: "▶" / "";
-    top: 6px;
-    right: 8px;
+  .jam-fretboard .fretboard-board {
+    padding-block: 2px;
   }
   .jam-chord {
-    font-size: clamp(14px, 24cqi, 20px);
-    line-height: 24px;
+    font-size: clamp(14px, 26cqi, 22px);
+    line-height: 26px;
   }
+  .jam-bars[data-count="12"] li {
+    padding: 4px 8px;
+  }
+  /* Six narrow cards a row leave room for the numeral alone; the bar number stays for screen readers */
+  .jam-bars[data-count="12"] li:has(.jam-bar-numeral) .jam-bar-index {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  .jam-bars[data-count="12"] .jam-bar-numeral::before {
+    content: none;
+  }
+  .jam-bars[data-count="12"] .jam-chord {
+    line-height: 20px;
+  }
+  .jam-fretboard {
+    margin-top: 10px;
+  }
+  /* The pinned Play bar leaves little room, so the legend comes after the board */
   .jam-now {
+    display: contents;
+  }
+  .jam-fretboard {
+    display: flex;
+    flex-direction: column;
+  }
+  .jam-now-line {
+    margin-bottom: 8px;
     font-size: 14px;
     line-height: 20px;
+  }
+  .jam-now-notes {
+    display: none;
+  }
+  .jam-mood-legend {
+    order: 3;
+    margin-top: 12px;
+  }
+  .jam-drawer {
+    top: auto;
+    left: 0;
+    width: auto;
+    max-height: min(75dvh, calc(100dvh - var(--top-h, 64px)));
+    padding-inline: var(--space-4);
+    border-top: 1px solid var(--rule);
+    border-left: 0;
+    border-radius: 16px 16px 0 0;
+    box-shadow: 0 -12px 32px rgba(0, 0, 0, 0.18);
+    animation-name: jam-sheet-in;
+  }
+  .jam-drawer-head {
+    margin-inline: calc(-1 * var(--space-4));
+    padding-inline: var(--space-4);
   }
   .jam-share-row {
     flex-wrap: wrap;
@@ -827,424 +1194,14 @@ fieldset.jam-plays {
     padding-bottom: var(--space-2);
   }
 }
-
-.jam-moods .jam-context {
-  margin-bottom: 12px;
-}
-.jam-mood-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-.jam-mood-chip {
-  height: 36px;
-  padding: 0 12px;
-  border: 1px solid var(--deck-line);
-  border-radius: var(--radius-pill);
-  background: var(--page);
-  color: var(--ink);
-  font: 500 14px/20px var(--ui);
-}
-@media (pointer: coarse) {
-  .jam-mood-chip {
-    position: relative;
-  }
-  .jam-mood-chip::before {
-    content: "";
-    position: absolute;
-    inset: -4px 0;
+@keyframes jam-sheet-in {
+  from {
+    opacity: 0;
+    translate: 0 24px;
   }
 }
-.jam-mood-chip:hover {
-  background: var(--wash);
-}
-.jam-mood-free {
-  position: relative;
-  margin-right: 7px;
-}
-.jam-mood-free::after {
-  content: "";
-  position: absolute;
-  top: 8px;
-  right: -8px;
-  bottom: 8px;
-  width: 1px;
-  background: var(--deck-line);
-}
-.jam-mood-chip[aria-pressed="true"] {
-  border-color: var(--ink);
-  background: var(--ink);
-  color: var(--page);
-  font-weight: 600;
-}
-/* The fretboard stays in view under eight or twelve bars, so the stage packs tight */
-.jam .jam-stage {
-  gap: 12px;
-  padding-top: 16px;
-}
-.jam.mood-on .jam-moods .jam-context {
-  margin-bottom: 8px;
-}
-.jam.mood-on .jam-head {
-  align-items: center;
-}
-.jam.mood-on .jam-heading {
-  display: contents;
-}
-.jam.mood-on .jam-mood-why {
-  grid-column: 1 / -1;
-}
-.jam.mood-on .jam-transport {
-  grid-area: 1 / 2;
-}
-.jam.mood-on :is(.jam-heading .jam-context, .jam-about) {
-  display: none;
-}
-.jam.mood-on .jam-heading h1 {
-  font: 800 64px/1 var(--display);
-  letter-spacing: -0.035em;
-}
-.jam-mood-why {
-  max-width: 680px;
-  margin: 8px 0 0;
-  font-size: 17px;
-  line-height: 25px;
-  color: var(--ink);
-}
-.jam-recipe {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 12px 24px;
-  margin: 0;
-  padding-top: 12px;
-  border-top: 1px solid var(--rule);
-}
-.jam-fact {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-}
-.jam-fact dt {
-  font-size: 11px;
-  font-weight: 600;
-  line-height: 16px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--mut);
-}
-.jam-fact dd {
-  margin: 0;
-}
-.jam-fact-value {
-  font-size: 17px;
-  font-weight: 600;
-  line-height: 24px;
-  overflow-wrap: anywhere;
-}
-.jam-fact-help {
-  font-size: 13px;
-  line-height: 18px;
-  color: var(--mut);
-}
-.jam-fact-link {
-  min-height: 0;
-  padding: 0;
-  border: 0;
-  background: none;
-  color: inherit;
-  font: inherit;
-  text-align: left;
-  text-decoration: underline;
-  text-underline-offset: 3px;
-}
-.jam-fact-link:hover {
-  color: var(--ink);
-}
-.jam-recipe .jam-picker-button {
-  gap: 8px;
-  min-height: 24px;
-  font-size: 17px;
-  font-weight: 600;
-  line-height: 24px;
-}
-.jam-recipe .jam-picker-chevron {
-  width: 16px;
-  height: 16px;
-}
-.jam-recipe .jam-grooves {
-  right: 0;
-  left: auto;
-}
-.jam-mood-summary {
-  display: none;
-  margin: 0;
-  font-size: 14px;
-  line-height: 20px;
-  color: var(--mut);
-}
-.jam.mood-on .jam-bars {
-  --jam-bar-columns: 4;
-}
-.jam.mood-on .jam-bars li {
-  gap: 2px;
-}
-@media (min-width: 600px) {
-  .jam.mood-on .jam-bars li {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    gap: 0 8px;
-    padding: 8px 14px;
-  }
-  .jam.mood-on .jam-bars li[aria-current] {
-    padding: 6px 12px;
-  }
-  .jam.mood-on .jam-bar-no {
-    grid-area: 1 / 2;
-  }
-  .jam.mood-on .jam-bars .jam-chord {
-    grid-area: 1 / 1;
-  }
-  .jam.mood-on .jam-bar-job {
-    grid-column: 1 / -1;
-  }
-  .jam.mood-on .jam-bar-numeral {
-    position: static;
-    margin-left: 4px;
-  }
-  .jam.mood-on .jam-bar-numeral::before {
-    content: "· " / "";
-  }
-  .jam.mood-on .jam-bars li[aria-current] .jam-bar-numeral::before {
-    content: "▶ " / "";
-    letter-spacing: 0;
-  }
-}
-.jam.mood-on .jam-bars li[aria-current]::after {
-  content: none;
-}
-.jam-bar-numeral {
-  position: absolute;
-  top: 10px;
-  right: 12px;
-  font: 400 12px/16px var(--mono);
-  color: var(--mut);
-}
-.jam-bars li[aria-current] .jam-bar-numeral {
-  font-weight: 600;
-  color: var(--ink);
-}
-.jam-bars li[aria-current] .jam-bar-numeral::before {
-  content: "Now · ";
-  font-family: var(--ui);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-.jam.mood-on .jam-bars .jam-chord {
-  font-size: clamp(16px, 32cqi, 30px);
-  line-height: 34px;
-}
-.jam-bar-job {
-  font-size: 13px;
-  line-height: 18px;
-  color: var(--mut);
-}
-.jam-bars li[aria-current] .jam-bar-job {
-  color: var(--ink);
-}
-.jam-now-job {
-  display: none;
-}
-.jam-fretboard {
-  display: flex;
-  flex-direction: column;
-}
-.jam-mood-legend {
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
-  order: 3;
-  margin: 12px 0 0;
-  font-size: 14px;
-  line-height: 20px;
-  color: var(--mut);
-}
-.jam-mood-legend[hidden] {
-  display: none;
-}
-.jam-mood-legend strong {
-  color: var(--ink);
-}
-.jam-mood-dot {
-  flex: none;
-  width: 12px;
-  height: 12px;
-  border: 1.5px solid var(--ink);
-  border-radius: 50%;
-  background: var(--led);
-  transform: translateY(1px);
-}
-.jam-mood-legend[data-missing] .jam-mood-dot {
-  background: none;
-}
-.jam-fretboard .fretboard-board {
-  order: 2;
-}
-.jam-field-hint {
-  margin: 0;
-  font-size: 13px;
-  line-height: 18px;
-  color: var(--mut);
-}
-.jam.mood-on .fb-mark[data-role="root"] rect {
-  fill: var(--ink);
-}
-.jam.mood-on .fb-mark[data-role="root"] text {
-  fill: var(--page);
-}
-.jam .fretboard-svg .fb-mark[data-mood]:not([data-dimmed]) :is(circle, rect) {
-  fill: var(--led);
-  stroke: var(--ink);
-  stroke-width: 2;
-}
-.jam .fretboard-svg .fb-mark[data-mood]:not([data-dimmed]) text {
-  fill: #111;
-  font-weight: 600;
-}
-
-@media (min-width: 1024px) and (max-width: 1439px) {
-  .jam.mood-on .jam-stage {
-    padding-inline: 40px;
-  }
-  .jam.mood-on .jam-now-details {
-    display: none;
-  }
-}
-@media (max-width: 1439px) {
-  .jam.mood-on .jam-heading h1 {
-    font-size: 48px;
-  }
-  .jam-mood-chip {
-    padding: 0 10px;
-  }
-}
-@media (max-width: 599px) {
-  .jam-moods {
-    margin-inline: calc(-1 * var(--space-4));
-  }
-  .jam-moods .jam-context {
-    padding-inline: var(--space-4);
-  }
-  /* The padding keeps the focus ring and the tap area inside the scrolling row */
-  .jam-mood-chips {
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    scrollbar-width: none;
-    margin-block: -4px;
-    padding: 4px var(--space-4);
-  }
-  .jam-mood-chip {
-    flex: none;
-    height: 36px;
-    padding: 0 14px;
-  }
-  .jam.mood-on .jam-heading h1 {
-    font-size: 44px;
-  }
-  #jamRecipeGrooveHelp {
-    display: none;
-  }
-  .jam-mood-why {
-    margin-top: 6px;
-    font-size: 15px;
-    line-height: 21px;
-  }
-  /* The pinned Play bar leaves little room, so the board comes before its settings */
-  .jam .jam-fretboard-head {
-    display: contents;
-  }
-  .jam .jam-now {
-    margin-bottom: 12px;
-  }
-  .jam .jam-fretboard-controls {
-    order: 4;
-    margin-top: 12px;
-  }
-  .jam-recipe {
-    display: block;
-    padding-top: 0;
-    border-top: 0;
-  }
-  .jam-fact:not(:last-child) {
-    display: none;
-  }
-  .jam.mood-on .jam-mood-summary:not([hidden]) {
-    display: block;
-  }
-  .jam-bar-numeral {
-    position: static;
-    margin-left: 4px;
-  }
-  .jam-bar-numeral::before {
-    content: "· " / "";
-  }
-  .jam-bars li[aria-current] .jam-bar-numeral::before {
-    content: "▶ " / "";
-    letter-spacing: 0;
-  }
-  .jam.mood-on .jam-bars li {
-    padding: 6px 10px;
-  }
-  .jam.mood-on .jam-bars li[aria-current] {
-    padding: 4px 8px;
-  }
-  .jam.mood-on .jam-bars .jam-chord {
-    font-size: clamp(14px, 28cqi, 24px);
-    line-height: 26px;
-  }
-  .jam-bar-job {
-    display: none;
-  }
-  .jam.mood-on
-    .jam-now:has(.jam-now-job:not(:empty))
-    :is(.jam-now-next, #jamFretboardScale) {
-    display: none;
-  }
-  .jam.mood-on .jam-now-job:not(:empty) {
-    display: inline;
-  }
-}
-@media (min-width: 600px) {
-  .jam.mood-on .jam-bars[data-count="12"] .jam-bar-job {
-    display: none;
-  }
-  .jam.mood-on:has(.jam-bars[data-count="12"]) .jam-now-details {
-    display: inline;
-  }
-  .jam.mood-on:has(.jam-bars[data-count="12"])
-    .jam-now:has(.jam-now-job:not(:empty))
-    :is(.jam-now-next, #jamFretboardScale) {
-    display: none;
-  }
-  .jam.mood-on:has(.jam-bars[data-count="12"]) .jam-now-job:not(:empty) {
-    display: inline;
-  }
-}
-@media (max-width: 599px) {
-  .jam .jam-bars[data-count="12"] li {
-    min-height: 0;
-    padding-block: 2px;
-  }
-  .jam .jam-bars[data-count="12"] li[aria-current] {
-    padding-block: 0;
-  }
-  .jam .jam-bars[data-count="12"] .jam-chord {
-    line-height: 20px;
-  }
-}
-@media (min-width: 600px) {
-  /* The now line wraps its own text before the controls drop to a row of their own */
-  .jam-now {
-    flex: 1 1 240px;
+@media (prefers-reduced-motion: reduce) {
+  .jam-drawer {
+    animation: none;
   }
 }

@@ -50,10 +50,10 @@ describe('jam fretboard', () => {
     expect(labelsWith(marks, 'root')).toEqual(['4']);
     expect(labelsWith(marks, 'tone')).toEqual(['1', '6', 'b3']);
   });
-  it('states the chord, its tones, the scale and the next chord', () => {
+  it('states the chord, its tones and the next chord', () => {
     const drawing = inA({ nextChord: E7 });
     expect(drawing.chordText).toBe('D7: D F# A C');
-    expect(drawing.scaleText).toBe('Scale: A minor pentatonic, A C D E G');
+    expect([drawing.chordName, drawing.chordNotes]).toEqual(['D7', 'D F# A C']);
     expect(drawing.nextChordText).toBe('Next: E7');
     expect(drawing.description).toBe('Fretboard of the Bass (4-string, E A D G), frets 0 to 12, with the notes of A minor pentatonic marked, the tones of D7 stronger');
   });
@@ -67,14 +67,13 @@ describe('jam fretboard', () => {
     const fMajorSeventh = chordAt(numerals('Imaj7'), 'F', 0);
     const drawing = inA({ key: 'F', scale: 'major', chord: fMajorSeventh, nextChord: fMajorSeventh });
     expect(drawing.chordText).toBe('Fmaj7: F A C E');
-    expect(drawing.scaleText).toBe('Scale: F major, F G A Bb C D E');
     expect(markAt(drawing.marks, BASS_STRING.A, 1)).toMatchObject({ label: 'Bb', role: 'scale' });
   });
   it('spells a Db blues with flats, from the name of the key', () => {
     const dFlatSeventh = chordAt(BLUES, 'Db', 0);
     const drawing = inA({ key: 'Db', chord: dFlatSeventh, nextChord: dFlatSeventh, labels: 'degrees' });
     expect(drawing.chordText).toBe('Db7: Db F Ab Cb');
-    expect(drawing.scaleText).toBe('Scale: Db minor pentatonic, Db Fb Gb Ab Cb');
+    expect(drawing.chordNotes).toBe('Db F Ab Cb');
     expect(drawing.openNames).toEqual(['G', 'D', 'A', 'E']);
     expect(labelsWith(drawing.marks, 'tone')).toEqual(['3', '5', 'b7']);
   });

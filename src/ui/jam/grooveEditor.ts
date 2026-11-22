@@ -35,6 +35,8 @@ export function grooveEditor(jam: Jam, { played, saved, deleted }: GrooveEditorH
   const editButton = byId('grooveEdit', HTMLButtonElement);
   const deleteButton = byId('grooveDelete', HTMLButtonElement);
   const fileInput = byId('grooveOpenFile', HTMLInputElement);
+  const more = byId('jamMore');
+  const editingNote = byId('jamEditingNote');
   const draft = new DraftSession(() => source.value, savedGrooves);
   const settling = settledInput(source, check);
   let fromEntry = false;
@@ -116,13 +118,21 @@ export function grooveEditor(jam: Jam, { played, saved, deleted }: GrooveEditorH
   function open() {
     pane.hidden = false;
     editButton.setAttribute('aria-pressed', 'true');
+    showEditing(true);
     source.focus();
+  }
+
+  /** The editor stays open in a closed drawer, so its button says the groove text is still open. */
+  function showEditing(editing: boolean) {
+    more.toggleAttribute('data-editing', editing);
+    editingNote.hidden = !editing;
   }
 
   function close() {
     settling.cancel();
     pane.hidden = true;
     editButton.setAttribute('aria-pressed', 'false');
+    showEditing(false);
     announce('');
     stopPreview();
   }
