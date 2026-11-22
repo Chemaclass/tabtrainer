@@ -4,6 +4,7 @@ import { JAM_SWING, Jam, MIXER_PARTS, Mixer, NEW_GROOVE_TEXT, bundledGrooves, ja
 import { grooveSlug, mineGrooveSlug } from '../../src/app/jamLink';
 import type { Saved } from '../../src/app/storage';
 import { parseGroove } from '../../src/core/groove';
+import { moodById, type MoodId } from '../../src/core/moods';
 
 const files = Object.fromEntries(readdirSync('src/grooves').filter(name => name.endsWith('.txt')).map(name => [`./grooves/${name}`, readFileSync(`src/grooves/${name}`, 'utf8')]));
 const minor = { './grooves/02-minor-vamp.txt': 'title: Minor vamp\ntempo: 100\nkey: Bbm\nprogression: i iv\nkick: x...' };
@@ -102,8 +103,8 @@ describe('jam', () => {
     jam.setKey('C'); jam.setTempo(120);
     jam.choose('minor-vamp'); jam.setTempo(70);
     expect(JSON.parse(stored.get('tabtrainer:jam') ?? '{}')).toEqual({
-      'blues-shuffle': { key: 'C', tempo: 120, progression: 'groove', swing: 66 },
-      'minor-vamp': { key: 'Bbm', tempo: 70, progression: 'groove', swing: 50 },
+      'blues-shuffle': { key: 'C', tempo: 120, progression: 'groove', swing: 66, ownTempo: true },
+      'minor-vamp': { key: 'Bbm', tempo: 70, progression: 'groove', swing: 50, ownTempo: true },
     });
     const reloaded = new Jam(grooves);
     expect([reloaded.key, reloaded.tempo]).toEqual(['C', 120]);
@@ -338,7 +339,8 @@ describe('mixer', () => {
 });
 
 describe('jam moods', () => {
-  const sadLoop = 'sad-i-bvi-biii-bvii';
+  const loopOf = (id: MoodId, index = 0) => moodById(id).loops[index].slug;
+  const sadLoop = loopOf('sad');
 
   it('sets the mood chords, a minor key on the same tonic, its scale first and a tempo in its range', () => {
     const jam = new Jam(bundledGrooves(files));
@@ -347,18 +349,71 @@ describe('jam moods', () => {
     expect([jam.mood?.id, jam.progression, jam.key, jam.tempo]).toEqual(['sad', sadLoop, 'Em', 66]);
     expect(jam.scales.slice(0, 2)).toEqual(['minor', 'minor-pentatonic']);
     expect(jam.scale).toBe('minor');
-    expect(jam.timeline().bars.map(bar => bar.chord.name)).toEqual(['Em', 'C', 'G', 'D']);
+    expect(jam.timeline().bars.map(bar => bar.chord.name)).toEqual(['Em', 'C', 'G', 'D', 'Em', 'C', 'Am', 'Bm']);
     expect(jam.applyMood('sad')).toBe(false);
   });
-  it('starts a new mood at its own tempo and offers a mode scale the groove alone never would', () => {
+  it('starts a mood at its own tempo when the tempo is outside its range, and offers a mode scale the groove alone never would', () => {
     const jam = new Jam(bundledGrooves(files));
     jam.choose('rock-straight-eighths');
     jam.applyMood('exciting');
     expect([jam.key, jam.tempo, jam.scale]).toEqual(['E', 148, 'mixolydian']);
     expect(jam.timeline().bars.map(bar => bar.chord.name)).toEqual(['E', 'E', 'D', 'A', 'E', 'E', 'A', 'D']);
-    jam.setTempo(170);
+    jam.setTempo(176);
+    jam.applyMood('dark');
+    expect([jam.key, jam.tempo, jam.progression]).toEqual(['Em', 100, loopOf('dark')]);
+  });
+  it('opens a mood chip at its start tempo when the tempo came from another mood', () => {
+    const jam = new Jam(bundledGrooves(files));
+    jam.choose('rock-straight-eighths');
+    jam.applyMood('happy');
+    jam.applyMood('exciting');
+    expect(jam.tempo).toBe(148);
     jam.applyMood('epic');
-    expect([jam.key, jam.tempo, jam.progression]).toEqual(['Em', 160, 'epic-i-bvi-bvii-i']);
+    expect(jam.tempo).toBe(160);
+    jam.applyMood('tense');
+    jam.applyMood('dark');
+    expect(jam.tempo).toBe(100);
+  });
+  it('keeps a tempo the player set inside the range, through Free and back, or on to another mood', () => {
+    const jam = new Jam(bundledGrooves(files));
+    jam.choose('rock-straight-eighths');
+    jam.applyMood('exciting');
+    jam.setTempo(130);
+    jam.clearMood();
+    jam.applyMood('exciting');
+    expect(jam.tempo).toBe(130);
+    jam.applyMood('epic');
+    expect(jam.tempo).toBe(130);
+    jam.applyMood('sad');
+    expect(jam.tempo).toBe(66);
+    jam.applyMood('melancholic');
+    expect(jam.tempo).toBe(72);
+  });
+  it('keeps what was playing after a reload, and whether the player set the tempo', () => {
+    const jam = new Jam(bundledGrooves(files));
+    jam.choose('rock-straight-eighths');
+    jam.applyMood('exciting');
+    jam.setTempo(130);
+    const reloaded = new Jam(bundledGrooves(files));
+    reloaded.choose('rock-straight-eighths');
+    expect([reloaded.mood?.id, reloaded.tempo]).toEqual(['exciting', 130]);
+    reloaded.applyMood('epic');
+    expect(reloaded.tempo).toBe(130);
+    const byMood = new Jam(bundledGrooves(files));
+    byMood.choose('slow-ballad');
+    byMood.applyMood('sad');
+    const again = new Jam(bundledGrooves(files));
+    again.choose('slow-ballad');
+    expect(again.tempo).toBe(66);
+    again.applyMood('melancholic');
+    expect(again.tempo).toBe(72);
+  });
+  it('does not count a linked tempo as the player own', () => {
+    const jam = new Jam(bundledGrooves(files));
+    jam.open('rock-straight-eighths', { mood: 'exciting', tempo: 130 });
+    expect(jam.tempo).toBe(130);
+    jam.applyMood('epic');
+    expect(jam.tempo).toBe(160);
   });
   it("takes the picked groove's own tempo, held inside the mood's range, when the mood follows it", () => {
     const jam = new Jam(bundledGrooves(files));
@@ -387,9 +442,9 @@ describe('jam moods', () => {
   it('keeps the chords when they already are one of the mood loops', () => {
     const jam = new Jam(bundledGrooves(files));
     jam.choose('rock-straight-eighths');
-    jam.setProgression('i-bvii-bvi-bvii');
+    jam.setProgression(loopOf('epic', 2));
     jam.applyMood('epic');
-    expect(jam.progression).toBe('i-bvii-bvi-bvii');
+    expect(jam.progression).toBe(loopOf('epic', 2));
   });
   it('finds the groove that fits a mood best, staying on the current one when it fits', () => {
     const jam = new Jam(bundledGrooves(files));
@@ -408,22 +463,26 @@ describe('jam moods', () => {
     jam.setTempo(140);
     jam.setScale('dorian');
     expect(jam.nextMoodLoop()).toBe(true);
-    expect([jam.mood?.id, jam.progression]).toEqual(['sad', 'sad-i-iv-i-v']);
+    expect([jam.mood?.id, jam.progression]).toEqual(['sad', loopOf('sad', 1)]);
     jam.nextMoodLoop();
     jam.nextMoodLoop();
     expect(jam.progression).toBe(sadLoop);
+    expect(jam.setProgression('i-v-vi-iv')).toBe(false);
+    expect(jam.setProgression(loopOf('happy'))).toBe(false);
+    expect([jam.mood?.id, jam.progression]).toEqual(['sad', sadLoop]);
+    jam.clearMood();
     expect(jam.setProgression('i-v-vi-iv')).toBe(true);
-    expect(jam.mood).toBeNull();
     expect(jam.nextMoodLoop()).toBe(false);
   });
-  it('drops only the label when cleared, and its mode scale with it', () => {
+  it('gives back the groove own chords when cleared, keeping the home note and the tempo', () => {
     const jam = new Jam(bundledGrooves(files));
     jam.choose('rock-straight-eighths');
     jam.applyMood('dark');
-    jam.setTempo(100);
+    jam.setKey('Am');
+    jam.setTempo(90);
     expect(jam.clearMood()).toBe(true);
     expect(jam.clearMood()).toBe(false);
-    expect([jam.mood, jam.progression, jam.key, jam.tempo]).toEqual([null, 'dark-i-bii-i-bii', 'Em', 100]);
+    expect([jam.mood, jam.progression, jam.key, jam.tempo]).toEqual([null, 'groove', 'A', 90]);
     expect(jam.scales).not.toContain('phrygian');
   });
   it('follows the player to a groove picked from the list and plays its chords there', () => {
@@ -433,6 +492,31 @@ describe('jam moods', () => {
     expect(jam.pickGroove('jazz-swing')).toBe(true);
     expect(jam.pickGroove('jazz-swing')).toBe(false);
     expect([jam.slug, jam.mood?.id, jam.progression, jam.key]).toEqual(['jazz-swing', 'sad', sadLoop, 'Fm']);
+  });
+  it('keeps Free on a groove picked from the list, while a load still restores the mood saved there', () => {
+    const jam = new Jam(bundledGrooves(files));
+    jam.choose('rock-straight-eighths');
+    jam.applyMood('dreamy');
+    jam.choose('blues-shuffle');
+    expect(jam.mood).toBeNull();
+    expect(new Jam(bundledGrooves(files)).choose('rock-straight-eighths')).toBe(true);
+    expect(jam.pickGroove('rock-straight-eighths')).toBe(true);
+    expect([jam.mood, jam.progression]).toEqual([null, 'groove']);
+  });
+  it('opens a mood at its starting tempo on the groove its chip moves to, even over a tempo set by hand there', () => {
+    const jam = new Jam(bundledGrooves(files));
+    jam.choose('slow-ballad');
+    jam.setTempo(60);
+    jam.choose('rock-straight-eighths');
+    expect(jam.chooseForMood('slow-ballad')).toBe(true);
+    jam.applyMood('sad');
+    expect(jam.tempo).toBe(66);
+    jam.setTempo(60);
+    const again = new Jam(bundledGrooves(files));
+    again.choose('slow-ballad');
+    again.clearMood();
+    again.applyMood('sad');
+    expect(again.tempo).toBe(60);
   });
   it('keeps a mood saved on the first groove off another groove the address opens', () => {
     const first = new Jam(bundledGrooves(files));
@@ -446,13 +530,12 @@ describe('jam moods', () => {
     const jam = new Jam(bundledGrooves(files));
     jam.choose('funk-sixteenths');
     jam.applyMood('funky');
-    jam.clearMood();
     jam.choose('rock-straight-eighths');
     jam.applyMood('sad');
     expect(jam.open('blues-shuffle')).toBe(true);
     expect([jam.mood, jam.progression]).toEqual([null, 'groove']);
     jam.open('funk-sixteenths');
-    expect([jam.mood, jam.progression]).toEqual([null, 'funky-i7-i7-i7-iv7']);
+    expect([jam.mood?.id, jam.progression]).toEqual(['funky', loopOf('funky')]);
     jam.open('rock-straight-eighths');
     expect([jam.mood?.id, jam.progression]).toEqual(['sad', sadLoop]);
     expect(new Jam(bundledGrooves(files)).mood).toBeNull();
@@ -472,7 +555,7 @@ describe('jam moods', () => {
     jam.applyMood('tense');
     const reloaded = new Jam(bundledGrooves(files));
     reloaded.choose('rock-straight-eighths');
-    expect([reloaded.mood?.id, reloaded.progression]).toEqual(['tense', 'tense-i-iv-v7-i']);
+    expect([reloaded.mood?.id, reloaded.progression]).toEqual(['tense', loopOf('tense')]);
     const saved = JSON.parse(stored.get('tabtrainer:jam')!);
     stored.set('tabtrainer:jam', JSON.stringify({ ...saved, 'rock-straight-eighths': { ...saved['rock-straight-eighths'], progression: 'ii-v-i' } }));
     const foreign = new Jam(bundledGrooves(files));
@@ -482,7 +565,7 @@ describe('jam moods', () => {
   it('opens a mood link with the mood scale, not the scale chosen before', () => {
     const jam = new Jam(bundledGrooves(files));
     jam.choose('rock-straight-eighths');
-    jam.setProgression('dark-i-bii-i-bii');
+    jam.setProgression(loopOf('dark'));
     expect(jam.setScale('blues')).toBe(true);
     jam.open('rock-straight-eighths', { mood: 'dark', progression: 'dark-i-bii-i-bii' });
     expect([jam.mood?.id, jam.scale]).toEqual(['dark', 'phrygian']);
@@ -499,10 +582,26 @@ describe('jam moods', () => {
     reloaded.choose('rock-straight-eighths');
     expect(reloaded.mood?.id).toBe('sad');
   });
-  it('opens a link to a mood loop even with no mood on', () => {
+  it('opens an old link to a mood loop with no mood on its eight bar loop', () => {
     const jam = new Jam(bundledGrooves(files));
     expect(jam.open('bossa-nova', { progression: 'melancholic-i-iv-iv-i' })).toBe(true);
-    expect([jam.mood, jam.timeline().bars.map(bar => bar.chord.name)]).toEqual([null, ['D', 'G', 'Gm', 'D']]);
+    expect([jam.mood, jam.timeline().bars.map(bar => bar.chord.name)]).toEqual([null, ['D', 'G', 'Gm', 'D', 'Bm', 'G', 'Gm', 'A']]);
+  });
+  it('reads a Jam preset in a saved setup or link as the mood loop that replaced it only when the mood is named', () => {
+    stored.set('tabtrainer:jam', JSON.stringify({ 'rock-straight-eighths': { mood: 'happy', progression: 'i-v-vi-iv' }, 'bossa-nova': { progression: 'i-v-vi-iv' } }));
+    const jam = new Jam(bundledGrooves(files));
+    jam.choose('rock-straight-eighths');
+    expect([jam.mood?.id, jam.progression, jam.timeline().bars.length]).toEqual(['happy', loopOf('happy'), 8]);
+    jam.choose('bossa-nova');
+    expect([jam.mood, jam.progression, jam.timeline().bars.length]).toEqual([null, 'i-v-vi-iv', 4]);
+    jam.open('metal-gallop', { mood: 'epic', progression: 'i-bvii-bvi-bvii' });
+    expect([jam.mood?.id, jam.progression]).toEqual(['epic', loopOf('epic', 1)]);
+  });
+  it('keeps Sad on after a reload of a setup saved with its old four bar loop', () => {
+    stored.set('tabtrainer:jam', JSON.stringify({ 'slow-ballad': { mood: 'sad', progression: 'sad-i-bvi-biii-bvii', key: 'Am', tempo: 66 } }));
+    const jam = new Jam(bundledGrooves(files));
+    jam.choose('slow-ballad');
+    expect([jam.mood?.id, jam.progression, jam.timeline().bars.length]).toEqual(['sad', sadLoop, 8]);
   });
   it('plays a mood on a draft without saving it, and drops it when the draft changes the chords', () => {
     const jam = new Jam(bundledGrooves(files));
@@ -524,17 +623,27 @@ describe('jam moods', () => {
   });
   it('opens a mood link with its own key and tempo, even outside the mood range', () => {
     const jam = new Jam(bundledGrooves(files));
-    expect(jam.open('rock-straight-eighths', { mood: 'sad', key: 'Am', tempo: 120, progression: 'sad-i-iv-i-v', swing: 50 })).toBe(true);
-    expect([jam.mood?.id, jam.key, jam.tempo, jam.progression]).toEqual(['sad', 'Am', 120, 'sad-i-iv-i-v']);
+    expect(jam.open('rock-straight-eighths', { mood: 'sad', key: 'Am', tempo: 120, progression: loopOf('sad', 1), swing: 50 })).toBe(true);
+    expect([jam.mood?.id, jam.key, jam.tempo, jam.progression]).toEqual(['sad', 'Am', 120, loopOf('sad', 1)]);
   });
   it('opens the chords of a link with no mood when the mood does not match them, or is unknown', () => {
     const jam = new Jam(bundledGrooves(files));
     jam.open('rock-straight-eighths', { mood: 'sad', progression: 'i-v-vi-iv' });
     expect([jam.mood, jam.progression]).toEqual([null, 'i-v-vi-iv']);
-    jam.open('rock-straight-eighths', { mood: 'angry', progression: 'sad-i-iv-i-v' });
-    expect([jam.mood, jam.progression]).toEqual([null, 'sad-i-iv-i-v']);
+    jam.open('rock-straight-eighths', { mood: 'angry', progression: loopOf('sad', 1) });
+    expect([jam.mood, jam.progression]).toEqual([null, loopOf('sad', 1)]);
     jam.open('rock-straight-eighths', { mood: 'sad' });
     expect(jam.mood?.id).toBe('sad');
+  });
+  it('opens a link that names only a mood, or chords that do not exist, on that mood first loop', () => {
+    for (const setup of [{ mood: 'sad' }, { mood: 'sad', progression: 'nope' }]) {
+      stored.clear();
+      const jam = new Jam(bundledGrooves(files));
+      jam.choose('rock-straight-eighths');
+      jam.setTempo(100);
+      expect(jam.open('rock-straight-eighths', setup)).toBe(true);
+      expect([jam.mood?.id, jam.progression, jam.key, jam.tempo]).toEqual(['sad', sadLoop, 'Em', 100]);
+    }
   });
   it('opens an old link without a mood as before', () => {
     const jam = new Jam(bundledGrooves(files));

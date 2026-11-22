@@ -196,7 +196,7 @@ tempo: 90
             <span id="jamPickerHint" hidden>Choose another groove</span>
             <nav id="jamGrooves" class="jam-grooves" aria-label="Grooves" hidden><ul id="jamGrooveList" class="jam-groove-list" aria-label="Bundled grooves"></ul><p id="jamMineHeading" class="jam-groove-group">Mine</p><ul id="jamMineList" class="jam-groove-list" aria-labelledby="jamMineHeading"></ul><p id="jamMineEmpty" class="jam-groove-empty">Grooves you save appear here.</p></nav>
           </div>
-          <p id="jamMoodWhy" class="jam-mood-why" aria-live="polite" hidden></p>
+          <p id="jamMoodWhy" class="jam-mood-why sr-only" aria-live="polite"></p>
         </div>
         <div class="jam-transport">
           <p class="jam-bpm"><span id="jamBpm" class="jam-bpm-value"></span> <span class="jam-bpm-unit">bpm</span></p>
@@ -207,7 +207,7 @@ tempo: 90
       <p id="jamMoodSummary" class="jam-mood-summary" hidden></p>
       <dl id="jamRecipe" class="jam-recipe" hidden>
         <div class="jam-fact"><dt>Scale to solo with</dt><dd id="jamRecipeScale" class="jam-fact-value"></dd><dd id="jamRecipeScaleHelp" class="jam-fact-help"></dd></div>
-        <div class="jam-fact"><dt>Chords</dt><dd id="jamRecipeChords" class="jam-fact-value jam-numerals"></dd><dd class="jam-fact-help"><button id="jamMoreLoops" class="jam-fact-link" type="button"></button></dd></div>
+        <div class="jam-fact"><dt>Chords</dt><dd id="jamRecipeChords" class="jam-fact-value" aria-live="polite"></dd><dd class="jam-fact-help"><button id="jamMoreLoops" class="jam-fact-link" type="button"></button></dd></div>
         <div class="jam-fact"><dt>Tempo</dt><dd id="jamRecipeTempo" class="jam-fact-value"></dd><dd id="jamRecipeTempoHelp" class="jam-fact-help"></dd></div>
         <div class="jam-fact"><dt>Groove</dt><dd id="jamRecipeGroove" class="jam-fact-value"></dd><dd id="jamRecipeGrooveHelp" class="jam-fact-help"></dd></div>
       </dl>
@@ -247,7 +247,7 @@ tempo: 90
             <div class="jam-field"><label for="jamKey">Key</label><select id="jamKey"></select></div>
             <div class="jam-field"><label for="jamCountIn">Count-in</label><select id="jamCountIn"><option value="off">Off</option><option value="bar">One bar</option></select></div>
           </div>
-          <div class="jam-field"><label for="jamProgression">Progression</label><select id="jamProgression"></select></div>
+          <div class="jam-field"><label id="jamProgressionLabel" for="jamProgression">Progression</label><select id="jamProgression"></select></div>
           <div class="jam-field"><div class="jam-field-head"><label for="jamTempo">Tempo</label><output id="jamTempoOut" for="jamTempo"></output></div><input id="jamTempo" type="range" min="40" max="220" step="1" aria-describedby="jamTempoHint" /><p id="jamTempoHint" class="jam-field-hint" hidden></p></div>
           <div class="jam-field"><div class="jam-field-head"><label for="jamSwing">Swing</label><output id="jamSwingOut" for="jamSwing"></output></div><input id="jamSwing" type="range" min="50" max="66" step="1" /></div>
         </div>

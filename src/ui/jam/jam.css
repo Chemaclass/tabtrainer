@@ -826,19 +826,42 @@ fieldset.jam-plays {
 .jam-mood-chips {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 6px;
 }
 .jam-mood-chip {
-  height: 38px;
-  padding: 0 16px;
+  height: 36px;
+  padding: 0 12px;
   border: 1px solid var(--deck-line);
   border-radius: var(--radius-pill);
   background: var(--page);
   color: var(--ink);
-  font: 500 15px/20px var(--ui);
+  font: 500 14px/20px var(--ui);
+}
+@media (pointer: coarse) {
+  .jam-mood-chip {
+    position: relative;
+  }
+  .jam-mood-chip::before {
+    content: "";
+    position: absolute;
+    inset: -4px 0;
+  }
 }
 .jam-mood-chip:hover {
   background: var(--wash);
+}
+.jam-mood-free {
+  position: relative;
+  margin-right: 7px;
+}
+.jam-mood-free::after {
+  content: "";
+  position: absolute;
+  top: 8px;
+  right: -8px;
+  bottom: 8px;
+  width: 1px;
+  background: var(--deck-line);
 }
 .jam-mood-chip[aria-pressed="true"] {
   border-color: var(--ink);
@@ -846,32 +869,52 @@ fieldset.jam-plays {
   color: var(--page);
   font-weight: 600;
 }
+/* The fretboard stays in view under eight bars, so a mood packs the stage tighter */
+.jam.mood-on .jam-stage {
+  gap: 12px;
+  padding-top: 16px;
+}
+.jam.mood-on .jam-moods .jam-context {
+  margin-bottom: 8px;
+}
+.jam.mood-on .jam-head {
+  align-items: center;
+}
+.jam.mood-on .jam-heading {
+  display: contents;
+}
+.jam.mood-on .jam-mood-why {
+  grid-column: 1 / -1;
+}
+.jam.mood-on .jam-transport {
+  grid-area: 1 / 2;
+}
 .jam.mood-on :is(.jam-heading .jam-context, .jam-about) {
   display: none;
 }
 .jam.mood-on .jam-heading h1 {
-  font: 800 88px/0.95 var(--display);
-  letter-spacing: -0.04em;
+  font: 800 64px/1 var(--display);
+  letter-spacing: -0.035em;
 }
 .jam-mood-why {
-  max-width: 600px;
-  margin: 16px 0 0;
-  font-size: 21px;
-  line-height: 30px;
+  max-width: 680px;
+  margin: 8px 0 0;
+  font-size: 17px;
+  line-height: 25px;
   color: var(--ink);
 }
 .jam-recipe {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 16px 24px;
+  gap: 12px 24px;
   margin: 0;
-  padding-top: 20px;
+  padding-top: 12px;
   border-top: 1px solid var(--rule);
 }
 .jam-fact {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;
   min-width: 0;
 }
 .jam-fact dt {
@@ -890,13 +933,6 @@ fieldset.jam-plays {
   font-weight: 600;
   line-height: 24px;
   overflow-wrap: anywhere;
-}
-.jam-numerals {
-  font-family: var(--mono);
-  word-spacing: 0.4em;
-}
-.jam-numerals-row {
-  display: block;
 }
 .jam-fact-help {
   font-size: 13px;
@@ -947,17 +983,34 @@ fieldset.jam-plays {
 }
 @media (min-width: 600px) {
   .jam.mood-on .jam-bars li {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 0 8px;
     padding: 8px 14px;
   }
   .jam.mood-on .jam-bars li[aria-current] {
     padding: 6px 12px;
   }
-}
-.jam.mood-on .jam-bar-numeral {
-  top: 8px;
-}
-.jam.mood-on .jam-bars li[aria-current] .jam-bar-numeral {
-  top: 6px;
+  .jam.mood-on .jam-bar-no {
+    grid-area: 1 / 2;
+  }
+  .jam.mood-on .jam-bars .jam-chord {
+    grid-area: 1 / 1;
+  }
+  .jam.mood-on .jam-bar-job {
+    grid-column: 1 / -1;
+  }
+  .jam.mood-on .jam-bar-numeral {
+    position: static;
+    margin-left: 4px;
+  }
+  .jam.mood-on .jam-bar-numeral::before {
+    content: "· " / "";
+  }
+  .jam.mood-on .jam-bars li[aria-current] .jam-bar-numeral::before {
+    content: "▶ " / "";
+    letter-spacing: 0;
+  }
 }
 .jam.mood-on .jam-bars li[aria-current]::after {
   content: none;
@@ -1002,8 +1055,8 @@ fieldset.jam-plays {
   display: flex;
   align-items: baseline;
   gap: 8px;
-  order: 1;
-  margin: 0 0 12px;
+  order: 3;
+  margin: 12px 0 0;
   font-size: 14px;
   line-height: 20px;
   color: var(--mut);
@@ -1048,14 +1101,20 @@ fieldset.jam-plays {
   font-weight: 600;
 }
 
-@media (min-width: 1024px) and (max-width: 1279px) {
-  .jam.mood-on .jam-heading h1 {
-    font-size: 72px;
+@media (min-width: 1024px) and (max-width: 1439px) {
+  .jam.mood-on .jam-stage {
+    padding-inline: 40px;
+  }
+  .jam.mood-on .jam-now-details {
+    display: none;
   }
 }
-@media (max-width: 1023px) {
+@media (max-width: 1439px) {
   .jam.mood-on .jam-heading h1 {
-    font-size: 64px;
+    font-size: 48px;
+  }
+  .jam-mood-chip {
+    padding: 0 10px;
   }
 }
 @media (max-width: 599px) {
@@ -1065,11 +1124,13 @@ fieldset.jam-plays {
   .jam-moods .jam-context {
     padding-inline: var(--space-4);
   }
+  /* The padding keeps the focus ring and the tap area inside the scrolling row */
   .jam-mood-chips {
     flex-wrap: nowrap;
     overflow-x: auto;
     scrollbar-width: none;
-    padding-inline: var(--space-4);
+    margin-block: -4px;
+    padding: 4px var(--space-4);
   }
   .jam-mood-chip {
     flex: none;
@@ -1077,12 +1138,26 @@ fieldset.jam-plays {
     padding: 0 14px;
   }
   .jam.mood-on .jam-heading h1 {
-    font-size: 60px;
+    font-size: 44px;
+  }
+  #jamRecipeGrooveHelp {
+    display: none;
   }
   .jam-mood-why {
+    margin-top: 6px;
+    font-size: 15px;
+    line-height: 21px;
+  }
+  /* The pinned Play bar leaves little room, so the board comes before its settings */
+  .jam.mood-on .jam-fretboard-head {
+    display: contents;
+  }
+  .jam.mood-on .jam-now {
+    margin-bottom: 12px;
+  }
+  .jam.mood-on .jam-fretboard-controls {
+    order: 4;
     margin-top: 12px;
-    font-size: 16px;
-    line-height: 23px;
   }
   .jam-recipe {
     display: block;
@@ -1100,15 +1175,21 @@ fieldset.jam-plays {
     margin-left: 4px;
   }
   .jam-bar-numeral::before {
-    content: "· ";
+    content: "· " / "";
   }
   .jam-bars li[aria-current] .jam-bar-numeral::before {
-    content: "▶ ";
+    content: "▶ " / "";
     letter-spacing: 0;
+  }
+  .jam.mood-on .jam-bars li {
+    padding: 6px 10px;
+  }
+  .jam.mood-on .jam-bars li[aria-current] {
+    padding: 4px 8px;
   }
   .jam.mood-on .jam-bars .jam-chord {
     font-size: clamp(14px, 28cqi, 24px);
-    line-height: 28px;
+    line-height: 26px;
   }
   .jam-bar-job {
     display: none;
@@ -1120,9 +1201,5 @@ fieldset.jam-plays {
   }
   .jam.mood-on .jam-now-job:not(:empty) {
     display: inline;
-  }
-  .jam-mood-legend {
-    order: 3;
-    margin: 12px 0 0;
   }
 }

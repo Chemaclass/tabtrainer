@@ -34,7 +34,7 @@ describe('mood stage', () => {
       name: 'Sad',
       why: moodById('sad').why,
       scale: { value: 'E minor', helper: 'Shown on the fretboard below' },
-      chords: { value: 'i bVI bIII bVII', helper: '2 more loops for Sad', more: true },
+      chords: { value: 'Sink and rise', helper: 'Loop 1 of 3. Next loop', more: true },
       tempo: { value: 'Slow, 56 to 88', helper: 'Faster and it turns restless' },
       groove: { value: 'Straight eighths rock in E', helper: '2 grooves fit Sad' },
       summary: 'E minor · slow, 56 to 88',
@@ -61,16 +61,22 @@ describe('mood stage', () => {
       { numeral: 'bVI', job: 'A major chord that sinks below home.' },
       { numeral: 'bIII', job: 'A moment of light.' },
       { numeral: 'bVII', job: 'Leads back home.' },
+      { numeral: 'i', job: 'Home again.' },
+      { numeral: 'bVI', job: 'Sinks below home again.' },
+      { numeral: 'iv', job: 'Sinks deeper.' },
+      { numeral: 'v', job: 'A soft pull back home.' },
     ]);
   });
   it('shows an eight bar loop in two rows of four, with a job for every bar', () => {
     const jam = new Jam(bundledGrooves(files));
     jam.choose('rock-straight-eighths');
     jam.applyMood('exciting');
-    expect(moodStage(jam)).toMatchObject({ chords: { value: 'I I bVII IV | I I IV bVII', helper: '2 more loops for Exciting' }, summary: 'E Mixolydian · fast, 120 to 176' });
+    expect(moodStage(jam)).toMatchObject({ chords: { value: 'Drive and climb', helper: 'Loop 1 of 3. Next loop' }, summary: 'E Mixolydian · fast, 120 to 176' });
     const bars = moodBars(jam)!;
     expect(bars).toHaveLength(8);
     expect(bars.at(-1)).toEqual({ numeral: 'bVII', job: 'One step below, climbing home.' });
+    jam.nextMoodLoop();
+    expect(moodStage(jam)?.chords).toMatchObject({ value: 'Punch and climb', helper: 'Loop 2 of 3. Next loop' });
   });
   it('spells the key out', () => {
     expect([keyLabel('Am'), keyLabel('Eb')]).toEqual(['A minor', 'Eb major']);
@@ -105,19 +111,27 @@ describe('mood note legend', () => {
 
 describe('mood progressions in the list', () => {
   it('keeps a chosen mood loop listed after its mood turns off', () => {
-    expect(progressionChoices(null, 'melancholic-i-iv-iv-i').at(-1)).toBe('melancholic-i-iv-iv-i');
+    const melancholic = moodById('melancholic').loops[1].slug;
+    const dark = moodById('dark').loops[0].slug;
+    expect(progressionChoices(null, melancholic).at(-1)).toBe(melancholic);
     expect(progressionChoices(null, 'i-v-vi-iv').filter(slug => slug === 'i-v-vi-iv')).toHaveLength(1);
     expect(progressionChoices(null, 'nope')).not.toContain('nope');
-    expect(progressionChoices(moodById('dark'), 'dark-i-bii-i-bii').filter(slug => slug === 'dark-i-bii-i-bii')).toHaveLength(1);
+    expect(progressionChoices(moodById('dark'), dark).filter(slug => slug === dark)).toHaveLength(1);
   });
-  it('adds the mood loops and names them after the mood', () => {
+  it('lists only the loops of the mood that is on, by name and chords', () => {
     const sad = moodById('sad');
-    expect(progressionChoices(null, 'groove')).not.toContain('sad-i-iv-i-v');
-    expect(progressionChoices(sad, 'groove').slice(-3)).toEqual(['sad-i-bvi-biii-bvii', 'sad-i-iv-i-v', 'sad-i-iv-bvi-v']);
-    expect(progressionName('sad-i-iv-i-v', sad)).toBe('Sad: i iv i v');
-    expect(progressionName('sad-i-iv-i-v')).toBe('i iv i v');
-    expect(progressionChoices(moodById('happy'), 'groove').filter(slug => slug === 'i-v-vi-iv')).toHaveLength(1);
-    expect(progressionName('i-v-vi-iv', moodById('happy'))).toBe('Happy: I V vi IV');
-    expect(progressionName('i-v-vi-iv')).toBe('I V vi IV');
+    const [, second] = sad.loops;
+    expect(progressionChoices(sad, 'groove')).toEqual(sad.loops.map(loop => loop.slug));
+    expect(progressionChoices(moodById('bluesy'), '12-bar-blues')).toEqual(['12-bar-blues', 'minor-blues']);
+    expect(progressionName(second.slug, sad)).toBe('Deeper each time: i iv i v, bVI bIII iv v');
+    expect(progressionName('12-bar-blues', moodById('bluesy'))).toBe('12 bar blues: I7 IV7 I7 I7, IV7 IV7 I7 I7, V7 IV7 I7 V7');
+  });
+  it('lists the groove own chords and the presets with no mood, and no mood loop', () => {
+    const choices = progressionChoices(null, 'groove');
+    expect(choices[0]).toBe('groove');
+    expect(choices).toContain('i-v-vi-iv');
+    expect(choices).not.toContain(moodById('sad').loops[0].slug);
+    expect(progressionName('12-bar-blues')).toBe('12 bar blues');
+    expect(progressionName(moodById('sad').loops[1].slug)).toBe('Deeper each time: i iv i v, bVI bIII iv v');
   });
 });

@@ -195,11 +195,37 @@ test('a mood sets the Jam to its chords, asks before dropping groove changes, an
   await page.locator('#jamGrooves a', { hasText: 'Sixteenth funk' }).click();
   await expect(page).toHaveURL(/\/jam\/funk-sixteenths\//);
   await expect(page.locator('#jamTitle')).toHaveText('Sad');
+  await expect(page.locator('#jamProgressionLabel')).toHaveText('Loop');
+  await expect(page.locator('#jamProgression option')).toHaveCount(3);
   await sad.click();
+  await expect(sad).toHaveAttribute('aria-pressed', 'true');
+  const free = page.getByRole('button', { name: 'Free, no mood' });
+  await free.click();
+  await expect(free).toHaveAttribute('aria-pressed', 'true');
   await expect(sad).toHaveAttribute('aria-pressed', 'false');
   await expect(page.locator('#jamTitle #jamPickerButton')).toBeVisible();
   await expect(page.locator('#jamRecipe')).toBeHidden();
   await expect(page.locator('#jamTempoHint')).toHaveText('');
+  await expect(page.locator('#jamMoodWhy')).toHaveText('No mood. The groove plays its own chords.');
+  await expect(page.locator('#jamProgressionLabel')).toHaveText('Progression');
+  await expect(page.locator('#jamProgression')).toHaveValue('groove');
+});
+
+test('the Jam opens on Free, and a link that names only a mood opens its first loop', async ({ page }) => {
+  await page.goto('./jam/blues-shuffle/');
+  const chips = page.locator('#jamMoods button');
+  await expect(chips.first()).toHaveText('Free');
+  await expect(chips.first()).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.locator('#jamMoods [aria-pressed="true"]')).toHaveCount(1);
+  await page.goto('./jam/rock-straight-eighths/?mood=melancholic');
+  await expect(page.locator('#jamTitle')).toHaveText('Melancholic');
+  await expect(page.locator('#jamRecipeChords')).toHaveText('Wistful steps');
+  await expect(page.locator('#jamMoreLoops')).toHaveText('Loop 1 of 3. Next loop');
+  await expect(page.locator('#jamProgression option')).toHaveText([
+    'Wistful steps: I iii IV iv, I vi IV iv',
+    'Changed home: I IV iv I, vi IV iv V',
+    'Soft and warm: Imaj7 vi7 IV iv, Imaj7 iii IV iv',
+  ]);
 });
 
 test('a mood keeps unsaved groove text when the groove fits it', async ({ page }) => {
@@ -237,9 +263,10 @@ test('a mood link opens the mood with its own key and tempo, and says when the t
   await expect(page.locator('#jamKey')).toHaveValue('Am');
   await expect(page.locator('#jamShareHint')).toHaveText('Mood, key, tempo and chords');
   await expect(page.locator('#jamTempoHint')).toHaveText('Faster than usual for Sad: 56 to 88');
-  await expect(page).toHaveURL(/\?mood=sad&key=Am&tempo=120&progression=sad-i-iv-i-v&swing=50$/);
+  await expect(page).toHaveURL(/\?mood=sad&key=Am&tempo=120&progression=sad-i-iv-i-v-bvi-biii-iv-v&swing=50$/);
+  await expect(page.locator('#jamBars li')).toHaveCount(8);
   await page.goto('./jam/rock-straight-eighths/?mood=sad&progression=i-v-vi-iv');
-  await expect(page.locator('#jamMoods [aria-pressed="true"]')).toHaveCount(0);
+  await expect(page.locator('#jamMoods [aria-pressed="true"]')).toHaveText(['Free']);
   await expect(page.locator('#jamShareHint')).toHaveText('Key, tempo, chords and swing');
 });
 

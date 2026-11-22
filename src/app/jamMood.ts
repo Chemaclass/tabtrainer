@@ -1,4 +1,4 @@
-import { barRows, jamProgression, moodNoteText, type Mood } from '../core/moods';
+import { jamProgression, moodNoteText, type Mood } from '../core/moods';
 import { scaleById, type ScaleId } from '../core/scales';
 import { isMinorKey, keyRootName, pitchClass } from '../core/theory';
 import { keyTonic } from '../core/harmony';
@@ -15,6 +15,7 @@ export interface MoodStage {
   name: string;
   why: string;
   scale: MoodFact;
+  /** The loop name as the value and the button to the next loop as the helper. */
   chords: MoodFact & { more: boolean };
   tempo: MoodFact;
   groove: MoodFact;
@@ -49,7 +50,8 @@ export function moodStage(jam: MoodJam): MoodStage | null {
   const { mood } = jam;
   if (!mood) return null;
   const loop = playingLoop(mood, jam.progression);
-  const others = mood.loops.length - 1;
+  const total = mood.loops.length;
+  const number = loop ? mood.loops.indexOf(loop) + 1 : 1;
   const scaleTitle = scaleTitleIn(jam.key, jam.scale);
   const range = `${mood.tempo.min} to ${mood.tempo.max}`;
   const note = tempoNote(mood, jam.tempo);
@@ -57,7 +59,7 @@ export function moodStage(jam: MoodJam): MoodStage | null {
     name: mood.name,
     why: mood.why,
     scale: { value: scaleTitle, helper: 'Shown on the fretboard below' },
-    chords: { value: loop ? barRows(loop.bars) : '', helper: `${plural(others, 'more loop', 'more loops')} for ${mood.name}`, more: others > 0 },
+    chords: { value: loop?.name ?? '', helper: `Loop ${number} of ${total}. Next loop`, more: total > 1 },
     tempo: { value: `${mood.tempo.word}, ${range}`, helper: note || mood.tempo.outside },
     groove: { value: jam.groove.title, helper: grooveHelper(jam, mood) },
     summary: [scaleTitle, `${mood.tempo.word.toLowerCase()}, ${range}`].join(SUMMARY_SEPARATOR),

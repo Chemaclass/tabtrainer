@@ -17,7 +17,7 @@ interface JamViewHandlers {
   changed: () => void;
   chordsChanged: (bars: readonly GrooveBar[]) => void;
   shareLink: () => string;
-  moodPicked: (id: MoodId) => void;
+  moodPicked: (id: MoodId | null) => void;
 }
 
 const COUNT_IN_BAR = 'bar';
@@ -66,6 +66,7 @@ export function jamView(jam: Jam, engine: LoopEngine, { active, choose, changed,
   const tempoOut = byId('jamTempoOut', HTMLOutputElement);
   const key = byId('jamKey', HTMLSelectElement);
   const progression = byId('jamProgression', HTMLSelectElement);
+  const progressionLabel = byId('jamProgressionLabel');
   const swing = byId('jamSwing', HTMLInputElement);
   const swingOut = byId('jamSwingOut', HTMLOutputElement);
   const countIn = byId('jamCountIn', HTMLSelectElement);
@@ -196,6 +197,7 @@ export function jamView(jam: Jam, engine: LoopEngine, { active, choose, changed,
 
   function showProgressions() {
     const { mood } = jam;
+    progressionLabel.textContent = mood ? 'Loop' : 'Progression';
     progression.replaceChildren(...progressionChoices(mood, jam.progression).map(slug => new Option(progressionName(slug, mood), slug)));
     setSelectValue(progression, jam.progression);
   }

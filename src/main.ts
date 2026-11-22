@@ -244,8 +244,9 @@ function chooseGroove(slug: string) {
     showJam(slug);
   });
 }
-function chooseMood(id: MoodId) {
-  if (jam.mood?.id === id) {
+function chooseMood(id: MoodId | null) {
+  if (id === (jam.mood?.id ?? null)) return;
+  if (id === null) {
     jam.clearMood();
     showJamGroove();
     return;
@@ -256,7 +257,7 @@ function chooseMood(id: MoodId) {
   const allowed = fits ? Promise.resolve(true) : grooveEditing.mayDiscard();
   void allowed.then(chosen => {
     if (!chosen) return;
-    const moved = jam.choose(slug) || (!fits && jam.endPreview());
+    const moved = jam.chooseForMood(slug) || (!fits && jam.endPreview());
     if (moved) grooveEditing.follow();
     jam.applyMood(id);
     jamming.show();
