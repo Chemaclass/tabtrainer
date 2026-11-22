@@ -255,6 +255,7 @@ export function jamView(jam: Jam, engine: LoopEngine, { active, choose, changed,
     showKeys();
     showChords();
     moods.show();
+    picker.show();
     showShare();
   }
 

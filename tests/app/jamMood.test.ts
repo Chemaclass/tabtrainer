@@ -36,7 +36,7 @@ describe('mood stage', () => {
       scale: { value: 'E minor', helper: 'Shown on the fretboard below' },
       chords: { value: 'i bVI bIII bVII', helper: '2 more loops for Sad', more: true },
       tempo: { value: 'Slow, 56 to 88', helper: 'Faster and it turns restless' },
-      groove: { value: 'Straight eighths rock in E', helper: '1 groove fits Sad' },
+      groove: { value: 'Straight eighths rock in E', helper: '2 grooves fit Sad' },
       summary: 'E minor · slow, 56 to 88',
       tempoHint: 'Usual for Sad: 56 to 88',
     });
@@ -44,7 +44,7 @@ describe('mood stage', () => {
   it('says when the groove the player chose does not fit the mood', () => {
     const jam = sadOnRock();
     jam.pickGroove('funk-sixteenths');
-    expect(moodStage(jam)?.groove.helper).toBe('1 groove fits Sad, not this one');
+    expect(moodStage(jam)?.groove.helper).toBe('2 grooves fit Sad, not this one');
     jam.applyMood('happy');
     expect(moodStage(jam)?.groove.helper).toBe('2 grooves fit Happy, not this one');
   });

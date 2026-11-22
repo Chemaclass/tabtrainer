@@ -15,7 +15,7 @@ It's a free web app with no account. Your songs stay in your browser, and it wor
 - **Follow along:** the playing note turns red and the page scrolls with it. Add a metronome or a count-in.
 - **Keep your place:** the library shows how far you got on each song and takes you back to it.
 - **Play hands free:** the main controls have keys, and `?` lists them. A two-button page turner pedal works as a foot switch.
-- **Jam:** pick a feeling, such as Sad, Epic or Dreamy, and improvise over a looping groove that carries it. The page shows the chords, the scale to solo with, and why it sounds that way. Grooves come in blues, rock, funk, reggae, jazz, bossa and metal, in any key.
+- **Jam:** pick a feeling, such as Sad, Epic or Dreamy, and improvise over a looping groove that carries it. The page shows the chords, the scale to solo with, and why it sounds that way. Grooves come in blues, rock, funk, reggae, jazz, bossa, metal and a slow ballad, in any key.
 - **Fretboard:** see where the notes of any key and scale sit on your instrument.
 - **Write your own:** write a song or groove in plain text. The score updates as you type, and a groove plays what you type.
 
