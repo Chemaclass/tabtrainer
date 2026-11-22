@@ -137,6 +137,10 @@ describe('hand marks', () => {
     ]);
     expect(levelMarks(null, ['Learn']).map(mark => mark.date)).toEqual([null]);
   });
+  it('dates a level played clean by its clean pass, even when it was marked first', () => {
+    const [learn] = levelMarks(song({ levels: { learn: at(3) }, markedLevels: { learn: at(1) } }), ['Learn']);
+    expect(learn).toEqual({ slug: 'learn', name: 'Learn', date: '3 Nov 2026', clean: true });
+  });
   it('explains the toggle', () => {
     expect(doneHint('Learn', null, false)).toBe('Click to mark Learn done.');
     expect(doneHint('Learn', '12 Nov 2026', false)).toBe('Marked done on 12 Nov 2026. Click to undo.');

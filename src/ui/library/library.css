@@ -422,8 +422,7 @@ button.level-mark:hover {
 }
 .level-mark.done {
   border-color: var(--ok);
-  background: var(--ok);
-  color: #fff;
+  color: var(--ok-text);
 }
 .level-mark.done::before {
   content: "✓ ";

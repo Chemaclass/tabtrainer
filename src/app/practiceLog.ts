@@ -66,6 +66,9 @@ export const hasPractice = ({ songs, days }: PracticeRecord): boolean => Object.
 
 const FIRST_LEVEL = PRACTICE_LEVELS[0].toLowerCase();
 
+// Version names come from song files, so a name like "constructor" must not read Object.prototype.
+export const timeOf = (times: Record<string, number>, key: string): number | undefined => Object.hasOwn(times, key) ? times[key] : undefined;
+
 /** When each version was first played clean, crediting a record from before levels were kept with its best guess. */
 export function levelsDone(song: SongRecord): Record<string, number> {
   if (song.levels) return song.levels;
@@ -78,7 +81,7 @@ export function levelsDone(song: SongRecord): Record<string, number> {
 
 const unionTimes = (a: Record<string, number>, b: Record<string, number>) => {
   const times = { ...a };
-  for (const [key, at] of Object.entries(b)) times[key] = earliest(times[key], at)!;
+  for (const [key, at] of Object.entries(b)) times[key] = earliest(timeOf(times, key), at)!;
   return times;
 };
 
@@ -90,7 +93,7 @@ export function songProgress(song: SongRecord | null, levels: readonly string[] 
   if (!song) return 'not-started';
   if (levels.length === 0) return song.cleanAt !== null || (song.doneAt ?? null) !== null || Object.keys(doneLevels(song)).length > 0 ? 'done' : 'in-progress';
   const done = doneLevels(song);
-  return levels.every(level => done[level] !== undefined) ? 'done' : 'in-progress';
+  return levels.every(level => timeOf(done, level) !== undefined) ? 'done' : 'in-progress';
 }
 
 const earliest = (a: number | null | undefined, b: number | null | undefined) => a == null ? b ?? null : b == null ? a : Math.min(a, b);
@@ -101,8 +104,10 @@ function mergeSong(mine: SongRecord | undefined, theirs: SongRecord): SongRecord
   if (!mine) return theirs;
   const latest = theirs.lastPlayed > mine.lastPlayed ? theirs : mine;
   const merged: SongRecord = { ...latest, bestSpeed: Math.max(mine.bestSpeed, theirs.bestSpeed), cleanAt: earliest(mine.cleanAt, theirs.cleanAt), seconds: Math.max(mine.seconds, theirs.seconds) };
-  if (mine.levels || theirs.levels) {
-    merged.levels = unionTimes(levelsDone(mine), levelsDone(theirs));
+  // Each side's levels are worked out before merging, since the merged version and clean time no longer pair up.
+  if (mine.levels || theirs.levels || mine.version !== null || theirs.version !== null) {
+    const levels = unionTimes(levelsDone(mine), levelsDone(theirs));
+    if (Object.keys(levels).length > 0 || mine.levels || theirs.levels) merged.levels = levels;
   }
   if (mine.markedLevels || theirs.markedLevels) merged.markedLevels = unionTimes(mine.markedLevels ?? {}, theirs.markedLevels ?? {});
   const doneAt = earliest(mine.doneAt, theirs.doneAt);
@@ -124,6 +129,12 @@ export class PracticeLog {
 
   progress(ref: string): SongProgress {
     return songProgress(this.song(ref));
+  }
+
+  /** Whether this version of the song was played whole at full speed or marked done by hand. */
+  levelDone(ref: string, level: string | null): boolean {
+    const song = this.song(ref);
+    return song !== null && level !== null && timeOf(doneLevels(song), level) !== undefined;
   }
 
   latest(): { ref: string; song: SongRecord } | null {
@@ -152,7 +163,7 @@ export class PracticeLog {
       const loop: BarLoop | null = pass.whole ? null : [pass.firstBar, pass.lastBar];
       const fullSpeed = pass.whole && pass.speed >= CLEAN_SPEED;
       const levels = version === null ? null : { ...levelsDone(song) };
-      const clean = fullSpeed && (levels && version !== null ? levels[version] === undefined : song.cleanAt === null);
+      const clean = fullSpeed && (levels && version !== null ? timeOf(levels, version) === undefined : song.cleanAt === null);
       const best = pass.speed > song.bestSpeed;
       if (best) song.bestSpeed = pass.speed;
       if (clean && levels && version !== null) levels[version] = now;
@@ -171,7 +182,7 @@ export class PracticeLog {
       const song: SongRecord = { ...record.songs[ref] ?? newSong(0) };
       if (level !== null) {
         const marked = { ...song.markedLevels };
-        if (done && levelsDone(song)[level] === undefined) marked[level] ??= now;
+        if (done && timeOf(levelsDone(song), level) === undefined && timeOf(marked, level) === undefined) marked[level] = now;
         if (!done) delete marked[level];
         song.markedLevels = marked;
       } else if (done) {
@@ -209,7 +220,7 @@ export class PracticeLog {
     let record: PracticeRecord;
     try { record = this.read(); } catch { return null; }
     const result = change(record);
-    return this.store.write(record) ? result : null;
+    return isPracticeRecord(record) && this.store.write(record) ? result : null;
   }
 
   // Throws on unreadable or corrupt data, so a write never replaces a record it could not read.
