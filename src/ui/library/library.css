@@ -325,6 +325,7 @@ body:not(.library-view) .family-switch {
   list-style: none;
 }
 .catalogue-row {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 20px;
@@ -336,16 +337,95 @@ body:not(.library-view) .family-switch {
   text-align: left;
   background: var(--page);
 }
-a.catalogue-row {
+.catalogue-row {
   font: 500 var(--text-s)/20px var(--ui);
   color: var(--ink);
-  text-decoration: none;
 }
 .catalogue-row:hover {
   background: var(--wash);
 }
-.catalogue-row:focus-visible {
+.catalogue-link {
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  text-decoration: none;
+}
+.catalogue-link::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+}
+.catalogue-link:focus-visible {
+  outline: none;
+}
+.catalogue-link:focus-visible::after {
+  outline: 2px solid var(--ink);
   outline-offset: -2px;
+}
+.done-toggle,
+.level-mark {
+  position: relative;
+  z-index: 1;
+}
+.catalogue-progress-line.done-toggle {
+  align-self: flex-start;
+  max-width: 100%;
+}
+.done-toggle {
+  min-height: 0;
+  padding: var(--space-1) 0;
+  margin: calc(-1 * var(--space-1)) 0;
+  border: 0;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+}
+.done-toggle:hover .progress-label,
+.done-toggle:hover .progress-when,
+.catalogue-progress-line.done-toggle:hover {
+  text-decoration: underline;
+}
+button.catalogue-progress {
+  align-items: flex-start;
+  font: inherit;
+  color: inherit;
+}
+.catalogue-progress-line.not-started {
+  color: var(--mut);
+}
+.level-marks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: var(--space-2);
+}
+.level-mark {
+  min-height: 28px;
+  padding: 0 10px;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-pill);
+  background: none;
+  font: 500 var(--text-xs)/26px var(--ui);
+  color: var(--mut);
+  cursor: pointer;
+}
+span.level-mark {
+  cursor: default;
+}
+button.level-mark:hover {
+  border-color: var(--mut);
+  color: var(--ink);
+}
+.level-mark.done {
+  border-color: var(--ok);
+  color: var(--ok-text);
+}
+.level-mark.done::before {
+  content: "✓ ";
 }
 .row-status {
   display: flex;

@@ -4,7 +4,7 @@ import { songAddress } from '../../app/songLink';
 import { setSelectValue } from '../shell/dropdown';
 import { catalogueMatches, categoryCounts, difficultyLabel, isProgressFilter, progressCounts, type CatalogueEntry, type LibraryKind, type ProgressFilter } from '../../app/catalogue';
 import { songProgress, type SongProgress, type SongRecord } from '../../app/practiceLog';
-import { pickUp, pickUpAction, pickUpState, pickUpTitle, progressSummary, recentWins, rowProgress, speedLadder, weekSummary, weekUnit, type PickUp, type PracticeHistory, type RowProgress } from '../../app/practiceProgress';
+import { doneHint, levelMarks, pickUp, pickUpAction, pickUpState, pickUpTitle, progressSummary, recentWins, rowProgress, speedLadder, weekSummary, weekUnit, type PickUp, type PracticeHistory, type RowProgress } from '../../app/practiceProgress';
 import { DEFAULT_TEMPLATE, SONG_TEMPLATES, templateInstruments, type SongTemplate, type SongTemplateId, type TemplateInstrument } from '../../app/songTemplates';
 import { INSTRUMENTS, isFamily } from '../../core/instruments';
 import { defaultSpeedPractice } from '../../core/speedPractice';
@@ -33,7 +33,7 @@ function checkMark() {
   icon.append(path); return icon;
 }
 
-export function libraryView(onPick: (value: string) => void, onContinue: (plan: PickUp) => void, onNew: () => void, onTemplate: (id: SongTemplateId, instrument: TemplateInstrument) => void, onOpen: () => void, onPropose: () => void, onExercises: () => void, onShare: (value: string, ready: boolean) => void, onBackup: () => void) {
+export function libraryView(onPick: (value: string) => void, onContinue: (plan: PickUp) => void, onNew: () => void, onTemplate: (id: SongTemplateId, instrument: TemplateInstrument) => void, onOpen: () => void, onPropose: () => void, onExercises: () => void, onShare: (value: string, ready: boolean) => void, onBackup: () => void, onDone: (value: string, level: string | null, done: boolean) => void) {
   let shares = new Map<string, ShareState>(), history: PracticeHistory | null = null;
   let entries: CatalogueEntry[] = [], family = 'bass', kind: LibraryKind = 'exercises', expanded = false;
   let practice: Record<string, SongRecord> = {}, now = 0, increase = defaultSpeedPractice.increase, progressFilter: ProgressFilter = 'all';
@@ -89,40 +89,74 @@ export function libraryView(onPick: (value: string) => void, onContinue: (plan: 
     slot.append(mark, text('span', partial ? `${Math.round(share * levels)} of ${levels} levels done` : statusText[progress], 'sr-only'));
     return slot;
   }
+  // A song without levels is marked done by clicking its progress; a song with levels by clicking each level.
+  // A clean pass was earned by playing, so its row shows the date and offers no undo.
+  function doneToggle(entry: CatalogueEntry, progress: RowProgress, levelled: boolean, className: string, label: string | null) {
+    const clean = (practice[entry.value]?.cleanAt ?? null) !== null;
+    const toggle = text(levelled || clean ? 'span' : 'button', '', className);
+    if (label !== null) toggle.textContent = label;
+    if (!(toggle instanceof HTMLButtonElement)) return toggle;
+    const done = progress.progress === 'done';
+    toggle.type = 'button'; toggle.classList.add('done-toggle'); toggle.dataset.done = entry.value;
+    toggle.setAttribute('aria-pressed', String(done));
+    toggle.title = doneHint(entry.title, done ? progress.date : null, false);
+    toggle.onclick = () => onDone(entry.value, null, !done);
+    return toggle;
+  }
+  const doneHelp = (toggle: HTMLElement, title: string) => { if (toggle instanceof HTMLButtonElement) toggle.append(text('span', `, mark ${title} done`, 'sr-only')); };
+  function levelToggles(entry: CatalogueEntry) {
+    const group = text('span', '', 'level-marks'); group.setAttribute('role', 'group'); group.setAttribute('aria-label', `Levels done in ${entry.title}`);
+    for (const mark of levelMarks(practice[entry.value] ?? null, levelsOf(entry))) {
+      const pill = text(mark.clean ? 'span' : 'button', mark.name, mark.date !== null ? 'level-mark done' : 'level-mark');
+      pill.title = doneHint(mark.name, mark.date, mark.clean);
+      if (pill instanceof HTMLButtonElement) {
+        pill.type = 'button'; pill.dataset.done = entry.value; pill.dataset.level = mark.slug;
+        pill.setAttribute('aria-pressed', String(mark.date !== null)); pill.setAttribute('aria-label', `Mark ${entry.title} ${mark.name} done`);
+        pill.onclick = () => onDone(entry.value, mark.slug, mark.date === null);
+      } else pill.append(text('span', `, played clean on ${mark.date}`, 'sr-only'));
+      group.append(pill);
+    }
+    return group;
+  }
   function progressLane(entry: CatalogueEntry, progress: RowProgress) {
-    const lane = text('span', '', `catalogue-progress ${progress.progress}`);
-    if (progress.progress === 'not-started') { lane.append(text('span', `Not started · ${entry.tempo} BPM`, 'progress-when')); return lane; }
-    if (progress.date) lane.title = `Done on ${progress.date}`;
-    lane.append(text('span', progress.label, 'progress-label'));
-    if (progress.best !== null) {
-      const bar = text('span', '', 'progress-bar'); bar.setAttribute('aria-hidden', 'true'); bar.style.setProperty('--best', `${progress.best}%`);
-      lane.append(bar);
-    } else if (progress.when) lane.append(text('span', progress.when, 'progress-when'));
+    const lane = doneToggle(entry, progress, levelsOf(entry).length > 0, `catalogue-progress ${progress.progress}`, null);
+    if (progress.progress === 'not-started') lane.append(text('span', `Not started · ${entry.tempo} BPM`, 'progress-when'));
+    else {
+      lane.append(text('span', progress.label, 'progress-label'));
+      if (progress.best !== null) {
+        const bar = text('span', '', 'progress-bar'); bar.setAttribute('aria-hidden', 'true'); bar.style.setProperty('--best', `${progress.best}%`);
+        lane.append(bar);
+      } else if (progress.when) lane.append(text('span', progress.when, 'progress-when'));
+    }
+    doneHelp(lane, entry.title);
     return lane;
   }
   function row(entry: CatalogueEntry) {
     const li = document.createElement('li'), path = bundledPath(entry.value);
-    const button = document.createElement(path === null ? 'button' : 'a'); button.className = 'catalogue-row'; button.dataset.value = entry.value;
-    if (button instanceof HTMLAnchorElement && path !== null) button.href = songAddress(import.meta.env.BASE_URL, path);
-    else button.setAttribute('type', 'button');
-    const progress = rowProgress(practice[entry.value] ?? null, now, levelsOf(entry));
+    // The row is no control itself: the title link stretches over it, so the done toggles can sit inside it.
+    const button = text('div', '', 'catalogue-row'); button.dataset.value = entry.value;
+    const link = document.createElement(path === null ? 'button' : 'a'); link.className = 'catalogue-link';
+    if (link instanceof HTMLAnchorElement && path !== null) link.href = songAddress(import.meta.env.BASE_URL, path);
+    else link.setAttribute('type', 'button');
+    link.append(text('strong', entry.title));
+    const levels = levelsOf(entry), progress = rowProgress(practice[entry.value] ?? null, now, levels);
     button.append(status(entry, progress.progress, progress.share));
-    const copy = text('span', '', 'catalogue-copy'); copy.append(text('strong', entry.title));
-    if (progress.progress !== 'not-started') {
-      const line = text('span', progressSummary(progress), `catalogue-progress-line ${progress.progress}`);
-      if (progress.date) line.title = `Done on ${progress.date}`;
-      copy.append(line);
+    const copy = text('span', '', 'catalogue-copy'); copy.append(link);
+    if (levels.length === 0 || progress.progress !== 'not-started') {
+      const line = doneToggle(entry, progress, levels.length > 0, `catalogue-progress-line ${progress.progress}`, progressSummary(progress));
+      doneHelp(line, entry.title); copy.append(line);
     }
     const description = kind === 'exercises' ? entry.about : entry.artist;
     if (description) copy.append(text('span', description, 'catalogue-description'));
-    const versions = entry.versions > 1 ? `${entry.versions} ${entry.practiceLevels ? 'practice levels' : 'arrangements'}` : '';
+    if (levels.length > 0) copy.append(levelToggles(entry));
+    const versions = entry.versions > 1 && levels.length === 0 ? `${entry.versions} arrangements` : '';
     const mobileMeta = `${levelLabel(entry)} · ${entry.tempo} BPM${versions ? ` · ${versions}` : ''}`;
     copy.append(text('span', mobileMeta, 'catalogue-mobile-meta')); button.append(copy);
     const share = shares.get(entry.value);
     button.append(text('span', levelLabel(entry), 'catalogue-level'), share ? text('span', shareLabel(share), share.ready ? 'share-state ready' : 'share-state') : progressLane(entry, progress));
     if (versions) copy.append(text('span', versions, 'catalogue-arrangements'));
     const arrow = text('span', '→', 'catalogue-arrow'); arrow.setAttribute('aria-hidden', 'true'); button.append(arrow);
-    button.onclick = event => { if (path !== null && !isPlainClick(event)) return; event.preventDefault(); onPick(entry.value); }; li.append(button);
+    link.onclick = event => { if (path !== null && !isPlainClick(event)) return; event.preventDefault(); onPick(entry.value); }; li.append(button);
     if (share) {
       const action = text('button', share.ready ? 'Add to TabTrainer' : 'See what is left', share.ready ? 'share-action ready' : 'share-action toggle');
       action.setAttribute('type', 'button'); action.setAttribute('aria-label', `${action.textContent}: ${entry.title}`);
@@ -216,6 +250,11 @@ export function libraryView(onPick: (value: string) => void, onContinue: (plan: 
     });
   }
   return {
+    announce(message: string) { byId('songResults').textContent = message; },
+    focusDone(value: string, level: string | null) {
+      const toggles = [...list.querySelectorAll<HTMLElement>('[data-done]')].filter(t => t.dataset.done === value && (t.dataset.level ?? null) === level && t.offsetParent !== null);
+      (toggles[0] ?? byId('catalogueHeading')).focus();
+    },
     chooseTemplate() { byId('templateList').querySelector<HTMLButtonElement>('.template-card.default')?.focus(); },
     show(all: CatalogueEntry[], instrument: string, category: LibraryKind, songs: Record<string, SongRecord>, time: number, shareStates: Map<string, ShareState>, climbIncrease: number, practiceHistory: PracticeHistory | null) {
       if (kind !== category || family !== instrument) { search.value = ''; setSelectValue(level, ''); progressFilter = 'all'; expanded = false; }

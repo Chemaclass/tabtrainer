@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { CatalogueEntry } from '../../src/app/catalogue';
 import type { PracticeDay, SongRecord, Win } from '../../src/app/practiceLog';
-import { daysAgo, doneWhen, fullDate, minutesLabel, nextSpeed, recentWins, weekSummary, weekUnit, pickUp, pickUpAction, pickUpState, pickUpTitle, progressSummary, rowProgress, speedLadder } from '../../src/app/practiceProgress';
+import { daysAgo, doneHint, doneWhen, fullDate, levelMarks, minutesLabel, nextSpeed, recentWins, weekSummary, weekUnit, pickUp, pickUpAction, pickUpState, pickUpTitle, progressSummary, rowProgress, speedLadder } from '../../src/app/practiceProgress';
 
 const at = (day: number, hour = 12) => new Date(2026, 10, day, hour).getTime();
 const entry = (value: string, family = 'bass'): CatalogueEntry => ({ value, title: `${value} title`, artist: '', kind: 'exercises', family, tempo: 90, versions: 1 });
@@ -120,6 +120,37 @@ describe('level progress', () => {
   });
   it('falls back to the best speed before any level is done', () => {
     expect(rowProgress(song({ bestSpeed: 85, version: 'learn' }), at(15), levels)).toMatchObject({ label: 'Best 85%', share: null, progress: 'in-progress' });
+  });
+});
+
+describe('hand marks', () => {
+  it('says done with the day it was marked', () => {
+    const row = rowProgress(song({ doneAt: at(13), bestSpeed: 0, cleanAt: null }), at(15));
+    expect(row).toMatchObject({ progress: 'done', label: 'Done', when: '2 days ago', date: '13 Nov 2026' });
+    expect(rowProgress(song({ doneAt: at(13), cleanAt: at(10) }), at(15)).label).toBe('Clean at 100%');
+  });
+  it('lists each level with its date', () => {
+    expect(levelMarks(song({ levels: { develop: at(12) }, markedLevels: { challenge: at(13) } }), ['Learn', 'Develop', 'Challenge'])).toEqual([
+      { slug: 'learn', name: 'Learn', date: null, clean: false },
+      { slug: 'develop', name: 'Develop', date: '12 Nov 2026', clean: true },
+      { slug: 'challenge', name: 'Challenge', date: '13 Nov 2026', clean: false },
+    ]);
+    expect(levelMarks(null, ['Learn']).map(mark => mark.date)).toEqual([null]);
+  });
+  it('dates a level played clean by its clean pass, even when it was marked first', () => {
+    const [learn] = levelMarks(song({ levels: { learn: at(3) }, markedLevels: { learn: at(1) } }), ['Learn']);
+    expect(learn).toEqual({ slug: 'learn', name: 'Learn', date: '3 Nov 2026', clean: true });
+  });
+  it('explains the toggle', () => {
+    expect(doneHint('Learn', null, false)).toBe('Click to mark Learn done.');
+    expect(doneHint('Learn', '12 Nov 2026', false)).toBe('Marked done on 12 Nov 2026. Click to undo.');
+    expect(doneHint('Learn', '12 Nov 2026', true)).toBe('Played clean on 12 Nov 2026.');
+  });
+  it('says not started, not decades ago, for a song only marked whose shape changed', () => {
+    expect(rowProgress(song({ lastPlayed: 0, bestSpeed: 0, version: null, markedLevels: { learn: at(2) } }), at(15))).toMatchObject({ label: 'Not started', when: null });
+  });
+  it('never picks up a song that was only marked', () => {
+    expect(pickUp({ ladder: song({ lastPlayed: 0 }) }, entries, 'bass')).toBeNull();
   });
 });
 
