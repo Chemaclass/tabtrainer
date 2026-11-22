@@ -135,6 +135,8 @@ function drawPalmMutes(svg: SVGSVGElement, targets: Target[], top: number) {
       if (new Set(run.map(target => target.event)).size < 2) continue;
       lineFrom = labelEnd + MARK.gap;
     }
+    lineFrom = Math.max(lineFrom, labelEnd + MARK.gap);
+    if (right <= lineFrom) continue;
     const lineY = y - MARK.lineLift;
     svgLine(svg, 'technique-line', lineFrom, lineY, right, lineY);
     svgLine(svg, 'technique-line end', right, lineY, right, lineY + MARK.tick);

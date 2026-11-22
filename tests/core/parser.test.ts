@@ -217,6 +217,10 @@ describe('palm mute', () => {
   it('points a problem in a muted note at the note', () => {
     expect(guitar(':q _3.9 0.6 0.6 0.6 0.6 |').issues).toEqual([expect.objectContaining({ code: 'string-missing', col: 5, length: 3 })]);
   });
+  it('keeps the mute on a tie that holds a muted note', () => {
+    const events = guitar(':q _0.6 ~0.6 0.6 ~0.6 |').song.bars[0].events;
+    expect(events.map(e => !!e.palmMute)).toEqual([true, true, false, false]);
+  });
   it('survives a round trip', () => {
     const { song } = guitar(':8 _0.6 _0.6 (3.6 5.5) _(3.6 5.5) _x.6 _0.6 :q _~0.6 | _(0.6 x.5) 0.6 _0.6:h |');
     const text = serializeSong(song);

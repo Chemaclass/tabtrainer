@@ -17,7 +17,7 @@ export function timeSignatureDigitHeight(strings: number, stringSpace: number) {
 }
 
 /** Height of the band above the tab lines that holds technique marks such as "P.M.". */
-export const markRoom = (marks: { letters: boolean }, stringSpace: number) => marks.letters ? 1.5 * stringSpace : 0;
+export const markRoom = (marks: { letters: boolean }, stringSpace: number) => marks.letters ? Math.round(1.5 * stringSpace) : 0;
 
 export function barWidths(avail: number, weights: number[], mins: number[]): number[] {
   const minSum = mins.reduce((a, b) => a + b, 0);

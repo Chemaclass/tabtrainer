@@ -140,7 +140,8 @@ export class Synth {
     const lowPass = this.ctx!.createBiquadFilter();
     lowPass.type = 'lowpass';
     const closed = Math.max(VOICE.closedMin, frequency * VOICE.closedRatio);
-    lowPass.frequency.setValueAtTime(Math.max(closed, Math.min(VOICE.openMax, frequency * tone.openRatio)), when);
+    const open = Math.min(VOICE.openMax, frequency * tone.openRatio);
+    lowPass.frequency.setValueAtTime(shape.muted ? Math.max(closed, open) : open, when);
     lowPass.frequency.exponentialRampToValueAtTime(closed, when + tone.sweepTime);
     const sineLevel = this.ctx!.createGain();
     sineLevel.gain.value = VOICE.sineLevel;

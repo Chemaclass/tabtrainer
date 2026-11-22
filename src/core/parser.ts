@@ -110,6 +110,7 @@ export function parseSong(src: string): ParseResult {
   };
   let bars: Bar[] = [];
   const mutedStrings = new Set<number>();
+  const palmStrings = new Set<number>();
   const st = { cur: null as Bar | null, notesAt: NO_TOKEN, startAt: null as Tok | null }; let t = 0;
   let dur = parseDuration('q')!;
   let pendingTempo: number | undefined;
@@ -159,7 +160,9 @@ export function parseSong(src: string): ParseResult {
     for (const n of notes) { if (n.dead) mutedStrings.add(n.string); else mutedStrings.delete(n.string); }
     const ev: NoteEvent = { start: t, dur: dur.ticks, notes, value: dur.value, dots: dur.dots, triplet: dur.triplet };
     if (pendingChord) ev.chord = pendingChord; if (pendingText) ev.text = pendingText; if (pendingLyric) ev.lyric = pendingLyric;
-    if (palmMute) ev.palmMute = true;
+    // A tie keeps the palm mute of the note it holds, so the held part does not ring out.
+    if (palmMute || (notes.length > 0 && notes.every(n => n.tie && palmStrings.has(n.string)))) ev.palmMute = true;
+    for (const n of notes) { if (ev.palmMute) palmStrings.add(n.string); else palmStrings.delete(n.string); }
     pendingChord = pendingText = pendingLyric = undefined;
     st.cur.events.push(ev); t += dur.ticks;
   };
@@ -174,7 +177,7 @@ export function parseSong(src: string): ParseResult {
       const name = s.replace(/^=+/, '').trim() || `Version ${versions.length + 1}`;
       if (bars.length || versionLine) versions.push(version());
       else if (versions.length === 0 && pendingSection) { /* section before the first version applies to it */ }
-      bars = []; mutedStrings.clear(); st.startAt = null; versionName = name; versionLine = tok.line; versionAt = spanOf(tok); versionLevel = undefined;
+      bars = []; mutedStrings.clear(); palmStrings.clear(); st.startAt = null; versionName = name; versionLine = tok.line; versionAt = spanOf(tok); versionLevel = undefined;
       pendingTempo = undefined;
       time = [headerTime[0], headerTime[1]]; dur = parseDuration('q')!; pendingChord = pendingText = pendingLyric = undefined;
       if (versions.some(v => v.name === name)) report('warning', 'version-duplicate', spanOf(tok), `There is already a version called "${name}"`);

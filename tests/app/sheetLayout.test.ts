@@ -107,6 +107,6 @@ describe('line breaks', () => {
 describe('mark room', () => {
   it('makes room above the tab only for a system with a mark', () => {
     expect(markRoom({ letters: false }, 13)).toBe(0);
-    expect(markRoom({ letters: true }, 13)).toBe(19.5);
+    expect(markRoom({ letters: true }, 13)).toBe(20);
   });
 });
