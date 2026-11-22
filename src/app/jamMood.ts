@@ -1,4 +1,4 @@
-import { jamProgression, moodNoteText, type Mood } from '../core/moods';
+import { barRows, jamProgression, moodNoteText, type Mood } from '../core/moods';
 import { scaleById, type ScaleId } from '../core/scales';
 import { isMinorKey, keyRootName, pitchClass } from '../core/theory';
 import { keyTonic } from '../core/harmony';
@@ -57,7 +57,7 @@ export function moodStage(jam: MoodJam): MoodStage | null {
     name: mood.name,
     why: mood.why,
     scale: { value: scaleTitle, helper: 'Shown on the fretboard below' },
-    chords: { value: loop?.bars ?? '', helper: `${plural(others, 'more loop', 'more loops')} for ${mood.name}`, more: others > 0 },
+    chords: { value: loop ? barRows(loop.bars) : '', helper: `${plural(others, 'more loop', 'more loops')} for ${mood.name}`, more: others > 0 },
     tempo: { value: `${mood.tempo.word}, ${range}`, helper: note || mood.tempo.outside },
     groove: { value: jam.groove.title, helper: grooveHelper(jam, mood) },
     summary: [scaleTitle, `${mood.tempo.word.toLowerCase()}, ${range}`].join(SUMMARY_SEPARATOR),

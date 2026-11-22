@@ -243,6 +243,19 @@ test('a mood link opens the mood with its own key and tempo, and says when the t
   await expect(page.locator('#jamShareHint')).toHaveText('Key, tempo, chords and swing');
 });
 
+test('Exciting starts fast with eight bars, and an old Exciting link opens its new loop', async ({ page }) => {
+  await page.goto('./jam/blues-shuffle/');
+  await page.getByRole('group', { name: 'How do you want it to feel?' }).getByRole('button', { name: 'Exciting', exact: true }).click();
+  await expect(page.locator('#jamTitle')).toHaveText('Exciting');
+  await expect(page.locator('#jamTempo')).toHaveValue('148');
+  await expect(page.locator('#jamBars li')).toHaveCount(8);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(page.viewportSize()!.width);
+  await page.goto('./jam/rock-straight-eighths/?mood=exciting&progression=exciting-i-bvii-iv-i');
+  await expect(page.locator('#jamTitle')).toHaveText('Exciting');
+  await expect(page.locator('#jamBars li')).toHaveCount(8);
+  await expect(page).toHaveURL(/progression=exciting-i-bvii-iv-i-i-bvii-iv-bvii/);
+});
+
 test('the landing demo plays two bars in one click and lights the playing note', async ({ page }) => {
   await page.addInitScript(() => {
     const Stub = window.AudioContext;

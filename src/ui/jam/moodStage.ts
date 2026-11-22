@@ -1,6 +1,6 @@
 import type { Jam } from '../../app/jam';
 import { moodStage, type MoodStage } from '../../app/jamMood';
-import { MOODS, type MoodId } from '../../core/moods';
+import { BAR_ROW_SEPARATOR, MOODS, type MoodId } from '../../core/moods';
 import { byId } from '../dom';
 
 interface MoodStageHandlers {
@@ -58,12 +58,21 @@ export function moodStageView(jam: Jam, { pick, nextLoop }: MoodStageHandlers) {
     }
   }
 
+  function showChordRows(chords: string) {
+    byId('jamRecipeChords').replaceChildren(...chords.split(BAR_ROW_SEPARATOR).map(row => {
+      const line = document.createElement('span');
+      line.className = 'jam-numerals-row';
+      line.textContent = row;
+      return line;
+    }));
+  }
+
   function showFacts(stage: MoodStage) {
     setText(moodName, stage.name);
     setText(why, stage.why);
     setText(byId('jamRecipeScale'), stage.scale.value);
     setText(byId('jamRecipeScaleHelp'), stage.scale.helper);
-    setText(byId('jamRecipeChords'), stage.chords.value);
+    showChordRows(stage.chords.value);
     setText(moreLoops, stage.chords.helper);
     moreLoops.hidden = !stage.chords.more;
     setText(byId('jamRecipeTempo'), stage.tempo.value);

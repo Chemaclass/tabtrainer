@@ -63,6 +63,15 @@ describe('mood stage', () => {
       { numeral: 'bVII', job: 'Leads back home.' },
     ]);
   });
+  it('shows an eight bar loop in two rows of four, with a job for every bar', () => {
+    const jam = new Jam(bundledGrooves(files));
+    jam.choose('rock-straight-eighths');
+    jam.applyMood('exciting');
+    expect(moodStage(jam)).toMatchObject({ chords: { value: 'I I bVII IV | I I IV bVII', helper: '2 more loops for Exciting' }, summary: 'E Mixolydian · fast, 120 to 176' });
+    const bars = moodBars(jam)!;
+    expect(bars).toHaveLength(8);
+    expect(bars.at(-1)).toEqual({ numeral: 'bVII', job: 'One step below, climbing home.' });
+  });
   it('spells the key out', () => {
     expect([keyLabel('Am'), keyLabel('Eb')]).toEqual(['A minor', 'Eb major']);
   });

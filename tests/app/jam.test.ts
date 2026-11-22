@@ -344,20 +344,45 @@ describe('jam moods', () => {
     const jam = new Jam(bundledGrooves(files));
     jam.choose('rock-straight-eighths');
     expect(jam.applyMood('sad')).toBe(true);
-    expect([jam.mood?.id, jam.progression, jam.key, jam.tempo]).toEqual(['sad', sadLoop, 'Em', 88]);
+    expect([jam.mood?.id, jam.progression, jam.key, jam.tempo]).toEqual(['sad', sadLoop, 'Em', 66]);
     expect(jam.scales.slice(0, 2)).toEqual(['minor', 'minor-pentatonic']);
     expect(jam.scale).toBe('minor');
     expect(jam.timeline().bars.map(bar => bar.chord.name)).toEqual(['Em', 'C', 'G', 'D']);
     expect(jam.applyMood('sad')).toBe(false);
   });
-  it('keeps a tempo already in the range and offers a mode scale the groove alone never would', () => {
+  it('starts a new mood at its own tempo and offers a mode scale the groove alone never would', () => {
     const jam = new Jam(bundledGrooves(files));
     jam.choose('rock-straight-eighths');
     jam.applyMood('exciting');
-    expect([jam.key, jam.tempo, jam.scale]).toEqual(['E', 120, 'mixolydian']);
-    jam.setTempo(150);
+    expect([jam.key, jam.tempo, jam.scale]).toEqual(['E', 148, 'mixolydian']);
+    expect(jam.timeline().bars.map(bar => bar.chord.name)).toEqual(['E', 'E', 'D', 'A', 'E', 'E', 'A', 'D']);
+    jam.setTempo(170);
     jam.applyMood('epic');
-    expect([jam.key, jam.tempo, jam.progression]).toEqual(['Em', 150, 'epic-i-bvi-bvii-i']);
+    expect([jam.key, jam.tempo, jam.progression]).toEqual(['Em', 160, 'epic-i-bvi-bvii-i']);
+  });
+  it('keeps a tempo inside the range when the mood follows a groove picked from the list', () => {
+    const jam = new Jam(bundledGrooves(files));
+    jam.choose('rock-straight-eighths');
+    jam.applyMood('exciting');
+    jam.setTempo(170);
+    jam.pickGroove('metal-gallop');
+    expect([jam.mood?.id, jam.tempo]).toEqual(['exciting', 170]);
+    jam.pickGroove('jazz-swing');
+    expect([jam.mood?.id, jam.tempo]).toEqual(['exciting', 132]);
+    jam.pickGroove('reggae-one-drop');
+    expect([jam.mood?.id, jam.tempo]).toEqual(['exciting', 120]);
+  });
+  it('opens a saved setup or a link with a retired Exciting loop on the loop that replaced it, mood kept', () => {
+    stored.set('tabtrainer:jam', JSON.stringify({ 'rock-straight-eighths': { mood: 'exciting', progression: 'exciting-i-bvii-iv-i', key: 'E', tempo: 150 } }));
+    const jam = new Jam(bundledGrooves(files));
+    jam.choose('rock-straight-eighths');
+    expect([jam.mood?.id, jam.progression, jam.timeline().bars.length]).toEqual(['exciting', 'exciting-i-bvii-iv-i-i-bvii-iv-bvii', 8]);
+    const linked = new Jam(bundledGrooves(files));
+    linked.open('metal-gallop', { mood: 'exciting', progression: 'exciting-i-iv-bvii-iv' });
+    expect([linked.mood?.id, linked.setup.progression]).toEqual(['exciting', 'exciting-i-iv-bvii-iv-i-iv-bvii-bvii']);
+    const noMood = new Jam(bundledGrooves(files));
+    noMood.open('bossa-nova', { progression: 'exciting-i-bvii-iv-i' });
+    expect([noMood.mood, noMood.timeline().bars.length]).toEqual([null, 8]);
   });
   it('keeps the chords when they already are one of the mood loops', () => {
     const jam = new Jam(bundledGrooves(files));
