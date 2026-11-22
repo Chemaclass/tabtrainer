@@ -12,7 +12,7 @@ kit: rock
 crash: x....... | ........ | ........ | ........
 hat:   xoxoxoxo
 snare: ..x...x. | ..x...x. | ..x...x. | ..x..ox.
-# the kick on 1 and softly before 3, pushing a little earlier in every second bar
+# the kick on 1 and softly on the "and" of 3, moving to the "and" of 2 in every second bar
 kick:  X....o.. | X..o....
 # the chord rings for two beats and is struck again on 3
 keys:  X---x--- | X---x--- | X---x--- | X---x-x-
