@@ -616,4 +616,17 @@ describe('slides', () => {
     expect(glideEnd(1)).toBeCloseTo(0.25);
     expect(glideEnd(0.5)).toBeCloseTo(0.5);
   });
+  it('start two frets away when the note they slide from is not played', () => {
+    const startCents = (seekTo: number) => {
+      const { sources, advance } = fakeAudio();
+      const p = new Player();
+      p.load(buildTimeline(parseSong('instrument: guitar6\ntempo: 60\n:w 12.3 | :q \\3.3 r r r |').song), 60);
+      p.seek(seekTo); p.play(); advance(seekTo ? 0.2 : 4.5);
+      const calls = sources.flatMap(source => source.detune.setValueAtTime.mock.calls.map(call => call[0] as number));
+      vi.useRealTimers(); vi.unstubAllGlobals();
+      return calls;
+    };
+    expect(startCents(0)).toContain(900);
+    expect(startCents(4)).toEqual([200, 200]);
+  });
 });

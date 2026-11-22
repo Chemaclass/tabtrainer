@@ -25,7 +25,7 @@ export interface PitchPoint { at: number; cents: number }
 
 // A glide takes a quarter of a beat, or half the note when it is shorter. In beats, so a slower speed slows it down.
 const GLIDE = { most: 0.25, share: 0.5 };
-const SLIDE_IN_FRETS = 2;
+export const SLIDE_IN_FRETS = 2;
 
 /** How a slide moves the pitch: from its source, or from two frets away when it has none, to the written fret. */
 export function pitchPlan(note: Note, source: Note | undefined, writtenBeats: number): PitchPoint[] | undefined {

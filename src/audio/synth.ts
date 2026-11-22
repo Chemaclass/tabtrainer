@@ -135,7 +135,7 @@ export class Synth {
     const end = when + dur + VOICE.tail;
     const saw = this.oscillator('sawtooth', frequency, when, end, kind);
     const sine = this.oscillator('sine', frequency, when, end, kind);
-    if (shape.pitch?.length) for (const oscillator of [saw, sine]) this.glide(oscillator.detune, when, shape.pitch);
+    if (shape.pitch?.length) for (const oscillator of [saw, sine]) this.glide(oscillator.detune, when, shape.pitch.map(point => ({ ...point, after: Math.min(point.after, dur / 2) })));
     const envelope = this.ctx!.createGain();
     envelope.gain.setValueAtTime(SILENT, when);
     envelope.gain.exponentialRampToValueAtTime(vel, when + (shape.legato ? VOICE.legatoAttack : VOICE.attack));

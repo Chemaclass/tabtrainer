@@ -74,6 +74,12 @@ describe('Synth', () => {
     expect(gains[1].gain.exponentialRampToValueAtTime).toHaveBeenCalledWith(0.2, 1.03);
     expect(lowPass.frequency.setValueAtTime.mock.calls[0][0]).toBe(lowPass.frequency.exponentialRampToValueAtTime.mock.calls[0][0]);
   });
+  it('ends the glide of a palm-muted note while the note still sounds', () => {
+    const { sources } = fakeAudio();
+    const synth = new Synth(); synth.ensure();
+    synth.voice(1, 55, 1, 0.2, undefined, 'instrument', { muted: true, pitch: [{ after: 0, cents: -200 }, { after: 0.3, cents: 0 }] });
+    expect(sources[0].detune.linearRampToValueAtTime).toHaveBeenCalledWith(0, 1.06);
+  });
   it('glides both oscillators of a voice through the pitch points', () => {
     const { sources } = fakeAudio();
     const synth = new Synth(); synth.ensure();
