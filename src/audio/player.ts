@@ -169,7 +169,7 @@ export class Player {
       const when = passStart + this.duration(passFrom, n.beat, speed);
       if (when < musicFrom || when >= end || this.mute.has(n.string)) continue;
       if (n.dead) this.synth.thud(when, n.midi, LEVEL.dead);
-      else this.synth.voice(when, n.midi, Math.max(0.15, this.duration(n.beat, n.beat + n.ring, speed)), n.soft ? LEVEL.tied : LEVEL.picked);
+      else this.synth.voice(when, n.midi, Math.max(0.15, this.duration(n.beat, n.beat + n.ring, speed)), n.soft ? LEVEL.tied : LEVEL.picked, undefined, 'instrument', { muted: n.muted });
     }
     if (!this.metronome) return;
     for (const b of this.bars) for (let i = 0; i < b.beats; i++) {

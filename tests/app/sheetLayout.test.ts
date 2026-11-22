@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { barWidths, barsPerLine, labelRows, lineBreaks, nextZoom, timeSignatureDigitHeight } from '../../src/app/sheetLayout';
+import { barWidths, barsPerLine, labelRows, lineBreaks, markRoom, nextZoom, timeSignatureDigitHeight } from '../../src/app/sheetLayout';
 
 describe('bars per line', () => {
   it('fits a bar for every 240 pixels', () => {
@@ -101,5 +101,12 @@ describe('line breaks', () => {
   });
   it('keeps a bar wider than the line on a line of its own', () => {
     expect(lineBreaks([150, 20], 100, 4)).toEqual([1, 1]);
+  });
+});
+
+describe('mark room', () => {
+  it('makes room above the tab only for a system with a mark', () => {
+    expect(markRoom({ letters: false }, 13)).toBe(0);
+    expect(markRoom({ letters: true }, 13)).toBe(20);
   });
 });

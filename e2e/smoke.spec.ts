@@ -53,14 +53,17 @@ test('the editor shows a problem for a bad line and clears it once fixed', async
   await expect(page.locator('#issues li')).toHaveCount(0);
 });
 
-test('technique marks draw without a problem', async ({ page }) => {
+test('technique marks draw without a problem', async ({ page }, testInfo) => {
   await openFirstExercise(page);
   await page.locator('#editBtn').click();
-  await page.locator('#src').fill('title: Marks\ninstrument: guitar6\ntempo: 90\nkey: C\ntime: 4/4\n\n:q 3.5 x.5 2.4 0.3 | 3.5 2.4 0.3 2.4 |\n');
+  await page.locator('#src').fill('title: Marks\ninstrument: guitar6\ntempo: 90\nkey: C\ntime: 4/4\n\n:q 3.5 x.5 2.4 0.3 | :8 _0.6 _0.6 _(0.6 2.5) _0.6 :q 2.4 0.3 |\n');
+  if (testInfo.project.name === 'phone') await page.locator('#scoreTab').click();
   await expect(page.locator('#issues li')).toHaveCount(0);
   await expect(page.locator('.system.error')).toHaveCount(0);
-  await expect(page.locator('.note')).toHaveCount(8);
+  await expect(page.locator('.note')).toHaveCount(10);
   await expect(page.locator('.note:has(path):not(:has(text))')).toHaveCount(1);
+  await expect(page.locator('.technique-label.pm')).toHaveText(['P.M.']);
+  await expect(page.locator('.technique-label.pm')).toBeVisible();
 });
 
 test('the player reaches the playing state and lights the current note', async ({ page }) => {

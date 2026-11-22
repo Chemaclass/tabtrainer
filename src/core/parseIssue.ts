@@ -1,6 +1,6 @@
 export type SongIssueCode =
   | 'level-unknown' | 'listen-address' | 'tempo-range' | 'tempo-late' | 'instrument-unknown' | 'tuning-unreadable' | 'time-signature'
-  | 'note-unreadable' | 'string-missing' | 'fret-high' | 'string-twice' | 'tie-dead' | 'duration-unknown'
+  | 'note-unreadable' | 'string-missing' | 'fret-high' | 'string-twice' | 'tie-dead' | 'duration-unknown' | 'palm-mute-place'
   | 'bar-short' | 'bar-long' | 'version-duplicate' | 'version-empty' | 'song-empty';
 
 export type GrooveIssueCode =
