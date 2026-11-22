@@ -23,6 +23,7 @@ interface JamViewHandlers {
 const COUNT_IN_BAR = 'bar';
 const COUNT_IN_OFF = 'off';
 const SHARE_HINT = 'Key, tempo, chords and swing';
+const MOOD_SHARE_HINT = 'Mood, key, tempo and chords';
 const NO_SHARE_HINT = 'Links open bundled grooves as written. Download a file to share your own.';
 
 interface SwingTexts { shown: string; spoken: string }
@@ -122,6 +123,7 @@ export function jamView(jam: Jam, engine: LoopEngine, { active, choose, changed,
     if (jam.setTempo(+tempo.value)) engine.setTempo(jam.tempo);
     showTempo();
     showSummary();
+    moods.show();
   }
 
   function changeKey() {
@@ -236,7 +238,8 @@ export function jamView(jam: Jam, engine: LoopEngine, { active, choose, changed,
   function showShare() {
     const shareable = !jam.entry.mine && !jam.previewing;
     share.hidden = !shareable;
-    shareHint.textContent = shareable ? SHARE_HINT : NO_SHARE_HINT;
+    const hint = jam.mood ? MOOD_SHARE_HINT : SHARE_HINT;
+    shareHint.textContent = shareable ? hint : NO_SHARE_HINT;
   }
 
   function showGroove() {
@@ -252,6 +255,7 @@ export function jamView(jam: Jam, engine: LoopEngine, { active, choose, changed,
     showKeys();
     showChords();
     moods.show();
+    showShare();
   }
 
   function show() {

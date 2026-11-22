@@ -435,9 +435,31 @@ describe('jam moods', () => {
     jam.preview(playableGroove('title: Mine\ngenre: rock\ntempo: 120\nkey: G\ntime: 4/4\nprogression: I V\nkick: x...x...\n').playable!);
     expect(jam.mood).toBeNull();
   });
-  it('leaves the share setup as it was', () => {
+  it('shares the mood only while one is on', () => {
     const jam = new Jam(bundledGrooves(files));
-    jam.applyMood('bluesy');
     expect(Object.keys(jam.setup)).toEqual(['key', 'tempo', 'progression', 'swing']);
+    jam.applyMood('bluesy');
+    expect(jam.setup).toEqual({ mood: 'bluesy', key: 'A', tempo: 80, progression: '12-bar-blues', swing: 66 });
+    jam.clearMood();
+    expect(jam.setup).not.toHaveProperty('mood');
+  });
+  it('opens a mood link with its own key and tempo, even outside the mood range', () => {
+    const jam = new Jam(bundledGrooves(files));
+    expect(jam.open('rock-straight-eighths', { mood: 'sad', key: 'Am', tempo: 120, progression: 'sad-i-iv-i-v', swing: 50 })).toBe(true);
+    expect([jam.mood?.id, jam.key, jam.tempo, jam.progression]).toEqual(['sad', 'Am', 120, 'sad-i-iv-i-v']);
+  });
+  it('opens the chords of a link with no mood when the mood does not match them, or is unknown', () => {
+    const jam = new Jam(bundledGrooves(files));
+    jam.open('rock-straight-eighths', { mood: 'sad', progression: 'i-v-vi-iv' });
+    expect([jam.mood, jam.progression]).toEqual([null, 'i-v-vi-iv']);
+    jam.open('rock-straight-eighths', { mood: 'angry', progression: 'sad-i-iv-i-v' });
+    expect([jam.mood, jam.progression]).toEqual([null, 'sad-i-iv-i-v']);
+    jam.open('rock-straight-eighths', { mood: 'sad' });
+    expect(jam.mood?.id).toBe('sad');
+  });
+  it('opens an old link without a mood as before', () => {
+    const jam = new Jam(bundledGrooves(files));
+    expect(jam.open('funk-sixteenths', { key: 'F#m', tempo: 96, progression: 'one-chord', swing: 58 })).toBe(true);
+    expect([jam.mood, jam.key, jam.tempo, jam.progression, jam.swing]).toEqual([null, 'F#m', 96, 'one-chord', 58]);
   });
 });

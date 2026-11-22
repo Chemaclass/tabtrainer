@@ -30,6 +30,13 @@ export const scaleTitleIn = (key: string, scale: ScaleId) => `${keyRootName(key)
 /** "A minor" for Am: the key spelled out, for players who do not read key names yet. */
 export const keyLabel = (key: string) => `${keyRootName(key)} ${isMinorKey(key) ? 'minor' : 'major'}`;
 
+/** "Faster than usual for Sad" once the tempo leaves the mood's range, empty inside it. */
+export function tempoNote(mood: Mood, tempo: number): string {
+  if (tempo > mood.tempo.max) return `Faster than usual for ${mood.name}`;
+  if (tempo < mood.tempo.min) return `Slower than usual for ${mood.name}`;
+  return '';
+}
+
 const playingLoop = (mood: Mood, progression: string) => mood.loops.find(loop => loop.slug === progression);
 
 function grooveHelper(jam: MoodJam, mood: Mood): string {
@@ -45,15 +52,16 @@ export function moodStage(jam: MoodJam): MoodStage | null {
   const others = mood.loops.length - 1;
   const scaleTitle = scaleTitleIn(jam.key, jam.scale);
   const range = `${mood.tempo.min} to ${mood.tempo.max}`;
+  const note = tempoNote(mood, jam.tempo);
   return {
     name: mood.name,
     why: mood.why,
     scale: { value: scaleTitle, helper: 'Shown on the fretboard below' },
     chords: { value: loop?.bars ?? '', helper: `${plural(others, 'more loop', 'more loops')} for ${mood.name}`, more: others > 0 },
-    tempo: { value: `${mood.tempo.word}, ${range}`, helper: mood.tempo.outside },
+    tempo: { value: `${mood.tempo.word}, ${range}`, helper: note || mood.tempo.outside },
     groove: { value: jam.groove.title, helper: grooveHelper(jam, mood) },
     summary: [scaleTitle, `${mood.tempo.word.toLowerCase()}, ${range}`, `${jam.groove.title} groove`].join(SUMMARY_SEPARATOR),
-    tempoHint: `Usual for ${mood.name}: ${range}`,
+    tempoHint: note ? `${note}: ${range}` : `Usual for ${mood.name}: ${range}`,
   };
 }
 

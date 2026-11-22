@@ -191,6 +191,18 @@ test('a mood sets the Jam to its chords, asks before dropping groove changes, an
   await expect(page.locator('#jamRecipe')).toBeHidden();
 });
 
+test('a mood link opens the mood with its own key and tempo, and says when the tempo leaves the mood range', async ({ page }) => {
+  await page.goto('./jam/rock-straight-eighths/?mood=sad&key=Am&tempo=120&progression=sad-i-iv-i-v&swing=50');
+  await expect(page.locator('#jamTitle')).toHaveText('Sad');
+  await expect(page.locator('#jamKey')).toHaveValue('Am');
+  await expect(page.locator('#jamShareHint')).toHaveText('Mood, key, tempo and chords');
+  await expect(page.locator('#jamTempoHint')).toHaveText('Faster than usual for Sad: 56 to 88');
+  await expect(page).toHaveURL(/\?mood=sad&key=Am&tempo=120&progression=sad-i-iv-i-v&swing=50$/);
+  await page.goto('./jam/rock-straight-eighths/?mood=sad&progression=i-v-vi-iv');
+  await expect(page.locator('#jamMoods [aria-pressed="true"]')).toHaveCount(0);
+  await expect(page.locator('#jamShareHint')).toHaveText('Key, tempo, chords and swing');
+});
+
 test('the landing demo plays two bars in one click and lights the playing note', async ({ page }) => {
   await page.addInitScript(() => {
     const Stub = window.AudioContext;

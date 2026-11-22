@@ -107,8 +107,10 @@ export class Jam {
   get progression() { return this.chosenProgression; }
   get swing() { return this.chosenSwing; }
   get mood(): Mood | null { return this.chosenMood ? moodById(this.chosenMood) : null; }
-  get setup(): Required<JamSetup> {
-    return { key: this.chosenKey, tempo: this.chosenTempo, progression: this.chosenProgression, swing: this.chosenSwing };
+  /** What a link carries; the mood only while one is on, so a link without a mood stays as it was. */
+  get setup(): JamSetup & Required<Omit<JamSetup, 'mood'>> {
+    const setup = { key: this.chosenKey, tempo: this.chosenTempo, progression: this.chosenProgression, swing: this.chosenSwing };
+    return this.chosenMood ? { mood: this.chosenMood, ...setup } : setup;
   }
   get keys(): readonly string[] {
     if (this.chosenProgression === OWN_PROGRESSION) return jamKeys(this.groove);
@@ -219,12 +221,13 @@ export class Jam {
   open(slug: string, setup: JamSetup = {}): boolean {
     const moved = this.choose(slug);
     if (this.slug !== slug) return moved;
-    const { key, tempo, progression, swing } = setup;
+    const { mood, key, tempo, progression, swing } = setup;
     const changes = [
       progression !== undefined && this.setProgression(progression),
       key !== undefined && this.setKey(this.keyWithTonicOf(key)),
       within(tempo, JAM_TEMPO) && this.setTempo(tempo),
       within(swing, JAM_SWING) && this.setSwing(swing),
+      mood !== undefined && this.labelMood(mood),
     ];
     return moved || changes.includes(true);
   }
@@ -281,6 +284,15 @@ export class Jam {
   private withMine(): JamGroove[] {
     const mine = this.saved().map(mineGroove);
     return [...this.bundled, ...mine];
+  }
+
+  /** A linked mood names the chords the link plays, or none at all when they are not its own. */
+  private labelMood(value: string): boolean {
+    const next = isMoodId(value) && this.playsLoopOf(moodById(value)) ? value : null;
+    if (next === this.chosenMood) return false;
+    this.chosenMood = next;
+    this.save();
+    return true;
   }
 
   private playsLoopOf(mood: Mood): boolean {

@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { readFileSync, readdirSync } from 'node:fs';
 import { Jam, bundledGrooves } from '../../src/app/jam';
 import { jamFretboard } from '../../src/app/jamFretboard';
-import { keyLabel, moodBars, moodLegend, moodStage } from '../../src/app/jamMood';
+import { keyLabel, moodBars, moodLegend, moodStage, tempoNote } from '../../src/app/jamMood';
 import { progressionChoices, progressionName } from '../../src/app/jamSummary';
 import { chordAt, numerals } from '../../src/core/harmony';
 import { INSTRUMENTS } from '../../src/core/instruments';
@@ -47,6 +47,13 @@ describe('mood stage', () => {
     expect(moodStage(jam)?.groove.helper).toBe('1 groove fits Sad, not this one');
     jam.applyMood('happy');
     expect(moodStage(jam)?.groove.helper).toBe('2 grooves fit Happy, not this one');
+  });
+  it('notes when the tempo leaves the mood range, in the recipe and under the slider', () => {
+    const sad = moodById('sad');
+    expect([tempoNote(sad, 56), tempoNote(sad, 88), tempoNote(sad, 89), tempoNote(sad, 40)]).toEqual(['', '', 'Faster than usual for Sad', 'Slower than usual for Sad']);
+    const jam = sadOnRock();
+    jam.setTempo(120);
+    expect(moodStage(jam)).toMatchObject({ tempo: { helper: 'Faster than usual for Sad' }, tempoHint: 'Faster than usual for Sad: 56 to 88' });
   });
   it('gives every bar its numeral and its job', () => {
     expect(moodBars(sadOnRock())).toEqual([

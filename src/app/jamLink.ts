@@ -1,6 +1,6 @@
-export interface JamSetup { key?: string; tempo?: number; progression?: string; swing?: number }
+export interface JamSetup { mood?: string; key?: string; tempo?: number; progression?: string; swing?: number }
 
-const SETUP_PARAMS = ['key', 'tempo', 'progression', 'swing'] as const;
+const SETUP_PARAMS = ['mood', 'key', 'tempo', 'progression', 'swing'] as const;
 const MINE_PREFIX = 'mine:';
 
 export const mineGrooveSlug = (title: string) => MINE_PREFIX + title;
@@ -23,6 +23,7 @@ function numberParam(query: URLSearchParams, name: string): number | undefined {
 
 export function jamSetup(query: URLSearchParams): JamSetup {
   const setup: JamSetup = {
+    mood: textParam(query, 'mood'),
     key: textParam(query, 'key'),
     tempo: numberParam(query, 'tempo'),
     progression: textParam(query, 'progression'),
