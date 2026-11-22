@@ -227,9 +227,7 @@
 .tab-request a {
   color: var(--ink);
 }
-.tab-request + .explore {
-  padding-top: var(--space-2);
-}
+
 .library-view :is(#editBtn, .file-menu),
 body:not(.library-view) #writeSongBtn,
 .library-view .top-context > * {
@@ -844,6 +842,42 @@ button.level-mark:hover {
 }
 .primary:hover {
   filter: brightness(0.96);
+}
+.request-card {
+  display: none;
+  margin-bottom: var(--space-5);
+  padding: var(--space-5);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-m);
+}
+.request-card h2 {
+  margin: 0 0 var(--space-2);
+  font-size: 18px;
+  line-height: 24px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.request-card p {
+  margin: 0 0 var(--space-3);
+  font-size: var(--text-s);
+  line-height: 22px;
+  color: var(--mut);
+}
+.request-card a {
+  font-size: var(--text-s);
+  color: var(--ink);
+}
+.tab-request + .explore {
+  padding-top: var(--space-2);
+}
+/* One invite per screen: the card beside the list from 1200px, the line under it below that. */
+@media (min-width: 1200px) {
+  .request-card:not(:has(h2:empty)) {
+    display: block;
+  }
+  .tab-request {
+    display: none;
+  }
 }
 .guide-card {
   padding: var(--space-5);
