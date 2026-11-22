@@ -1,3 +1,4 @@
+import { nextLevel } from '../../app/practiceLevels';
 import { familyOf } from '../../core/instruments';
 import { categoryCounts, nextExercise, type CatalogueEntry, type LibraryKind } from '../../app/catalogue';
 import type { OpenSong } from '../../app/openSong';
@@ -27,17 +28,24 @@ interface SongListActions {
   shared: () => Saved[];
   proposeSaved: (title: string, onChecklist: boolean) => void;
   backup: () => void;
+  chooseLevel: (index: number) => void;
 }
 
 export function songList(songbook: Songbook, workspace: Workspace, openSong: OpenSong, practiceLog: PracticeLog, actions: SongListActions) {
   let entries: CatalogueEntry[] = [];
   let playingSong: string | null = null, playedSong: string | null = null;
+  const playingKey = () => `${workspace.picked} ${openSong.versionSlug() ?? ''}`;
   const tabs = libraryNav(kind => actions.showLibrary(kind));
-  const practice = practiceNav(kind => actions.showLibrary(kind), actions.pick);
+  const practice = practiceNav(kind => actions.showLibrary(kind), actions.pick, actions.chooseLevel);
   const catalogue = libraryView(ref => actions.pick(ref), actions.continue, actions.newSong, actions.startFrom, () => actions.openFile(), () => actions.propose(), () => { actions.showLibrary('exercises'); byId('libraryTitle').focus({ preventScroll: true }); }, (ref, ready) => {
     const saved = actions.shared().find(song => savedRef(song.title) === ref);
     if (saved) actions.proposeSaved(saved.title, !ready);
-  }, () => actions.backup());
+  }, () => actions.backup(), (ref, level, done) => {
+    const saved = practiceLog.setDone(ref, level, done, Date.now());
+    list.fill();
+    if (!saved) catalogue.announce('Could not save that. This browser may be blocking storage, or it is full.');
+    catalogue.focusDone(ref, level);
+  });
   byId('writeSongBtn').onclick = actions.newSong;
   function showNavigation() {
     const kind = entries.find(e => e.value === workspace.picked)?.kind ?? 'mine';
@@ -48,13 +56,14 @@ export function songList(songbook: Songbook, workspace: Workspace, openSong: Ope
       instrument: song ? familyOf(song.meta.instrument) : workspace.family,
       kind,
       next: nextExercise(entries, workspace.picked),
+      level: nextLevel(openSong.versions.map(version => version.name), openSong.versionIndex),
       practising: workspace.screen === 'practice',
       song: workspace.picked,
-      played: playedSong !== null && playedSong === workspace.picked,
+      played: playedSong !== null && playedSong === playingKey(),
     });
     actions.shown();
   }
-  return {
+  const list = {
     fill() {
       entries = songbook.entries();
       const shares = new Map<string, ShareState>(workspace.screen === 'library' && workspace.kind === 'mine' ? actions.shared().map(song => [savedRef(song.title), shareState(song.text, songbook.paths)]) : []);
@@ -64,9 +73,10 @@ export function songList(songbook: Songbook, workspace: Workspace, openSong: Ope
       showNavigation();
     },
     showNavigation,
-    started() { playingSong = workspace.picked; },
+    started() { playingSong = playingKey(); },
     stopped() { if (playingSong === null) return; playedSong = playingSong; playingSong = null; showNavigation(); },
     chooseTemplate: catalogue.chooseTemplate,
     nextExercise: practice.nextExercise,
   };
+  return list;
 }

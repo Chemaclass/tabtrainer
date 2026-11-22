@@ -9,7 +9,7 @@ import { PlayTime, PracticeLog } from './app/practiceLog';
 import type { PickUp } from './app/practiceProgress';
 import { PracticeSession } from './app/practiceSession';
 import { Backups } from './app/backup';
-import { songAddress, songShareLink, songSource } from './app/songLink';
+import { songAddress, songShareLink, songSource, versionSlug } from './app/songLink';
 import { bundledPath, savedRef } from './app/songRef';
 import { Songbook } from './app/songbook';
 import { shareState, withOpenDraft } from './app/songProposal';
@@ -36,6 +36,7 @@ import { songFile } from './ui/editor/songFile';
 import { fretboardSheet } from './ui/fretboard/fretboardSheet';
 import { songList } from './ui/library/songList';
 import { clearedSheet } from './ui/player/clearedSheet';
+import { nextLevel } from './app/practiceLevels';
 import { passageView } from './ui/player/passageView';
 import { playbackView } from './ui/player/playbackView';
 import { playerPanel } from './ui/player/playerPanel';
@@ -107,8 +108,8 @@ const score = scoreView({
   onNote: (key, bar) => passages.selectNote(key, bar),
   onPlayNote: (key, bar) => { const chosen = passages.selectNote(key, bar) ? passagePlayback.selectedNote : null; if (chosen) player.play(chosen.beat); },
 });
-const header = songHeader(index => { if (openSong.choose(index)) showVersion(); });
-const songs = songList(songbook, workspace, openSong, practiceLog, { pick: pickSong, continue: continuePractice, showLibrary, newSong: () => startNewSong(), startFrom: startFromTemplate, openFile: () => files.open(), shown: saveView.showShare, propose: () => proposal.open(), shared: sharedSongs, proposeSaved: proposal.openSaved, backup: () => files.backup() });
+const header = songHeader(index => chooseVersion(index));
+const songs = songList(songbook, workspace, openSong, practiceLog, { pick: pickSong, continue: continuePractice, showLibrary, newSong: () => startNewSong(), startFrom: startFromTemplate, openFile: () => files.open(), shown: saveView.showShare, propose: () => proposal.open(), shared: sharedSongs, proposeSaved: proposal.openSaved, backup: () => files.backup(), chooseLevel: index => chooseVersion(index) });
 window.addEventListener('popstate', event => navigation.visit(event.state, (route, accept, cancel) => {
   draftSession.beginNavigation();
   if (followLanding(navigation.search())) { accept(); setScreen('library'); return; }
@@ -128,7 +129,9 @@ const passages = passageView(player, passage, passagePlayback, openSong, score, 
 const cleared = clearedSheet(player, {
   next: ([first, last], startSpeed) => { passage.setRange(first, last, true); passages.apply(); speed.set(startSpeed); speedPractice.start(); practiceSession.restart(Date.now()); player.play(); },
   wholeSong: () => { passage.clear(); passages.apply(); practiceSession.restart(Date.now()); player.play(0); },
-  nextExercise: songs.nextExercise,
+  nextExercise: () => nextLevel(openSong.versions.map(version => version.name), openSong.versionIndex) ? undefined : songs.nextExercise(),
+  nextLevel: () => practiceLog.levelDone(workspace.picked, openSong.versionSlug()) ? nextLevel(openSong.versions.map(version => version.name), openSong.versionIndex) : null,
+  chooseLevel: index => chooseVersion(index),
   pick: pickSong,
   daysInARow: () => practiceLog.daysInARow(Date.now()),
 });
@@ -150,7 +153,7 @@ const playback = playbackView(player, { transport: transportView, score, follows
   stopped: () => { passagePlayback.deselect(); passages.show(); songs.stopped(); },
 });
 player.on(playback.show);
-player.on(state => { if (state.playing) jamming.stop(); });
+player.on(state => { if (state.playing) { jamming.stop(); cleared.close(); } });
 player.on(state => playTime.update(workspace.picked || null, state.phase === 'playing', Date.now()));
 player.on(state => practiceSession.playing(state.phase === 'playing', Date.now()));
 player.onPassEnd(pass => {
@@ -205,6 +208,7 @@ function showTitle() {
   else view.showTitle(openSong.song ? songPageTitle(openSong.song.meta.title, familyOf(openSong.song.meta.instrument), openSong.song.meta.artist) : SITE_TITLE, path ? songAddress(site, path) : site);
 }
 function setScreen(next: Screen, focus = false) {
+  cleared.close();
   if (next !== 'practice') { player.stop(); scrolling.stopContinuous(); }
   if (next !== 'jam') jamming.stop();
   const song = openSong.song;
@@ -316,8 +320,11 @@ function update(resetLoop: boolean) {
   player.load(buildTimeline(song), song.meta.tempo); playback.load();
   songs.showNavigation(); passages.apply(); draw(); speed.show(); if (wasPlaying) transportView.showPlayButton();
 }
-function chooseVersionNamed(slug: string | null) { if (openSong.chooseNamed(slug)) showVersion(); }
+// Stop first, so a pass that just ended is recorded for the level that played it.
+function chooseVersion(index: number) { if (index === openSong.versionIndex) return; player.stop(); if (openSong.choose(index)) showVersion(); }
+function chooseVersionNamed(slug: string | null) { const index = openSong.versions.findIndex(version => versionSlug(version.name) === slug); if (index >= 0) chooseVersion(index); }
 function showVersion() {
+  cleared.close();
   player.stop();
   update(false); showLink();
   const song = openSong.song;
