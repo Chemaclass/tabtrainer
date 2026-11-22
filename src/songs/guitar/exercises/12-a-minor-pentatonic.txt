@@ -8,6 +8,7 @@ key: Am
 time: 4/4
 
 # The notes are A, C, D, E and G. Index finger on fret 5, ring finger on fret 7, little finger on fret 8. Pick down, up, down, up all the way through.
+# Challenge adds three marks. / is a slide: pick, then keep pressing and move the finger along the string. h is a hammer-on: pick the first note, then bring a finger down hard on the higher fret without picking. p is a pull-off: keep your index on the lower fret, pick the higher note, then flick the top finger off so the lower note sounds.
 == Learn
 level: medium
 @Up and down
@@ -35,10 +36,11 @@ level: hard
 @Triplets in threes
 :8t 5.6 8.6 5.5 8.6 5.5 7.5 5.5 7.5 5.4 7.5 5.4 7.4 | 5.4 7.4 5.3 7.4 5.3 7.3 5.3 7.3 5.2 7.3 5.2 8.2 |
 5.2 8.2 5.1 8.2 5.1 8.1 8.1 5.1 8.2 5.1 8.2 5.2 | 8.2 5.2 7.3 5.2 7.3 5.3 :q 7.4 r |
-# The next shape sits at frets 7 to 10. To get there, slide your index finger from fret 5 to fret 7 on string 3 (the D), then keep your hand at fret 7. On the way back, after the last high C, that same D becomes your ring finger again.
+# The next shape sits at frets 7 to 10. To get there, slide your index finger from fret 5 to fret 7 on string 3 (the D), then keep your hand at fret 7. The / before the 7 marks that slide: pick only the 5 and keep pressing as you move. On the way back, after the last high C, that same D becomes your ring finger again.
 @Shift to the next shape
-:16 5.6 8.6 5.5 7.5 5.4 7.4 5.3 7.3 :8 9.3 8.2 10.2 8.1 | :16 10.1 8.1 10.2 8.2 9.3 7.3 10.4 7.4 :8 10.5 7.5 10.6 8.6 |
+:16 5.6 8.6 5.5 7.5 5.4 7.4 5.3 /7.3 :8 9.3 8.2 10.2 8.1 | :16 10.1 8.1 10.2 8.2 9.3 7.3 10.4 7.4 :8 10.5 7.5 10.6 8.6 |
 :16 8.6 10.6 7.5 10.5 7.4 10.4 7.3 9.3 :8 8.2 10.2 :q 8.1 | :16 7.3 5.3 7.4 5.4 7.5 5.5 8.6 5.6 :q 5.6 r |
+# Hammer on with the ring or little finger, and pull off back to the index.
 @A long lick with gaps
-:8 5.6 :16 r 8.6 :8 5.5 :16 r 7.5 :8 5.4 :16 r 7.4 :8 5.3 :16 r 7.3 | :16 5.2 8.2 r 5.1 8.1 r 5.1 8.2 r 5.2 7.3 r :q 7.4 |
-:8 8.1 :16 r 5.1 :8 8.2 :16 r 5.2 :16 7.3 5.3 7.4 5.4 7.5 5.5 8.6 5.6 | :16 5.4 7.4 5.3 7.3 :8 r 7.4 :h 5.6 |
+:8 5.6 :16 r 8.6 :8 5.5 :16 r 7.5 :8 5.4 :16 r 7.4 :8 5.3 :16 r 7.3 | :16 5.2 h8.2 r 5.1 h8.1 r 5.1 8.2 r 5.2 7.3 r :q 7.4 |
+:8 8.1 :16 r 5.1 :8 8.2 :16 r 5.2 :16 7.3 p5.3 7.4 p5.4 7.5 p5.5 8.6 p5.6 | :16 5.4 7.4 5.3 7.3 :8 r 7.4 :h 5.6 |

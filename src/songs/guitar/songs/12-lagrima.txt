@@ -8,7 +8,7 @@ key: E
 time: 3/4
 
 # Tárrega's notes for the E major part, the first eight bars.
-# The slides Lágrima is known for come in its E minor second part, which is left out here because a slide cannot be written in this tab.
+# The slides Lágrima is known for come in its E minor second part, which is left out here.
 @First phrase
 # Tune on the top string, bass on the fourth string, both moving up together. The open B string rings between them on every off beat.
 :8 (4.1 2.4) 0.2 (5.1 4.4) 0.2 (7.1 6.4) 0.2 |
