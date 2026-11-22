@@ -1,0 +1,46 @@
+title: Hammer-ons and Pull-offs
+artist: TabTrainer
+about: Play two notes with one pick stroke: hammer a finger down for the higher note, and pull it off for the lower one.
+level: medium
+instrument: guitar6
+tempo: 72
+key: Am
+time: 4/4
+
+# h before a note is a hammer-on: pick the note before it, then bring a finger down hard on the new fret, without picking again.
+# p before a note is a pull-off: put both fingers down, pick the higher note, then flick the finger on the higher fret off the string so the lower note sounds.
+# Both happen on one string, from the note just before. Keep the second note as loud as the first.
+== Learn
+level: medium
+# Index finger on fret 5. Hammer with the ring finger on fret 7 and the little finger on fret 8.
+@Hammer-ons
+"Am" :q 5.4 h7.4 5.3 h7.3 | 5.2 h8.2 5.1 h8.1 |
+@Pull-offs
+8.1 p5.1 8.2 p5.2 | 7.3 p5.3 7.4 p5.4 |
+
+== Develop
+level: medium
+@Up with hammer-ons
+"Am" :8 5.6 h8.6 5.5 h7.5 5.4 h7.4 5.3 h7.3 | 5.2 h8.2 5.1 h8.1 :h 8.1 |
+@Down with pull-offs
+:8 8.1 p5.1 8.2 p5.2 7.3 p5.3 7.4 p5.4 | 7.5 p5.5 8.6 p5.6 :h 5.6 |
+
+== Challenge
+level: hard
+# Three notes, one pick stroke: pick, hammer on, pull off. One string per beat.
+@Hammer and pull
+"Am" :8t 5.6 h8.6 p5.6 5.5 h7.5 p5.5 5.4 h7.4 p5.4 5.3 h7.3 p5.3 | 5.2 h8.2 p5.2 5.1 h8.1 p5.1 :h 5.1 |
+# On the way down, pull off first, then hammer back on.
+:8t 8.1 p5.1 h8.1 8.2 p5.2 h8.2 7.3 p5.3 h7.3 7.4 p5.4 h7.4 | 7.5 p5.5 h7.5 8.6 p5.6 h8.6 :h 5.6 |
+# E minor pentatonic in open position. Pull off to the open string, then hammer on from it. Pull the finger slightly down as it leaves the string.
+@Open strings
+"Em" :8 3.1 p0.1 3.2 p0.2 2.3 p0.3 2.4 p0.4 | 2.5 p0.5 3.6 p0.6 :h 0.6 |
+:8 0.6 h3.6 0.5 h2.5 0.4 h2.4 0.3 h2.3 | 0.2 h3.2 0.1 h3.1 :h 0.1 |
+# Groups of four sixteenths: pick the first note, hammer, pull off, then pick the note on the next string.
+@Sixteenth rolls
+"Am" :16 5.2 h8.2 p5.2 7.3 5.2 h8.2 p5.2 7.3 5.1 h8.1 p5.1 8.2 5.1 h8.1 p5.1 8.2 | 5.3 h7.3 p5.3 7.4 5.3 h7.3 p5.3 7.4 5.4 h7.4 p5.4 7.5 :q 7.4 |
+# The mirror: pull off first, hammer back on, then pick the note on the next string up. The last group stays on string 1 and lands on A.
+:16 7.4 p5.4 h7.4 5.3 7.4 p5.4 h7.4 5.3 7.3 p5.3 h7.3 5.2 7.3 p5.3 h7.3 5.2 | 8.2 p5.2 h8.2 5.1 8.2 p5.2 h8.2 5.1 8.1 p5.1 h8.1 p5.1 :q 5.1 |
+@Lick
+:8 5.3 h7.3 5.2 h8.2 :q 5.2 :8 8.1 p5.1 | :8t 8.2 p5.2 7.3 :8 5.3 h7.3 :q p5.3 :8 7.4 5.4 |
+:8 5.4 h7.4 5.3 h7.3 :16 5.2 h8.2 p5.2 7.3 :8 5.3 r | :w 7.4 |

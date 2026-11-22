@@ -1,0 +1,42 @@
+title: Blues Bends
+artist: TabTrainer
+about: Bend a string in tune to a target pitch, a whole step, a half step or a small curl, then let it back down.
+level: medium
+instrument: guitar6
+tempo: 66
+key: A
+time: 4/4
+
+# ^ after a note is a bend: pick the note, then push the string across the neck until it sounds higher.
+# ^1 is a whole step, the sound of two frets higher. ^1/2 is a half step, one fret. ^1/4 is a small curl, less than a fret.
+# r after the amount lets the string back down within the same note. A tie after a bend (~7.3) holds the bend.
+# Push with three fingers on the string, the ring finger on the fret and the two behind it helping. Turn your wrist, as if turning a door handle.
+== Learn
+level: medium
+# Play the target fret first, listen, then bend the lower note until it sounds the same.
+@Hear the target, then bend to it
+"A7" :q 9.3 r :h 7.3^1 | :q 9.3 r :h 7.3^1 | :q 10.2 r :h 8.2^1 | :q 10.2 r :h 8.2^1 |
+
+== Develop
+level: hard
+# A half bend from D takes you to the blue note, between D and E. Then whole bends that come back down before the next note.
+@Half bends and releases
+"A7" :h 7.3^1/2 :q 5.3 7.4 | :h 7.3^1r :q 5.3 7.4 | :h 8.2^1r :q 5.2 7.3 | :q 5.3^1/4 :8 7.4 5.4 :h 7.4 |
+
+== Challenge
+level: hard
+# Bend up on the beat, then keep the string pushed up for the rest of the bar. Listen to check it does not sag.
+@Bend and hold
+"A7" :q 7.3^1 :h. ~7.3 | :q 8.2^1 :h. ~8.2 | :q 8.1^1 :h. ~8.1 | :q 7.3^1 :8 ~7.3 5.3 :h 7.4 |
+# Bend up, let it down, then pull off to the index finger. Pick the bend only: the release and the pull-off sound without a new pick.
+@Bend, release, pull off
+:q 7.3^1r :8 p5.3 7.4 :q 5.4 7.4 | :q 8.2^1r :8 p5.2 8.2 :q 5.2 7.3 |
+:q 8.1^1r :8 p5.1 8.2 :q 5.2 r | :8 7.3^1r p5.3 8.2^1r p5.2 :h 5.1 |
+# A curl bends the C, the minor third, a little toward C sharp. It gives the line its blues sound.
+@Curls
+:8 7.4 5.3^1/4 7.4 5.4 :q 7.5 5.5 | :8 5.1 8.1^1/4 5.1 8.2 :q 5.2 7.3 |
+:8 5.6 8.6^1/4 5.6 5.5 :q 7.5 5.4 | :8 8.1^1/4 5.1 8.2 5.2 5.3^1/4 7.4 :q 5.6 |
+# A high bent phrase, answered by a low one.
+@Call and answer
+:q 8.2^1 :8 ~8.2 5.1 :q 8.2^1r :8 p5.2 7.3 | :8 7.4 5.4 7.5 5.5 :h 5.6 |
+:q 7.3^1/2 :8 7.3^1r p5.3 :q 7.3^1 :8 ~7.3 5.3 | :8 7.4 5.4 7.5 5.5 8.6 :q. 5.6 |
