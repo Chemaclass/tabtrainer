@@ -1,8 +1,9 @@
 import { addressOf } from '../../app/address';
 import type { Jam, JamGroove } from '../../app/jam';
+import { moodFits } from '../../core/moods';
 import { byId, isPlainClick, textSpan } from '../dom';
 
-interface GrooveOption { slug: string; link: HTMLAnchorElement }
+interface GrooveOption { slug: string; genre: string; link: HTMLAnchorElement; fit: HTMLSpanElement }
 
 const FOCUS_STEP: Readonly<Record<string, number>> = { ArrowDown: 1, ArrowUp: -1 };
 
@@ -10,13 +11,15 @@ function grooveHref(slug: string): string {
   return addressOf(new URLSearchParams({ view: 'jam', groove: slug }).toString(), import.meta.env.BASE_URL);
 }
 
-function grooveLink({ slug, groove }: JamGroove): HTMLAnchorElement {
+function grooveLink({ slug, groove }: JamGroove, fit: HTMLSpanElement): HTMLAnchorElement {
   const link = document.createElement('a');
   link.className = 'jam-groove';
   link.href = grooveHref(slug);
+  const genre = textSpan('jam-groove-genre', groove.genre);
+  genre.append(fit);
   link.append(
     textSpan('jam-groove-title', groove.title),
-    textSpan('jam-groove-genre', groove.genre),
+    genre,
     textSpan('jam-groove-tempo', `${groove.tempo} bpm`),
   );
   return link;
@@ -45,9 +48,10 @@ export function groovePicker(jam: Jam, choose: (slug: string) => void) {
   document.addEventListener('pointerdown', closeWhenPressedOutside);
 
   function optionFor(entry: JamGroove): GrooveOption {
-    const link = grooveLink(entry);
+    const fit = textSpan('jam-groove-fit', '');
+    const link = grooveLink(entry, fit);
     link.addEventListener('click', event => pick(event, entry.slug));
-    return { slug: entry.slug, link };
+    return { slug: entry.slug, genre: entry.groove.genre, link, fit };
   }
 
   /** Lists every groove again, after one of mine is saved or deleted. */
@@ -143,10 +147,13 @@ export function groovePicker(jam: Jam, choose: (slug: string) => void) {
     close();
   }
 
+  /** Tags each groove whose genre fits the mood that is on, in words rather than colour. */
   function show() {
-    for (const { slug, link } of options) {
+    const { mood } = jam;
+    for (const { slug, genre, link, fit } of options) {
       if (slug === jam.slug) link.setAttribute('aria-current', 'page');
       else link.removeAttribute('aria-current');
+      fit.textContent = mood && moodFits(mood, genre) ? ` · fits ${mood.name}` : '';
     }
   }
 

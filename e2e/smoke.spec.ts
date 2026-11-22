@@ -183,7 +183,10 @@ test('a mood sets the Jam to its chords, asks before dropping groove changes, an
   await ask.getByRole('button', { name: 'Discard' }).click();
   await expect(ask).toBeHidden();
   await expect(sad).toHaveAttribute('aria-pressed', 'true');
-  await expect(page).toHaveURL(/\/jam\/rock-straight-eighths\//);
+  await expect(page).toHaveURL(/\/jam\/slow-ballad\//);
+  await page.locator('#jamPickerButton').click();
+  await expect(page.locator('#jamGrooves .jam-groove-fit:text("fits Sad")')).toHaveCount(2);
+  await page.keyboard.press('Escape');
   await expect(page.locator('#jamTitle')).toHaveText('Sad');
   await expect(page.locator('#jamKey')).toHaveValue(/m$/);
   await expect(page.locator('#jamMoodWhy')).toContainText('three frets above home');

@@ -130,7 +130,7 @@ describe('jam progression and swing', () => {
 
   it('lists the grooves grouped by genre and opens one by its slug', () => {
     const jam = new Jam(bundledGrooves(files));
-    expect(jam.list.map(g => g.slug)).toEqual(['blues-shuffle', 'rock-straight-eighths', 'reggae-one-drop', 'funk-sixteenths', 'jazz-swing', 'bossa-nova', 'metal-gallop']);
+    expect(jam.list.map(g => g.slug)).toEqual(['blues-shuffle', 'rock-straight-eighths', 'reggae-one-drop', 'funk-sixteenths', 'jazz-swing', 'bossa-nova', 'metal-gallop', 'slow-ballad']);
     expect(jam.choose('reggae-one-drop')).toBe(true);
     expect([jam.groove.genre, jam.key, jam.tempo, jam.swing]).toEqual(['reggae', 'Am', 74, 58]);
   });
@@ -369,7 +369,8 @@ describe('jam moods', () => {
   it('finds the groove that fits a mood best, staying on the current one when it fits', () => {
     const jam = new Jam(bundledGrooves(files));
     expect(jam.grooveFor('bluesy')).toBe('blues-shuffle');
-    expect(jam.grooveFor('sad')).toBe('rock-straight-eighths');
+    expect(jam.grooveFor('sad')).toBe('slow-ballad');
+    expect(jam.grooveFor('melancholic')).toBe('slow-ballad');
     expect(jam.grooveFor('funky')).toBe('funk-sixteenths');
     jam.choose('reggae-one-drop');
     expect(jam.grooveFor('funky')).toBe('reggae-one-drop');
@@ -436,7 +437,7 @@ describe('jam moods', () => {
     jam.choose('rock-straight-eighths');
     jam.preview(playableGroove(NEW_GROOVE_TEXT.replace('genre: rock', 'genre: jazz')).playable!);
     expect(jam.fitsMood('sad')).toBe(false);
-    expect(jam.grooveFor('sad')).toBe('rock-straight-eighths');
+    expect(jam.grooveFor('sad')).toBe('slow-ballad');
     expect(jam.endPreview()).toBe(true);
     expect(jam.fitsMood('sad')).toBe(true);
   });

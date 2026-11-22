@@ -1,0 +1,20 @@
+title: Slow ballad in A minor
+genre: ballad
+about: A slow, soft ballad in A minor to practise long, singing notes over held chords and a gentle backbeat.
+tempo: 68
+key: Am
+time: 4/4
+swing: 50
+progression: i bVI bIII bVII
+kit: rock
+
+# eight straight eighths per bar: 1 & 2 & 3 & 4 &
+crash: x....... | ........ | ........ | ........
+hat:   xoxoxoxo
+snare: ..x...x. | ..x...x. | ..x...x. | ..x..ox.
+# the kick on 1 and softly on the "and" of 3, moving to the "and" of 2 in every second bar
+kick:  X....o.. | X..o....
+# the chord rings for two beats and is struck again on 3
+keys:  X---x--- | X---x--- | X---x--- | X---x-x-
+# long roots with a fifth or a third to move, then a half step into the next bar's root
+bass:  1 - - - - - 5 - | 1 - - - 5 - - - | 1 - - - - - 3 - | 1 - - - 5 - >b1 -

@@ -55,8 +55,8 @@ A mood stays on while one of its loops plays. Change the key, tempo or scale and
 | Mood | Scale | Loops | Tempo | Grooves |
 | --- | --- | --- | --- | --- |
 | Happy | major | `I V vi IV`, `I IV I V`, `I vi IV V` | 100 to 140 | rock, bossa |
-| Sad | natural minor | `i bVI bIII bVII`, `i iv i v`, `i iv bVI v` | 56 to 88 | rock |
-| Melancholic | major, with the minor iv | `I IV iv I`, `I iii IV iv`, `Imaj7 vi7 IV iv` | 60 to 96 | bossa |
+| Sad | natural minor | `i bVI bIII bVII`, `i iv i v`, `i iv bVI v` | 56 to 88 | ballad, rock |
+| Melancholic | major, with the minor iv | `I IV iv I`, `I iii IV iv`, `Imaj7 vi7 IV iv` | 60 to 96 | ballad, bossa |
 | Exciting | Mixolydian | `I bVII IV I`, `I IV bVII IV` | 120 to 176 | rock, metal |
 | Epic | natural minor | `i bVI bVII i`, `i bVII bVI bVII`, `i i bVI bVII` | 120 to 180 | metal, rock |
 | Dark | Phrygian | `i bII i bII`, `i bII bvii i` | 80 to 130 | metal, rock |
@@ -65,7 +65,7 @@ A mood stays on while one of its loops plays. Change the key, tempo or scale and
 | Bluesy | blues | 12 bar blues, minor blues | 60 to 130 | blues, rock |
 | Funky | Dorian | `i7 i7 i7 IV7`, `i7 IV7 i7 IV7` | 88 to 116 | funk, reggae |
 
-A groove fits a mood by its `genre:`, so a groove you write with `genre: funk` fits Funky too. Picking a mood moves to a groove that fits when the current one does not. Choosing a groove by hand keeps the mood, even on a groove that does not fit.
+A groove fits a mood by its `genre:`, so a groove you write with `genre: funk` fits Funky too. Picking a mood moves to a groove that fits when the current one does not, taking the first genre in the list. While a mood is on, the groove list tags each groove that fits it, such as "fits Sad". Choosing a groove by hand keeps the mood, even on a groove that does not fit.
 
 `tests/core/moodFit.test.ts` checks every pair in the Grooves column. It plays every loop over every bundled groove of that genre, in all twelve keys. Each bass note must be a tone of its chord or a note of the mood scale. A new groove that fails a mood comes out of that mood's list.
 
