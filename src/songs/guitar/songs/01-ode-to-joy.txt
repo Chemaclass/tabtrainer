@@ -1,12 +1,14 @@
 title: Ode to Joy
 artist: Ludwig van Beethoven (public domain)
-about: Read Beethoven's Ode to Joy as a melody that moves step by step, with the long-short rhythm of a dotted quarter note and an eighth.
+about: Read Beethoven's Ode to Joy as a melody that moves step by step, with the long-short rhythm of a dotted quarter note and an eighth, then play it again over a bass note on each chord.
 level: easy
 instrument: guitar6
 tempo: 96
 key: G
 time: 4/4
 
+== Melody
+level: easy
 # Open position. Most notes sit on the G and B strings; the middle ends on the open D string.
 @Theme
 "G" :q 0.2 0.2 1.2 3.2 | "D" 3.2 1.2 0.2 2.3 | "G" 0.3 0.3 2.3 0.2 | "D" :q. 0.2 :8 2.3 :h 2.3 |
@@ -15,3 +17,14 @@ time: 4/4
 "D" :q 2.3 2.3 0.2 0.3 | 2.3 :8 0.2 1.2 :q 0.2 0.3 | 2.3 :8 0.2 1.2 :q 0.2 2.3 | "G" 0.3 "D" 2.3 :h 0.4 |
 @Theme again
 "G" :q 0.2 0.2 1.2 3.2 | "D" 3.2 1.2 0.2 2.3 | "G" 0.3 0.3 2.3 0.2 | "D" :q. 2.3 :8 0.3 "G" :h 0.3 |
+== Melody and bass
+level: medium
+# The same tune with a bass note on each chord: fret 3 of the low E string for G, the open D string for D.
+# Play the bass with your thumb and the tune with your fingers. Let the bass ring until a finger has to move.
+@Theme
+"G" :q (3.6 0.2) 0.2 1.2 3.2 | "D" (0.4 3.2) 1.2 0.2 2.3 | "G" (3.6 0.3) 0.3 2.3 0.2 | "D" :q. (0.4 0.2) :8 2.3 :h 2.3 |
+"G" :q (3.6 0.2) 0.2 1.2 3.2 | "D" (0.4 3.2) 1.2 0.2 2.3 | "G" (3.6 0.3) 0.3 2.3 0.2 | "D" :q. (0.4 2.3) :8 0.3 "G" :h (3.6 0.3) |
+@Middle
+"D" :q (0.4 2.3) 2.3 0.2 0.3 | (0.4 2.3) :8 0.2 1.2 :q 0.2 0.3 | (0.4 2.3) :8 0.2 1.2 :q 0.2 2.3 | "G" (3.6 0.3) "D" (0.4 2.3) :h 0.4 |
+@Theme again
+"G" :q (3.6 0.2) 0.2 1.2 3.2 | "D" (0.4 3.2) 1.2 0.2 2.3 | "G" (3.6 0.3) 0.3 2.3 0.2 | "D" :q. (0.4 2.3) :8 0.3 "G" :h (3.6 0.3) |
