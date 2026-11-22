@@ -897,7 +897,6 @@ fieldset.jam-plays {
 }
 .jam-numerals-row {
   display: block;
-  white-space: nowrap;
 }
 .jam-fact-help {
   font-size: 13px;
@@ -945,10 +944,14 @@ fieldset.jam-plays {
 }
 .jam.mood-on .jam-bars li {
   gap: 2px;
-  padding: 8px 14px;
 }
-.jam.mood-on .jam-bars li[aria-current] {
-  padding: 6px 12px;
+@media (min-width: 600px) {
+  .jam.mood-on .jam-bars li {
+    padding: 8px 14px;
+  }
+  .jam.mood-on .jam-bars li[aria-current] {
+    padding: 6px 12px;
+  }
 }
 .jam.mood-on .jam-bar-numeral {
   top: 8px;

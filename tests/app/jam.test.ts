@@ -360,11 +360,11 @@ describe('jam moods', () => {
     jam.applyMood('epic');
     expect([jam.key, jam.tempo, jam.progression]).toEqual(['Em', 160, 'epic-i-bvi-bvii-i']);
   });
-  it('keeps a tempo inside the range when the mood follows a groove picked from the list', () => {
+  it("takes the picked groove's own tempo, held inside the mood's range, when the mood follows it", () => {
     const jam = new Jam(bundledGrooves(files));
     jam.choose('rock-straight-eighths');
     jam.applyMood('exciting');
-    jam.setTempo(170);
+    jam.setTempo(150);
     jam.pickGroove('metal-gallop');
     expect([jam.mood?.id, jam.tempo]).toEqual(['exciting', 170]);
     jam.pickGroove('jazz-swing');
