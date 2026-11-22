@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { readFileSync, readdirSync } from 'node:fs';
 import { Jam, bundledGrooves } from '../../src/app/jam';
 import { jamFretboard } from '../../src/app/jamFretboard';
-import { keyLabel, moodBars, moodLegend, moodStage, tempoNote } from '../../src/app/jamMood';
+import { grooveGroups, keyLabel, moodBars, moodLegend, moodStage, scaleGroups, tempoNote } from '../../src/app/jamMood';
 import { progressionChoices, progressionName } from '../../src/app/jamSummary';
 import { chordAt, numerals } from '../../src/core/harmony';
 import { INSTRUMENTS } from '../../src/core/instruments';
@@ -96,10 +96,26 @@ describe('mood note legend', () => {
     expect(legend?.sentence).toBe('C is the sad note. Three frets above A, not four.');
     expect(marked({ key: 'Am', scale: 'minor', bars: 'i bVI bIII bVII', bar: 0, moodNote: legend!.pitchClass })).toEqual(['C']);
   });
-  it('says nothing when the chosen scale lacks the mood note', () => {
-    expect(moodLegend(moodById('dark'), 'Em', 'minor-pentatonic')).toBeNull();
-    expect(moodLegend(moodById('exciting'), 'E', 'major-pentatonic')).toBeNull();
+  it('says which note the chosen scale leaves out, and marks nothing on the board', () => {
+    expect(moodLegend(moodById('exciting'), 'E', 'major-pentatonic')).toEqual({ pitchClass: null, name: 'D', sentence: 'This scale leaves out D, the exciting note.' });
+    expect(moodLegend(moodById('dark'), 'Em', 'minor-pentatonic')?.sentence).toBe('This scale leaves out F, the dark note.');
     expect(moodLegend(null, 'E', 'major')).toBeNull();
+  });
+  it('groups the scales: those that carry the mood first, then the others', () => {
+    expect(scaleGroups(null, ['major', 'major-pentatonic'])).toEqual([{ label: null, scales: ['major', 'major-pentatonic'] }]);
+    expect(scaleGroups(moodById('happy'), ['major', 'major-pentatonic', 'lydian'])).toEqual([
+      { label: 'Carries the mood', scales: ['major', 'major-pentatonic'] },
+      { label: 'Also fits these chords', scales: ['lydian'] },
+    ]);
+    expect(scaleGroups(moodById('exciting'), ['mixolydian'])).toEqual([{ label: 'Carries the mood', scales: ['mixolydian'] }]);
+  });
+  it('lists the bundled grooves that fit the mood first', () => {
+    const jam = new Jam(bundledGrooves(files));
+    const slugs = (entries: readonly { slug: string }[]) => entries.map(entry => entry.slug);
+    const sad = grooveGroups(jam.list, moodById('sad'));
+    expect(slugs(sad.fitting)).toEqual(['rock-straight-eighths', 'slow-ballad']);
+    expect(sad.other).toHaveLength(jam.list.length - 2);
+    expect(grooveGroups(jam.list, null)).toEqual({ fitting: [], other: jam.list });
   });
   it('marks the borrowed Melancholic note only while the minor chord holds it', () => {
     const legend = moodLegend(moodById('melancholic'), 'C', 'major')!;

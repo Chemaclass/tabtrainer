@@ -1,5 +1,6 @@
 import { addressOf } from '../../app/address';
 import type { Jam, JamGroove } from '../../app/jam';
+import { grooveGroups } from '../../app/jamMood';
 import { moodFits } from '../../core/moods';
 import { byId, isPlainClick, textSpan } from '../dom';
 
@@ -36,9 +37,14 @@ export function groovePicker(jam: Jam, choose: (slug: string) => void) {
   const button = byId('jamPickerButton', HTMLButtonElement);
   const menu = byId('jamGrooves');
   const bundledList = byId('jamGrooveList', HTMLUListElement);
+  const fitList = byId('jamFitList', HTMLUListElement);
+  const fitHeading = byId('jamFitHeading');
+  const otherHeading = byId('jamOtherHeading');
   const mineList = byId('jamMineList', HTMLUListElement);
   const mineEmpty = byId('jamMineEmpty');
   let options: GrooveOption[] = [];
+  let bundledOptions: GrooveOption[] = [];
+  let mineOptions: GrooveOption[] = [];
 
   button.addEventListener('click', toggle);
   button.addEventListener('keydown', openWithArrow);
@@ -56,13 +62,27 @@ export function groovePicker(jam: Jam, choose: (slug: string) => void) {
 
   /** Lists every groove again, after one of mine is saved or deleted. */
   function fill() {
-    const bundledOptions = jam.list.filter(entry => !entry.mine).map(optionFor);
-    const mineOptions = jam.list.filter(entry => entry.mine).map(optionFor);
-    options = [...bundledOptions, ...mineOptions];
-    bundledList.replaceChildren(...bundledOptions.map(option => listItem(option.link)));
+    bundledOptions = jam.list.filter(entry => !entry.mine).map(optionFor);
+    mineOptions = jam.list.filter(entry => entry.mine).map(optionFor);
     mineList.replaceChildren(...mineOptions.map(option => listItem(option.link)));
     mineEmpty.hidden = mineOptions.length > 0;
     show();
+  }
+
+  /** With a mood on, the bundled grooves that fit it come first under their own heading. */
+  function group() {
+    const { mood } = jam;
+    const { fitting, other } = grooveGroups(jam.list, mood);
+    const optionsOf = (entries: readonly JamGroove[]) => entries.map(entry => bundledOptions.find(option => option.slug === entry.slug)!);
+    const fittingOptions = optionsOf(fitting);
+    const otherOptions = optionsOf(other);
+    fitList.replaceChildren(...fittingOptions.map(option => listItem(option.link)));
+    bundledList.replaceChildren(...otherOptions.map(option => listItem(option.link)));
+    fitHeading.textContent = mood ? `Fits ${mood.name}` : '';
+    otherHeading.textContent = mood ? 'Other grooves' : 'Bundled grooves';
+    fitHeading.hidden = fitList.hidden = fittingOptions.length === 0;
+    otherHeading.hidden = !mood;
+    options = [...fittingOptions, ...otherOptions, ...mineOptions];
   }
 
   function isOpen(): boolean {
@@ -147,14 +167,15 @@ export function groovePicker(jam: Jam, choose: (slug: string) => void) {
     close();
   }
 
-  /** Tags each groove whose genre fits the mood that is on, in words rather than colour. */
+  /** Marks the chosen groove, and tags each of mine that fits the mood, since only bundled grooves sit under "Fits". */
   function show() {
     const { mood } = jam;
-    for (const { slug, genre, link, fit } of options) {
+    group();
+    for (const { slug, link } of options) {
       if (slug === jam.slug) link.setAttribute('aria-current', 'page');
       else link.removeAttribute('aria-current');
-      fit.textContent = mood && moodFits(mood, genre) ? ` · fits ${mood.name}` : '';
     }
+    for (const { genre, fit } of mineOptions) fit.textContent = mood && moodFits(mood, genre) ? ` · fits ${mood.name}` : '';
   }
 
   fill();

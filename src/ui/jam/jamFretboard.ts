@@ -1,7 +1,7 @@
 import type { Jam, Mixer } from '../../app/jam';
 import { barChords, isBassInstrument, jamFretboard, type JamFretboardSettings } from '../../app/jamFretboard';
 import { FIRST_FRET, LAST_FRET } from '../../app/fretboardMarks';
-import { moodBars, moodLegend } from '../../app/jamMood';
+import { moodBars, moodLegend, scaleGroups, type MoodLegend } from '../../app/jamMood';
 import type { LoopEngine } from '../../audio/loopEngine';
 import type { GrooveBar } from '../../core/grooveTimeline';
 import { isScaleId, scaleById } from '../../core/scales';
@@ -55,7 +55,14 @@ export function jamFretboardView(jam: Jam, mixer: Pick<Mixer, 'plays'>, settings
   }
 
   function showControls() {
-    scaleSelect.replaceChildren(...jam.scales.map(id => new Option(scaleById(id).name, id)));
+    scaleSelect.replaceChildren(...scaleGroups(jam.mood, jam.scales).flatMap(({ label, scales }) => {
+      const options = scales.map(id => new Option(scaleById(id).name, id));
+      if (label === null) return options;
+      const group = document.createElement('optgroup');
+      group.label = label;
+      group.append(...options);
+      return [group];
+    }));
     setSelectValue(scaleSelect, jam.scale);
     setSelectValue(bassSelect, settings.bass);
     bassField.hidden = mixer.plays !== 'bass';
@@ -75,7 +82,7 @@ export function jamFretboardView(jam: Jam, mixer: Pick<Mixer, 'plays'>, settings
       nextChord,
       moodNote: moodNote?.pitchClass ?? null,
     });
-    showMoodNote(moodNote?.sentence ?? null);
+    showMoodNote(moodNote);
     jobLine.textContent = moodBars(jam)?.[playingBar % bars.length]?.job ?? '';
     announceOnce(chordLine, drawing.chordText);
     scaleLine.textContent = drawing.scaleText;
@@ -89,13 +96,18 @@ export function jamFretboardView(jam: Jam, mixer: Pick<Mixer, 'plays'>, settings
     }));
   }
 
-  /** The first sentence names the note in bold, the rest says where it sits. */
-  function showMoodNote(sentence: string | null) {
-    legend.hidden = sentence === null;
-    if (sentence === null) return;
-    const split = sentence.indexOf('. ') + 1;
-    legendNote.textContent = sentence.slice(0, split);
-    legendRest.textContent = sentence.slice(split + 1);
+  /** The first sentence names the note in bold, the rest says where it sits; a scale without the note says so in plain text. */
+  function showMoodNote(note: MoodLegend | null) {
+    legend.hidden = note === null;
+    if (note === null) {
+      // The Scale control names this line as its description, and a hidden line is still read
+      legendNote.textContent = legendRest.textContent = '';
+      return;
+    }
+    legend.toggleAttribute('data-missing', note.pitchClass === null);
+    const split = note.pitchClass === null ? 0 : note.sentence.indexOf('. ') + 1;
+    legendNote.textContent = note.sentence.slice(0, split);
+    legendRest.textContent = note.sentence.slice(split).trimStart();
   }
 
   /** Redraws for a new groove, key, progression, scale, instrument or label choice. */

@@ -185,7 +185,8 @@ test('a mood sets the Jam to its chords, asks before dropping groove changes, an
   await expect(sad).toHaveAttribute('aria-pressed', 'true');
   await expect(page).toHaveURL(/\/jam\/slow-ballad\//);
   await page.locator('#jamPickerButton').click();
-  await expect(page.locator('#jamGrooves .jam-groove-fit:text("fits Sad")')).toHaveCount(2);
+  await expect(page.locator('#jamFitHeading')).toHaveText('Fits Sad');
+  await expect(page.locator('#jamFitList a')).toHaveCount(2);
   await page.keyboard.press('Escape');
   await expect(page.locator('#jamTitle')).toHaveText('Sad');
   await expect(page.locator('#jamKey')).toHaveValue(/m$/);
@@ -281,6 +282,28 @@ test('Exciting starts fast with eight bars, and an old Exciting link opens its n
   await expect(page.locator('#jamTitle')).toHaveText('Exciting');
   await expect(page.locator('#jamBars li')).toHaveCount(8);
   await expect(page).toHaveURL(/progression=exciting-i-bvii-iv-i-i-bvii-iv-bvii/);
+});
+
+test('the open controls say when they leave the mood, and the groove list puts fitting grooves first', async ({ page }) => {
+  await page.goto('./jam/blues-shuffle/');
+  await page.getByRole('group', { name: 'How do you want it to feel?' }).getByRole('button', { name: 'Exciting', exact: true }).click();
+  await expect(page.locator('#jamScale optgroup')).toHaveCount(2);
+  await expect(page.locator('#jamScale optgroup').first()).toHaveAttribute('label', 'Carries the mood');
+  await page.locator('[data-select="jamScale"]').click();
+  await expect(page.locator('#jamScale-options [role="group"]').first()).toHaveAttribute('aria-label', 'Carries the mood');
+  await page.locator('#jamScale-options').getByRole('option', { name: 'Major pentatonic' }).click();
+  await expect(page.locator('#jamMoodLegend')).toHaveText('This scale leaves out D, the exciting note.');
+  await expect(page.locator('#jamFretboardBoard .fb-mark[data-mood]')).toHaveCount(0);
+  await page.locator('#jamPickerButton').click();
+  await expect(page.locator('#jamFitHeading')).toHaveText('Fits Exciting');
+  await expect(page.locator('#jamFitList a')).toHaveCount(2);
+  await expect(page.locator('#jamOtherHeading')).toHaveText('Other grooves');
+  await page.keyboard.press('Escape');
+  await page.locator('#grooveEdit').click();
+  const source = page.locator('#grooveSource');
+  await source.fill((await source.inputValue()).replace(/^progression: .*$/m, 'progression: I I IV IV | V V IV I'));
+  await expect(page.locator('#grooveFeedback')).toHaveText('Mood off. The groove plays the chords you wrote.');
+  await expect(page.getByRole('button', { name: 'Free, no mood' })).toHaveAttribute('aria-pressed', 'true');
 });
 
 test('the landing demo plays two bars in one click and lights the playing note', async ({ page }) => {

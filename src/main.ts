@@ -252,14 +252,15 @@ function chooseMood(id: MoodId | null) {
     return;
   }
   const slug = jam.grooveFor(id);
-  // A draft whose genre does not fit gives way to a groove that does, so its changes are asked about first
-  const fits = jam.fitsMood(id);
-  const allowed = fits ? Promise.resolve(true) : grooveEditing.mayDiscard();
+  // Leaving a draft for the mood's groove asks about its changes first
+  const stays = slug === jam.slug && jam.fitsMood(id);
+  const allowed = stays ? Promise.resolve(true) : grooveEditing.mayDiscard();
   void allowed.then(chosen => {
     if (!chosen) return;
-    const moved = jam.chooseForMood(slug) || (!fits && jam.endPreview());
+    const moved = jam.chooseForMood(slug) || (!stays && jam.endPreview());
     if (moved) grooveEditing.follow();
     jam.applyMood(id);
+    grooveEditing.moodOn();
     jamming.show();
     showLink(moved);
   });
