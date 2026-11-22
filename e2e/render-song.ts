@@ -46,8 +46,9 @@ async function render(page: Page, base: string, shot: Shot) {
   const area = page.locator(shot.area);
   await area.locator(shot.drawn).first().waitFor({ state: 'attached', timeout: 10_000 }).catch(() => { throw new Error('nothing was drawn within 10 seconds.'); });
   const [name, slug] = shot.opened;
-  const opened = await page.evaluate(name => new URLSearchParams(location.search).get(name), name);
-  if (opened !== slug) throw new Error(`the app opened ${opened ?? 'something else'} instead of ${slug}; is the file in the build?`);
+  // The app moves the query into the address, such as /guitar/fur-elise/ or /jam/rock-straight-eighths/.
+  const opened = await page.evaluate(() => decodeURIComponent(location.pathname));
+  if (!opened.endsWith(`/${slug}/`)) throw new Error(`the app opened ${opened} instead of the ${name} ${slug}; is the file in the build?`);
   await page.evaluate(() => document.fonts.ready);
   await page.evaluate(hideOverlays, shot.area);
   await area.screenshot({ path: shot.image, animations: 'disabled' });
