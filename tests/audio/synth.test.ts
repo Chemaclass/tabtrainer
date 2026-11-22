@@ -66,6 +66,14 @@ describe('Synth', () => {
     expect(muted.frequency.setValueAtTime.mock.calls[0][0]).toBeLessThan(open.frequency.setValueAtTime.mock.calls[0][0]);
     expect(muted.frequency.exponentialRampToValueAtTime.mock.calls[0][1]).toBeCloseTo(1.05);
   });
+  it('fades a hammered note in and starts it dark, with no pick', () => {
+    const { filters, gains } = fakeAudio();
+    const synth = new Synth(); synth.ensure();
+    synth.voice(1, 52, 1, 0.2, undefined, 'instrument', { legato: true });
+    const lowPass = filters[0] as unknown as { frequency: { setValueAtTime: { mock: { calls: number[][] } }; exponentialRampToValueAtTime: { mock: { calls: number[][] } } } };
+    expect(gains[1].gain.exponentialRampToValueAtTime).toHaveBeenCalledWith(0.2, 1.03);
+    expect(lowPass.frequency.setValueAtTime.mock.calls[0][0]).toBe(lowPass.frequency.exponentialRampToValueAtTime.mock.calls[0][0]);
+  });
   it('plays a dead note as one short falling sawtooth through a dark low pass', () => {
     const { sources, filters, gains } = fakeAudio();
     const synth = new Synth(); synth.ensure();

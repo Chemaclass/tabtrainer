@@ -1,7 +1,7 @@
 import { frequencyOf } from '../core/pitch';
 
 export type SourceKind = 'instrument' | 'count-in' | 'metronome' | 'backing';
-export interface VoiceShape { muted?: boolean }
+export interface VoiceShape { muted?: boolean; legato?: boolean }
 type Scheduled = { node: AudioScheduledSourceNode; kind: SourceKind; start: number; end: number };
 
 const MASTER_LEVEL = 0.8;
@@ -19,6 +19,8 @@ const VOICE = {
   closedRatio: 2,
   closedMin: 180,
   sweepTime: 0.4,
+  // A hammer-on or pull-off has no pick, so it fades in and starts already dark
+  legatoAttack: 0.03,
 };
 // The picking hand damps the string, so the note stops early and its low pass starts nearly closed
 const PALM = {
@@ -135,13 +137,13 @@ export class Synth {
     const sine = this.oscillator('sine', frequency, when, end, kind);
     const envelope = this.ctx!.createGain();
     envelope.gain.setValueAtTime(SILENT, when);
-    envelope.gain.exponentialRampToValueAtTime(vel, when + VOICE.attack);
+    envelope.gain.exponentialRampToValueAtTime(vel, when + (shape.legato ? VOICE.legatoAttack : VOICE.attack));
     envelope.gain.exponentialRampToValueAtTime(VOICE.releaseLevel, when + dur);
     const lowPass = this.ctx!.createBiquadFilter();
     lowPass.type = 'lowpass';
     const closed = Math.max(VOICE.closedMin, frequency * VOICE.closedRatio);
     const open = Math.min(VOICE.openMax, frequency * tone.openRatio);
-    lowPass.frequency.setValueAtTime(shape.muted ? Math.max(closed, open) : open, when);
+    lowPass.frequency.setValueAtTime(shape.legato ? closed : shape.muted ? Math.max(closed, open) : open, when);
     lowPass.frequency.exponentialRampToValueAtTime(closed, when + tone.sweepTime);
     const sineLevel = this.ctx!.createGain();
     sineLevel.gain.value = VOICE.sineLevel;

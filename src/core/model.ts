@@ -3,6 +3,9 @@ import type { Instrument } from './instruments';
 /** Ticks per quarter note. 48 divides evenly into 16ths (12), 8th-triplets (16), 32nds (6) and 16th-triplets (8). */
 export const PPQ = 48;
 
+export const APPROACHES = ['hammer', 'pull'] as const;
+export type Approach = typeof APPROACHES[number];
+
 export interface Note {
   /** 1 = highest-pitched string (standard tab numbering). */
   string: number;
@@ -10,6 +13,8 @@ export interface Note {
   fret: number;
   /** Tied from the previous note on this string: keep it ringing, don't pick again. */
   tie?: boolean;
+  /** How the fretting hand reaches the note from the one before it on this string. */
+  approach?: Approach;
   /** Muted by the fretting hand: a click with no pitch. */
   dead?: boolean;
 }

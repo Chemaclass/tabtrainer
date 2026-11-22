@@ -1,6 +1,7 @@
-import { Barline, Beam, Dot, Formatter, Renderer, StaveNote, Stem, TabNote, TabStave, Tuplet, Voice, type StemmableNote, type TabNotePosition } from 'vexflow';
+import { Barline, Beam, Dot, Formatter, Renderer, StaveNote, Stem, TabNote, TabStave, TabTie, Tuplet, Voice, type RenderContext, type StemmableNote, type TabNotePosition } from 'vexflow';
 import { PPQ, type Bar, type Note, type NoteEvent, type Song } from '../core/model';
 import { onsetKey } from '../core/timeline';
+import { eventsInOrder, sourceOf } from '../core/technique';
 import { barWidths, labelRows, lineBreaks, markRoom, timeSignatureDigitHeight } from '../app/sheetLayout';
 
 export interface RenderOptions { barsPerLine: number; width: number; touchSize: number }
@@ -58,7 +59,8 @@ export function renderSong(host: HTMLElement, song: Song, opt: RenderOptions): v
   const { tuning } = song.meta.instrument;
   let beat = 0; const barStart: Record<number, number> = {};
   for (const b of song.bars) { barStart[b.index] = beat; beat += (b.beats * 4) / b.beatValue; }
-  const c: Ctx = { tuning, nStr: tuning.length, tempo: song.meta.tempo, opt, barStart };
+  const before = new Map(eventsInOrder(song.bars).map(({ event, before: previous }) => [event, previous]));
+  const c: Ctx = { tuning, nStr: tuning.length, tempo: song.meta.tempo, opt, barStart, before };
   const changes = song.bars.map((bar, i) => timeSignatureChanges(bar, song.bars[i - 1]));
   const room = noteStartOffset(c);
   const mins = song.bars.map((bar, i) => barMinWidth(bar, barNotes(bar, c).minWidth, changes[i], room, c));
@@ -69,22 +71,23 @@ export function renderSong(host: HTMLElement, song: Song, opt: RenderOptions): v
     sys.className = 'system'; sys.dataset.first = String(group[0].index); sys.dataset.last = String(group[group.length - 1].index);
     host.appendChild(sys);
     try {
-      const rows = drawSystem(sys, group, song.bars[i - 1], c, 1);
-      if (rows > 1) { sys.innerHTML = ''; drawSystem(sys, group, song.bars[i - 1], c, rows); }
+      const around = { prev: song.bars[i - 1], next: song.bars[i + count] };
+      const rows = drawSystem(sys, group, around, c, 1);
+      if (rows > 1) { sys.innerHTML = ''; drawSystem(sys, group, around, c, rows); }
     }
     catch (e) { sys.textContent = `Bars ${group[0].index} to ${group[group.length - 1].index} could not be drawn: ${(e as Error).message}`; sys.classList.add('error'); }
     i += count;
   }
 }
 
-interface Ctx { tuning: number[]; nStr: number; tempo: number; opt: RenderOptions; barStart: Record<number, number> }
+interface Ctx { tuning: number[]; nStr: number; tempo: number; opt: RenderOptions; barStart: Record<number, number>; before: Map<NoteEvent, NoteEvent | undefined> }
 
 const SHEET_MUT = '#5c5c5c', SHEET_LINE = '#c4c4c4';
 const SVG_NS = 'http://www.w3.org/2000/svg';
 const DIGIT_CAP_HEIGHT = 0.73, DIGIT_WIDTH = 0.62;
 const ROW = { barNo: 0.4 * STRING_SPACE, label: 1.4 * STRING_SPACE, section: 2.8 * STRING_SPACE };
 const LOOP_MARK_HEIGHT = 3, LABEL_ROW = 1.1 * STRING_SPACE, LABEL_GAP = 6, NOTE_ROOM = 1.15, FORMAT_PAD = 12;
-const MARK = { baseline: 10, lineLift: 3, tick: 4, gap: 4, labelLeft: 2 };
+const MARK = { baseline: 13, lineLift: 3, tick: 4, gap: 4, labelLeft: 2 };
 
 function svgRect(className: string, x: number, y: number, width: number, height: number): SVGRectElement {
   const el = document.createElementNS(SVG_NS, 'rect');
@@ -107,7 +110,7 @@ function svgLine(svg: SVGSVGElement, className: string, x1: number, y1: number, 
   svg.append(el);
 }
 
-type Target = { note: TabTickable; event: NoteEvent };
+type Target = { note: TabTickable; event: NoteEvent; placed: Note[] };
 
 /** Neighbouring palm-muted events, as their drawn pieces. A rest or an unmuted note ends a run. */
 function palmMuteRuns(targets: Target[]): Target[][] {
@@ -140,6 +143,44 @@ function drawPalmMutes(svg: SVGSVGElement, targets: Target[], top: number) {
     const lineY = y - MARK.lineLift;
     svgLine(svg, 'technique-line', lineFrom, lineY, right, lineY);
     svgLine(svg, 'technique-line end', right, lineY, right, lineY + MARK.tick);
+  }
+}
+
+const JOIN_LETTER = { hammer: 'H', pull: 'P' } as const;
+const HALF_JOIN_LETTER_LEFT = 8;
+
+/** Arcs for hammer-ons and pull-offs. One that crosses a system break is drawn as two halves, and only the half that ends on the note gets the letters. A chord shows each of its letters once. */
+function drawJoins(ctx: RenderContext, svg: SVGSVGElement, targets: Target[], next: Bar | undefined, c: Ctx, top: number) {
+  const first = new Map<NoteEvent, Target>(), last = new Map<NoteEvent, Target>();
+  for (const target of targets) { if (!first.has(target.event)) first.set(target.event, target); last.set(target.event, target); }
+  const arc = (from: Target | undefined, fromIndex: number, to: Target | undefined, toIndex: number) => {
+    ctx.openGroup('join');
+    new TabTie({
+      first_note: from?.note ?? null, last_note: to?.note ?? null,
+      first_indices: [from ? fromIndex : toIndex], last_indices: [to ? toIndex : fromIndex],
+    }).setContext(ctx).draw();
+    ctx.closeGroup();
+  };
+  for (const [event, to] of first) {
+    const before = c.before.get(event);
+    const from = before && last.get(before);
+    const letters = new Set<string>();
+    for (const note of event.notes) {
+      const source = note.approach && sourceOf(before, note);
+      if (!note.approach || !source) continue;
+      arc(from, from?.placed.indexOf(source) ?? 0, to, to.placed.indexOf(note));
+      letters.add(JOIN_LETTER[note.approach]);
+    }
+    if (!letters.size) continue;
+    const x = from ? (from.note.getTieRightX() + to.note.getTieLeftX()) / 2 : to.note.getTieLeftX() - HALF_JOIN_LETTER_LEFT;
+    svgText(svg, 'technique-label', x, top - MARK.baseline, [...letters].join(' '));
+  }
+  const after = next?.events[0], lastEvent = targets.at(-1)?.event;
+  const from = lastEvent && last.get(lastEvent);
+  if (!after || !from || c.before.get(after) !== lastEvent) return;
+  for (const note of after.notes) {
+    const source = note.approach && sourceOf(lastEvent, note);
+    if (source) arc(from, from.placed.indexOf(source), undefined, 0);
   }
 }
 
@@ -191,7 +232,7 @@ function barNotes(bar: Bar, c: Ctx): BarNotes {
       else if (g.length) { trip.push(g); g = []; }
       if (pi === 0 && (ev.chord || ev.text)) labels.push([t, ev]);
       if (pi === 0 && ev.lyric) lyricAt.push([t, ev.lyric]);
-      tn.push(t); targets.push({ note: t, event: ev });
+      tn.push(t); targets.push({ note: t, event: ev, placed: sorted });
     });
   }
   if (g.length) trip.push(g);
@@ -215,10 +256,11 @@ function labelWidth(el: SVGTextElement): number {
   return (el.textContent ?? '').length * 7;
 }
 
-function drawSystem(div: HTMLDivElement, bars: Bar[], prev: Bar | undefined, c: Ctx, rows: number): number {
+function drawSystem(div: HTMLDivElement, bars: Bar[], { prev, next }: { prev?: Bar; next?: Bar }, c: Ctx, rows: number): number {
   const W = sheetWidth(c.opt);
   const lift = (rows - 1) * LABEL_ROW;
-  const room = markRoom({ letters: bars.some(bar => bar.events.some(e => e.palmMute)) }, STRING_SPACE);
+  const joins = bars.some(bar => bar.events.some(e => e.notes.some(n => n.approach)));
+  const room = markRoom({ joins, palmMute: bars.some(bar => bar.events.some(e => e.palmMute)) }, STRING_SPACE);
   const top = tabLineTop(bars, !prev, lift) + room;
   const labelTop = top - room;
   const H = top + 40 + c.nStr * 13 + 30; // provisional; resized to the real tab bottom below
@@ -291,7 +333,9 @@ function drawSystem(div: HTMLDivElement, bars: Bar[], prev: Bar | undefined, c: 
     });
     x += bw;
   });
-  drawPalmMutes(svg, notes.flatMap(n => n.targets), top);
+  const systemTargets = notes.flatMap(n => n.targets);
+  drawJoins(ctx, svg, systemTargets, next, c, top);
+  drawPalmMutes(svg, systemTargets, top - (joins ? STRING_SPACE : 0));
   lyrics.forEach(([px, words]) => svgText(svg, 'lyric', px, bottom + STRING_SPACE + 11, words));
   const end = Math.ceil(bottom + (lyrics.length ? STRING_SPACE + 18 : 14));
   hits.forEach(hit => { if (hit.classList.contains('bar-target')) hit.setAttribute('height', String(Math.min(bottom + 24, end))); });

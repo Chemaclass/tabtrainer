@@ -34,6 +34,17 @@ describe('song fixes', () => {
     }
   });
 
+  it('swaps a hammer-on that goes down for a pull-off, and back', () => {
+    expect(fixed(':q 7.3 h5.3 3.4 3.4 |', 'Change to p5.3')).toBe(':q 7.3 p5.3 3.4 3.4 |');
+    expect(fixed(':q 5.3 (p7.3 2.2) 3.4 3.4 |', 'Change to h7.3')).toBe(':q 5.3 (h7.3 2.2) 3.4 3.4 |');
+    expect(parseSong(fixed(':q 7.3 _h5.3 3.4 3.4 |', 'Change to p5.3')).issues).toEqual([]);
+  });
+
+  it('offers no swap for a join that stays on its fret', () => {
+    const text = ':q 5.3 h5.3 3.4 3.4 |';
+    expect(parseSong(text).issues.flatMap(issue => songFixes(text, issue))).toEqual([]);
+  });
+
   it('offers nothing for a problem with no mechanical fix', () => {
     const text = ':q 3.x |';
     expect(parseSong(text).issues.flatMap(issue => songFixes(text, issue))).toEqual([]);

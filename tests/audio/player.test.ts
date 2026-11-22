@@ -1,6 +1,8 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { Player } from '../../src/audio/player';
 import { fakeAudio } from './fakeAudio';
+import { parseSong } from '../../src/core/parser';
+import { buildTimeline } from '../../src/core/timeline';
 
 const loaded = () => {
   const p = new Player();
@@ -575,5 +577,26 @@ describe('palm mute', () => {
     const stops = sources.map(s => (s.stop.mock.calls[0][0] as number) - (s.start.mock.calls[0][0] as number));
     expect(stops).toHaveLength(2);
     stops.forEach(length => expect(length).toBeCloseTo(0.17));
+  });
+});
+
+describe('hammer-ons and pull-offs', () => {
+  afterEach(() => { vi.useRealTimers(); vi.unstubAllGlobals(); });
+  const PULL_OFF_INTO_BAR_2 = 'instrument: guitar6\ntempo: 90\n:q 7.3 7.3 7.3 7.3 | p5.3 5.3 5.3 5.3 |';
+  const play = (start: (p: Player) => void, until: number) => {
+    const { gains, advance } = fakeAudio();
+    const p = new Player();
+    p.load(buildTimeline(parseSong(PULL_OFF_INTO_BAR_2).song), 90);
+    start(p); advance(until);
+    return gains.map(g => g.gain.exponentialRampToValueAtTime.mock.calls[0]?.[0]).filter(level => level === 0.2 || level === 0.28);
+  };
+  it('play softer than a picked note when the note before is played', () => {
+    expect(play(p => p.play(), 3)).toEqual([0.28, 0.28, 0.28, 0.28, 0.2]);
+  });
+  it('are picked when the pass starts on them, after a seek or at each loop start', () => {
+    expect(play(p => { p.seek(4); p.play(); }, 0.2)).toEqual([0.28]);
+    const looped = play(p => { p.setRange([4, 8], true); p.play(); }, 0.08 + 4 / 1.5 + 0.1);
+    expect(looped.length).toBeGreaterThan(4);
+    expect(looped).not.toContain(0.2);
   });
 });
