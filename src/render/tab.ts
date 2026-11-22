@@ -1,8 +1,8 @@
-import { Barline, Beam, Dot, Formatter, Renderer, StaveNote, Stem, TabNote, TabSlide, TabStave, TabTie, Tuplet, Voice, type RenderContext, type StemmableNote, type TabNotePosition } from 'vexflow';
+import { Barline, Beam, Bend, Dot, Formatter, Renderer, StaveNote, Stem, TabNote, TabSlide, TabStave, TabTie, Tuplet, Voice, type RenderContext, type StemmableNote, type TabNotePosition } from 'vexflow';
 import { PPQ, type Approach, type Bar, type Note, type NoteEvent, type Song } from '../core/model';
 import { onsetKey } from '../core/timeline';
-import { eventsInOrder, isSlide, sourceOf } from '../core/technique';
-import { barWidths, labelRows, lineBreaks, markRoom, timeSignatureDigitHeight } from '../app/sheetLayout';
+import { BENDS, bendsLetDown, eventsInOrder, isSlide, sourceOf } from '../core/technique';
+import { BEND_BAND, barWidths, labelRows, lineBreaks, markRoom, timeSignatureDigitHeight } from '../app/sheetLayout';
 
 export interface RenderOptions { barsPerLine: number; width: number; touchSize: number }
 
@@ -60,10 +60,10 @@ export function renderSong(host: HTMLElement, song: Song, opt: RenderOptions): v
   let beat = 0; const barStart: Record<number, number> = {};
   for (const b of song.bars) { barStart[b.index] = beat; beat += (b.beats * 4) / b.beatValue; }
   const before = new Map(eventsInOrder(song.bars).map(({ event, before: previous }) => [event, previous]));
-  const c: Ctx = { tuning, nStr: tuning.length, tempo: song.meta.tempo, opt, barStart, before };
+  const c: Ctx = { tuning, nStr: tuning.length, tempo: song.meta.tempo, opt, barStart, before, lettingDown: bendsLetDown(song.bars) };
   const changes = song.bars.map((bar, i) => timeSignatureChanges(bar, song.bars[i - 1]));
   const room = noteStartOffset(c);
-  const mins = song.bars.map((bar, i) => barMinWidth(bar, barNotes(bar, c).minWidth, changes[i], room, c));
+  const mins = song.bars.map((bar, i) => fittedBarNotes(bar, changes[i], room, c).min);
   let i = 0;
   for (const count of lineBreaks(mins, sheetWidth(opt) - 12, opt.barsPerLine)) {
     const group = song.bars.slice(i, i + count);
@@ -80,9 +80,45 @@ export function renderSong(host: HTMLElement, song: Song, opt: RenderOptions): v
   }
 }
 
-interface Ctx { tuning: number[]; nStr: number; tempo: number; opt: RenderOptions; barStart: Record<number, number>; before: Map<NoteEvent, NoteEvent | undefined> }
+interface Ctx {
+  tuning: number[]; nStr: number; tempo: number; opt: RenderOptions; barStart: Record<number, number>; before: Map<NoteEvent, NoteEvent | undefined>;
+  lettingDown: Set<Note>;
+}
 
 const SHEET_MUT = '#5c5c5c', SHEET_LINE = '#c4c4c4';
+
+/** How much room a bend takes: VexFlow's own, a short label with a narrow release, or narrow curves with no label. */
+const BEND_FITS = ['roomy', 'short', 'bare'] as const;
+type BendFit = typeof BEND_FITS[number];
+type BendPhrase = NonNullable<ConstructorParameters<typeof Bend>[2]>;
+const NARROW_BEND = { rise: 6, release: 6 }, LET_DOWN_WIDTH = 8;
+
+function bendPhrase(n: Note, steps: typeof BENDS[number], fit: BendFit, letDown: boolean): BendPhrase {
+  if (letDown) return [{ type: Bend.DOWN, text: '', width: LET_DOWN_WIDTH, draw_width: LET_DOWN_WIDTH }];
+  const text = fit === 'roomy' ? steps.label : fit === 'short' ? steps.short : '';
+  const up = fit === 'bare' ? { type: Bend.UP, text, width: NARROW_BEND.rise, draw_width: NARROW_BEND.rise / 2 } : { type: Bend.UP, text };
+  const down = fit === 'roomy' ? { type: Bend.DOWN, text: '' } : { type: Bend.DOWN, text: '', width: NARROW_BEND.release, draw_width: NARROW_BEND.release / 2 };
+  return n.release ? [up, down] : [up];
+}
+
+function bendMark(n: Note, fit: BendFit, c: Ctx): Bend | undefined {
+  const steps = n.bend ? BENDS.find(b => b.steps === n.bend) : undefined;
+  if (!steps) return undefined;
+  const bend = new Bend(steps.label, false, bendPhrase(n, steps, fit, c.lettingDown.has(n)));
+  bend.render_options.line_style = SHEET_MUT;
+  return bend;
+}
+
+/**
+ * The bends a chord shows, with the index of the note each one hangs on: one on the top bent note when they all bend alike.
+ * VexFlow puts each bend of a note right of the one before, so the top string goes first and a lower string's curve passes under it.
+ */
+function chordBends(sorted: Note[], fit: BendFit, c: Ctx): [Bend, number][] {
+  const bent = sorted.flatMap((note, index) => note.bend ? [{ note, index }] : []).sort((a, b) => a.note.string - b.note.string);
+  const alike = (a: Note, b: Note) => a.bend === b.bend && a.release === b.release && c.lettingDown.has(a) === c.lettingDown.has(b);
+  const shown = bent.length > 1 && bent.every(({ note }) => alike(note, bent[0].note)) ? [bent[0]] : bent;
+  return shown.flatMap(({ note, index }) => { const bend = bendMark(note, fit, c); return bend ? [[bend, index] as [Bend, number]] : []; });
+}
 const SVG_NS = 'http://www.w3.org/2000/svg';
 const DIGIT_CAP_HEIGHT = 0.73, DIGIT_WIDTH = 0.62;
 const ROW = { barNo: 0.4 * STRING_SPACE, label: 1.4 * STRING_SPACE, section: 2.8 * STRING_SPACE };
@@ -147,14 +183,17 @@ function drawPalmMutes(svg: SVGSVGElement, targets: Target[], top: number) {
 }
 
 const JOIN_LETTER: Partial<Record<Approach, string>> = { hammer: 'H', pull: 'P' };
-const HALF_JOIN_LETTER_LEFT = 8, SLIDE_IN_WIDTH = 9, SLIDE_RISE = 3;
+const HALF_JOIN_LETTER_LEFT = 8, SHORT_SLIDE_WIDTH = 9, SLIDE_RISE = 3;
 
 // TabSlide always prints "sl." in the row the app keeps for chord names
 class SilentSlide extends TabSlide { renderText() {} }
 
 const slideDirection = (approach: Approach) => approach === 'slide-up' ? TabSlide.SLIDE_UP : TabSlide.SLIDE_DOWN;
 
-/** Arcs for hammer-ons and pull-offs, lines for slides. A join that crosses a system break is drawn as two halves, and only the half that ends on the note gets the letters. A chord shows each of its letters once. A slide with no note before it gets a short line into the note. */
+/**
+ * Arcs for hammer-ons and pull-offs, lines for slides. An arc that crosses a system break is drawn as two halves, and only the half that ends on the note gets the letters.
+ * A chord shows each of its letters once. A slide that crosses a system break, or has no note before it, gets a short line out of or into the note.
+ */
 function drawJoins(ctx: RenderContext, svg: SVGSVGElement, targets: Target[], next: Bar | undefined, c: Ctx, top: number) {
   const first = new Map<NoteEvent, Target>(), last = new Map<NoteEvent, Target>();
   for (const target of targets) { if (!first.has(target.event)) first.set(target.event, target); last.set(target.event, target); }
@@ -167,12 +206,13 @@ function drawJoins(ctx: RenderContext, svg: SVGSVGElement, targets: Target[], ne
     (isSlide(approach) ? new SilentSlide(notes, slideDirection(approach)) : new TabTie(notes)).setContext(ctx).draw();
     ctx.closeGroup();
   };
-  const slideIn = (approach: Approach, to: Target, index: number) => {
-    const x = to.note.getTieLeftX(), y = to.note.getYs()[index], rise = SLIDE_RISE * slideDirection(approach);
+  const shortSlide = (approach: Approach, x: number, y: number) => {
+    const rise = SLIDE_RISE * slideDirection(approach);
     ctx.openGroup('join');
-    ctx.beginPath(); ctx.moveTo(x - SLIDE_IN_WIDTH, y + rise); ctx.lineTo(x, y - rise); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x, y + rise); ctx.lineTo(x + SHORT_SLIDE_WIDTH, y - rise); ctx.stroke();
     ctx.closeGroup();
   };
+  const slideInto = (approach: Approach, to: Target, note: Note) => shortSlide(approach, to.note.getTieLeftX() - SHORT_SLIDE_WIDTH, to.note.getYs()[to.placed.indexOf(note)]);
   for (const [event, to] of first) {
     const before = c.before.get(event);
     const from = before && last.get(before);
@@ -180,9 +220,9 @@ function drawJoins(ctx: RenderContext, svg: SVGSVGElement, targets: Target[], ne
     for (const note of event.notes) {
       if (!note.approach) continue;
       const source = sourceOf(before, note);
-      if (source) arc(note.approach, from, from?.placed.indexOf(source) ?? 0, to, to.placed.indexOf(note));
-      else if (isSlide(note.approach)) slideIn(note.approach, to, to.placed.indexOf(note));
-      const letter = source && JOIN_LETTER[note.approach];
+      if (isSlide(note.approach) && !(source && from)) slideInto(note.approach, to, note);
+      else if (source) arc(note.approach, from, from?.placed.indexOf(source) ?? 0, to, to.placed.indexOf(note));
+      const letter = source && !source.bend && JOIN_LETTER[note.approach];
       if (letter) letters.add(letter);
     }
     if (!letters.size) continue;
@@ -194,7 +234,10 @@ function drawJoins(ctx: RenderContext, svg: SVGSVGElement, targets: Target[], ne
   if (!after || !from || c.before.get(after) !== lastEvent) return;
   for (const note of after.notes) {
     const source = sourceOf(lastEvent, note);
-    if (note.approach && source) arc(note.approach, from, from.placed.indexOf(source), undefined, 0);
+    if (!note.approach || !source) continue;
+    const index = from.placed.indexOf(source);
+    if (isSlide(note.approach)) shortSlide(note.approach, from.note.getTieRightX(), from.note.getYs()[index]);
+    else arc(note.approach, from, index, undefined, 0);
   }
 }
 
@@ -228,7 +271,7 @@ interface BarNotes {
   voice: Voice; beams: Beam[]; tups: Tuplet[]; formatter: Formatter; minWidth: number;
 }
 
-function barNotes(bar: Bar, c: Ctx): BarNotes {
+function barNotes(bar: Bar, c: Ctx, fit: BendFit): BarNotes {
   const tn: TabTickable[] = [];
   const targets: Target[] = [];
   const trip: TabTickable[][] = [];
@@ -242,6 +285,7 @@ function barNotes(bar: Bar, c: Ctx): BarNotes {
         ? tabNote(sorted.map(n => ({ str: n.string, fret: fretLabel(n, pi > 0) })), val, dots)
         : tabRest(val, dots, c.nStr);
       if (dots) Dot.buildAndAttach([t]);
+      if (pi === 0 && t instanceof TabNote) chordBends(sorted, fit, c).forEach(([bend, index]) => t.addModifier(bend, index));
       if (isT) { g.push(t); if (g.length === 3) { trip.push(g); g = []; } }
       else if (g.length) { trip.push(g); g = []; }
       if (pi === 0 && (ev.chord || ev.text)) labels.push([t, ev]);
@@ -262,8 +306,20 @@ const sheetWidth = (opt: RenderOptions) => Math.max(240, opt.width);
 const tabOptionsFor = (c: Ctx) => ({ num_lines: c.nStr, space_above_staff_ln: 0, fill_style: SHEET_LINE });
 const noteStartOffset = (c: Ctx) => new TabStave(0, 0, 100, tabOptionsFor(c)).getNoteStartX();
 const timeSignatureChanges = (bar: Bar, prev: Bar | undefined) => !prev || prev.beats !== bar.beats || prev.beatValue !== bar.beatValue;
-const barMinWidth = (bar: Bar, notesWidth: number, tsChange: boolean, noteStart: number, c: Ctx) =>
-  notesWidth * NOTE_ROOM + noteStart + FORMAT_PAD + (tsChange ? timeSignatureWidth(bar, c.nStr) + STRING_SPACE / 2 : 0);
+const barFrame = (bar: Bar, tsChange: boolean, noteStart: number, c: Ctx) =>
+  noteStart + FORMAT_PAD + (tsChange ? timeSignatureWidth(bar, c.nStr) + STRING_SPACE / 2 : 0);
+
+/** A bar's notes with the roomiest bends that VexFlow can fit within the sheet, and the width it asks for. */
+function fittedBarNotes(bar: Bar, tsChange: boolean, noteStart: number, c: Ctx): { notes: BarNotes; min: number } {
+  const frame = barFrame(bar, tsChange, noteStart, c);
+  const bends = bar.events.some(e => e.notes.some(n => n.bend));
+  const fitFrom = (i: number): BarNotes => {
+    const notes = barNotes(bar, c, BEND_FITS[i]);
+    return !bends || i === BEND_FITS.length - 1 || notes.minWidth + frame <= sheetWidth(c.opt) - 12 ? notes : fitFrom(i + 1);
+  };
+  const notes = fitFrom(0);
+  return { notes, min: notes.minWidth * NOTE_ROOM + frame };
+}
 
 function labelWidth(el: SVGTextElement): number {
   try { const w = el.getComputedTextLength(); if (w > 0) return w; } catch { /* not laid out */ }
@@ -274,8 +330,10 @@ function drawSystem(div: HTMLDivElement, bars: Bar[], { prev, next }: { prev?: B
   const W = sheetWidth(c.opt);
   const lift = (rows - 1) * LABEL_ROW;
   const joins = bars.some(bar => bar.events.some(e => e.notes.some(n => n.approach && JOIN_LETTER[n.approach])));
-  const room = markRoom({ joins, palmMute: bars.some(bar => bar.events.some(e => e.palmMute)) }, STRING_SPACE);
+  const bend = bars.some(bar => bar.events.some(e => e.notes.some(n => n.bend)));
+  const room = markRoom({ bend, joins, palmMute: bars.some(bar => bar.events.some(e => e.palmMute)) }, STRING_SPACE);
   const top = tabLineTop(bars, !prev, lift) + room;
+  const marksTop = top - (bend ? BEND_BAND * STRING_SPACE : 0);
   const labelTop = top - room;
   const H = top + 40 + c.nStr * 13 + 30; // provisional; resized to the real tab bottom below
   const r = new Renderer(div, Renderer.Backends.SVG); r.resize(W, H); const ctx = r.getContext();
@@ -283,8 +341,9 @@ function drawSystem(div: HTMLDivElement, bars: Bar[], { prev, next }: { prev?: B
   const tabOptions = tabOptionsFor(c);
   const noteStart = noteStartOffset(c);
   const tsChanges = bars.map((bar, bi) => timeSignatureChanges(bar, bi === 0 ? prev : bars[bi - 1]));
-  const notes = bars.map(bar => barNotes(bar, c));
-  const mins = notes.map((n, bi) => barMinWidth(bars[bi], n.minWidth, tsChanges[bi], noteStart, c));
+  const fitted = bars.map((bar, bi) => fittedBarNotes(bar, tsChanges[bi], noteStart, c));
+  const notes = fitted.map(f => f.notes);
+  const mins = fitted.map(f => f.min);
   let x = 6; const avail = W - 12; let bottom = 0;
   const widths = barWidths(avail, bars.map(b => 3 + b.events.length), mins);
   const lyrics: [number, string][] = [];
@@ -348,8 +407,8 @@ function drawSystem(div: HTMLDivElement, bars: Bar[], { prev, next }: { prev?: B
     x += bw;
   });
   const systemTargets = notes.flatMap(n => n.targets);
-  drawJoins(ctx, svg, systemTargets, next, c, top);
-  drawPalmMutes(svg, systemTargets, top - (joins ? STRING_SPACE : 0));
+  drawJoins(ctx, svg, systemTargets, next, c, marksTop);
+  drawPalmMutes(svg, systemTargets, marksTop - (joins ? STRING_SPACE : 0));
   lyrics.forEach(([px, words]) => svgText(svg, 'lyric', px, bottom + STRING_SPACE + 11, words));
   const end = Math.ceil(bottom + (lyrics.length ? STRING_SPACE + 18 : 14));
   hits.forEach(hit => { if (hit.classList.contains('bar-target')) hit.setAttribute('height', String(Math.min(bottom + 24, end))); });

@@ -1,6 +1,6 @@
 import { INSTRUMENTS, customInstrument, type Instrument } from './instruments';
 import { LEVELS, PPQ, barTicks, type Approach, type Bar, type Level, type Note, type NoteEvent, type Song, type Version } from './model';
-import { APPROACH_MARK, OPPOSITE, RISES, approachOf, isSlide, sourceOf } from './technique';
+import { APPROACH_MARK, BENDS, OPPOSITE, RISES, approachOf, holdBends, isSlide, sourceOf } from './technique';
 import { NO_TOKEN, hinted, spanOf, valueSpan, type IssueSpan, type ParseIssue, type SongIssueCode } from './parseIssue';
 
 export interface ParseResult { song: Song; issues: ParseIssue[] }
@@ -114,6 +114,7 @@ export function parseSong(src: string): ParseResult {
   let bars: Bar[] = [];
   const mutedStrings = new Set<number>();
   const palmStrings = new Set<number>();
+  const heldBends = new Map<number, number>();
   const st = { cur: null as Bar | null, notesAt: NO_TOKEN, startAt: null as Tok | null }; let t = 0;
   let dur = parseDuration('q')!;
   let pendingTempo: number | undefined;
@@ -140,15 +141,30 @@ export function parseSong(src: string): ParseResult {
     st.cur = null; st.startAt = null;
   };
   const parseNote = (s: string, at: IssueSpan): Note | null => {
-    const r = /^([~hp/\\]?)(\d{1,2}|[xX])\.(\d{1,2})$/.exec(s);
+    const r = /^([~hp/\\]?)(\d{1,2}|[xX])\.(\d{1,2})(?:\^(.*))?$/.exec(s);
     const dead = /^[xX]$/.test(r?.[2] ?? '');
-    if (!r || (dead && r[1])) { report('error', 'note-unreadable', at, hinted(`Can't read "${s}".`, 'Notes are fret.string, e.g. 3.4 (fret 3 on string 4)')); return null; }
+    if (!r || (dead && (r[1] || r[4] !== undefined))) { report('error', 'note-unreadable', at, hinted(`Can't read "${s}".`, 'Notes are fret.string, e.g. 3.4 (fret 3 on string 4)')); return null; }
     const fret = dead ? 0 : +r[2], string = +r[3];
     if (string < 1 || string > strings) { report('error', 'string-missing', at, `String ${string} doesn't exist on this ${strings}-string instrument`); return null; }
     if (fret > meta.instrument.maxFret) { report('error', 'fret-high', at, `Fret ${fret} is above the instrument's ${meta.instrument.maxFret} frets`); return null; }
     const approach = approachOf(r[1]);
     const joined = approach && joinFits(approach, fret, string, s, at) ? { approach } : {};
-    return { string, fret, ...(r[1] === '~' ? { tie: true } : {}), ...joined, ...(dead ? { dead: true } : {}) };
+    const tie = r[1] === '~';
+    const bent = r[4] === undefined ? {} : bendOf(r[4], fret, string, tie, s, at);
+    return { string, fret, ...(tie ? { tie: true } : {}), ...joined, ...bent, ...(dead ? { dead: true } : {}) };
+  };
+  const bendOf = (written: string, fret: number, string: number, tie: boolean, s: string, at: IssueSpan): Pick<Note, 'bend' | 'release'> => {
+    const m = /^(.*?)(r?)$/.exec(written)!;
+    const bend = BENDS.find(b => b.written === m[1]);
+    if (!bend) report('error', 'bend-amount', at, hinted(`Can't read the bend in "${s}".`, 'Use ^1/4, ^1/2, ^1, ^3/2 or ^2: ^1 is a whole step, two frets'));
+    else if (fret === 0) report('error', 'bend-open', at, `An open string can't be bent`);
+    else if (tie && heldBends.has(string) && !(m[2] && heldBends.get(string) === bend.steps)) report('error', 'bend-held', at, heldHint(heldBends.get(string)!, fret, string));
+    else return { bend: bend.steps, ...(m[2] ? { release: true } : {}) };
+    return {};
+  };
+  const heldHint = (held: number, fret: number, string: number) => {
+    const written = BENDS.find(b => b.steps === held)?.written;
+    return hinted(`String ${string} is already bent here.`, `Write ~${fret}.${string} to hold the bend, or ~${fret}.${string}^${written}r to let it down`);
   };
   const joinFits = (approach: Approach, fret: number, string: number, s: string, at: IssueSpan): boolean => {
     const source = sourceOf(bars.at(-1)?.events.at(-1), { string });
@@ -182,6 +198,7 @@ export function parseSong(src: string): ParseResult {
     // A tie keeps the palm mute of the note it holds, so the held part does not ring out.
     if (palmMute || (notes.length > 0 && notes.every(n => n.tie && palmStrings.has(n.string)))) ev.palmMute = true;
     for (const n of notes) { if (ev.palmMute) palmStrings.add(n.string); else palmStrings.delete(n.string); }
+    holdBends(heldBends, notes);
     pendingChord = pendingText = pendingLyric = undefined;
     st.cur.events.push(ev); t += dur.ticks;
   };
@@ -196,7 +213,7 @@ export function parseSong(src: string): ParseResult {
       const name = s.replace(/^=+/, '').trim() || `Version ${versions.length + 1}`;
       if (bars.length || versionLine) versions.push(version());
       else if (versions.length === 0 && pendingSection) { /* section before the first version applies to it */ }
-      bars = []; mutedStrings.clear(); palmStrings.clear(); st.startAt = null; versionName = name; versionLine = tok.line; versionAt = spanOf(tok); versionLevel = undefined;
+      bars = []; mutedStrings.clear(); palmStrings.clear(); heldBends.clear(); st.startAt = null; versionName = name; versionLine = tok.line; versionAt = spanOf(tok); versionLevel = undefined;
       pendingTempo = undefined;
       time = [headerTime[0], headerTime[1]]; dur = parseDuration('q')!; pendingChord = pendingText = pendingLyric = undefined;
       if (versions.some(v => v.name === name)) report('warning', 'version-duplicate', spanOf(tok), `There is already a version called "${name}"`);

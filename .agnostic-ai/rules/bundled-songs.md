@@ -10,4 +10,5 @@ globs: src/songs/**
 - Header order: `title`, `artist`, `about`, `level`, `listen` (optional), `instrument`, `tempo`, `key`, `time`. Exercises use `artist: TabTrainer` unless credited as above; songs use `<Composer> (public domain)` or `Traditional (public domain)`.
 - `about:` is one sentence saying what the song trains, written for the player.
 - `level:` is `easy`, `medium` or `hard`. When versions differ, put a `level:` line under each `== Name` line too.
+- Use a technique mark (`h p / \ ^ x _`) only where the song needs it. The first file that teaches a mark explains it in a top comment.
 - `tests/songs.test.ts` fails on any parser warning, a missing `about:` or `level:`, fewer than 4 bars or a broken round trip. Every bar must add up to its time signature.

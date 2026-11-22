@@ -57,7 +57,7 @@ test('technique marks draw without a problem', async ({ page }, testInfo) => {
   const phone = testInfo.project.name === 'phone';
   await openFirstExercise(page);
   await page.locator('#editBtn').click();
-  await page.locator('#src').fill('title: Marks\ninstrument: guitar6\ntempo: 90\nkey: C\ntime: 4/4\n\n:q 3.5 x.5 /4.4 \\2.4 | :8 _0.6 _0.6 _(0.6 2.5) _0.6 :q 2.4 h4.4 | p2.4 (0.3 2.2) (h2.3 p0.2) 0.3 |\n');
+  await page.locator('#src').fill('title: Marks\ninstrument: guitar6\ntempo: 90\nkey: C\ntime: 4/4\n\n:q 3.5 x.5 /4.4 \\2.4 | :8 _0.6 _0.6 _(0.6 2.5) _0.6 :q 2.4 h4.4 | p2.4 (0.3 2.2) (h2.3 p0.2) 2.3^1 |\n');
   if (phone) await page.locator('#scoreTab').click();
   await expect(page.locator('#issues li')).toHaveCount(0);
   await expect(page.locator('.system.error')).toHaveCount(0);
@@ -71,6 +71,24 @@ test('technique marks draw without a problem', async ({ page }, testInfo) => {
   // A chord with a hammer-on and a pull-off shows both letters once, side by side
   await expect(page.locator('.technique-label:not(.pm)')).toHaveText(['H', 'P', 'H P']);
   await expect(page.locator('.technique-label:not(.pm)').first()).toBeVisible();
+  await expect(page.locator('.note text', { hasText: 'full' })).toHaveCount(1);
+  await expect(page.locator('.note text', { hasText: 'full' })).toBeVisible();
+});
+
+test('a bar full of bends fits the sheet, and a chord bent alike shows one bend', async ({ page }, testInfo) => {
+  await openFirstExercise(page);
+  await page.locator('#editBtn').click();
+  await page.locator('#src').fill(`title: Bends\ninstrument: guitar6\ntempo: 90\nkey: C\ntime: 4/4\n\n:8${' 7.3^3/2r'.repeat(8)} | :q (7.3^1 8.2^1) (7.3^1 8.2^1r) 7.3^1 ~7.3^1r |\n`);
+  if (testInfo.project.name === 'phone') await page.locator('#scoreTab').click();
+  await expect(page.locator('#issues li')).toHaveCount(0);
+  await expect(page.locator('.system.error')).toHaveCount(0);
+  const overflow = await page.locator('#sheet .system svg').evaluateAll(svgs => svgs.map(svg => {
+    let right = 0;
+    svg.querySelectorAll('.note path, .note text').forEach(el => { const box = (el as SVGGraphicsElement).getBBox(); right = Math.max(right, box.x + box.width); });
+    return right - Number(svg.getAttribute('width'));
+  }));
+  expect(overflow.every(over => over <= 0)).toBe(true);
+  await expect(page.locator('.note text', { hasText: 'full' })).toHaveCount(4);
 });
 
 test('the player reaches the playing state and lights the current note', async ({ page }) => {

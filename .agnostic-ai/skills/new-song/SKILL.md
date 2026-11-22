@@ -12,4 +12,4 @@ x-claude: {argument-hint: "<what it trains | public domain song>"}
 4. Write the file. Keep fingerings playable: stay within about four frets per hand position, prefer open strings in low positions, and check each note against the `key:` line. Use `@Section` lines for the parts the `about:` line names.
 5. Run `npx vitest run tests/songs.test.ts`. Fix each issue at the line it names; a short bar gets filled with a rest and fails the test.
 6. Ask the `song-reviewer` agent to check the file, and fix what it finds.
-7. Check it in the browser: pick it in the song list, play it, and confirm the tab, its rhythm and the highlight follow along.
+7. Check it in the browser: pick it in the song list, play it, and confirm the tab, its rhythm and the highlight follow along. If it uses technique marks, check that each one draws and sounds.

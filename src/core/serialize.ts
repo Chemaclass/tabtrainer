@@ -1,6 +1,6 @@
 import { INSTRUMENTS } from './instruments';
 import type { Note, NoteEvent, Song } from './model';
-import { APPROACH_MARK } from './technique';
+import { APPROACH_MARK, BENDS } from './technique';
 
 const NAMES = ['C', 'C#', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B'];
 const midiName = (m: number) => NAMES[m % 12] + (Math.floor(m / 12) - 1);
@@ -8,7 +8,11 @@ const midiName = (m: number) => NAMES[m % 12] + (Math.floor(m / 12) - 1);
 function durToken(e: NoteEvent): string {
   return e.value + '.'.repeat(e.dots) + (e.triplet ? 't' : '');
 }
-const noteTok = (n: Note) => n.dead ? `x.${n.string}` : (n.tie ? '~' : n.approach ? APPROACH_MARK[n.approach] : '') + `${n.fret}.${n.string}`;
+const bendTok = (n: Note) => {
+  const written = n.bend && BENDS.find(b => b.steps === n.bend)?.written;
+  return written ? `^${written}${n.release ? 'r' : ''}` : '';
+};
+const noteTok = (n: Note) => n.dead ? `x.${n.string}` : (n.tie ? '~' : n.approach ? APPROACH_MARK[n.approach] : '') + `${n.fret}.${n.string}` + bendTok(n);
 
 /** Turn a song back into the text format (stable, round-trips through parseSong). */
 export function serializeSong(song: Song, barsPerLine = 2): string {

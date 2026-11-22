@@ -1,5 +1,5 @@
 import { PPQ, barTicks, type Song } from './model';
-import { eventsInOrder, pitchPlan, sourceOf, type PitchPoint } from './technique';
+import { eventsInOrder, holdBends, pitchPlan, sourceOf, type PitchPoint } from './technique';
 
 export interface TimedNote {
   /** Absolute position in quarter-note beats from the start of the song. */
@@ -20,7 +20,7 @@ export interface TimedNote {
   muted?: boolean;
   /** Reached by a hammer-on, pull-off or slide from the note before: sounds without a pick attack. */
   legato?: boolean;
-  /** Pitch movement in cents against `midi`, as points in beats from the note's start. */
+  /** Pitch movement in cents against `midi`, as points in beats from the note's start: slides and bends. */
   pitch?: PitchPoint[];
 }
 
@@ -32,6 +32,7 @@ export function buildTimeline(song: Song): { notes: TimedNote[]; bars: BarSpan[]
   const notes: TimedNote[] = []; const bars: BarSpan[] = [];
   const tuning = song.meta.instrument.tuning; const tr = song.meta.instrument.transpose;
   const before = new Map(eventsInOrder(song.bars).map(({ event, before: previous }) => [event, previous]));
+  const heldBends = new Map<number, number>();
   let pos = 0;
   for (const b of song.bars) {
     const len = barTicks(b) / PPQ;
@@ -41,9 +42,10 @@ export function buildTimeline(song: Song): { notes: TimedNote[]; bars: BarSpan[]
       const beat = pos + e.start / PPQ;
       for (const n of e.notes) {
         const source = n.approach && sourceOf(before.get(e), n);
-        const pitch = pitchPlan(n, source, e.dur / PPQ);
+        const pitch = pitchPlan(n, source, heldBends.get(n.string), e.dur / PPQ);
         notes.push({ beat, ring: e.dur / PPQ, midi: tuning[n.string - 1] + n.fret + tr, string: n.string, fret: n.fret, bar: b.index, key: onsetKey(beat), ...(n.tie ? { soft: true } : {}), ...(n.dead ? { dead: true } : {}), ...(e.palmMute ? { muted: true } : {}), ...(source ? { legato: true } : {}), ...(pitch ? { pitch } : {}) });
       }
+      holdBends(heldBends, e.notes);
     }
     pos += len;
   }

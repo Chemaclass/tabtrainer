@@ -16,10 +16,13 @@ export function timeSignatureDigitHeight(strings: number, stringSpace: number) {
   return Math.min(((strings - 1) * stringSpace) / 2, 2.2 * stringSpace);
 }
 
-/** Height of the band above the tab lines for technique marks: one row for the letters of hammer-ons and pull-offs, one above it for "P.M.". */
-export function markRoom(marks: { joins: boolean; palmMute: boolean }, stringSpace: number) {
+/** Room for bend arrows and their labels, in string spaces above the tab lines. */
+export const BEND_BAND = 2;
+
+/** Height of the band above the tab lines for technique marks: bend arrows first, then a row for the letters of hammer-ons and pull-offs, then one for "P.M.". */
+export function markRoom(marks: { bend: boolean; joins: boolean; palmMute: boolean }, stringSpace: number) {
   const rows = Number(marks.joins) + Number(marks.palmMute);
-  return rows ? Math.round((rows + 0.5) * stringSpace) : 0;
+  return Math.round((marks.bend ? BEND_BAND : 0) * stringSpace + (rows ? (rows + 0.5) * stringSpace : 0));
 }
 
 export function barWidths(avail: number, weights: number[], mins: number[]): number[] {

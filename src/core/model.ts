@@ -15,6 +15,10 @@ export interface Note {
   tie?: boolean;
   /** How the fretting hand reaches the note from the one before it on this string. */
   approach?: Approach;
+  /** How far the string is bent up, in whole steps: 0.25, 0.5, 1, 1.5 or 2. */
+  bend?: number;
+  /** The bend comes back down within the note. */
+  release?: boolean;
   /** Muted by the fretting hand: a click with no pitch. */
   dead?: boolean;
 }

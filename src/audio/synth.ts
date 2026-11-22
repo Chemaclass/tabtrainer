@@ -1,7 +1,14 @@
 import { frequencyOf } from '../core/pitch';
 
 export type SourceKind = 'instrument' | 'count-in' | 'metronome' | 'backing';
-export interface VoiceShape { muted?: boolean; legato?: boolean; pitch?: readonly { after: number; cents: number }[] }
+/** A pitch change in cents, at a time in seconds from the note's start. */
+export interface PitchMove { after: number; cents: number }
+export interface VoiceShape { muted?: boolean; legato?: boolean; pitch?: readonly PitchMove[] }
+
+function squeeze(points: readonly PitchMove[], within: number): readonly PitchMove[] {
+  const last = Math.max(0, ...points.map(point => point.after));
+  return last <= within ? points : points.map(point => ({ ...point, after: point.after * within / last }));
+}
 type Scheduled = { node: AudioScheduledSourceNode; kind: SourceKind; start: number; end: number };
 
 const MASTER_LEVEL = 0.8;
@@ -135,7 +142,9 @@ export class Synth {
     const end = when + dur + VOICE.tail;
     const saw = this.oscillator('sawtooth', frequency, when, end, kind);
     const sine = this.oscillator('sine', frequency, when, end, kind);
-    if (shape.pitch?.length) for (const oscillator of [saw, sine]) this.glide(oscillator.detune, when, shape.pitch.map(point => ({ ...point, after: Math.min(point.after, dur / 2) })));
+    // A palm-muted note dies early, so its pitch moves squeeze into the first half of what sounds, keeping their shape
+    const pitch = shape.pitch && squeeze(shape.pitch, shape.muted ? dur / 2 : dur);
+    if (pitch?.length) for (const oscillator of [saw, sine]) this.glide(oscillator.detune, when, pitch);
     const envelope = this.ctx!.createGain();
     envelope.gain.setValueAtTime(SILENT, when);
     envelope.gain.exponentialRampToValueAtTime(vel, when + (shape.legato ? VOICE.legatoAttack : VOICE.attack));
@@ -156,7 +165,7 @@ export class Synth {
   }
 
   // detune is in cents, so a straight ramp is a straight glide in pitch
-  private glide(detune: AudioParam, when: number, points: readonly { after: number; cents: number }[]) {
+  private glide(detune: AudioParam, when: number, points: readonly PitchMove[]) {
     detune.setValueAtTime(points[0].cents, when);
     for (const point of points.slice(1)) detune.linearRampToValueAtTime(point.cents, when + point.after);
   }
