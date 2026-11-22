@@ -21,13 +21,13 @@ const headerParts = (page: Page) => page.evaluate(() => {
     fretboard: box('#fretboardBtn'),
     ...(phone
       ? { slotA: box('#themeBtn, #editBtn'), slotB: box('#writeSongBtn, .top-action .file-menu') }
-      : { theme: box('#themeBtn'), tools: box('.top-tools'), action: box('.top-action') }),
+      : { theme: box('#themeBtn'), help: box('#helpBtn'), tools: box('.top-tools'), action: box('.top-action') }),
   };
 });
 
 for (const colorScheme of ['light', 'dark'] as const) {
   test(`the header keeps every part in place across screens, ${colorScheme}`, async ({ page }, testInfo) => {
-    const widths = testInfo.project.name === 'phone' ? [390, 320] : [1440, 1024, 768];
+    const widths = testInfo.project.name === 'phone' ? [390, 320] : [1440, 1300, 1240, 1024, 768, 600];
     await page.emulateMedia({ colorScheme });
     for (const width of widths) {
       await page.setViewportSize({ width, height: 900 });

@@ -1,3 +1,4 @@
+import { REPOSITORY } from './repository';
 import { bundledPath, bundledRef } from './songRef';
 
 // "./songs/bass/songs/07-a-dawning.txt" -> "bass/a-dawning". The number only orders the list, so links survive a renumbering.
@@ -25,7 +26,6 @@ export function songShareLink(root: string, picked: string, version: string | nu
   return path === null ? null : shareUrl(root, path, version);
 }
 
-const REPOSITORY = 'https://github.com/Chemaclass/tabtrainer';
 export interface SongSource { url: string; exercise: boolean }
 // An exercise opens GitHub's editor so a player can fix it; a song opens its file to read.
 export function songSource(picked: string): SongSource | null {

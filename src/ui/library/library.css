@@ -4,7 +4,7 @@
   display: grid;
   grid-template-columns:
     114px minmax(12px, 24px) 132px minmax(16px, 32px) 424px minmax(16px, 32px)
-    minmax(0, 1fr) minmax(12px, 24px) 140px 16px 160px;
+    minmax(0, 1fr) minmax(12px, 24px) 176px 16px 160px;
   grid-template-areas: "logo . family . nav . context . tools . action";
   grid-template-rows: 72px;
   align-items: center;
@@ -126,8 +126,8 @@
 .top-tools {
   grid-area: tools;
   display: grid;
-  grid-template-columns: repeat(3, 44px);
-  column-gap: var(--space-1);
+  grid-template-columns: repeat(4, 44px);
+  column-gap: 0;
   align-items: center;
   justify-items: center;
 }
@@ -205,8 +205,30 @@
 .top-action .file-menu summary::after {
   margin-left: 6px;
 }
-.theme-item {
+.theme-item,
+.feedback-item {
   display: none;
+}
+.help-open span {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border: 1.5px solid currentColor;
+  border-radius: 50%;
+  font: 600 13px/1 var(--ui);
+}
+.tab-request {
+  margin: 0;
+  padding-top: var(--space-5);
+  font-size: var(--text-s);
+  color: var(--mut);
+}
+.tab-request a {
+  color: var(--ink);
+}
+.tab-request + .explore {
+  padding-top: var(--space-2);
 }
 .library-view :is(#editBtn, .file-menu),
 body:not(.library-view) #writeSongBtn,
@@ -1110,11 +1132,21 @@ body:not(.library-view) .site-footer {
     top: 0;
   }
 }
+@media (min-width: 1200px) and (max-width: 1339px) {
+  .top {
+    padding: 0 40px;
+  }
+}
+@media (min-width: 600px) and (max-width: 639px) {
+  .top {
+    padding: 0 var(--space-3);
+  }
+}
 @media (max-width: 1199px) {
   .top {
     grid-template-columns:
       114px 12px 132px 16px 376px minmax(0, 1fr)
-      140px 12px 112px;
+      176px 12px 112px;
     grid-template-areas: "logo . family . nav . tools . action";
     padding: 0 var(--space-6);
   }
@@ -1190,7 +1222,7 @@ body:not(.library-view) .site-footer {
 }
 @media (max-width: 1023px) {
   .top {
-    grid-template-columns: 114px 12px 132px minmax(0, 1fr) 140px 12px 112px;
+    grid-template-columns: 114px 12px 132px minmax(0, 1fr) 176px 12px 112px;
     grid-template-areas: "logo . family . tools . action" "nav nav nav nav nav nav nav";
     grid-template-rows: 52px 52px;
   }
@@ -1359,8 +1391,11 @@ body:not(.library-view) .site-footer {
   body:not(.library-view) #themeBtn {
     display: none;
   }
-  body:not(.library-view) .theme-item {
+  body:not(.library-view) :is(.theme-item, .feedback-item) {
     display: block;
+  }
+  #helpBtn {
+    display: none;
   }
   .library {
     padding: 28px var(--space-4) var(--space-3);

@@ -67,6 +67,7 @@
       <button id="tunerBtn" class="tool-open" aria-haspopup="dialog" aria-controls="tuner" aria-label="Tuner" title="Tune your instrument"><svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M6 1.5v6a3 3 0 0 0 6 0v-6M9 10.5v6" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></button>
       <button id="fretboardBtn" class="tool-open" aria-haspopup="dialog" aria-controls="fretboard" aria-label="Fretboard" title="See the notes of a scale on the fretboard"><svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M1.5 4.5h15M1.5 9h15M1.5 13.5h15M5 3v12M10 3v12M15 3v12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></button>
       <button id="themeBtn" class="theme-toggle" aria-label="Switch to dark theme" title="Switch to dark theme"><svg class="moon" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M13.5 9.6A5.5 5.5 0 0 1 6.4 2.5a5.5 5.5 0 1 0 7.1 7.1Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg><svg class="sun" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="3" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 1v1.5M8 13.5V15M1 8h1.5M13.5 8H15M3 3l1 1M12 12l1 1M3 13l1-1M12 4l1-1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></button>
+      <button id="helpBtn" class="tool-open help-open" aria-haspopup="dialog" aria-controls="feedback" aria-label="Help and feedback" title="Report a problem or suggest an idea"><span aria-hidden="true">?</span></button>
     </div>
     <div class="top-action">
       <button id="writeSongBtn" class="write-song" aria-label="Write a song" title="Write a song"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M7 1v12M1 7h12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><span>Write<span class="write-noun"> a song</span></span></button>
@@ -83,6 +84,7 @@
         <button id="shareBtn" class="ghost" title="Copy a link that opens this song">Copy link</button>
         <button id="proposeBtn" class="ghost" title="Send this song to the TabTrainer website">Add to TabTrainer</button>
         <button id="syntaxHelpBtn" class="ghost">Song format help</button>
+        <button id="feedbackMenuBtn" class="ghost feedback-item">Report a problem or suggest an idea</button>
         <button id="themeMenuBtn" class="ghost theme-item">Switch to dark theme</button>
         </nav>
       </details>
@@ -135,7 +137,7 @@ tempo: 90
         <li><span class="landing-step-no">04</span><div><h3>It is live</h3><p>We review it and reply. After the merge it has a page of its own.</p></div><div class="landing-artefact" aria-hidden="true"><strong>Low Tide</strong><span>by Jane Doe · easy · bass</span><code class="landing-song-link">tabtrainer/?song=bass/low-tide</code></div></li>
       </ol>
     </section>
-    <footer class="landing-footer"><span class="landing-brand"><svg width="18" height="18" viewBox="0 0 22 22" aria-hidden="true"><path d="M1 5h20M1 11h20M1 17h20" stroke="currentColor" stroke-width="1.5"/><circle cx="14" cy="11" r="4" fill="var(--playing)"/></svg>TabTrainer</span><span>Made by <a href="https://chemaclass.com" target="_blank" rel="noopener">Chemaclass</a> · <a href="https://github.com/Chemaclass/tabtrainer" target="_blank" rel="noopener">Source code on GitHub</a> · MIT licence</span></footer>
+    <footer class="landing-footer"><span class="landing-brand"><svg width="18" height="18" viewBox="0 0 22 22" aria-hidden="true"><path d="M1 5h20M1 11h20M1 17h20" stroke="currentColor" stroke-width="1.5"/><circle cx="14" cy="11" r="4" fill="var(--playing)"/></svg>TabTrainer</span><span>Made by <a href="https://chemaclass.com" target="_blank" rel="noopener">Chemaclass</a> · <a href="https://github.com/Chemaclass/tabtrainer" target="_blank" rel="noopener">Source code on GitHub</a> · <a href="https://github.com/Chemaclass/tabtrainer/issues/new/choose" target="_blank" rel="noopener">Report a problem or suggest an idea</a> · MIT licence</span></footer>
   </div>
 
   <div class="save-state" hidden><span id="dirtyState">No unsaved changes</span><button id="returnDraftBtn" class="ghost" hidden>Return to draft</button><span id="saveFeedback" role="status" aria-live="polite"></span><button id="recoverDownload" class="ghost" hidden>Download a copy</button><span id="shareNotice" class="share-notice" hidden>This song is ready to share with everyone. <button id="shareNoticeBtn" class="ghost">Add to TabTrainer</button><button id="shareNoticeClose" class="ghost" aria-label="Dismiss the share notice" title="Dismiss">✕</button></span></div>
@@ -164,7 +166,8 @@ tempo: 90
       <p id="songResults" class="sr-only" role="status" aria-live="polite"></p>
       <ul id="catalogueList" class="catalogue-list"></ul>
       <div id="catalogueEmpty" class="catalogue-empty" hidden><h2 id="emptyTitle">No exercises match</h2><p id="emptyDescription">Try another search or clear the filters.</p><div><button id="emptyClearBtn" class="toggle">Clear filters</button><button id="emptyExercisesBtn" class="toggle" hidden>Browse exercises</button><button id="emptyWriteBtn" class="toggle" hidden>Write it yourself</button><button id="emptyOpenBtn" class="toggle" hidden>Open a file</button></div></div>
-      <div id="closingRow" class="explore"><p><span id="closingText">Missing a song? Write it, and send it in for everyone.</span> <button id="closingWriteBtn">Write a song</button></p><button id="exploreAllBtn">Explore all exercises →</button></div>
+      <p id="tabRequest" class="tab-request"><span id="tabRequestLead"></span> <a id="tabRequestLink" target="_blank" rel="noopener"></a><span id="tabRequestTail"></span></p>
+      <div id="closingRow" class="explore"><p><span id="closingText">Or write it yourself, and send it in for everyone.</span> <button id="closingWriteBtn">Write a song</button></p><button id="exploreAllBtn">Explore all exercises →</button></div>
       <button id="readTabMobileBtn" class="mobile-tab-help">How to read tab →</button>
     </div>
     <aside class="library-aside" aria-label="Practice suggestions">
@@ -259,7 +262,7 @@ tempo: 90
       </section>
     </aside>
   </main>
-  <footer class="site-footer"><a href="%BASE_URL%">What is TabTrainer?</a> Free and open source. <a href="%BASE_URL%library/?kind=mine&amp;new=1">Write a song and send it in</a>. Made by <a href="https://chemaclass.com" target="_blank" rel="noopener">Chemaclass</a> · <a href="https://github.com/Chemaclass/tabtrainer" target="_blank" rel="noopener">Source code on GitHub</a><span id="offlineReady" class="offline-ready" role="status"></span></footer>
+  <footer class="site-footer"><a href="%BASE_URL%">What is TabTrainer?</a> Free and open source. <a href="%BASE_URL%library/?kind=mine&amp;new=1">Write a song and send it in</a>. Made by <a href="https://chemaclass.com" target="_blank" rel="noopener">Chemaclass</a> · <a href="https://github.com/Chemaclass/tabtrainer" target="_blank" rel="noopener">Source code on GitHub</a> · <a href="https://github.com/Chemaclass/tabtrainer/issues/new/choose" target="_blank" rel="noopener">Report a problem or suggest an idea</a><span id="offlineReady" class="offline-ready" role="status"></span></footer>
   <div id="practiceScreen" hidden>
   <main class="layout noedit">
     <div id="editorTabs" class="editor-tabs" role="tablist" aria-label="Editor view">
@@ -301,7 +304,7 @@ tempo: 90
           <div><dt><code>|</code></dt><dd>end of a bar</dd></div>
         </dl>
       </section>
-      <p class="tip">Tap a note, then Play. Tap a bar number to loop it. <span class="keys">Press <kbd>?</kbd> for </span><button id="shortcutsBtn" class="tip-link" type="button" aria-haspopup="dialog"><span class="keys">shortcuts</span><span class="touch-label">Shortcuts</span></button><span class="keys">.</span></p>
+      <p class="tip">Tap a note, then Play. Tap a bar number to loop it. <span class="keys">Press <kbd>?</kbd> for </span><button id="shortcutsBtn" class="tip-link" type="button" aria-haspopup="dialog"><span class="keys">shortcuts</span><span class="touch-label">Shortcuts</span></button>. <button id="feedbackTipBtn" class="tip-link" type="button" aria-haspopup="dialog" aria-controls="feedback">Report a problem or suggest an idea</button>.</p>
     </section>
   </main>
 
@@ -516,6 +519,14 @@ tempo: 90
       <tr><td><kbd>↑</kbd> <kbd>↓</kbd></td><td>Scroll faster or slower, while scrolling continuously</td></tr>
       <tr><td><kbd>?</kbd></td><td>Show this list</td></tr>
     </table>
+  </dialog>
+  <dialog id="feedback" class="songs-guide feedback" aria-labelledby="feedbackTitle">
+    <form method="dialog"><button class="close round" aria-label="Close">✕</button></form>
+    <h2 id="feedbackTitle">Help and feedback</h2>
+    <p>Tell me what is wrong or what you miss. Anyone can ask, and anything goes. I read every issue and I will take care of it.</p>
+    <ul id="feedbackLinks" class="feedback-links"></ul>
+    <p class="muted">Each link opens a short form on GitHub. You need a free account.</p>
+    <p id="feedbackShortcuts" hidden><button id="feedbackShortcutsBtn" class="tip-link" type="button">See the keyboard shortcuts</button></p>
   </dialog>
   <dialog id="songsGuide" class="songs-guide" aria-labelledby="songsGuideTitle">
     <form method="dialog"><button class="close round" aria-label="Close">✕</button></form>
