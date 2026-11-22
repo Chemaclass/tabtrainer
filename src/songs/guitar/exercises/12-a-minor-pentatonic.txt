@@ -1,0 +1,44 @@
+title: A Minor Pentatonic
+artist: TabTrainer
+about: The five-note scale behind most rock and blues solos, in its most common shape at the fifth fret, then a short lick built from it and the move to the next shape at the seventh fret.
+level: medium
+instrument: guitar6
+tempo: 80
+key: Am
+time: 4/4
+
+# The notes are A, C, D, E and G. Index finger on fret 5, ring finger on fret 7, little finger on fret 8. Pick down, up, down, up all the way through.
+== Learn
+level: medium
+@Up and down
+"Am" :8 {d} 5.6 {u} 8.6 5.5 7.5 5.4 7.4 5.3 7.3 | 5.2 8.2 5.1 8.1 8.1 5.1 8.2 5.2 | 7.3 5.3 7.4 5.4 7.5 5.5 8.6 5.6 |
+@A lick
+:8 5.2 8.2 5.2 7.3 :q 5.3 7.3 | :q 5.3 :8 7.3 5.3 :h 7.4 |
+
+== Develop
+level: medium
+@Groups of four up
+"Am" :8 5.6 8.6 5.5 7.5 8.6 5.5 7.5 5.4 | 5.5 7.5 5.4 7.4 7.5 5.4 7.4 5.3 |
+5.4 7.4 5.3 7.3 7.4 5.3 7.3 5.2 | 5.3 7.3 5.2 8.2 7.3 5.2 8.2 5.1 |
+@Groups of four down
+8.1 5.1 8.2 5.2 5.1 8.2 5.2 7.3 | 8.2 5.2 7.3 5.3 5.2 7.3 5.3 7.4 |
+7.3 5.3 7.4 5.4 5.3 7.4 5.4 7.5 | 7.4 5.4 7.5 5.5 5.4 7.5 5.5 8.6 |
+@A longer lick
+:q 5.6 :8 5.6 8.6 5.5 7.5 5.4 7.4 | :8 5.3 7.3 5.2 8.2 :q 5.1 8.2 |
+:8 5.2 7.3 5.3 7.4 :q 5.4 7.5 | :8 5.5 7.5 5.5 8.6 :h 5.6 |
+
+== Challenge
+level: hard
+@Sixteenths up and down
+"Am" :16 5.6 8.6 5.5 7.5 5.4 7.4 5.3 7.3 5.2 8.2 5.1 8.1 8.1 5.1 8.2 5.2 | 7.3 5.3 7.4 5.4 7.5 5.5 8.6 5.6 5.6 8.6 5.5 7.5 5.4 7.4 5.3 7.3 |
+5.2 8.2 5.1 8.1 8.1 5.1 8.2 5.2 7.3 5.3 7.4 5.4 7.5 5.5 8.6 5.6 | :16 5.6 8.6 5.5 7.5 5.4 7.4 5.3 7.3 :8 7.4 5.4 :q 5.6 |
+@Triplets in threes
+:8t 5.6 8.6 5.5 8.6 5.5 7.5 5.5 7.5 5.4 7.5 5.4 7.4 | 5.4 7.4 5.3 7.4 5.3 7.3 5.3 7.3 5.2 7.3 5.2 8.2 |
+5.2 8.2 5.1 8.2 5.1 8.1 8.1 5.1 8.2 5.1 8.2 5.2 | 8.2 5.2 7.3 5.2 7.3 5.3 :q 7.4 r |
+# The next shape sits at frets 7 to 10. To get there, slide your index finger from fret 5 to fret 7 on string 3 (the D), then keep your hand at fret 7. On the way back, after the last high C, that same D becomes your ring finger again.
+@Shift to the next shape
+:16 5.6 8.6 5.5 7.5 5.4 7.4 5.3 7.3 :8 9.3 8.2 10.2 8.1 | :16 10.1 8.1 10.2 8.2 9.3 7.3 10.4 7.4 :8 10.5 7.5 10.6 8.6 |
+:16 8.6 10.6 7.5 10.5 7.4 10.4 7.3 9.3 :8 8.2 10.2 :q 8.1 | :16 7.3 5.3 7.4 5.4 7.5 5.5 8.6 5.6 :q 5.6 r |
+@A long lick with gaps
+:8 5.6 :16 r 8.6 :8 5.5 :16 r 7.5 :8 5.4 :16 r 7.4 :8 5.3 :16 r 7.3 | :16 5.2 8.2 r 5.1 8.1 r 5.1 8.2 r 5.2 7.3 r :q 7.4 |
+:8 8.1 :16 r 5.1 :8 8.2 :16 r 5.2 :16 7.3 5.3 7.4 5.4 7.5 5.5 8.6 5.6 | :16 5.4 7.4 5.3 7.3 :8 r 7.4 :h 5.6 |
