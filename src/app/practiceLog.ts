@@ -121,7 +121,9 @@ function renumbered(record: PracticeRecord, paths: string[]): PracticeRecord {
   const songs: Record<string, SongRecord> = Object.create(null);
   for (const [ref, song] of Object.entries(record.songs)) {
     const current = normalizeSongReference(ref, paths);
-    songs[current] = mergeSong(Object.hasOwn(songs, current) ? songs[current] : undefined, song);
+    const earlier = Object.hasOwn(songs, current) ? songs[current] : undefined;
+    // Two keys of one record are separate stretches of practice, unlike the same song on two devices.
+    songs[current] = earlier ? { ...mergeSong(earlier, song), seconds: earlier.seconds + song.seconds } : song;
   }
   return { songs, days: Object.assign(Object.create(null), record.days), wins: record.wins.map(win => ({ ...win, song: normalizeSongReference(win.song, paths) })) };
 }

@@ -211,7 +211,7 @@ describe('renumbered bundled songs', () => {
   });
   it('merges progress saved under the old and the new number', () => {
     const { log } = memory(record({ [OLD]: { ...song, markedLevels: { learn: at(1) } }, [NEW]: { ...song, bestSpeed: 90, lastPlayed: at(4), seconds: 10 } }), paths);
-    expect(log.song(NEW)).toMatchObject({ bestSpeed: 90, lastPlayed: at(4), seconds: 30, markedLevels: { learn: at(1) } });
+    expect(log.song(NEW)).toMatchObject({ bestSpeed: 90, lastPlayed: at(4), seconds: 40, markedLevels: { learn: at(1) } });
     expect(Object.keys(log.record.songs)).toEqual([NEW]);
   });
   it('moves wins to the current number', () => {
