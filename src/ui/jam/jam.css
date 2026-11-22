@@ -837,6 +837,16 @@ fieldset.jam-plays {
   color: var(--ink);
   font: 500 14px/20px var(--ui);
 }
+@media (pointer: coarse) {
+  .jam-mood-chip {
+    position: relative;
+  }
+  .jam-mood-chip::before {
+    content: "";
+    position: absolute;
+    inset: -4px 0;
+  }
+}
 .jam-mood-chip:hover {
   background: var(--wash);
 }
@@ -995,10 +1005,10 @@ fieldset.jam-plays {
     margin-left: 4px;
   }
   .jam.mood-on .jam-bar-numeral::before {
-    content: "· ";
+    content: "· " / "";
   }
   .jam.mood-on .jam-bars li[aria-current] .jam-bar-numeral::before {
-    content: "▶ ";
+    content: "▶ " / "";
     letter-spacing: 0;
   }
 }
@@ -1103,13 +1113,7 @@ fieldset.jam-plays {
   .jam.mood-on .jam-heading h1 {
     font-size: 48px;
   }
-  .jam-mood-chips {
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    scrollbar-width: none;
-  }
   .jam-mood-chip {
-    flex: none;
     padding: 0 10px;
   }
 }
@@ -1120,11 +1124,13 @@ fieldset.jam-plays {
   .jam-moods .jam-context {
     padding-inline: var(--space-4);
   }
+  /* The padding keeps the focus ring and the tap area inside the scrolling row */
   .jam-mood-chips {
     flex-wrap: nowrap;
     overflow-x: auto;
     scrollbar-width: none;
-    padding-inline: var(--space-4);
+    margin-block: -4px;
+    padding: 4px var(--space-4);
   }
   .jam-mood-chip {
     flex: none;
@@ -1169,10 +1175,10 @@ fieldset.jam-plays {
     margin-left: 4px;
   }
   .jam-bar-numeral::before {
-    content: "· ";
+    content: "· " / "";
   }
   .jam-bars li[aria-current] .jam-bar-numeral::before {
-    content: "▶ ";
+    content: "▶ " / "";
     letter-spacing: 0;
   }
   .jam.mood-on .jam-bars li {

@@ -80,13 +80,31 @@ export function moodStageView(jam: Jam, { pick, nextLoop }: MoodStageHandlers) {
     setText(tempoHint, stage.tempoHint);
   }
 
+  let revealedMood: string | null = null;
+  // The row has no width while the Jam screen is hidden, so the pressed chip is revealed once it shows
+  new ResizeObserver(revealPressed).observe(chips);
+
+  /** Scrolls the chip row sideways only, so a mood opened from a link shows its pressed chip on a phone. */
+  function revealPressed() {
+    const pressedMood = jam.mood?.id ?? '';
+    if (pressedMood === revealedMood || chips.clientWidth === 0) return;
+    revealedMood = pressedMood;
+    const button = buttons.find(chip => chip.dataset.mood === pressedMood)!;
+    const row = chips.getBoundingClientRect();
+    const chip = button.getBoundingClientRect();
+    if (chip.left < row.left) chips.scrollLeft -= row.left - chip.left;
+    else if (chip.right > row.right) chips.scrollLeft += chip.right - row.right;
+  }
+
   function show() {
     const stage = moodStage(jam);
-    for (const button of buttons) button.setAttribute('aria-pressed', String(button.dataset.mood === (jam.mood?.id ?? '')));
+    const pressedMood = jam.mood?.id ?? '';
+    for (const button of buttons) button.setAttribute('aria-pressed', String(button.dataset.mood === pressedMood));
+    revealPressed();
     screen.classList.toggle('mood-on', stage !== null);
     placeTitle(stage !== null);
     for (const element of [moodName, recipe, summary, tempoHint]) element.hidden = stage === null;
-    // With Free on, the why line stays as a hidden live region that says the mood is off
+    // With Free on, the why line is visually hidden but keeps its polite live region and gets the Free text
     why.classList.toggle('sr-only', stage === null);
     grooveTitle.textContent = stage ? MOOD_GROOVE_TITLE : GROOVE_TITLE;
     if (stage) showFacts(stage);

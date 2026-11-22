@@ -493,6 +493,31 @@ describe('jam moods', () => {
     expect(jam.pickGroove('jazz-swing')).toBe(false);
     expect([jam.slug, jam.mood?.id, jam.progression, jam.key]).toEqual(['jazz-swing', 'sad', sadLoop, 'Fm']);
   });
+  it('keeps Free on a groove picked from the list, while a load still restores the mood saved there', () => {
+    const jam = new Jam(bundledGrooves(files));
+    jam.choose('rock-straight-eighths');
+    jam.applyMood('dreamy');
+    jam.choose('blues-shuffle');
+    expect(jam.mood).toBeNull();
+    expect(new Jam(bundledGrooves(files)).choose('rock-straight-eighths')).toBe(true);
+    expect(jam.pickGroove('rock-straight-eighths')).toBe(true);
+    expect([jam.mood, jam.progression]).toEqual([null, 'groove']);
+  });
+  it('opens a mood at its starting tempo on the groove its chip moves to, even over a tempo set by hand there', () => {
+    const jam = new Jam(bundledGrooves(files));
+    jam.choose('slow-ballad');
+    jam.setTempo(60);
+    jam.choose('rock-straight-eighths');
+    expect(jam.chooseForMood('slow-ballad')).toBe(true);
+    jam.applyMood('sad');
+    expect(jam.tempo).toBe(66);
+    jam.setTempo(60);
+    const again = new Jam(bundledGrooves(files));
+    again.choose('slow-ballad');
+    again.clearMood();
+    again.applyMood('sad');
+    expect(again.tempo).toBe(60);
+  });
   it('keeps a mood saved on the first groove off another groove the address opens', () => {
     const first = new Jam(bundledGrooves(files));
     first.applyMood('bluesy');

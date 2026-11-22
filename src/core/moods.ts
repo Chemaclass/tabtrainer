@@ -327,7 +327,7 @@ const MOOD_ENTRIES: readonly MoodEntry[] = [
     tempo: { min: 88, max: 116, start: 98, word: 'Medium', outside: 'Slower and it loses its bounce' },
     genres: ['funk', 'reggae'],
     note: { degree: '6', label: 'the funky note', contrast: 'not four' },
-    why: 'A bright note three frets below home lifts the minor home chord, so two chords are enough to keep it moving.',
+    why: 'A bright note three frets below home lifts the minor home chord, so a few chords are enough to keep it moving.',
   },
 ];
 

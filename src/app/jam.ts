@@ -83,7 +83,7 @@ export class Jam {
   private draft: Groove | null = null;
   private chosenKey = '';
   private chosenTempo = 0;
-  /** Whether the player set the tempo by hand since a mood, a groove or a link last set it. */
+  /** Whether the player set the tempo by hand on this groove; a reload restores it, a mood chip moving to the groove does not. */
   private ownTempo = false;
   private chosenProgression = OWN_PROGRESSION;
   private chosenSwing: number = JAM_SWING.min;
@@ -142,11 +142,19 @@ export class Jam {
     return true;
   }
 
-  /** A groove the player picks from the list takes the mood along, even one whose genre does not fit it. */
+  /** A groove the player picks from the list keeps what is on now: the mood, even on a genre that does not fit, or Free. */
   pickGroove(slug: string): boolean {
     const carried = this.chosenMood;
     if (!this.choose(slug)) return false;
     if (carried) this.applyMood(carried, 'clamp');
+    else if (this.chosenMood) this.clearMood();
+    return true;
+  }
+
+  /** The groove a mood chip moves to opens at the mood's starting tempo, whatever tempo was set by hand there before. */
+  chooseForMood(slug: string): boolean {
+    if (!this.choose(slug)) return false;
+    this.ownTempo = false;
     return true;
   }
 

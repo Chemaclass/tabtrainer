@@ -257,7 +257,7 @@ function chooseMood(id: MoodId | null) {
   const allowed = fits ? Promise.resolve(true) : grooveEditing.mayDiscard();
   void allowed.then(chosen => {
     if (!chosen) return;
-    const moved = jam.choose(slug) || (!fits && jam.endPreview());
+    const moved = jam.chooseForMood(slug) || (!fits && jam.endPreview());
     if (moved) grooveEditing.follow();
     jam.applyMood(id);
     jamming.show();

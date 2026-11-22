@@ -11,7 +11,7 @@ export const SUMMARY_SEPARATOR = ' · ';
 const MOOD_LOOPS = MOODS.flatMap(mood => mood.loops);
 const isMoodLoop = (slug: string) => MOOD_LOOPS.some(loop => loop.slug === slug);
 
-// A comma between the rows, not a bar line, so a screen reader does not say "vertical bar"
+// Rows are joined with a comma rather than the bar line the groove text uses
 const loopName = (loop: MoodLoop) => `${loop.name}: ${barRows(loop.bars).join(', ')}`;
 
 /** A mood loop by its name and chords, such as "Drive and climb: I I bVII IV, I I IV bVII". */
