@@ -43,7 +43,8 @@ level: hard
 :16 5.6 8.6 5.5 7.5 8.6 5.5 7.5 5.4 5.5 7.5 5.4 7.4 7.5 5.4 7.4 5.3 | 5.4 7.4 5.3 7.3 7.4 5.3 7.3 5.2 5.3 7.3 5.2 8.2 5.1 8.1 :8 r |
 :16 10.1 8.1 10.2 8.2 8.1 10.2 8.2 9.3 10.2 8.2 9.3 7.3 8.2 9.3 7.3 10.4 | 9.3 7.3 10.4 7.4 7.3 10.4 7.4 10.5 10.4 7.4 10.5 7.5 :q 7.4 |
 # The same short lick in shapes 1, 2, 3 and 4. Move up during each last note, then land on A.
+# In each lick, pick only the first note on each string: h is a hammer-on (bring the finger down hard on the higher fret), p is a pull-off (with the lower finger already down, flick the top finger off so the lower fret sounds).
 @Lick in every shape
-:8 5.3 7.3 :16 5.2 8.2 5.2 r :8 7.3 5.3 :q 7.4 | :8 8.2 10.2 :16 8.1 10.1 8.1 r :8 10.2 8.2 :q 9.3 |
-:8 9.3 12.3 :16 10.2 13.2 10.2 r :8 12.3 9.3 :q 12.4 | :8 14.3 13.2 :16 15.2 12.1 15.2 r :8 13.2 14.3 :q 12.3 |
+:8 5.3 h7.3 :16 5.2 h8.2 p5.2 r :8 7.3 p5.3 :q 7.4 | :8 8.2 h10.2 :16 8.1 h10.1 p8.1 r :8 10.2 p8.2 :q 9.3 |
+:8 9.3 h12.3 :16 10.2 h13.2 p10.2 r :8 12.3 p9.3 :q 12.4 | :8 14.3 13.2 :16 h15.2 12.1 15.2 r :8 13.2 14.3 :q p12.3 |
 :w 12.5 |

@@ -1,0 +1,41 @@
+title: Slides Between Shapes
+artist: TabTrainer
+about: Slide one finger along a string to move between the shapes of A minor pentatonic without a gap in the sound.
+level: medium
+instrument: guitar6
+tempo: 76
+key: Am
+time: 4/4
+
+# / before a note is a slide up, \ a slide down: pick the note before it, then keep pressing and move the same finger along the string to the new fret. Do not pick again.
+# A slide with no note before it on that string starts from a fret or two away. Pick it there and slide in quickly, on the beat.
+# Shape 1 sits at frets 5 to 8, shape 2 at frets 7 to 10, shape 3 at frets 9 to 13. The slide is how your hand gets from one to the next.
+== Learn
+level: medium
+# Slide with the finger that played the note before: the ring finger on string 3, the little finger on string 2.
+@Up to the next shape and back
+"Am" :q 5.3 7.3 /9.3 r | 9.3 \7.3 5.3 r | 5.2 8.2 /10.2 r | 10.2 \8.2 5.2 r |
+
+== Develop
+level: hard
+# Slide with the ring finger on string 3 and the little finger on string 6, then stay in shape 2. Slide back down with the same finger and you are in shape 1 again.
+@Through two shapes
+"Am" :8 5.4 7.4 5.3 7.3 /9.3 8.2 10.2 8.1 | 10.1 8.1 10.2 8.2 9.3 \7.3 5.3 7.4 |
+:8 5.6 8.6 /10.6 7.5 10.5 7.4 10.4 7.4 | 10.4 7.4 10.5 7.5 10.6 \8.6 :q 5.6 |
+
+== Challenge
+level: hard
+# Slides from nowhere: start a fret or two away, pick, and arrive on the written fret on the beat.
+@Slide into the note
+"Am" :q /7.3 r \5.2 r | /9.3 r \8.2 r | /7.4 r \5.1 r | /10.2 r :h \7.4 |
+# One string, three shapes. Slide with the same finger all the way along the string, and hold each slide's last note so the sound never stops.
+@Three shapes on one string
+:8 5.3 7.3 /9.3 /12.3 :q ~12.3 :8 \9.3 \7.3 | :q 5.3 :8 7.3 /9.3 :q ~9.3 :8 \7.3 5.3 |
+:8 5.2 8.2 /10.2 /13.2 :q ~13.2 :8 \10.2 \8.2 | :q 5.2 :8 8.2 /10.2 :h ~10.2 |
+# Three notes on most strings. Each slide moves your hand to the next shape. On the way down, the reach from 10.2 to 14.3 is wide: let your hand move up for it.
+@Diagonal run
+:8t 3.6 5.6 /8.6 5.5 7.5 /10.5 7.4 10.4 /12.4 9.3 12.3 /14.3 | :8 13.2 15.2 12.1 15.1 /17.1 :q. ~17.1 |
+:8t 17.1 \15.1 12.1 15.2 \13.2 10.2 14.3 \12.3 9.3 12.4 \10.4 7.4 | 10.5 \7.5 5.5 8.6 \5.6 3.6 :h 5.6 |
+@Lick with slides
+:8 7.4 5.3 7.3 /9.3 :q 8.2 :8 10.2 8.2 | 10.2 \8.2 9.3 \7.3 :h 7.4 |
+:q /7.3 :8 5.3 7.3 /9.3 \7.3 :q 5.3 | :w 7.4 |
