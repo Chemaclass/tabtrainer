@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { PlayTime, PracticeLog, dayKey, hasPractice, isPracticeRecord, type PracticeRecord, type PracticeStore } from '../../src/app/practiceLog';
+import { PlayTime, PracticeLog, dayKey, hasPractice, isPracticeRecord, levelsDone, songProgress, type PracticeRecord, type PracticeStore } from '../../src/app/practiceLog';
 
 const at = (day: number, hour = 12, minute = 0) => new Date(2026, 10, day, hour, minute).getTime();
 const whole = (speed: number) => ({ firstBar: 1, lastBar: 8, whole: true, speed });
@@ -48,6 +48,45 @@ describe('practice log passes', () => {
     log.passEnded('demo:a', null, loop(70), at(3));
     log.passEnded('lib:Mine', null, loop(70), at(2));
     expect(log.latest()?.ref).toBe('demo:a');
+  });
+});
+
+describe('practice levels', () => {
+  const levels = ['learn', 'develop', 'challenge'];
+  it('keeps each level done on its own', () => {
+    const { log } = memory();
+    expect(log.passEnded('demo:a', 'learn', whole(100), at(2))).toEqual({ best: true, clean: true });
+    expect(log.song('demo:a')!.levels).toEqual({ learn: at(2) });
+    expect(songProgress(log.song('demo:a'), levels)).toBe('in-progress');
+    expect(log.passEnded('demo:a', 'learn', whole(100), at(3))).toEqual({ best: false, clean: false });
+    expect(log.passEnded('demo:a', 'develop', whole(100), at(4))).toEqual({ best: false, clean: true });
+    log.passEnded('demo:a', 'challenge', whole(100), at(5));
+    expect(log.song('demo:a')!.levels).toEqual({ learn: at(2), develop: at(4), challenge: at(5) });
+    expect(songProgress(log.song('demo:a'), levels)).toBe('done');
+    expect(log.wins().map(win => win.at)).toEqual([at(5), at(4), at(2)]);
+  });
+  it('credits an older record with the level it last played, and keeps it', () => {
+    const old = { bestSpeed: 100, cleanAt: at(1), lastPlayed: at(1), seconds: 0, lastLoop: null, lastSpeed: 100, version: 'learn' };
+    expect(levelsDone(old)).toEqual({ learn: at(1) });
+    const { log } = memory({ songs: { 'demo:a': old }, days: {}, wins: [] });
+    log.passEnded('demo:a', 'develop', loop(80), at(2));
+    expect(log.song('demo:a')!.levels).toEqual({ learn: at(1) });
+  });
+  it('treats a song without practice levels as done once any version is', () => {
+    const { log } = memory();
+    log.passEnded('demo:a', 'duet', whole(100), at(2));
+    expect(log.progress('demo:a')).toBe('done');
+  });
+  it('rejects levels that are not times', () => {
+    const song = { bestSpeed: 0, cleanAt: null, lastPlayed: 0, seconds: 0, lastLoop: null, lastSpeed: 100, version: null };
+    expect(isPracticeRecord({ songs: { a: { ...song, levels: { learn: 1 } } }, days: {}, wins: [] })).toBe(true);
+    expect(isPracticeRecord({ songs: { a: { ...song, levels: { learn: 'x' } } }, days: {}, wins: [] })).toBe(false);
+  });
+  it('merges levels, keeping the first time each was done', () => {
+    const base = { bestSpeed: 100, cleanAt: at(2), lastPlayed: at(5), seconds: 0, lastLoop: null, lastSpeed: 100, version: 'develop' };
+    const { log } = memory({ songs: { 'demo:a': { ...base, levels: { learn: at(3), develop: at(5) } } }, days: {}, wins: [] });
+    log.merge({ songs: { 'demo:a': { ...base, version: 'learn', levels: undefined } }, days: {}, wins: [] });
+    expect(log.song('demo:a')!.levels).toEqual({ learn: at(2), develop: at(5) });
   });
 });
 

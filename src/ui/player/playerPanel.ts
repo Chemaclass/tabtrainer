@@ -16,7 +16,7 @@ export function playerPanel(redraw: () => void) {
     if (phone.matches && isOpen() && target.isConnected && !sheet.contains(target) && !more.contains(target)) expand(false);
   });
   document.addEventListener('keydown', event => {
-    if (event.key !== 'Escape' || !phone.matches || !isOpen() || document.querySelector('dialog[open]')) return;
+    if (event.key !== 'Escape' || !phone.matches || !isOpen() || document.querySelector('dialog:modal')) return;
     expand(false);
     if (sheet.contains(document.activeElement)) more.focus();
   });

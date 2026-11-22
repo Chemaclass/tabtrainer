@@ -8,6 +8,8 @@ interface ClearedActions {
   next: (loop: BarLoop, speed: number) => void;
   wholeSong: () => void;
   nextExercise: () => CatalogueEntry | undefined;
+  nextLevel: () => { index: number; name: string } | null;
+  chooseLevel: (index: number) => void;
   pick: (ref: string) => void;
   daysInARow: () => number;
 }
@@ -15,8 +17,20 @@ interface ClearedActions {
 export function clearedSheet(player: Pick<Player, 'playing' | 'pause'>, actions: ClearedActions) {
   const sheet = byId('clearedSheet', HTMLDialogElement), steps = byId('clearedSteps');
   const nextButton = byId('clearedNextBtn', HTMLButtonElement), wholeButton = byId('clearedWholeBtn', HTMLButtonElement);
-  const exerciseButton = byId('clearedExerciseBtn', HTMLButtonElement);
+  const exerciseButton = byId('clearedExerciseBtn', HTMLButtonElement), levelButton = byId('clearedLevelBtn', HTMLButtonElement);
+  // Beside the score the sheet leaves the score and the level picker usable.
+  const beside = matchMedia('(min-width: 900px)');
   let shown: ClearedLoop | null = null;
+  document.addEventListener('keydown', event => {
+    if (event.key !== 'Escape' || !sheet.open || sheet.matches(':modal') || document.querySelector('dialog:modal')) return;
+    event.preventDefault(); sheet.close();
+  });
+  beside.addEventListener('change', () => { if (sheet.open) sheet.close(); });
+  sheet.addEventListener('click', event => {
+    if (!sheet.matches(':modal') || event.target !== sheet) return;
+    const bounds = sheet.getBoundingClientRect();
+    if (event.clientY < bounds.top || event.clientX < bounds.left || event.clientX > bounds.right) sheet.close();
+  });
   sheet.addEventListener('click', event => { if (event.target instanceof Element && event.target.closest('.cleared-action')) sheet.close(); });
   nextButton.onclick = () => { if (shown?.next) actions.next(shown.next, shown.startSpeed); };
   wholeButton.onclick = actions.wholeSong;
@@ -50,16 +64,24 @@ export function clearedSheet(player: Pick<Player, 'playing' | 'pause'>, actions:
     byId('clearedDays').textContent = `${days} ${days === 1 ? 'day' : 'days'}`;
     nextButton.hidden = !cleared.next;
     byId('clearedNextLabel').textContent = cleared.next ? `Next: ${barsLabel(cleared.next)}` : '';
-    const exercise = cleared.loop ? undefined : actions.nextExercise();
+    const level = cleared.loop ? null : actions.nextLevel();
+    levelButton.hidden = !level;
+    byId('clearedLevelName').textContent = level?.name ?? '';
+    levelButton.onclick = () => { if (level) actions.chooseLevel(level.index); };
+    const exercise = cleared.loop || level ? undefined : actions.nextExercise();
     exerciseButton.hidden = !exercise;
     byId('clearedExerciseTitle').textContent = exercise?.title ?? '';
     exerciseButton.onclick = () => { if (exercise) actions.pick(exercise.value); };
-    const primary = [nextButton, exerciseButton, wholeButton].find(button => !button.hidden) ?? wholeButton;
-    for (const button of [nextButton, exerciseButton, wholeButton]) button.classList.toggle('primary', button === primary);
-    sheet.showModal();
+    const actionButtons = [nextButton, levelButton, exerciseButton, wholeButton];
+    const primary = actionButtons.find(button => !button.hidden) ?? wholeButton;
+    for (const button of actionButtons) button.classList.toggle('primary', button === primary);
+    if (beside.matches) sheet.show(); else sheet.showModal();
     primary.focus();
   }
 
   // A pass ends inside the player's own update, so pause and open once that update is done.
-  return { open: (cleared: ClearedLoop) => queueMicrotask(() => show(cleared)) };
+  return {
+    open: (cleared: ClearedLoop) => queueMicrotask(() => show(cleared)),
+    close: () => { if (sheet.open) sheet.close(); },
+  };
 }

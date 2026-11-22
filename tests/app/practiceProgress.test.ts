@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { CatalogueEntry } from '../../src/app/catalogue';
 import type { PracticeDay, SongRecord, Win } from '../../src/app/practiceLog';
-import { daysAgo, minutesLabel, nextSpeed, recentWins, weekSummary, weekUnit, pickUp, pickUpAction, pickUpState, pickUpTitle, progressSummary, rowProgress, speedLadder } from '../../src/app/practiceProgress';
+import { daysAgo, doneWhen, fullDate, minutesLabel, nextSpeed, recentWins, weekSummary, weekUnit, pickUp, pickUpAction, pickUpState, pickUpTitle, progressSummary, rowProgress, speedLadder } from '../../src/app/practiceProgress';
 
 const at = (day: number, hour = 12) => new Date(2026, 10, day, hour).getTime();
 const entry = (value: string, family = 'bass'): CatalogueEntry => ({ value, title: `${value} title`, artist: '', kind: 'exercises', family, tempo: 90, versions: 1 });
@@ -84,15 +84,52 @@ describe('pick up where you left off', () => {
 
 describe('row progress', () => {
   it('reads not started, best speed, started and clean', () => {
-    expect(rowProgress(null, at(15))).toEqual({ progress: 'not-started', label: 'Not started', when: null, best: null });
-    expect(rowProgress(song({ bestSpeed: 85 }), at(15))).toEqual({ progress: 'in-progress', label: 'Best 85%', when: null, best: 85 });
+    const none = { share: null, date: null };
+    expect(rowProgress(null, at(15))).toEqual({ progress: 'not-started', label: 'Not started', when: null, best: null, ...none });
+    expect(rowProgress(song({ bestSpeed: 85 }), at(15))).toEqual({ progress: 'in-progress', label: 'Best 85%', when: null, best: 85, ...none });
     expect(rowProgress(song({ bestSpeed: 120 }), at(15)).best).toBe(100);
-    expect(rowProgress(song({ bestSpeed: 0 }), at(15))).toEqual({ progress: 'in-progress', label: 'Started', when: 'yesterday', best: null });
-    expect(rowProgress(song({ cleanAt: at(13) }), at(15))).toEqual({ progress: 'done', label: 'Clean at 100%', when: '2 days ago', best: null });
+    expect(rowProgress(song({ bestSpeed: 0 }), at(15))).toEqual({ progress: 'in-progress', label: 'Started', when: 'yesterday', best: null, ...none });
+    expect(rowProgress(song({ cleanAt: at(13) }), at(15))).toEqual({ progress: 'done', label: 'Clean at 100%', when: '2 days ago', best: null, share: null, date: '13 Nov 2026' });
   });
   it('sums up a row on one line', () => {
     expect(progressSummary(rowProgress(song({ cleanAt: at(13) }), at(15)))).toBe('Clean at 100% · 2 days ago');
     expect(progressSummary(rowProgress(song({ bestSpeed: 85 }), at(15)))).toBe('Best 85%');
+  });
+});
+
+describe('level progress', () => {
+  const levels = ['Learn', 'Develop', 'Challenge'];
+  it('names the one level done and fills a third of the ring', () => {
+    const row = rowProgress(song({ cleanAt: at(12), levels: { learn: at(12) } }), at(15), levels);
+    expect(row).toMatchObject({ progress: 'in-progress', label: 'Learn done', when: '3 days ago', share: 1 / 3, date: '12 Nov 2026' });
+    expect(progressSummary(row)).toBe('Learn done · 3 days ago');
+  });
+  it('counts levels and names the latest', () => {
+    const row = rowProgress(song({ levels: { learn: at(10), develop: at(15) } }), at(15), levels);
+    expect(progressSummary(row)).toBe('2 of 3 levels · Develop done · today');
+    expect(row.share).toBeCloseTo(2 / 3);
+  });
+  it('is done once every level is', () => {
+    const row = rowProgress(song({ levels: { learn: at(1), develop: at(2), challenge: at(3) } }), at(15), levels);
+    expect(row).toMatchObject({ progress: 'done', label: 'All 3 levels done', when: '3 Nov', share: 1 });
+  });
+  it('credits the level an older record last played clean', () => {
+    expect(rowProgress(song({ cleanAt: at(14), version: 'develop', lastLoop: null, lastSpeed: 100 }), at(15), levels).label).toBe('Develop done');
+    expect(rowProgress(song({ cleanAt: at(14), version: 'develop', lastLoop: [1, 2], lastSpeed: 70, bestSpeed: 100 }), at(15), levels).label).toBe('Best 100%');
+    expect(rowProgress(song({ cleanAt: at(14), version: null }), at(15), levels).label).toBe('Learn done');
+  });
+  it('falls back to the best speed before any level is done', () => {
+    expect(rowProgress(song({ bestSpeed: 85, version: 'learn' }), at(15), levels)).toMatchObject({ label: 'Best 85%', share: null, progress: 'in-progress' });
+  });
+});
+
+describe('done dates', () => {
+  it('uses words for the last week and a date after', () => {
+    expect(doneWhen(at(14), at(15))).toBe('yesterday');
+    expect(doneWhen(at(9), at(15))).toBe('6 days ago');
+    expect(doneWhen(at(8), at(15))).toBe('8 Nov');
+    expect(doneWhen(new Date(2025, 11, 30).getTime(), at(15))).toBe('30 Dec 2025');
+    expect(fullDate(at(8))).toBe('8 Nov 2026');
   });
 });
 

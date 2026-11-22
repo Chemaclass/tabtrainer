@@ -1166,6 +1166,7 @@ input[type="range"]::-moz-range-thumb {
 .cleared-sheet {
   --cleared-ok: #1f7a45;
   position: fixed;
+  z-index: 7;
   inset: auto 0 0;
   width: 100%;
   max-width: none;

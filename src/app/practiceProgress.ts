@@ -1,9 +1,9 @@
 import { defaultSpeedPractice, nextSpeedPracticeSpeed, type PassMark } from '../core/speedPractice';
 import type { CatalogueEntry } from './catalogue';
-import { CLEAN_SPEED, dayKey, songProgress, type BarLoop, type PracticeDay, type SongProgress, type SongRecord, type Win } from './practiceLog';
+import { CLEAN_SPEED, dayKey, levelsDone, songProgress, type BarLoop, type PracticeDay, type SongProgress, type SongRecord, type Win } from './practiceLog';
 
 export interface PickUp { entry: CatalogueEntry; loop: BarLoop | null; version: string | null; passSpeed: number | null; nextSpeed: number | null; lastPlayed: number }
-export interface RowProgress { progress: SongProgress; label: string; when: string | null; best: number | null }
+export interface RowProgress { progress: SongProgress; label: string; when: string | null; best: number | null; share: number | null; date: string | null }
 export interface PracticeHistory { week: PracticeDay[]; wins: Win[] }
 export interface WeekBar { letter: string; name: string; share: number; today: boolean }
 export interface WeekSummary { minutes: number; days: number; bars: WeekBar[]; spoken: string; hint: string }
@@ -62,12 +62,36 @@ export function speedLadder({ passSpeed }: PickUp): PassMark[] {
   return LADDER.map(step => step <= passSpeed ? 'done' : step === next ? 'current' : 'todo');
 }
 
-export function rowProgress(song: SongRecord | null, now: number): RowProgress {
-  const progress = songProgress(song);
-  if (!song) return { progress, label: 'Not started', when: null, best: null };
-  if (song.cleanAt !== null) return { progress, label: `Clean at ${CLEAN_SPEED}%`, when: daysAgo(song.cleanAt, now), best: null };
-  if (song.bestSpeed > 0) return { progress, label: `Best ${song.bestSpeed}%`, when: null, best: Math.min(song.bestSpeed, CLEAN_SPEED) };
-  return { progress, label: 'Started', when: daysAgo(song.lastPlayed, now), best: null };
+/** A date as "22 Nov 2026". */
+export function fullDate(time: number): string {
+  const date = new Date(time);
+  return `${date.getDate()} ${MONTHS[date.getMonth()]} ${date.getFullYear()}`;
+}
+
+/** How long ago, in words for the last week and as a date after that. */
+export function doneWhen(time: number, now: number): string {
+  const days = Math.round((startOfDay(now) - startOfDay(time)) / 86_400_000);
+  if (days < 7) return daysAgo(time, now);
+  const date = new Date(time), sameYear = date.getFullYear() === new Date(now).getFullYear();
+  return `${date.getDate()} ${MONTHS[date.getMonth()]}${sameYear ? '' : ` ${date.getFullYear()}`}`;
+}
+
+/** What a library row says about a song. Pass the level names when the song has practice levels. */
+export function rowProgress(song: SongRecord | null, now: number, levels: readonly string[] = []): RowProgress {
+  const slugs = levels.map(level => level.trim().toLowerCase());
+  const progress = songProgress(song, slugs);
+  const row = { progress, when: null, best: null, share: null, date: null };
+  if (!song) return { ...row, label: 'Not started' };
+  const done = levelsDone(song);
+  const finished = slugs.map((slug, i) => ({ name: levels[i].trim(), at: done[slug] })).filter((level): level is { name: string; at: number } => level.at !== undefined);
+  if (finished.length > 0) {
+    const latest = finished.reduce((a, b) => b.at > a.at ? b : a);
+    const label = finished.length === slugs.length ? `All ${slugs.length} levels done` : finished.length === 1 ? `${latest.name} done` : `${finished.length} of ${slugs.length} levels · ${latest.name} done`;
+    return { ...row, label, when: doneWhen(latest.at, now), share: finished.length / slugs.length, date: fullDate(latest.at) };
+  }
+  if (slugs.length === 0 && song.cleanAt !== null) return { ...row, label: `Clean at ${CLEAN_SPEED}%`, when: doneWhen(song.cleanAt, now), date: fullDate(song.cleanAt) };
+  if (song.bestSpeed > 0) return { ...row, label: `Best ${song.bestSpeed}%`, best: Math.min(song.bestSpeed, CLEAN_SPEED) };
+  return { ...row, label: 'Started', when: daysAgo(song.lastPlayed, now) };
 }
 
 export const progressSummary = ({ label, when }: RowProgress): string => when ? `${label} · ${when}` : label;

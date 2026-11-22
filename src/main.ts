@@ -34,6 +34,7 @@ import { songFile } from './ui/editor/songFile';
 import { fretboardSheet } from './ui/fretboard/fretboardSheet';
 import { songList } from './ui/library/songList';
 import { clearedSheet } from './ui/player/clearedSheet';
+import { nextLevel } from './app/practiceLevels';
 import { passageView } from './ui/player/passageView';
 import { playbackView } from './ui/player/playbackView';
 import { playerPanel } from './ui/player/playerPanel';
@@ -101,7 +102,7 @@ const score = scoreView({
   onPlayNote: (key, bar) => { const chosen = passages.selectNote(key, bar) ? passagePlayback.selectedNote : null; if (chosen) player.play(chosen.beat); },
 });
 const header = songHeader(index => { if (openSong.choose(index)) showVersion(); });
-const songs = songList(songbook, workspace, openSong, practiceLog, { pick: pickSong, continue: continuePractice, showLibrary, newSong: () => startNewSong(), startFrom: startFromTemplate, openFile: () => files.open(), shown: saveView.showShare, propose: () => proposal.open(), shared: sharedSongs, proposeSaved: proposal.openSaved, backup: () => files.backup() });
+const songs = songList(songbook, workspace, openSong, practiceLog, { pick: pickSong, continue: continuePractice, showLibrary, newSong: () => startNewSong(), startFrom: startFromTemplate, openFile: () => files.open(), shown: saveView.showShare, propose: () => proposal.open(), shared: sharedSongs, proposeSaved: proposal.openSaved, backup: () => files.backup(), chooseLevel: index => { if (openSong.choose(index)) showVersion(); } });
 window.addEventListener('popstate', event => navigation.visit(event.state, (route, accept, cancel) => {
   draftSession.beginNavigation();
   if (followLanding(navigation.search())) { accept(); setScreen('library'); return; }
@@ -122,6 +123,8 @@ const cleared = clearedSheet(player, {
   next: ([first, last], startSpeed) => { passage.setRange(first, last, true); passages.apply(); speed.set(startSpeed); speedPractice.start(); practiceSession.restart(Date.now()); player.play(); },
   wholeSong: () => { passage.clear(); passages.apply(); practiceSession.restart(Date.now()); player.play(0); },
   nextExercise: songs.nextExercise,
+  nextLevel: () => nextLevel(openSong.versions.map(version => version.name), openSong.versionIndex),
+  chooseLevel: index => { if (openSong.choose(index)) showVersion(); },
   pick: pickSong,
   daysInARow: () => practiceLog.daysInARow(Date.now()),
 });
@@ -143,7 +146,7 @@ const playback = playbackView(player, { transport: transportView, score, follows
   stopped: () => { passagePlayback.deselect(); passages.show(); songs.stopped(); },
 });
 player.on(playback.show);
-player.on(state => { if (state.playing) jamming.stop(); });
+player.on(state => { if (state.playing) { jamming.stop(); cleared.close(); } });
 player.on(state => playTime.update(workspace.picked || null, state.phase === 'playing', Date.now()));
 player.on(state => practiceSession.playing(state.phase === 'playing', Date.now()));
 player.onPassEnd(pass => {
@@ -198,6 +201,7 @@ function showTitle() {
   else view.showTitle(openSong.song ? songPageTitle(openSong.song.meta.title, familyOf(openSong.song.meta.instrument), openSong.song.meta.artist) : SITE_TITLE, path ? songAddress(site, path) : site);
 }
 function setScreen(next: Screen, focus = false) {
+  cleared.close();
   if (next !== 'practice') { player.stop(); scrolling.stopContinuous(); }
   if (next !== 'jam') jamming.stop();
   const song = openSong.song;
@@ -311,6 +315,7 @@ function update(resetLoop: boolean) {
 }
 function chooseVersionNamed(slug: string | null) { if (openSong.chooseNamed(slug)) showVersion(); }
 function showVersion() {
+  cleared.close();
   player.stop();
   update(false); showLink();
   const song = openSong.song;
