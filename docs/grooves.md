@@ -4,7 +4,7 @@
 
 A groove is a backing loop to improvise over in Jam. Bundled grooves live in `src/grooves/`. The headers work like the [song format](../README.md#song-format), then each part gets one line of steps.
 
-In Jam, open **My grooves** and choose **Edit text**, **New** or **Open file**. The loop plays what you type from the next bar. When a line has a problem, the list names it and the last working version keeps playing. **Save** keeps the groove in this browser, and **Download** saves it as a `.txt` file.
+In Jam, open **Mix and more**, then under **My grooves** choose **Edit text**, **New** or **Open file**. The groove text stays open when you close the drawer, and a dot on the button says so. The loop plays what you type from the next bar. When a line has a problem, the list names it and the last working version keeps playing. **Save** keeps the groove in this browser, and **Download** saves it as a `.txt` file.
 
 ```text
 title: My shuffle
@@ -50,7 +50,7 @@ The steps in a bar set its grid. In 4/4 that is 8 for eighths, 12 for triplets o
 
 The Jam opens with a question: "How do you want it to feel?" Each mood chip sets chords, a key, a tempo and a scale that carry that feeling. A mood starts at its own starting tempo, so it sounds the same whatever was open before. The one exception is a tempo you set by hand with the slider or the tempo keys on the groove that is playing: when it is inside the new mood's range, it stays. When a mood moves to another groove, it starts at its own tempo there. Every loop has eight bars, two phrases of four, apart from the two twelve bar blues. One sentence says why it sounds that way, in frets rather than theory words. The note that gives the mood its colour shows in amber on the fretboard.
 
-A mood decides the chords; the key, tempo, scale and groove stay yours. While a mood is on, the Progression list becomes Loop and offers only that mood's loops, each with a plain name, such as "Pull and hold". The stage button plays the next one. The first chip, Free, means no mood: it is pressed whenever no mood is on, and tapping it gives back the groove's own chords, keeping the key's home note and the tempo. Tapping the chip that is already pressed does nothing.
+A mood decides the chords; the key, tempo, scale and groove stay yours, in the setup line under the title. While a mood is on, the Chords list offers only that mood's loops, each with a plain name, such as "Pull and hold", and shows which of them plays, such as 1/3. Each bar card shows its chord and its Roman numeral; the line under the bars says what the playing chord does. The tempo number by Play opens the slider, with the mood's usual range under it. The first chip, Free, means no mood: it is pressed whenever no mood is on, and tapping it gives back the groove's own chords, keeping the key's home note and the tempo. Tapping the chip that is already pressed does nothing.
 
 | Mood | Scale | Loops | Tempo | Starts at | Grooves |
 | --- | --- | --- | --- | --- | --- |

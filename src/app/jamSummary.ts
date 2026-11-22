@@ -1,8 +1,6 @@
-import { genreName } from '../core/groove';
 import { OWN_PROGRESSION, PROGRESSION_PRESETS } from '../core/harmony';
 import { MOODS, barRows, type Mood, type MoodLoop } from '../core/moods';
 import { MIXER_PARTS, type Mixer } from './jam';
-import type { JamSetup } from './jamLink';
 
 export const OWN_PROGRESSION_NAME = "Groove's own";
 export const PROGRESSION_CHOICES: readonly string[] = [OWN_PROGRESSION, ...PROGRESSION_PRESETS.map(preset => preset.slug)];
@@ -29,21 +27,6 @@ export function progressionName(slug: string, mood: Mood | null = null): string 
 export function progressionChoices(mood: Mood | null, chosen: string): string[] {
   if (mood) return mood.loops.map(loop => loop.slug);
   return PROGRESSION_CHOICES.includes(chosen) || !isMoodLoop(chosen) ? [...PROGRESSION_CHOICES] : [...PROGRESSION_CHOICES, chosen];
-}
-
-function barCountText(barCount: number): string {
-  if (barCount === 1) return '1 bar';
-  return `${barCount} bars`;
-}
-
-export function grooveContext(genre: string, barCount: number): string {
-  const parts = [genreName(genre), barCountText(barCount)];
-  return parts.filter(Boolean).join(SUMMARY_SEPARATOR);
-}
-
-export function grooveSummary({ key, tempo, progression }: Required<Pick<JamSetup, 'key' | 'tempo' | 'progression'>>): string {
-  const parts = [key, `${tempo} bpm`, progressionName(progression)];
-  return parts.join(SUMMARY_SEPARATOR);
 }
 
 export function mixSummary(mixer: Pick<Mixer, 'plays' | 'level'>): string {

@@ -1,6 +1,6 @@
 import { JAM_SWING, type Jam } from '../../app/jam';
-import { keyLabel, moodBars, type MoodBar } from '../../app/jamMood';
-import { SUMMARY_SEPARATOR, grooveContext, grooveSummary, progressionChoices, progressionName } from '../../app/jamSummary';
+import { chordsChoice, keyLabel, moodBars, type MoodBar } from '../../app/jamMood';
+import { progressionChoices, progressionName } from '../../app/jamSummary';
 import { playbackShortcut } from '../../app/playbackShortcut';
 import { pref, setPref } from '../../app/storage';
 import type { LoopEngine } from '../../audio/loopEngine';
@@ -8,6 +8,7 @@ import type { GrooveBar } from '../../core/grooveTimeline';
 import type { MoodId } from '../../core/moods';
 import { byId, fillRange, textSpan } from '../dom';
 import { setSelectValue } from '../shell/dropdown';
+import { popup } from '../shell/popup';
 import { groovePicker } from './groovePicker';
 import { moodStageView } from './moodStage';
 
@@ -18,8 +19,11 @@ interface JamViewHandlers {
   chordsChanged: (bars: readonly GrooveBar[]) => void;
   shareLink: () => string;
   moodPicked: (id: MoodId | null) => void;
+  drawerClosed: () => void;
 }
 
+// Keep in step with the width in jam.css from which the open drawer pushes the stage aside
+const DRAWER_PUSHES = '(min-width: 1280px)';
 const COUNT_IN_BAR = 'bar';
 const COUNT_IN_OFF = 'off';
 const SHARE_HINT = 'Key, tempo, chords and swing';
@@ -39,26 +43,18 @@ function barItem({ bar, chord }: GrooveBar, moodBar: MoodBar | undefined): HTMLL
   const number = document.createElement('span');
   const name = document.createElement('span');
   number.className = 'jam-bar-no';
-  number.append(textSpan('sr-only', 'Bar '), String(bar + 1), textSpan('sr-only', ': '));
+  number.append(textSpan('sr-only', 'Bar '), textSpan('jam-bar-index', String(bar + 1)), textSpan('sr-only', ': '));
   name.className = 'jam-chord';
   name.textContent = chord.name;
   item.append(number, name);
   if (!moodBar) return item;
   number.append(textSpan('jam-bar-numeral', moodBar.numeral), textSpan('sr-only', ', '));
-  if (moodBar.job) item.append(textSpan('jam-bar-job', moodBar.job));
+  // The job shows once, on the now line under the bars, for the bar that plays
+  if (moodBar.job) item.append(textSpan('sr-only', `. ${moodBar.job}`));
   return item;
 }
 
-function enableSectionToggles() {
-  for (const toggle of document.querySelectorAll<HTMLButtonElement>('.jam-section-toggle')) {
-    toggle.addEventListener('click', () => {
-      const expanded = toggle.getAttribute('aria-expanded') === 'true';
-      toggle.setAttribute('aria-expanded', String(!expanded));
-    });
-  }
-}
-
-export function jamView(jam: Jam, engine: LoopEngine, { active, choose, changed, chordsChanged, shareLink, moodPicked }: JamViewHandlers) {
+export function jamView(jam: Jam, engine: LoopEngine, { active, choose, changed, chordsChanged, shareLink, moodPicked, drawerClosed }: JamViewHandlers) {
   const play = byId('jamPlay', HTMLButtonElement);
   const playLabel = byId('jamPlayLabel');
   const bpm = byId('jamBpm');
@@ -66,7 +62,6 @@ export function jamView(jam: Jam, engine: LoopEngine, { active, choose, changed,
   const tempoOut = byId('jamTempoOut', HTMLOutputElement);
   const key = byId('jamKey', HTMLSelectElement);
   const progression = byId('jamProgression', HTMLSelectElement);
-  const progressionLabel = byId('jamProgressionLabel');
   const swing = byId('jamSwing', HTMLInputElement);
   const swingOut = byId('jamSwingOut', HTMLOutputElement);
   const countIn = byId('jamCountIn', HTMLSelectElement);
@@ -74,12 +69,18 @@ export function jamView(jam: Jam, engine: LoopEngine, { active, choose, changed,
   const share = byId('jamShare', HTMLButtonElement);
   const shareStatus = byId('jamShareStatus');
   const shareHint = byId('jamShareHint');
-  const summary = byId('jamGrooveSummary');
   const title = byId('jamTitleText');
-  const context = byId('jamContext');
-  const about = byId('jamAbout');
+  const tempoButton = byId('jamTempoButton', HTMLButtonElement);
+  const tempoPanel = byId('jamTempoPanel');
+  const more = byId('jamMore', HTMLButtonElement);
+  const drawer = byId('jamDrawer');
   const picker = groovePicker(jam, choose);
-  const moods = moodStageView(jam, { pick: moodPicked, nextLoop: playNextLoop });
+  const moods = moodStageView(jam, { pick: moodPicked });
+  popup(tempoButton, tempoPanel, { focus: () => tempo });
+  const pushes = window.matchMedia(DRAWER_PUSHES);
+  // While the drawer pushes the stage aside the page stays usable, so a press there must not close it and move what was pressed
+  const drawerPopup = popup(more, drawer, { keepOpenFor: [play, tempoButton, tempoPanel], pinned: () => pushes.matches, closed: drawerClosed });
+  byId('jamDrawerClose').onclick = () => drawerPopup.close(true);
   let playing: boolean | null = null;
   let current: number | null = null;
 
@@ -100,7 +101,6 @@ export function jamView(jam: Jam, engine: LoopEngine, { active, choose, changed,
     showPlaying(state.playing);
     highlight(state.playing ? state.bar : null);
   });
-  enableSectionToggles();
   listenForSpace();
 
   function start() {
@@ -123,7 +123,6 @@ export function jamView(jam: Jam, engine: LoopEngine, { active, choose, changed,
   function changeTempo() {
     if (jam.setTempo(+tempo.value)) engine.setTempo(jam.tempo);
     showTempo();
-    showSummary();
     moods.show();
   }
 
@@ -136,12 +135,6 @@ export function jamView(jam: Jam, engine: LoopEngine, { active, choose, changed,
 
   function changeProgression() {
     if (!jam.setProgression(progression.value)) return;
-    showHarmony();
-    changed();
-  }
-
-  function playNextLoop() {
-    if (!jam.nextMoodLoop()) return;
     showHarmony();
     changed();
   }
@@ -167,12 +160,6 @@ export function jamView(jam: Jam, engine: LoopEngine, { active, choose, changed,
     }
   }
 
-  function showSummary() {
-    summary.textContent = jam.mood
-      ? [jam.groove.title, keyLabel(jam.key), `${jam.tempo} bpm`].join(SUMMARY_SEPARATOR)
-      : grooveSummary(jam.setup);
-  }
-
   function showTempo() {
     tempo.value = String(jam.tempo);
     fillRange(tempo);
@@ -190,6 +177,7 @@ export function jamView(jam: Jam, engine: LoopEngine, { active, choose, changed,
   }
 
   function showKeys() {
+    // A groove's key names only its home note, so with Free "E" stays "E" rather than reading as E major over a minor scale
     const label = jam.mood ? keyLabel : (name: string) => name;
     key.replaceChildren(...jam.keys.map(name => new Option(label(name), name)));
     setSelectValue(key, jam.key);
@@ -197,8 +185,14 @@ export function jamView(jam: Jam, engine: LoopEngine, { active, choose, changed,
 
   function showProgressions() {
     const { mood } = jam;
-    progressionLabel.textContent = mood ? 'Loop' : 'Progression';
-    progression.replaceChildren(...progressionChoices(mood, jam.progression).map(slug => new Option(progressionName(slug, mood), slug)));
+    const options = progressionChoices(mood, jam.progression).map(slug => new Option(progressionName(slug, mood), slug));
+    const chosen = options.find(option => option.value === jam.progression);
+    const { short, count } = chordsChoice(jam);
+    if (chosen) {
+      chosen.dataset.short = short;
+      if (count) chosen.dataset.note = count;
+    }
+    progression.replaceChildren(...options);
     setSelectValue(progression, jam.progression);
   }
 
@@ -224,17 +218,10 @@ export function jamView(jam: Jam, engine: LoopEngine, { active, choose, changed,
     bars.children[current ?? -1]?.setAttribute('aria-current', 'true');
   }
 
-  function showContext(barCount: number) {
-    const key = textSpan('jam-context-key', jam.key);
-    context.replaceChildren(grooveContext(jam.groove.genre, barCount), SUMMARY_SEPARATOR, key);
-  }
-
   function showChords() {
     const timeline = jam.timeline();
     engine.setTimeline(timeline);
     showBars(timeline.bars);
-    showContext(timeline.bars.length);
-    showSummary();
   }
 
   function showShare() {
@@ -245,10 +232,7 @@ export function jamView(jam: Jam, engine: LoopEngine, { active, choose, changed,
   }
 
   function showGroove() {
-    const { groove } = jam;
-    title.textContent = groove.title;
-    about.textContent = groove.about ?? '';
-    about.hidden = !groove.about;
+    title.textContent = jam.groove.title;
   }
 
   /** Redraws what follows the chords: the mood can clear, and the key list can switch mode. */

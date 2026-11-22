@@ -1,7 +1,7 @@
 import type { Jam, Mixer } from '../../app/jam';
 import { barChords, isBassInstrument, jamFretboard, type JamFretboardSettings } from '../../app/jamFretboard';
 import { FIRST_FRET, LAST_FRET } from '../../app/fretboardMarks';
-import { moodBars, moodLegend, scaleGroups, type MoodLegend } from '../../app/jamMood';
+import { moodLegend, nowText, scaleGroups, type MoodLegend } from '../../app/jamMood';
 import type { LoopEngine } from '../../audio/loopEngine';
 import type { GrooveBar } from '../../core/grooveTimeline';
 import { isScaleId, scaleById } from '../../core/scales';
@@ -22,8 +22,9 @@ export function jamFretboardView(jam: Jam, mixer: Pick<Mixer, 'plays'>, settings
   const bassField = byId('jamStringsField');
   const degreesToggle = byId('jamDegrees', HTMLButtonElement);
   const chordLine = byId('jamFretboardChord');
-  const scaleLine = byId('jamFretboardScale');
   const nextChordLine = byId('jamFretboardNext');
+  const nowChord = byId('jamNowChord');
+  const nowNotes = byId('jamNowNotes');
   const board = byId('jamFretboardBoard');
   const jobLine = byId('jamFretboardJob');
   const legend = byId('jamMoodLegend');
@@ -83,17 +84,27 @@ export function jamFretboardView(jam: Jam, mixer: Pick<Mixer, 'plays'>, settings
       moodNote: moodNote?.pitchClass ?? null,
     });
     showMoodNote(moodNote);
-    jobLine.textContent = moodBars(jam)?.[playingBar % bars.length]?.job ?? '';
-    announceOnce(chordLine, drawing.chordText);
-    scaleLine.textContent = drawing.scaleText;
+    const now = nowText(jam, playingBar);
+    jobLine.textContent = now.job;
     nextChordLine.textContent = drawing.nextChordText;
-    board.replaceChildren(fretboardSvg({
+    nextChordLine.hidden = !now.showNext;
+    nowChord.textContent = drawing.chordName;
+    nowNotes.textContent = drawing.chordNotes;
+    // The notes belong to the playing chord, so with Free they come before the next chord's name
+    if (now.showNext) nextChordLine.before(nowNotes);
+    else jobLine.after(nowNotes);
+    announceOnce(chordLine, drawing.chordText);
+    const svg = fretboardSvg({
       openNames: drawing.openNames,
       firstFret: FIRST_FRET,
       lastFret: LAST_FRET,
       marks: drawing.marks,
       label: drawing.description,
-    }));
+    });
+    // The board is sized from its own shape, so it can shrink to end on the first screen
+    const box = svg.viewBox.baseVal;
+    if (box?.height) board.style.setProperty('--board-ratio', String(box.width / box.height));
+    board.replaceChildren(svg);
   }
 
   /** The first sentence names the note in bold, the rest says where it sits; a scale without the note says so in plain text. */

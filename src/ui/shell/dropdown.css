@@ -32,6 +32,11 @@
 .dropdown-list[hidden] {
   display: none;
 }
+.dropdown-note {
+  margin-left: 6px;
+  font: 400 12px/16px var(--mono);
+  color: var(--mut);
+}
 .dropdown-option {
   position: relative;
   display: flex;

@@ -294,6 +294,16 @@ describe('mixer', () => {
     mixer.setPlays('guitar');
     expect(gains(mixer)).toEqual([1, 1, 0]);
   });
+  it('tells when the mutes differ from what the instrument I play sets', () => {
+    const mixer = new Mixer('bass');
+    expect(mixer.mutesChanged).toBe(false);
+    mixer.setMuted('bass', false);
+    expect(mixer.mutesChanged).toBe(true);
+    mixer.setPlays('guitar');
+    expect(mixer.mutesChanged).toBe(false);
+    mixer.setMuted('drums', true);
+    expect(mixer.mutesChanged).toBe(true);
+  });
   it('plays as the instrument it is given, resetting the bass mute when the saved mix was for the other one', () => {
     new Mixer('bass').setVolume('keys', 50);
     const asGuitar = new Mixer('guitar');
@@ -481,17 +491,14 @@ describe('jam moods', () => {
     jam.setKey('Am');
     jam.setTempo(140);
     jam.setScale('dorian');
-    expect(jam.nextMoodLoop()).toBe(true);
+    expect(jam.setProgression(loopOf('sad', 1))).toBe(true);
     expect([jam.mood?.id, jam.progression]).toEqual(['sad', loopOf('sad', 1)]);
-    jam.nextMoodLoop();
-    jam.nextMoodLoop();
-    expect(jam.progression).toBe(sadLoop);
+    jam.setProgression(sadLoop);
     expect(jam.setProgression('i-v-vi-iv')).toBe(false);
     expect(jam.setProgression(loopOf('happy'))).toBe(false);
     expect([jam.mood?.id, jam.progression]).toEqual(['sad', sadLoop]);
     jam.clearMood();
     expect(jam.setProgression('i-v-vi-iv')).toBe(true);
-    expect(jam.nextMoodLoop()).toBe(false);
   });
   it('gives back the groove own chords when cleared, keeping the home note and the tempo', () => {
     const jam = new Jam(bundledGrooves(files));

@@ -9,6 +9,7 @@ import { settledInput, showIssueList } from '../editor/sourceText';
 import { askChoice, askSaveConflict } from '../shell/askDialog';
 
 const MOOD_OFF = 'Mood off. The groove plays the chords you wrote.';
+const EDITING_NOTE = 'Groove text is open';
 
 interface GrooveEditorHandlers {
   played: () => void;
@@ -35,6 +36,8 @@ export function grooveEditor(jam: Jam, { played, saved, deleted }: GrooveEditorH
   const editButton = byId('grooveEdit', HTMLButtonElement);
   const deleteButton = byId('grooveDelete', HTMLButtonElement);
   const fileInput = byId('grooveOpenFile', HTMLInputElement);
+  const more = byId('jamMore');
+  const editingNote = byId('jamEditingNote');
   const draft = new DraftSession(() => source.value, savedGrooves);
   const settling = settledInput(source, check);
   let fromEntry = false;
@@ -116,13 +119,23 @@ export function grooveEditor(jam: Jam, { played, saved, deleted }: GrooveEditorH
   function open() {
     pane.hidden = false;
     editButton.setAttribute('aria-pressed', 'true');
+    showEditing(true);
     source.focus();
+  }
+
+  /** The editor stays open in a closed drawer, so its button says the groove text is still open. */
+  function showEditing(editing: boolean) {
+    more.toggleAttribute('data-editing', editing);
+    editingNote.hidden = !editing;
+    // A hidden description is still read, so the words go when the editor closes
+    editingNote.textContent = editing ? EDITING_NOTE : '';
   }
 
   function close() {
     settling.cancel();
     pane.hidden = true;
     editButton.setAttribute('aria-pressed', 'false');
+    showEditing(false);
     announce('');
     stopPreview();
   }
@@ -232,5 +245,10 @@ export function grooveEditor(jam: Jam, { played, saved, deleted }: GrooveEditorH
     return slug === jam.slug || mayDiscard();
   }
 
-  return { follow, mayChoose, mayDiscard, moodOn: forgetMoodOff };
+  /** Unchanged text closes with the drawer, so the Jam leaves draft mode and saves its setup and share link again. */
+  function closeUnchanged() {
+    if (isOpen() && !draft.hasChanges()) close();
+  }
+
+  return { follow, mayChoose, mayDiscard, closeUnchanged, moodOn: forgetMoodOff };
 }

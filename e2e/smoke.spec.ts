@@ -146,11 +146,14 @@ test('saving over a saved song asks in the app, and Escape keeps the saved one',
   await expect(page.locator('#dirtyState')).toHaveText('No unsaved changes');
 });
 
+const openMore = (page: Page) => page.getByRole('button', { name: 'Mix and more', exact: true }).click();
+
 test('a second Back while asking to discard groove changes keeps the address and the screen together', async ({ page }) => {
   await page.goto('./library/bass/exercises/');
   await page.locator('#jamNavBtn').click();
   await page.locator('#jamPickerButton').click();
   await page.locator('#jamGrooveList li').nth(2).locator('button, a').first().click();
+  await openMore(page);
   await page.locator('#grooveEdit').click();
   const source = page.locator('#grooveSource');
   await source.fill(`${await source.inputValue()}\n# changed`);
@@ -169,9 +172,11 @@ test('a second Back while asking to discard groove changes keeps the address and
 test('a mood sets the Jam to its chords, asks before dropping groove changes, and clears back to the groove title', async ({ page }) => {
   await page.goto('./jam/blues-shuffle/');
   const sad = page.getByRole('group', { name: 'How do you want it to feel?' }).getByRole('button', { name: 'Sad', exact: true });
+  await openMore(page);
   await page.locator('#grooveEdit').click();
   const source = page.locator('#grooveSource');
   await source.fill(`${await source.inputValue()}\n# changed`);
+  await page.keyboard.press('Escape');
   const ask = page.locator('#askDialog');
   await sad.click();
   await expect(ask).toBeVisible();
@@ -196,7 +201,7 @@ test('a mood sets the Jam to its chords, asks before dropping groove changes, an
   await page.locator('#jamGrooves a', { hasText: 'Sixteenth funk' }).click();
   await expect(page).toHaveURL(/\/jam\/funk-sixteenths\//);
   await expect(page.locator('#jamTitle')).toHaveText('Sad');
-  await expect(page.locator('#jamProgressionLabel')).toHaveText('Loop');
+  await expect(page.locator('#jamProgressionLabel')).toHaveText('Chords');
   await expect(page.locator('#jamProgression option')).toHaveCount(3);
   await sad.click();
   await expect(sad).toHaveAttribute('aria-pressed', 'true');
@@ -204,12 +209,13 @@ test('a mood sets the Jam to its chords, asks before dropping groove changes, an
   await free.click();
   await expect(free).toHaveAttribute('aria-pressed', 'true');
   await expect(sad).toHaveAttribute('aria-pressed', 'false');
-  await expect(page.locator('#jamTitle #jamPickerButton')).toBeVisible();
-  await expect(page.locator('#jamRecipe')).toBeHidden();
+  await expect(page.locator('#jamTitle')).toHaveText('Sixteenth funk in E minor');
   await expect(page.locator('#jamTempoHint')).toHaveText('');
   await expect(page.locator('#jamMoodWhy')).toHaveText('No mood. The groove plays its own chords.');
-  await expect(page.locator('#jamProgressionLabel')).toHaveText('Progression');
   await expect(page.locator('#jamProgression')).toHaveValue('groove');
+  await expect(page.locator('[data-select="jamProgression"]')).toHaveText("Groove's own");
+  await expect(page.locator('#jamFretboardNext')).toBeVisible();
+  await expect(page.locator('#jamMoodLegend')).toBeHidden();
 });
 
 test('the Jam opens on Free, and a link that names only a mood opens its first loop', async ({ page }) => {
@@ -220,8 +226,7 @@ test('the Jam opens on Free, and a link that names only a mood opens its first l
   await expect(page.locator('#jamMoods [aria-pressed="true"]')).toHaveCount(1);
   await page.goto('./jam/rock-straight-eighths/?mood=melancholic');
   await expect(page.locator('#jamTitle')).toHaveText('Melancholic');
-  await expect(page.locator('#jamRecipeChords')).toHaveText('Wistful steps');
-  await expect(page.locator('#jamMoreLoops')).toHaveText('Loop 1 of 3. Next loop');
+  await expect(page.locator('[data-select="jamProgression"]')).toHaveText('Wistful steps1/3');
   await expect(page.locator('#jamProgression option')).toHaveText([
     'Wistful steps: I iii IV iv, I vi IV iv',
     'Changed home: I IV iv I, vi IV iv V',
@@ -231,9 +236,11 @@ test('the Jam opens on Free, and a link that names only a mood opens its first l
 
 test('a mood keeps unsaved groove text when the groove fits it', async ({ page }) => {
   await page.goto('./jam/rock-straight-eighths/');
+  await openMore(page);
   await page.locator('#grooveEdit').click();
   const source = page.locator('#grooveSource');
   await source.fill(`${await source.inputValue()}\n# changed`);
+  await page.keyboard.press('Escape');
   const sad = page.getByRole('group', { name: 'How do you want it to feel?' }).getByRole('button', { name: 'Sad', exact: true });
   await sad.click();
   await expect(sad).toHaveAttribute('aria-pressed', 'true');
@@ -244,10 +251,12 @@ test('a mood keeps unsaved groove text when the groove fits it', async ({ page }
 
 test('a mood asks before it drops a new groove whose genre does not fit', async ({ page }) => {
   await page.goto('./jam/rock-straight-eighths/');
+  await openMore(page);
   await page.locator('#grooveNew').click();
   const source = page.locator('#grooveSource');
-  await source.fill((await source.inputValue()).replace('genre: rock', 'genre: jazz'));
-  await expect(page.locator('#jamContext')).toContainText('jazz');
+  await source.fill((await source.inputValue()).replace('genre: rock', 'genre: jazz').replace('title: My groove', 'title: My jazz'));
+  await expect(page.locator('#jamTitleText')).toHaveText('My jazz');
+  await page.keyboard.press('Escape');
   const ask = page.locator('#askDialog');
   const sad = page.getByRole('group', { name: 'How do you want it to feel?' }).getByRole('button', { name: 'Sad', exact: true });
   await sad.click();
@@ -300,11 +309,125 @@ test('the open controls say when they leave the mood, and the groove list puts f
   await expect(page.locator('#jamFitList .jam-groove-title').first()).toHaveText('Driving hard rock in A');
   await expect(page.locator('#jamOtherHeading')).toHaveText('Other grooves');
   await page.keyboard.press('Escape');
+  await openMore(page);
   await page.locator('#grooveEdit').click();
   const source = page.locator('#grooveSource');
   await source.fill((await source.inputValue()).replace(/^progression: .*$/m, 'progression: I I IV IV | V V IV I'));
   await expect(page.locator('#grooveFeedback')).toHaveText('Mood off. The groove plays the chords you wrote.');
   await expect(page.getByRole('button', { name: 'Free, no mood' })).toHaveAttribute('aria-pressed', 'true');
+});
+
+test('the tempo number opens its slider, with the usual tempo of the mood under it', async ({ page }) => {
+  await page.goto('./jam/rock-straight-eighths/?mood=sad');
+  const tempoButton = page.locator('#jamTempoButton');
+  await expect(page.locator('#jamTempo')).toBeHidden();
+  await tempoButton.click();
+  await expect(tempoButton).toHaveAttribute('aria-expanded', 'true');
+  await expect(page.locator('#jamTempo')).toBeFocused();
+  await expect(page.locator('#jamTempoHint')).toHaveText('Usual for Sad: 56 to 88');
+  await page.locator('#jamTempo').fill('120');
+  await expect(page.locator('#jamBpm')).toHaveText('120');
+  await expect(tempoButton).toHaveAttribute('data-outside', '');
+  await page.keyboard.press('Escape');
+  await expect(page.locator('#jamTempoPanel')).toBeHidden();
+  await expect(tempoButton).toBeFocused();
+});
+
+test('Mix and more opens a drawer that keeps the page playing, and keeps the groove text open when it closes', async ({ page }) => {
+  await page.goto('./jam/rock-straight-eighths/?mood=sad');
+  const more = page.getByRole('button', { name: 'Mix and more', exact: true });
+  const drawer = page.getByRole('dialog', { name: 'Mix and more' });
+  await more.click();
+  await expect(drawer).toBeFocused();
+  await expect(more).not.toHaveAccessibleDescription(/Groove text is open/);
+  const box = (await drawer.boundingBox())!;
+  const viewport = page.viewportSize()!;
+  if (viewport.width >= 600) expect(Math.round(box.width)).toBe(380);
+  else expect(Math.round(box.width)).toBe(viewport.width);
+  await page.locator('#jamPlay').click();
+  await expect(drawer).toBeVisible();
+  await page.locator('#jamPlay').click();
+  await page.locator('#grooveEdit').click();
+  await expect(more).toHaveAttribute('data-editing', '');
+  const source = page.locator('#grooveSource');
+  await source.fill(`${await source.inputValue()}\n# changed`);
+  await page.keyboard.press('Escape');
+  await expect(drawer).toBeHidden();
+  await expect(more).toBeFocused();
+  await expect(more).toHaveAccessibleDescription(/Groove text is open/);
+  await expect(more).toHaveAttribute('data-editing', '');
+  await page.getByRole('group', { name: 'How do you want it to feel?' }).getByRole('button', { name: 'Funky', exact: true }).click();
+  const ask = page.locator('#askDialog');
+  await expect(ask).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(ask).toBeHidden();
+  await expect(source).toHaveValue(/# changed$/);
+  await more.click();
+  await expect(source).toBeVisible();
+});
+
+test('closing the drawer closes unchanged groove text, so key and tempo are saved and shared again', async ({ page }) => {
+  await page.goto('./jam/rock-straight-eighths/?mood=sad');
+  await openMore(page);
+  await page.locator('#grooveEdit').click();
+  await page.keyboard.press('Escape');
+  await expect(page.locator('#grooveEditor')).toBeHidden();
+  const more = page.getByRole('button', { name: 'Mix and more', exact: true });
+  await expect(more).not.toHaveAttribute('data-editing');
+  await page.locator('[data-select="jamKey"]').click();
+  await page.locator('#jamKey-options').getByRole('option', { name: 'A minor' }).click();
+  await page.locator('#jamTempoButton').click();
+  await page.locator('#jamTempo').fill('80');
+  await expect(page).toHaveURL(/\?mood=sad&key=Am&tempo=80&/);
+  await page.keyboard.press('Escape');
+  await openMore(page);
+  await expect(page.locator('#jamShare')).toBeVisible();
+});
+
+test('a wide drawer pushes the page and stays open for presses on it; a narrower one closes and lets the press through', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name === 'phone', 'The phone sheet covers the page');
+  await page.goto('./jam/rock-straight-eighths/?mood=sad');
+  const drawer = page.getByRole('dialog', { name: 'Mix and more' });
+  const funky = page.getByRole('group', { name: 'How do you want it to feel?' }).getByRole('button', { name: 'Funky', exact: true });
+  await openMore(page);
+  await funky.click();
+  await expect(funky).toHaveAttribute('aria-pressed', 'true');
+  await expect(drawer).toBeVisible();
+  await page.setViewportSize({ width: 1024, height: 768 });
+  await page.locator('[data-select="jamKey"]').click();
+  await expect(drawer).toBeHidden();
+  await expect(page.locator('#jamKey-options')).toBeVisible();
+});
+
+test('the now line under the bars names the playing chord, its job and the mood note', async ({ page }) => {
+  await page.goto('./jam/rock-straight-eighths/?mood=sad');
+  await expect(page.locator('#jamNowChord')).toHaveText('Em');
+  await expect(page.locator('#jamFretboardJob')).toHaveText('Home. Minor, so it starts low.');
+  await expect(page.locator('#jamFretboardNext')).toBeHidden();
+  await expect(page.locator('#jamMoodLegend')).toContainText('G is the sad note.');
+  await expect(page.locator('#jamBars li').first().locator('.jam-bar-numeral')).toHaveText('i');
+});
+
+test('the Jam fits its width, and a six string fretboard ends on the first screen', async ({ page }, testInfo) => {
+  const phone = testInfo.project.name === 'phone';
+  await page.addInitScript(() => localStorage.setItem('tabtrainer:family', JSON.stringify('guitar')));
+  for (const path of ['./jam/rock-straight-eighths/?mood=sad', './jam/rock-straight-eighths/?mood=exciting', './jam/blues-shuffle/?mood=bluesy', './jam/rock-straight-eighths/']) {
+    await page.goto(path);
+    await expect(page.locator('#jamFretboardBoard svg')).toBeAttached();
+    const fit = await page.evaluate(() => ({
+      scrollWidth: document.documentElement.scrollWidth,
+      boardBottom: document.querySelector('#jamFretboardBoard')!.getBoundingClientRect().bottom,
+      transportTop: document.querySelector('.jam-transport')!.getBoundingClientRect().top,
+    }));
+    const viewport = page.viewportSize()!;
+    expect(fit.scrollWidth).toBeLessThanOrEqual(viewport.width);
+    expect(fit.boardBottom).toBeLessThanOrEqual(phone ? fit.transportTop : viewport.height);
+  }
+  const rowTops = await page.goto('./jam/blues-shuffle/?mood=bluesy').then(() => page.locator('#jamBars li').evaluateAll(items => new Set(items.map(item => item.getBoundingClientRect().top)).size));
+  expect(rowTops).toBe(phone ? 2 : 1);
+  await page.goto('./jam/rock-straight-eighths/?mood=sad');
+  const sadRows = await page.locator('#jamBars li').evaluateAll(items => new Set(items.map(item => item.getBoundingClientRect().top)).size);
+  expect(sadRows).toBe(phone ? 2 : 1);
 });
 
 test('the landing demo plays two bars in one click and lights the playing note', async ({ page }) => {

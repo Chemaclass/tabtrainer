@@ -3,28 +3,19 @@ import { scaleById, type ScaleId } from '../core/scales';
 import { isMinorKey, keyRootName, pitchClass } from '../core/theory';
 import { keyTonic } from '../core/harmony';
 import type { Jam, JamGroove } from './jam';
-import { SUMMARY_SEPARATOR } from './jamSummary';
+import { progressionName } from './jamSummary';
 
 export const MOOD_QUESTION = 'How do you want it to feel?';
 
 type MoodJam = Pick<Jam, 'mood' | 'key' | 'scale' | 'tempo' | 'progression' | 'groove' | 'list'>;
 
-export interface MoodFact { value: string; helper: string }
-
 export interface MoodStage {
   name: string;
   why: string;
-  scale: MoodFact;
-  /** The loop name as the value and the button to the next loop as the helper. */
-  chords: MoodFact & { more: boolean };
-  tempo: MoodFact;
-  groove: MoodFact;
-  /** Scale and tempo in one line, for narrow screens, where the groove fact stays on its own. */
-  summary: string;
+  /** "Usual for Sad: 56 to 88", or why the tempo is outside that range. */
   tempoHint: string;
+  tempoOutside: boolean;
 }
-
-const plural = (count: number, one: string, many: string) => `${count} ${count === 1 ? one : many}`;
 
 export const scaleTitleIn = (key: string, scale: ScaleId) => `${keyRootName(key)} ${scaleById(scale).title}`;
 
@@ -40,31 +31,39 @@ export function tempoNote(mood: Mood, tempo: number): string {
 
 const playingLoop = (mood: Mood, progression: string) => mood.loops.find(loop => loop.slug === progression);
 
-function grooveHelper(jam: MoodJam, mood: Mood): string {
-  const fitting = jam.list.filter(entry => mood.genres.includes(entry.groove.genre)).length;
-  const fits = `${plural(fitting, 'groove fits', 'grooves fit')} ${mood.name}`;
-  return mood.genres.includes(jam.groove.genre) ? fits : `${fits}, not this one`;
-}
-
 export function moodStage(jam: MoodJam): MoodStage | null {
   const { mood } = jam;
   if (!mood) return null;
-  const loop = playingLoop(mood, jam.progression);
-  const total = mood.loops.length;
-  const number = loop ? mood.loops.indexOf(loop) + 1 : 1;
-  const scaleTitle = scaleTitleIn(jam.key, jam.scale);
   const range = `${mood.tempo.min} to ${mood.tempo.max}`;
   const note = tempoNote(mood, jam.tempo);
   return {
     name: mood.name,
     why: mood.why,
-    scale: { value: scaleTitle, helper: 'Shown on the fretboard below' },
-    chords: { value: loop?.name ?? '', helper: `Loop ${number} of ${total}. Next loop`, more: total > 1 },
-    tempo: { value: `${mood.tempo.word}, ${range}`, helper: note || mood.tempo.outside },
-    groove: { value: jam.groove.title, helper: grooveHelper(jam, mood) },
-    summary: [scaleTitle, `${mood.tempo.word.toLowerCase()}, ${range}`].join(SUMMARY_SEPARATOR),
     tempoHint: note ? `${note}: ${range}` : `Usual for ${mood.name}: ${range}`,
+    tempoOutside: note !== '',
   };
+}
+
+/** The page title: the mood, or the groove's own title with Free. */
+export const heroTitle = (jam: MoodJam) => jam.mood?.name ?? jam.groove.title;
+
+export interface ChordsChoice { short: string; count: string }
+
+/** What the Chords control shows: the loop name and "1/3" under a mood, the progression name with Free. */
+export function chordsChoice(jam: MoodJam): ChordsChoice {
+  const { mood } = jam;
+  const loop = mood ? playingLoop(mood, jam.progression) : undefined;
+  if (!mood || !loop) return { short: progressionName(jam.progression, mood), count: '' };
+  return { short: loop.name, count: `${mood.loops.indexOf(loop) + 1}/${mood.loops.length}` };
+}
+
+export interface NowText { job: string; showNext: boolean }
+
+/** The job of the bar that plays; with no job, as with Free, the line names the next chord instead. */
+export function nowText(jam: MoodJam, bar: number): NowText {
+  const bars = moodBars(jam);
+  const job = bars?.length ? (bars[bar % bars.length]?.job ?? '') : '';
+  return { job, showNext: job === '' };
 }
 
 export interface MoodBar { numeral: string; job: string }

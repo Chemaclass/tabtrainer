@@ -41,7 +41,15 @@ function enhance(select: HTMLSelectElement) {
     return rows;
   }
   function sync() {
-    button.textContent = select.selectedOptions[0]?.textContent ?? '';
+    // The button can show a shorter name than the list, and a muted note after it, such as "Sink and rise 1/3"
+    const chosen = select.selectedOptions[0];
+    button.textContent = chosen?.dataset.short ?? chosen?.textContent ?? '';
+    if (chosen?.dataset.note) {
+      const note = document.createElement('span');
+      note.className = 'dropdown-note';
+      note.textContent = chosen.dataset.note;
+      button.append(note);
+    }
     button.disabled = select.disabled;
     if (select.disabled) close();
     items = options().map((option, index) => {
