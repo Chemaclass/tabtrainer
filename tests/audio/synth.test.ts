@@ -54,6 +54,20 @@ describe('Synth', () => {
     expect(sources.filter(s => s.start.mock.calls[0][0] === 1).every(s => s.type === 'sawtooth')).toBe(true);
     expect(sources).toHaveLength(12);
   });
+  it('plays a dead note as one short falling sawtooth through a dark low pass', () => {
+    const { sources, filters, gains } = fakeAudio();
+    const synth = new Synth(); synth.ensure();
+    synth.thud(1, 40, 0.2);
+    expect(sources).toHaveLength(1);
+    expect(sources[0]).toMatchObject({ type: 'sawtooth' });
+    expect(sources[0].start).toHaveBeenCalledWith(1);
+    expect(sources[0].stop).toHaveBeenCalledWith(1.05);
+    expect(sources[0].detune.linearRampToValueAtTime).toHaveBeenCalledWith(-1200, 1.05);
+    expect(filters).toEqual([expect.objectContaining({ type: 'lowpass', frequency: expect.objectContaining({ value: 900 }) })]);
+    expect(gains[1].gain.exponentialRampToValueAtTime).toHaveBeenCalledWith(0.2, 1.003);
+    synth.cancel('instrument', 1);
+    expect(sources[0].stop).toHaveBeenCalledTimes(2);
+  });
   it('cancels only backing sources that start after a given time', () => {
     const { sources } = fakeAudio();
     const synth = new Synth(); synth.ensure();

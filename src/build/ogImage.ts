@@ -99,7 +99,8 @@ function tabStaff(strings: number, columns: Column[]): string {
     if (column.chord) marks.push(text(x, top - 22, TEXT_FONT, 24, INK, column.chord, ' text-anchor="middle"'));
     for (const note of column.notes) {
       const y = top + (note.string - 1) * gap;
-      const label = note.tie ? `(${note.fret})` : String(note.fret);
+      const fret = note.dead ? 'x' : String(note.fret);
+      const label = note.tie ? `(${fret})` : fret;
       marks.push(`<rect x="${x - label.length * 9 - 4}" y="${y - 14}" width="${label.length * 18 + 8}" height="28" fill="${PAPER}"/>`);
       marks.push(text(x, y + 10, MONO_FONT, 28, INK, label, ' text-anchor="middle"'));
     }

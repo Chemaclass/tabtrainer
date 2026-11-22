@@ -135,13 +135,14 @@ export function parseSong(src: string): ParseResult {
     st.cur = null; st.startAt = null;
   };
   const parseNote = (s: string, at: IssueSpan): Note | null => {
-    const tie = s.startsWith('~'); const body = tie ? s.slice(1) : s;
-    const r = /^(\d{1,2})\.(\d{1,2})$/.exec(body);
+    const dead = /^[xX]\.(\d{1,2})$/.exec(s);
+    const tie = !dead && s.startsWith('~'); const body = tie ? s.slice(1) : s;
+    const r = dead ? ['', '0', dead[1]] : /^(\d{1,2})\.(\d{1,2})$/.exec(body);
     if (!r) { report('error', 'note-unreadable', at, hinted(`Can't read "${s}".`, 'Notes are fret.string, e.g. 3.4 (fret 3 on string 4)')); return null; }
     const fret = +r[1], string = +r[2];
     if (string < 1 || string > strings) { report('error', 'string-missing', at, `String ${string} doesn't exist on this ${strings}-string instrument`); return null; }
     if (fret > meta.instrument.maxFret) { report('error', 'fret-high', at, `Fret ${fret} is above the instrument's ${meta.instrument.maxFret} frets`); return null; }
-    return { string, fret, ...(tie ? { tie: true } : {}) };
+    return { string, fret, ...(tie ? { tie: true } : {}), ...(dead ? { dead: true } : {}) };
   };
   const pushEvent = (notes: Note[], tok: Tok) => {
     if (!st.cur) st.cur = newBar(tok);

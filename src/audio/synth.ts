@@ -51,6 +51,13 @@ const DRIVE = {
   curveSize: 2048,
   curveHardness: 3,
 };
+// The falling pitch makes it read as a click, not a note
+const DEAD = {
+  cutoff: 900,
+  attack: 0.003,
+  length: 0.05,
+  drop: -1200,
+};
 // setTargetAtTime approaches its target without reaching it; five time constants leave under one percent
 const RELEASE_TIME_CONSTANTS = 5;
 const CLICK = {
@@ -131,6 +138,22 @@ export class Synth {
     lowPass.connect(envelope);
     sine.connect(sineLevel);
     sineLevel.connect(envelope);
+    envelope.connect(out);
+  }
+
+  /** A dead note: a short sawtooth burst at the open string, dark and falling. */
+  thud(when: number, midi: number, vel: number, out: AudioNode = this.master!) {
+    const end = when + DEAD.length;
+    const saw = this.oscillator('sawtooth', frequencyOf(midi), when, end, 'instrument');
+    saw.detune.setValueAtTime(0, when);
+    saw.detune.linearRampToValueAtTime(DEAD.drop, end);
+    const lowPass = this.biquad('lowpass', DEAD.cutoff);
+    const envelope = this.ctx!.createGain();
+    envelope.gain.setValueAtTime(SILENT, when);
+    envelope.gain.exponentialRampToValueAtTime(vel, when + DEAD.attack);
+    envelope.gain.exponentialRampToValueAtTime(SILENT, end);
+    saw.connect(lowPass);
+    lowPass.connect(envelope);
     envelope.connect(out);
   }
 
