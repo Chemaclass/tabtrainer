@@ -525,6 +525,12 @@ describe('jam moods', () => {
     expect(jam.chooseForMood('slow-ballad')).toBe(true);
     jam.applyMood('sad');
     expect(jam.tempo).toBe(66);
+    jam.setTempo(120);
+    jam.chooseForMood(jam.grooveFor('happy'));
+    jam.applyMood('happy');
+    jam.chooseForMood('slow-ballad');
+    jam.applyMood('sad');
+    expect([jam.mood?.id, jam.tempo]).toEqual(['sad', 66]);
     jam.setTempo(60);
     const again = new Jam(bundledGrooves(files));
     again.choose('slow-ballad');

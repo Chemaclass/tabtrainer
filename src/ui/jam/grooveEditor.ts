@@ -57,6 +57,10 @@ export function grooveEditor(jam: Jam, { played, saved, deleted }: GrooveEditorH
     feedback.classList.toggle('bad', failed);
   }
 
+  function forgetMoodOff() {
+    if (feedback.textContent === MOOD_OFF) announce('');
+  }
+
   async function mayDiscard(): Promise<boolean> {
     if (!isOpen() || !draft.hasChanges()) return true;
     const choice = await askChoice({
@@ -96,6 +100,7 @@ export function grooveEditor(jam: Jam, { played, saved, deleted }: GrooveEditorH
     const hadMood = jam.mood !== null;
     jam.preview(playable);
     if (hadMood && !jam.mood) announce(MOOD_OFF);
+    else if (jam.mood) forgetMoodOff();
     played();
   }
 
@@ -219,6 +224,7 @@ export function grooveEditor(jam: Jam, { played, saved, deleted }: GrooveEditorH
 
   /** Shows the chosen groove's text after the player picks another groove while editing. */
   function follow() {
+    forgetMoodOff();
     if (isOpen()) load(jam.entry.text, true);
   }
 
@@ -226,5 +232,5 @@ export function grooveEditor(jam: Jam, { played, saved, deleted }: GrooveEditorH
     return slug === jam.slug || mayDiscard();
   }
 
-  return { follow, mayChoose, mayDiscard };
+  return { follow, mayChoose, mayDiscard, moodOn: forgetMoodOff };
 }

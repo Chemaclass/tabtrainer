@@ -260,6 +260,7 @@ function chooseMood(id: MoodId | null) {
     const moved = jam.chooseForMood(slug) || (!stays && jam.endPreview());
     if (moved) grooveEditing.follow();
     jam.applyMood(id);
+    grooveEditing.moodOn();
     jamming.show();
     showLink(moved);
   });

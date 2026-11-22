@@ -99,7 +99,11 @@ export function jamFretboardView(jam: Jam, mixer: Pick<Mixer, 'plays'>, settings
   /** The first sentence names the note in bold, the rest says where it sits; a scale without the note says so in plain text. */
   function showMoodNote(note: MoodLegend | null) {
     legend.hidden = note === null;
-    if (note === null) return;
+    if (note === null) {
+      // The Scale control names this line as its description, and a hidden line is still read
+      legendNote.textContent = legendRest.textContent = '';
+      return;
+    }
     legend.toggleAttribute('data-missing', note.pitchClass === null);
     const split = note.pitchClass === null ? 0 : note.sentence.indexOf('. ') + 1;
     legendNote.textContent = note.sentence.slice(0, split);

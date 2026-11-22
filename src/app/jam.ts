@@ -154,6 +154,8 @@ export class Jam {
   /** The groove a mood chip moves to opens at the mood's starting tempo, whatever tempo was set by hand there before. */
   chooseForMood(slug: string): boolean {
     if (!this.choose(slug)) return false;
+    // The groove's saved setup may hold this mood and a tempo: forget both so the mood opens fresh
+    this.chosenMood = null;
     this.ownTempo = false;
     return true;
   }
